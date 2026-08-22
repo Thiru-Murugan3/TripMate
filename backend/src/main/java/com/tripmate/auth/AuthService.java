@@ -138,4 +138,14 @@ public class AuthService {
                 "Bearer",
                 900);
     }
+
+    @Transactional
+    public LogoutResponse logout(LogoutRequest request) {
+
+        refreshTokenService.revokeRefreshToken(
+                request.refreshToken());
+
+        return new LogoutResponse(
+                "Logged out successfully");
+    }
 }

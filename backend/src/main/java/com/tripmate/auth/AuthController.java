@@ -40,4 +40,12 @@ public class AuthController {
         return ResponseEntity.ok(
                 authService.refresh(request));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<LogoutResponse> logout(
+            @Valid @RequestBody LogoutRequest request) {
+
+        return ResponseEntity.ok(
+                authService.logout(request));
+    }
 }

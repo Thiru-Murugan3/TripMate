@@ -115,4 +115,18 @@ public class RefreshTokenService {
         return createRefreshToken(
                 oldToken.getUser());
     }
+
+    @Transactional
+    public void revokeRefreshToken(String rawToken) {
+
+        String tokenHash = hashToken(rawToken);
+
+        refreshTokenRepository
+                .findByTokenHashAndRevokedFalse(tokenHash)
+                .ifPresent(token -> {
+                    token.setRevoked(true);
+                    token.setRevokedAt(LocalDateTime.now());
+                    refreshTokenRepository.save(token);
+                });
+    }
 }
