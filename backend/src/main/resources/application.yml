@@ -16,6 +16,12 @@ spring:
         format_sql: true
 server:
   port: ${SERVER_PORT:8080}
+
+jwt:
+  secret: ${JWT_SECRET:dGhpcmlzYWRldjUzY3JldGtleWZvcnRyaXBtYXRlYXBwbG9jYWw=}
+  access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}
+  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
