@@ -1,0 +1,16 @@
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+backend/target/
+*.log
+web/node_modules/
+mobile/node_modules/
+web/dist/
+mobile/www/
+.env
+*.env
+!*.env.example
+uploads/
+coverage/
