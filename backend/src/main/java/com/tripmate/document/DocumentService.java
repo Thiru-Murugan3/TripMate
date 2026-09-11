@@ -1,5 +1,7 @@
 package com.tripmate.document;
 
+import com.tripmate.audit.AuditAction;
+import com.tripmate.audit.AuditLogService;
 import com.tripmate.member.MemberStatus;
 import com.tripmate.member.TripMemberRepository;
 import com.tripmate.member.TripRole;
@@ -25,6 +27,7 @@ public class DocumentService {
     private final TripMemberRepository tripMemberRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public List<DocumentResponse> getDocuments(Long tripId, Long userId) {
@@ -72,6 +75,10 @@ public class DocumentService {
                 .build();
 
         Document saved = documentRepository.save(document);
+
+        // Audit Log (never storing file content or secrets)
+        auditLogService.log(userId, tripId, AuditAction.DOCUMENT_UPLOADED, "DOCUMENT", saved.getId(), "Uploaded document: " + saved.getFileName() + " (" + type + ")");
+
         return DocumentResponse.from(saved);
     }
 
@@ -86,6 +93,9 @@ public class DocumentService {
 
         fileStorageService.deleteFile(document.getStorageUrl());
         documentRepository.delete(document);
+
+        // Audit Log
+        auditLogService.log(userId, tripId, AuditAction.DOCUMENT_DELETED, "DOCUMENT", documentId, "Deleted document: " + document.getFileName());
     }
 
     private Trip findTripOrThrow(Long tripId) {

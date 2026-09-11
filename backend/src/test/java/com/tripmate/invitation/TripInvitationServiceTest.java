@@ -43,6 +43,9 @@ class TripInvitationServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private com.tripmate.audit.AuditLogService auditLogService;
+
     @InjectMocks
     private TripInvitationService tripInvitationService;
 

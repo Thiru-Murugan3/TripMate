@@ -36,6 +36,9 @@ class PasswordResetServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private com.tripmate.audit.AuditLogService auditLogService;
+
     @InjectMocks
     private PasswordResetService passwordResetService;
 

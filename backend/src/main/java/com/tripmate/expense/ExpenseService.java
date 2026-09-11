@@ -6,6 +6,7 @@ import com.tripmate.member.TripMemberRepository;
 import com.tripmate.member.TripRole;
 import com.tripmate.trip.Trip;
 import com.tripmate.trip.TripRepository;
+import com.tripmate.audit.AuditLogService;
 import com.tripmate.user.User;
 import com.tripmate.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class ExpenseService {
     private final TripRepository tripRepository;
     private final TripMemberRepository tripMemberRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     // 1. GET /api/v1/trips/{tripId}/expenses
     @Transactional(readOnly = true)
@@ -82,6 +84,8 @@ public class ExpenseService {
         List<ExpenseSplit> splits = generateSplits(savedExpense, trip, request.amount(), splitType, request.splits());
         savedExpense.setSplits(splits);
 
+        auditLogService.log(userId, tripId, com.tripmate.audit.AuditAction.EXPENSE_CREATED, "EXPENSE", savedExpense.getId(), "Created expense: " + savedExpense.getTitle() + " (" + savedExpense.getAmount() + ")");
+
         return ExpenseResponse.from(savedExpense);
     }
 
@@ -117,6 +121,9 @@ public class ExpenseService {
         expense.getSplits().addAll(splits);
 
         Expense updatedExpense = expenseRepository.save(expense);
+
+        auditLogService.log(userId, tripId, com.tripmate.audit.AuditAction.EXPENSE_UPDATED, "EXPENSE", updatedExpense.getId(), "Updated expense: " + updatedExpense.getTitle() + " (" + updatedExpense.getAmount() + ")");
+
         return ExpenseResponse.from(updatedExpense);
     }
 

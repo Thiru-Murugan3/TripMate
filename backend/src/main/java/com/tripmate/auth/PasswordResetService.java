@@ -1,5 +1,7 @@
 package com.tripmate.auth;
 
+import com.tripmate.audit.AuditAction;
+import com.tripmate.audit.AuditLogService;
 import com.tripmate.user.User;
 import com.tripmate.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class PasswordResetService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public Map<String, String> changePassword(Long userId, ChangePasswordRequest request) {
@@ -56,6 +59,9 @@ public class PasswordResetService {
 
         // Revoke old active refresh tokens
         refreshTokenRepository.revokeAllUserTokens(user.getId());
+
+        // Audit Log
+        auditLogService.log(userId, null, AuditAction.PASSWORD_CHANGED, "USER", userId, "Password changed successfully for user");
 
         return Map.of("message", "Password changed successfully. All active sessions have been logged out.");
     }
@@ -136,6 +142,9 @@ public class PasswordResetService {
 
         // 6. Revoke all user's active refresh tokens
         refreshTokenRepository.revokeAllUserTokens(user.getId());
+
+        // Audit Log
+        auditLogService.log(user.getId(), null, AuditAction.PASSWORD_RESET, "USER", user.getId(), "Password reset successfully via reset token");
 
         return Map.of("message", "Password reset successfully. You can now log in with your new password.");
     }

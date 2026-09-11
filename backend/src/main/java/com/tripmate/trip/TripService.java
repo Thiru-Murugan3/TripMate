@@ -1,5 +1,7 @@
 package com.tripmate.trip;
 
+import com.tripmate.audit.AuditAction;
+import com.tripmate.audit.AuditLogService;
 import com.tripmate.member.MemberStatus;
 import com.tripmate.member.TripMember;
 import com.tripmate.member.TripMemberRepository;
@@ -27,6 +29,7 @@ public class TripService {
     private final TripRepository tripRepository;
     private final TripMemberRepository tripMemberRepository;
     private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public TripResponse createTrip(Long userId, CreateTripRequest request) {
@@ -67,6 +70,9 @@ public class TripService {
                 .joinedAt(LocalDateTime.now())
                 .build();
         tripMemberRepository.save(ownerMember);
+
+        // Audit Log
+        auditLogService.log(userId, savedTrip.getId(), AuditAction.TRIP_CREATED, "TRIP", savedTrip.getId(), "Created trip: " + savedTrip.getName());
 
         return TripResponse.from(savedTrip);
     }
@@ -139,6 +145,9 @@ public class TripService {
 
         Trip updatedTrip = tripRepository.save(trip);
 
+        // Audit Log
+        auditLogService.log(userId, updatedTrip.getId(), AuditAction.TRIP_UPDATED, "TRIP", updatedTrip.getId(), "Updated trip: " + updatedTrip.getName());
+
         return TripResponse.from(updatedTrip);
     }
 
@@ -156,6 +165,9 @@ public class TripService {
         }
 
         tripRepository.delete(trip);
+
+        // Audit Log
+        auditLogService.log(userId, tripId, AuditAction.TRIP_DELETED, "TRIP", tripId, "Deleted trip: " + trip.getName());
     }
 
     private void validateDates(LocalDate startDate, LocalDate endDate) {

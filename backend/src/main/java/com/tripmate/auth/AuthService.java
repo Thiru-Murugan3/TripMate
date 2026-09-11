@@ -1,5 +1,7 @@
 package com.tripmate.auth;
 
+import com.tripmate.audit.AuditAction;
+import com.tripmate.audit.AuditLogService;
 import com.tripmate.security.JwtService;
 import com.tripmate.user.SystemRole;
 import com.tripmate.user.User;
@@ -9,9 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import com.tripmate.security.JwtService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +22,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final AuditLogService auditLogService;
 
+    @Transactional
     public RegisterResponse register(RegisterRequest request) {
 
         String email = request.email()
@@ -61,6 +64,9 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
+        // Audit Log
+        auditLogService.log(savedUser.getId(), null, AuditAction.USER_REGISTERED, "USER", savedUser.getId(), "User registered: " + savedUser.getEmail());
+
         return new RegisterResponse(
                 savedUser.getId(),
                 savedUser.getName(),
@@ -68,6 +74,7 @@ public class AuthService {
                 "User registered successfully");
     }
 
+    @Transactional
     public LoginResponse login(LoginRequest request) {
 
         String email = request.email()
@@ -76,12 +83,17 @@ public class AuthService {
 
         User user = userRepository
                 .findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED,
-                        "Invalid email or password"));
+                .orElse(null);
+
+        if (user == null) {
+            auditLogService.log(null, null, AuditAction.LOGIN_FAILED, "USER", null, "Failed login attempt for email: " + email);
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid email or password");
+        }
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-
+            auditLogService.log(user.getId(), null, AuditAction.LOGIN_FAILED, "USER", user.getId(), "Blocked user login attempt for email: " + email);
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "User account is blocked");
@@ -92,7 +104,7 @@ public class AuthService {
                 user.getPasswordHash());
 
         if (!passwordMatches) {
-
+            auditLogService.log(user.getId(), null, AuditAction.LOGIN_FAILED, "USER", user.getId(), "Failed login attempt (incorrect password) for email: " + email);
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
                     "Invalid email or password");
@@ -102,6 +114,9 @@ public class AuthService {
 
         String refreshToken = refreshTokenService
                 .createRefreshToken(user);
+
+        // Audit Log
+        auditLogService.log(user.getId(), null, AuditAction.LOGIN_SUCCESS, "USER", user.getId(), "Login successful for email: " + email);
 
         return new LoginResponse(
                 user.getId(),

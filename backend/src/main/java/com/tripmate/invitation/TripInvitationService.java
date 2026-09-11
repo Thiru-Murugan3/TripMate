@@ -1,5 +1,7 @@
 package com.tripmate.invitation;
 
+import com.tripmate.audit.AuditAction;
+import com.tripmate.audit.AuditLogService;
 import com.tripmate.member.MemberStatus;
 import com.tripmate.member.TripMember;
 import com.tripmate.member.TripMemberRepository;
@@ -30,6 +32,7 @@ public class TripInvitationService {
     private final TripMemberRepository tripMemberRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public InvitationResponse createInvitation(Long tripId, Long inviterUserId, CreateInvitationRequest request) {
@@ -121,6 +124,9 @@ public class TripInvitationService {
                     NotificationType.MEMBER_ADDED
             );
         }
+
+        // Audit Log
+        auditLogService.log(inviterUserId, tripId, AuditAction.INVITATION_CREATED, "INVITATION", saved.getId(), "Created invitation for " + (email != null ? email : mobile) + " as " + request.getRole());
 
         return InvitationResponse.from(saved, rawToken);
     }
@@ -249,6 +255,10 @@ public class TripInvitationService {
                 NotificationType.MEMBER_ADDED
         );
 
+        // Audit Log
+        auditLogService.log(userId, trip.getId(), AuditAction.INVITATION_ACCEPTED, "INVITATION", invitation.getId(), "Accepted invitation to join trip: " + trip.getName());
+        auditLogService.log(userId, trip.getId(), AuditAction.MEMBER_ADDED, "TRIP_MEMBER", member.getId(), "Added as " + invitation.getRole() + " to trip: " + trip.getName());
+
         return InvitationResponse.from(invitation, null);
     }
 
@@ -276,6 +286,9 @@ public class TripInvitationService {
                 rejectingUser.getName() + " declined your invitation to join " + invitation.getTrip().getName(),
                 NotificationType.MEMBER_REMOVED
         );
+
+        // Audit Log
+        auditLogService.log(userId, invitation.getTrip().getId(), AuditAction.INVITATION_REJECTED, "INVITATION", invitation.getId(), "Rejected invitation for trip: " + invitation.getTrip().getName());
 
         return InvitationResponse.from(updated, null);
     }
