@@ -16,6 +16,13 @@ public class User {
     @Builder.Default private SystemRole systemRole = SystemRole.USER;
     @Enumerated(EnumType.STRING) @Column(nullable=false,length=20)
     @Builder.Default private UserStatus status = UserStatus.ACTIVE;
+    @Column(name="profile_photo_url", length=500)
+    private String profilePhotoUrl;
+    @Column(name="emergency_contact", length=20)
+    private String emergencyContact;
+    @Column(name="travel_preferences", columnDefinition="TEXT")
+    private String travelPreferences;
+
     @Column(name="created_at",nullable=false,insertable=false,updatable=false) private LocalDateTime createdAt;
     @Column(name="updated_at",nullable=false,insertable=false,updatable=false) private LocalDateTime updatedAt;
 }

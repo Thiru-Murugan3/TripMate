@@ -66,6 +66,46 @@ public class FileStorageService {
         }
     }
 
+    public String storeProfilePhoto(MultipartFile file, Long userId) {
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "File cannot be empty");
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "File size exceeds maximum limit of 10 MB");
+        }
+
+        String originalFileName = StringUtils.cleanPath(
+                file.getOriginalFilename() != null ? file.getOriginalFilename() : "profile.jpg"
+        );
+
+        String extension = getFileExtension(originalFileName);
+        List<String> imageExtensions = List.of("jpg", "jpeg", "png", "webp", "gif");
+        if (!imageExtensions.contains(extension.toLowerCase())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Invalid image format. Allowed: jpg, jpeg, png, webp, gif");
+        }
+
+        String safeFileName = UUID.randomUUID() + "." + extension.toLowerCase();
+        Path profileUploadDir = Paths.get(UPLOAD_DIR, "profile", String.valueOf(userId)).toAbsolutePath().normalize();
+
+        try {
+            Files.createDirectories(profileUploadDir);
+            Path targetLocation = profileUploadDir.resolve(safeFileName);
+
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            return "/uploads/profile/" + userId + "/" + safeFileName;
+        } catch (IOException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Could not store profile photo.", ex);
+        }
+    }
+
     public void deleteFile(String storageUrl) {
         if (storageUrl == null || storageUrl.isBlank()) {
             return;

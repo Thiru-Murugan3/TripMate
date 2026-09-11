@@ -1,33 +1,60 @@
 package com.tripmate.user;
 
 import com.tripmate.security.UserPrincipal;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
+    // 1. GET /api/v1/users/me
     @GetMapping("/me")
-    public ResponseEntity<CurrentUserResponse> getCurrentUser(
+    public ResponseEntity<UserProfileResponse> getCurrentUser(
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        if (userPrincipal == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
-        }
+        return ResponseEntity.ok(
+                userService.getUserProfile(userPrincipal.getId())
+        );
+    }
 
-        User user = userRepository.findById(userPrincipal.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    // 2. PUT /api/v1/users/me
+    @PutMapping("/me")
+    public ResponseEntity<UserProfileResponse> updateProfile(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        return ResponseEntity.ok(
+                userService.updateUserProfile(userPrincipal.getId(), request)
+        );
+    }
 
-        return ResponseEntity.ok(CurrentUserResponse.from(user));
+    // 3. POST /api/v1/users/me/profile-photo
+    @PostMapping(path = "/me/profile-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserProfileResponse> uploadProfilePhoto(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(
+                userService.uploadProfilePhoto(userPrincipal.getId(), file)
+        );
+    }
+
+    // 4. DELETE /api/v1/users/me/profile-photo
+    @DeleteMapping("/me/profile-photo")
+    public ResponseEntity<UserProfileResponse> deleteProfilePhoto(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        return ResponseEntity.ok(
+                userService.deleteProfilePhoto(userPrincipal.getId())
+        );
     }
 }
