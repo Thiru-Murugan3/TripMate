@@ -8,15 +8,6 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') 
 
 cd /d "%~dp0backend"
 
-if not exist ".env" (
-    echo.
-    echo TripMate email configuration was not found.
-    echo Starting guided Gmail OTP setup...
-    echo.
-    call "%~dp0setup-email.bat"
-    if errorlevel 1 exit /b 1
-)
-
 if exist ".env" (
     echo Loading backend\.env...
     for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
@@ -24,27 +15,24 @@ if exist ".env" (
     )
 )
 
-if "%MAIL_USERNAME%"=="" (
+if "%BREVO_API_KEY%"=="" (
     echo.
-    echo MAIL_USERNAME is missing. Running email setup...
-    call "%~dp0setup-email.bat"
+    echo TripMate Brevo API key is not configured.
+    call "%~dp0setup-brevo.bat"
     if errorlevel 1 exit /b 1
-    for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
-        if not "%%A"=="" set "%%A=%%B"
-    )
+    for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do if not "%%A"=="" set "%%A=%%B"
 )
 
-if "%MAIL_PASSWORD%"=="" (
+if "%BREVO_SENDER_EMAIL%"=="" (
     echo.
-    echo MAIL_PASSWORD is missing. Running email setup...
-    call "%~dp0setup-email.bat"
+    echo TripMate Brevo sender email is not configured.
+    call "%~dp0setup-brevo.bat"
     if errorlevel 1 exit /b 1
-    for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
-        if not "%%A"=="" set "%%A=%%B"
-    )
+    for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do if not "%%A"=="" set "%%A=%%B"
 )
 
 echo.
-echo SMTP account: %MAIL_USERNAME%
+echo Transactional email provider: Brevo
+echo Sender: %BREVO_SENDER_EMAIL%
 echo Starting TripMate Backend...
 mvn spring-boot:run
