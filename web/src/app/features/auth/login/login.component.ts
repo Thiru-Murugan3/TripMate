@@ -1,179 +1,82 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+
 import { AuthService } from '../../../core/services/auth.service';
+
+interface ApiErrorResponse {
+  message?: string;
+}
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  template: `
-    <div class="auth-container">
-      <div class="auth-card card glass-panel">
-        <div class="auth-header">
-          <div class="brand-badge">
-            <span class="material-symbols-outlined icon">flight_takeoff</span>
-          </div>
-          <h2>Welcome Back</h2>
-          <p class="subtitle">Sign in to manage your trips and itineraries</p>
-        </div>
-
-        <div *ngIf="errorMessage" class="alert alert-danger">
-          <span class="material-symbols-outlined">error</span>
-          {{ errorMessage }}
-        </div>
-
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-          <!-- Email Input -->
-          <div class="form-group">
-            <label class="form-label" for="email">Email Address</label>
-            <input
-              id="email"
-              type="email"
-              class="form-control"
-              [class.is-invalid]="isFieldInvalid('email')"
-              formControlName="email"
-              placeholder="you@example.com"
-            />
-            <div *ngIf="isFieldInvalid('email')" class="form-error">
-              Valid email address is required
-            </div>
-          </div>
-
-          <!-- Password Input -->
-          <div class="form-group">
-            <div class="label-row">
-              <label class="form-label" for="password">Password</label>
-              <a routerLink="/forgot-password" class="forgot-link">Forgot password?</a>
-            </div>
-            <input
-              id="password"
-              type="password"
-              class="form-control"
-              [class.is-invalid]="isFieldInvalid('password')"
-              formControlName="password"
-              placeholder="••••••••"
-            />
-            <div *ngIf="isFieldInvalid('password')" class="form-error">
-              Password is required
-            </div>
-          </div>
-
-          <!-- Submit Button -->
-          <button type="submit" class="btn btn-primary btn-block" [disabled]="loginForm.invalid || isLoading">
-            <span *ngIf="isLoading" class="material-symbols-outlined spin">sync</span>
-            <span>{{ isLoading ? 'Signing In...' : 'Sign In' }}</span>
-          </button>
-        </form>
-
-        <div class="auth-footer">
-          Don't have an account? <a routerLink="/register">Create Account</a>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .auth-container {
-      min-height: 80vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem 1rem;
-    }
-    .auth-card {
-      width: 100%;
-      max-width: 440px;
-      padding: 2.5rem 2rem;
-    }
-    .auth-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .brand-badge {
-      width: 60px;
-      height: 60px;
-      margin: 0 auto 1rem;
-      border-radius: 50%;
-      background: var(--brand-gradient);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: var(--shadow-glow);
-    }
-    .brand-badge .icon {
-      font-size: 2.2rem;
-    }
-    .subtitle {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-top: 0.4rem;
-    }
-    .label-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .forgot-link {
-      font-size: 0.825rem;
-    }
-    .auth-footer {
-      text-align: center;
-      margin-top: 1.5rem;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-    }
-    .spin {
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      100% { transform: rotate(360deg); }
-    }
-  `]
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  readonly heroImageUrl =
+    'https://www.figma.com/api/mcp/asset/452be6a7-1a5d-4e35-9c3b-9fd7a9b9582c.png';
+  readonly logoMarkUrl =
+    'https://www.figma.com/api/mcp/asset/9eb8d94f-455c-4dbc-8538-702e6f198cd2.svg';
+
+  readonly loginForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required]
+  });
 
   isLoading = false;
   errorMessage = '';
+  showPassword = false;
 
-  loginForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]]
-  });
+  readonly registrationSuccess =
+    this.route.snapshot.queryParamMap.get('registered') === '1';
 
-  isFieldInvalid(field: string): boolean {
-    const control = this.loginForm.get(field);
-    return !!(control && control.invalid && (control.dirty || control.touched));
+  get controls() {
+    return this.loginForm.controls;
   }
 
-  onSubmit(): void {
-    if (this.loginForm.invalid) return;
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
 
-    this.isLoading = true;
+  submit(): void {
     this.errorMessage = '';
 
-    const credentials = this.loginForm.value as { email: string; password: string };
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
 
-    this.authService.login(credentials).subscribe({
-      next: () => {
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-        this.router.navigateByUrl(returnUrl);
-      },
-      error: (err) => {
-        this.isLoading = false;
-        if (err.error && err.error.message) {
-          this.errorMessage = err.error.message;
-        } else if (err.status === 401) {
-          this.errorMessage = 'Invalid email or password';
-        } else {
-          this.errorMessage = 'An error occurred during login. Please try again.';
+    this.isLoading = true;
+
+    this.authService
+      .login(this.loginForm.getRawValue())
+      .pipe(finalize(() => (this.isLoading = false)))
+      .subscribe({
+        next: () => {
+          const returnUrl =
+            this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
+          void this.router.navigateByUrl(returnUrl);
+        },
+        error: (error: HttpErrorResponse) => {
+          const apiError = error.error as ApiErrorResponse | undefined;
+
+          this.errorMessage =
+            apiError?.message ??
+            (error.status === 401
+              ? 'Invalid email or password.'
+              : 'Unable to sign in right now. Please try again.');
         }
-      }
-    });
+      });
   }
 }

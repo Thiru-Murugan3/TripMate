@@ -1,24 +1,31 @@
 :host {
   display: block;
   min-height: 100dvh;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #0f172a;
+  background: #f8fafc;
 }
 
-.auth-page {
+* {
+  box-sizing: border-box;
+}
+
+.login-page {
   min-height: 100dvh;
-  background: var(--tm-bg);
+  background: #f8fafc;
 }
 
-.auth-hero {
+.login-hero {
   min-height: 260px;
   padding: 24px;
   display: flex;
   align-items: flex-end;
   background-position: center;
   background-size: cover;
-  color: #fff;
+  color: #ffffff;
 }
 
-.brand-block {
+.hero-content {
   width: 100%;
 }
 
@@ -31,6 +38,8 @@
 
 .brand__mark {
   display: block;
+  width: 28px;
+  height: 24px;
   object-fit: contain;
 }
 
@@ -46,54 +55,56 @@ p {
 }
 
 h1 {
+  max-width: 560px;
   font-size: 24px;
   line-height: 1.2;
   font-weight: 800;
 }
 
-.desktop-copy {
+.hero-copy {
   display: none;
 }
 
-.auth-panel {
-  padding: 24px;
+.login-panel {
+  padding: 28px 24px 36px;
 }
 
-.auth-card {
+.login-card {
   width: 100%;
-  max-width: 440px;
+  max-width: 460px;
   margin: 0 auto;
 }
 
-.auth-heading {
+.login-heading {
   margin-bottom: 22px;
 }
 
-.auth-heading .eyebrow {
+.eyebrow {
   display: block;
   margin-bottom: 7px;
-  color: var(--tm-primary);
+  color: #2563eb;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
 
-.auth-heading h2 {
-  color: var(--tm-text);
+.login-heading h2 {
   font-size: 25px;
+  line-height: 1.2;
   font-weight: 800;
 }
 
-.auth-heading p {
+.login-heading p {
   margin-top: 6px;
-  color: var(--tm-muted);
+  color: #64748b;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 .field {
@@ -104,7 +115,7 @@ form {
 
 .field label,
 .field__label-row {
-  color: var(--tm-muted);
+  color: #64748b;
   font-size: 12px;
   font-weight: 700;
 }
@@ -115,47 +126,45 @@ form {
   justify-content: space-between;
 }
 
+.forgot-link {
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
 input {
   width: 100%;
   height: 48px;
-  border: 1px solid var(--tm-border);
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 0 16px;
-  background: #fff;
-  color: var(--tm-text);
+  background: #ffffff;
+  color: #0f172a;
   font: inherit;
   font-size: 15px;
   outline: none;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
 }
 
 input::placeholder {
   color: #94a3b8;
 }
 
+input:hover {
+  border-color: #cbd5e1;
+}
+
 input:focus {
-  border-color: var(--tm-primary);
+  border-color: #2563eb;
   box-shadow: 0 0 0 3px rgb(37 99 235 / 12%);
-}
-
-small {
-  color: var(--tm-danger);
-  font-size: 12px;
-}
-
-.text-button {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--tm-primary);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.text-button:disabled {
-  opacity: 1;
-  cursor: default;
 }
 
 .password-field {
@@ -163,45 +172,56 @@ small {
 }
 
 .password-field input {
-  padding-right: 48px;
+  padding-right: 64px;
 }
 
-.icon-button {
+.password-toggle {
   position: absolute;
   top: 50%;
   right: 14px;
-  width: 28px;
-  height: 28px;
   transform: translateY(-50%);
-  display: grid;
-  place-items: center;
   border: 0;
+  padding: 4px;
   background: transparent;
+  color: #2563eb;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.icon-button img {
-  display: block;
-  width: 18px;
-  height: 18px;
+small {
+  color: #dc2626;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .primary-button {
   width: 100%;
   height: 48px;
+  margin-top: 2px;
   border: 0;
   border-radius: 12px;
-  background: var(--tm-primary);
-  color: #fff;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #2563eb;
+  color: #ffffff;
   font: inherit;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 160ms ease, transform 160ms ease;
+  transition:
+    background 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .primary-button:hover:not(:disabled) {
   background: #1d4ed8;
+  box-shadow: 0 10px 22px rgb(37 99 235 / 22%);
 }
 
 .primary-button:active:not(:disabled) {
@@ -213,67 +233,30 @@ small {
   cursor: wait;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0;
-  color: var(--tm-muted);
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  height: 1px;
-  flex: 1;
-  background: var(--tm-border);
-}
-
-.social-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.social-button {
-  height: 48px;
-  border: 1px solid var(--tm-border);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: #fff;
-  color: var(--tm-text);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.social-button:disabled {
-  opacity: 0.72;
-  cursor: not-allowed;
-}
-
-.social-button img {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-}
-
 .switch-auth {
   padding-top: 20px;
   text-align: center;
-  color: var(--tm-muted);
+  color: #64748b;
   font-size: 14px;
 }
 
 .switch-auth a {
-  color: var(--tm-primary);
+  color: #2563eb;
   font-weight: 600;
   text-decoration: none;
+}
+
+.switch-auth a:hover {
+  text-decoration: underline;
+}
+
+.legal-copy {
+  max-width: 390px;
+  margin: 14px auto 0;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 .alert {
@@ -281,57 +264,73 @@ small {
   padding: 11px 13px;
   border-radius: 10px;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .alert--success {
+  border: 1px solid #a7f3d0;
   background: #ecfdf5;
   color: #047857;
 }
 
 .alert--error {
+  border: 1px solid #fecaca;
   background: #fef2f2;
   color: #b91c1c;
 }
 
 @media (min-width: 900px) {
-  .auth-page {
+  .login-page {
     display: grid;
-    grid-template-columns: minmax(420px, 0.9fr) minmax(520px, 1.1fr);
+    grid-template-columns: minmax(420px, 0.9fr) minmax(540px, 1.1fr);
   }
 
-  .auth-hero {
+  .login-hero {
     min-height: 100dvh;
     padding: 64px;
   }
 
-  .brand-block {
+  .hero-content {
     max-width: 620px;
   }
 
   h1 {
-    max-width: 560px;
     font-size: clamp(42px, 4vw, 58px);
     line-height: 1.08;
   }
 
-  .desktop-copy {
+  .hero-copy {
     display: block;
-    max-width: 500px;
+    max-width: 520px;
     margin-top: 18px;
     color: #e2e8f0;
     font-size: 17px;
     line-height: 1.6;
   }
 
-  .auth-panel {
+  .login-panel {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 56px 72px;
+    padding: 44px 72px;
   }
 
-  .auth-heading h2 {
+  .login-heading h2 {
     font-size: 30px;
+  }
+}
+
+@media (max-width: 430px) {
+  .login-hero {
+    min-height: 230px;
+  }
+
+  .login-panel {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  form {
+    gap: 16px;
   }
 }

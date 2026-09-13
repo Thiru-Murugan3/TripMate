@@ -1,32 +1,39 @@
-<main class="auth-page">
+<main class="login-page">
   <section
-    class="auth-hero"
+    class="login-hero"
     [style.background-image]="'linear-gradient(rgba(11, 21, 40, 0.60), rgba(11, 21, 40, 0.60)), url(' + heroImageUrl + ')'"
   >
-    <div class="brand-block">
+    <div class="hero-content">
       <div class="brand">
         <img class="brand__mark" [src]="logoMarkUrl" alt="" width="28" height="24" />
         <span class="brand__name">TripMate</span>
       </div>
+
       <h1>Plan Your Journey. Your Way.</h1>
-      <p class="desktop-copy">Everything you need to organize your next trip, in one place.</p>
+      <p class="hero-copy">
+        Keep your trips, itinerary, expenses, bookings and documents together in one place.
+      </p>
     </div>
   </section>
 
-  <section class="auth-panel">
-    <div class="auth-card">
-      <div class="auth-heading">
+  <section class="login-panel">
+    <div class="login-card">
+      <header class="login-heading">
         <span class="eyebrow">WELCOME BACK</span>
         <h2>Sign in to TripMate</h2>
-        <p>Continue planning your journeys.</p>
-      </div>
+        <p>Continue planning and managing your journeys.</p>
+      </header>
 
-      @if (successMessage) {
-        <div class="alert alert--success" role="status">{{ successMessage }}</div>
+      @if (registrationSuccess) {
+        <div class="alert alert--success" role="status">
+          Account created successfully. Sign in to continue.
+        </div>
       }
 
       @if (errorMessage) {
-        <div class="alert alert--error" role="alert">{{ errorMessage }}</div>
+        <div class="alert alert--error" role="alert">
+          {{ errorMessage }}
+        </div>
       }
 
       <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
@@ -39,9 +46,10 @@
             autocomplete="email"
             placeholder="yourname@email.com"
           />
-          @if (email.touched && email.hasError('required')) {
+
+          @if (controls.email.touched && controls.email.hasError('required')) {
             <small>Email is required.</small>
-          } @else if (email.touched && email.hasError('email')) {
+          } @else if (controls.email.touched && controls.email.hasError('email')) {
             <small>Enter a valid email address.</small>
           }
         </div>
@@ -49,9 +57,7 @@
         <div class="field">
           <div class="field__label-row">
             <label for="password">PASSWORD</label>
-            <button class="text-button" type="button" disabled title="Forgot password screen is next">
-              Forgot?
-            </button>
+            <a routerLink="/forgot-password" class="forgot-link">Forgot?</a>
           </div>
 
           <div class="password-field">
@@ -60,43 +66,39 @@
               [type]="showPassword ? 'text' : 'password'"
               formControlName="password"
               autocomplete="current-password"
-              placeholder="••••••••••••"
+              placeholder="Enter your password"
             />
+
             <button
-              class="icon-button"
               type="button"
+              class="password-toggle"
               (click)="togglePassword()"
               [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
             >
-              <img [src]="eyeIconUrl" alt="" width="18" height="18" />
+              {{ showPassword ? 'Hide' : 'Show' }}
             </button>
           </div>
-          @if (password.touched && password.hasError('required')) {
+
+          @if (controls.password.touched && controls.password.hasError('required')) {
             <small>Password is required.</small>
           }
         </div>
 
-        <button class="primary-button" type="submit" [disabled]="submitting">
-          {{ submitting ? 'Signing In...' : 'Sign In' }}
+        <button class="primary-button" type="submit" [disabled]="isLoading">
+          <span>{{ isLoading ? 'Signing In...' : 'Sign In' }}</span>
+          @if (!isLoading) {
+            <span aria-hidden="true">→</span>
+          }
         </button>
       </form>
 
-      <div class="divider"><span>or continue with</span></div>
-
-      <div class="social-actions">
-        <button type="button" class="social-button" disabled title="Google login is not connected yet">
-          <img [src]="googleIconUrl" alt="" width="18" height="18" />
-          <span>Google</span>
-        </button>
-        <button type="button" class="social-button" disabled title="Apple login is not connected yet">
-          <img [src]="appleIconUrl" alt="" width="18" height="18" />
-          <span>Apple</span>
-        </button>
-      </div>
-
       <p class="switch-auth">
         Don't have an account?
-        <a routerLink="/register">Sign Up</a>
+        <a routerLink="/register">Create Account</a>
+      </p>
+
+      <p class="legal-copy">
+        Sign in securely to access your TripMate account across web and mobile.
       </p>
     </div>
   </section>
