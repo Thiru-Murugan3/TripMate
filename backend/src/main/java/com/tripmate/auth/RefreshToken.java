@@ -47,9 +47,10 @@ public class RefreshToken {
     @Builder.Default
     private Boolean revoked = false;
 
+    @org.hibernate.annotations.CreationTimestamp
     @Column(
             name = "created_at",
-            insertable = false,
+            nullable = false,
             updatable = false
     )
     private LocalDateTime createdAt;
