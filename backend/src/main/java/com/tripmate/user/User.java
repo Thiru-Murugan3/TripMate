@@ -23,6 +23,11 @@ public class User {
     @Column(name="travel_preferences", columnDefinition="TEXT")
     private String travelPreferences;
 
-    @Column(name="created_at",nullable=false,insertable=false,updatable=false) private LocalDateTime createdAt;
-    @Column(name="updated_at",nullable=false,insertable=false,updatable=false) private LocalDateTime updatedAt;
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name="created_at", nullable=false, updatable=false)
+    private LocalDateTime createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name="updated_at", nullable=false)
+    private LocalDateTime updatedAt;
 }

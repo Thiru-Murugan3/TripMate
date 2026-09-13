@@ -21,6 +21,11 @@ public class Trip {
     @Column(columnDefinition="TEXT") private String description;
     @Column(name="cover_image_url",length=500) private String coverImageUrl;
     @Enumerated(EnumType.STRING) @Column(nullable=false,length=20) @Builder.Default private TripStatus status=TripStatus.PLANNED;
-    @Column(name="created_at",nullable=false,insertable=false,updatable=false) private LocalDateTime createdAt;
-    @Column(name="updated_at",nullable=false,insertable=false,updatable=false) private LocalDateTime updatedAt;
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name="created_at", nullable=false, updatable=false)
+    private LocalDateTime createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name="updated_at", nullable=false)
+    private LocalDateTime updatedAt;
 }
