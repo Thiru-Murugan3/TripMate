@@ -21,25 +21,12 @@ spring:
     baseline-on-migrate: true
     baseline-version: 1
     locations: classpath:db/migration
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    default-encoding: UTF-8
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          connectiontimeout: 10000
-          timeout: 10000
-          writetimeout: 10000
 
-app:
-  mail:
-    from: ${MAIL_FROM:${MAIL_USERNAME:}}
+brevo:
+  api-url: ${BREVO_API_URL:https://api.brevo.com/v3/smtp/email}
+  api-key: ${BREVO_API_KEY:}
+  sender-email: ${BREVO_SENDER_EMAIL:}
+  sender-name: ${BREVO_SENDER_NAME:TripMate}
 
 server:
   port: ${SERVER_PORT:8080}
