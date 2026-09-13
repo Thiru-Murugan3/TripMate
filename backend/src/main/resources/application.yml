@@ -24,9 +24,9 @@ spring:
 
 brevo:
   api-url: ${BREVO_API_URL:https://api.brevo.com/v3/smtp/email}
-  api-key: ${TRIPMATE_BREVO_API_KEY:${BREVO_API_KEY:}}
-  sender-email: ${TRIPMATE_BREVO_SENDER_EMAIL:${BREVO_SENDER_EMAIL:}}
-  sender-name: ${TRIPMATE_BREVO_SENDER_NAME:${BREVO_SENDER_NAME:TripMate}}
+  api-key: ${TRIPMATE_BREVO_API_KEY:}
+  sender-email: ${TRIPMATE_BREVO_SENDER_EMAIL:}
+  sender-name: ${TRIPMATE_BREVO_SENDER_NAME:TripMate}
 
 server:
   port: ${SERVER_PORT:8080}

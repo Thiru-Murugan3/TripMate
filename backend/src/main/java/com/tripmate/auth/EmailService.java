@@ -2,6 +2,7 @@ package com.tripmate.auth;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -12,6 +13,10 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 
 @Service
@@ -36,6 +41,19 @@ public class EmailService {
         this.apiKey = apiKey;
         this.senderEmail = senderEmail;
         this.senderName = senderName;
+    }
+
+    @PostConstruct
+    void logConfigurationSummary() {
+        if (StringUtils.hasText(apiKey)) {
+            log.info(
+                    "Brevo configuration loaded: sender={}, apiKeyFingerprint={}",
+                    senderEmail,
+                    apiKeyFingerprint()
+            );
+        } else {
+            log.warn("Brevo API key is not configured.");
+        }
     }
 
     public void sendVerificationOtpEmail(String recipientEmail, String otpCode) {
@@ -98,6 +116,16 @@ public class EmailService {
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "Verification email service is temporarily unavailable. Please try again."
             );
+        }
+    }
+
+    private String apiKeyFingerprint() {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256")
+                    .digest(apiKey.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash).substring(0, 12);
+        } catch (NoSuchAlgorithmException ex) {
+            return "unavailable";
         }
     }
 

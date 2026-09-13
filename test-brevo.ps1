@@ -40,7 +40,13 @@ $body = @{
     textContent = 'Brevo is correctly configured for TripMate OTP delivery.'
 } | ConvertTo-Json -Depth 5
 
+$sha = [Security.Cryptography.SHA256]::Create()
+$bytes = [Text.Encoding]::UTF8.GetBytes($apiKey)
+$hash = $sha.ComputeHash($bytes)
+$fingerprint = ([BitConverter]::ToString($hash)).Replace('-', '').ToLower().Substring(0, 12)
+
 Write-Host ''
+Write-Host "Brevo API key fingerprint: $fingerprint" -ForegroundColor DarkGray
 Write-Host 'Sending test email through Brevo...' -ForegroundColor Cyan
 try {
     $response = Invoke-RestMethod -Uri 'https://api.brevo.com/v3/smtp/email' -Method Post -Headers @{ 'api-key' = $apiKey; 'accept' = 'application/json' } -ContentType 'application/json' -Body $body -TimeoutSec 20

@@ -40,13 +40,23 @@ if "%BREVO_SENDER_EMAIL%"=="" (
     for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do if not "%%A"=="" set "%%A=%%B"
 )
 
-rem Force Spring Boot to use the same validated values loaded from backend\.env
+rem Force Spring Boot to use only the same values loaded from backend\.env
 set "TRIPMATE_BREVO_API_KEY=%BREVO_API_KEY%"
 set "TRIPMATE_BREVO_SENDER_EMAIL=%BREVO_SENDER_EMAIL%"
 set "TRIPMATE_BREVO_SENDER_NAME=%BREVO_SENDER_NAME%"
 
 echo.
+echo Validating the exact Brevo API key that Spring Boot will use...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { Invoke-RestMethod -Uri 'https://api.brevo.com/v3/account' -Method Get -Headers @{'api-key'=$env:TRIPMATE_BREVO_API_KEY;'accept'='application/json'} -TimeoutSec 15 | Out-Null; $sha=[Security.Cryptography.SHA256]::Create(); $bytes=[Text.Encoding]::UTF8.GetBytes($env:TRIPMATE_BREVO_API_KEY); $hash=$sha.ComputeHash($bytes); $fp=([BitConverter]::ToString($hash)).Replace('-','').ToLower().Substring(0,12); Write-Host ('Brevo preflight SUCCESS. API key fingerprint: ' + $fp) -ForegroundColor Green } catch { Write-Host 'Brevo preflight FAILED. The API key loaded from backend\.env is not accepted.' -ForegroundColor Red; if ($_.ErrorDetails.Message) { Write-Host $_.ErrorDetails.Message -ForegroundColor Yellow }; exit 1 }"
+if errorlevel 1 (
+    echo.
+    echo Backend was NOT started because Brevo authentication failed.
+    echo Run setup-brevo.bat again with the API key that succeeds in test-brevo.bat.
+    exit /b 1
+)
+
+echo.
 echo Transactional email provider: Brevo
 echo Sender: %TRIPMATE_BREVO_SENDER_EMAIL%
-echo Starting TripMate Backend with backend\.env Brevo credentials...
+echo Starting TripMate Backend with the validated backend\.env Brevo credentials...
 mvn spring-boot:run
