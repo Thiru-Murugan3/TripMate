@@ -1,10 +1,10 @@
 name: Backend CI
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, development ]
     paths: [ "backend/**", ".github/workflows/backend-ci.yml" ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, development ]
     paths: [ "backend/**" ]
 jobs:
   build:
@@ -19,4 +19,5 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - run: mvn -B -DskipTests package
+      - run: mvn -B test
+
