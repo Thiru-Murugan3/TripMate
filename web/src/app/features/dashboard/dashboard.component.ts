@@ -384,6 +384,7 @@ interface PopularDestination {
     .highlight-teal {
       color: #00e5ff;
       background: linear-gradient(135deg, #00e5ff 0%, #38bdf8 100%);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
