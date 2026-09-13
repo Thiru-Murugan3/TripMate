@@ -157,9 +157,9 @@ export class RegisterComponent {
       .register({ name, email, mobile, password })
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
-        next: () => {
-          void this.router.navigate(['/login'], {
-            queryParams: { registered: 1 }
+        next: (res) => {
+          void this.router.navigate(['/verify-email'], {
+            queryParams: { email: res.email || email }
           });
         },
         error: (error: HttpErrorResponse) => {

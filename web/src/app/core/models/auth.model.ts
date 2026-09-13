@@ -28,11 +28,19 @@ export interface RegisterRequest {
   mobile: string;
 }
 
-export interface RegisterResponse {
-  id: number;
-  name: string;
-  email: string;
+export interface RegistrationPendingResponse {
   message: string;
+  email: string;
+  expiresIn: number;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  otp: string;
+}
+
+export interface ResendEmailOtpRequest {
+  email: string;
 }
 
 export interface ForgotPasswordRequest {

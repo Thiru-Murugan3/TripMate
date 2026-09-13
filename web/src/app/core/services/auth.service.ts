@@ -7,7 +7,9 @@ import {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
-  RegisterResponse,
+  RegistrationPendingResponse,
+  VerifyEmailRequest,
+  ResendEmailOtpRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest
 } from '../models/auth.model';
@@ -37,8 +39,16 @@ export class AuthService {
     );
   }
 
-  register(data: RegisterRequest): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, data);
+  register(data: RegisterRequest): Observable<RegistrationPendingResponse> {
+    return this.http.post<RegistrationPendingResponse>(`${this.apiUrl}/register`, data);
+  }
+
+  verifyEmail(data: VerifyEmailRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-email`, data);
+  }
+
+  resendEmailOtp(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-email-otp`, { email });
   }
 
   fetchCurrentUser(): Observable<User> {

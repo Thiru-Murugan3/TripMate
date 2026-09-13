@@ -3,7 +3,6 @@ package com.tripmate.auth;
 import com.tripmate.security.UserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -16,17 +15,38 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(
+    public ResponseEntity<RegistrationPendingResponse> register(
             @Valid @RequestBody RegisterRequest request) {
 
-        RegisterResponse response = authService.register(request);
+        RegistrationPendingResponse response = emailVerificationService.startRegistration(request);
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Map<String, String>> verifyEmail(
+            @Valid @RequestBody VerifyEmailRequest request) {
+
+        emailVerificationService.verifyRegistration(request);
+
+        return ResponseEntity.ok(
+                Map.of("message", "Email verified successfully. Account created.")
+        );
+    }
+
+    @PostMapping("/resend-email-otp")
+    public ResponseEntity<Map<String, String>> resendOtp(
+            @Valid @RequestBody ResendEmailOtpRequest request) {
+
+        emailVerificationService.resendOtp(request.email());
+
+        return ResponseEntity.ok(
+                Map.of("message", "OTP resent successfully")
+        );
     }
 
     @PostMapping("/login")
@@ -54,7 +74,6 @@ public class AuthController {
                 authService.logout(request));
     }
 
-    // POST /api/v1/auth/change-password
     @PostMapping("/change-password")
     public ResponseEntity<Map<String, String>> changePassword(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -65,7 +84,6 @@ public class AuthController {
         );
     }
 
-    // POST /api/v1/auth/forgot-password
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request
@@ -75,7 +93,6 @@ public class AuthController {
         );
     }
 
-    // POST /api/v1/auth/reset-password
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request
