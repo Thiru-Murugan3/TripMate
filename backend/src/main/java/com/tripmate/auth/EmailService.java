@@ -2,6 +2,7 @@ package com.tripmate.auth;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
@@ -22,12 +23,12 @@ public class EmailService {
     private final String mailFrom;
 
     public EmailService(
-            JavaMailSender mailSender,
+            ObjectProvider<JavaMailSender> mailSenderProvider,
             @Value("${spring.mail.username:}") String mailUsername,
             @Value("${spring.mail.password:}") String mailPassword,
             @Value("${app.mail.from:}") String mailFrom
     ) {
-        this.mailSender = mailSender;
+        this.mailSender = mailSenderProvider.getIfAvailable();
         this.mailUsername = mailUsername;
         this.mailPassword = mailPassword;
         this.mailFrom = mailFrom;
@@ -60,7 +61,7 @@ public class EmailService {
     }
 
     private void validateMailConfiguration() {
-        if (!StringUtils.hasText(mailUsername) || !StringUtils.hasText(mailPassword)) {
+        if (mailSender == null || !StringUtils.hasText(mailUsername) || !StringUtils.hasText(mailPassword)) {
             log.error("TripMate SMTP is not configured. MAIL_USERNAME or MAIL_PASSWORD is missing.");
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
