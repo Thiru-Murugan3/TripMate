@@ -153,7 +153,13 @@ interface PopularDestination {
             </div>
           </div>
 
-          <div class="trips-grid">
+          <div *ngIf="upcomingTrips.length === 0" class="upcoming-empty-state">
+            <h3>No active upcoming trips</h3>
+            <p>Trips in Planning, Upcoming or Confirmed status will appear here.</p>
+            <button type="button" class="btn-create-trip" (click)="openCreateModal()">Plan New Trip</button>
+          </div>
+
+          <div *ngIf="upcomingTrips.length > 0" class="trips-grid">
             <div *ngFor="let trip of upcomingTrips" class="trip-card">
               <div class="trip-card-image" [style.background-image]="'url(' + trip.image + ')'">
                 <div class="card-badges">
@@ -555,6 +561,25 @@ interface PopularDestination {
     }
 
     /* Trips Grid */
+    .upcoming-empty-state {
+      background: #ffffff;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      color: #64748b;
+    }
+
+    .upcoming-empty-state h3 {
+      margin: 0 0 0.4rem;
+      color: #0f172a;
+      font-size: 1.1rem;
+    }
+
+    .upcoming-empty-state p {
+      margin: 0 0 1rem;
+    }
+
     .trips-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -867,56 +892,7 @@ export class DashboardComponent implements OnInit {
   isSubmitting = false;
   modalError = '';
 
-  upcomingTrips: DisplayTrip[] = [
-    {
-      name: 'Kodaikanal Family Trip',
-      destination: 'Kodaikanal, Tamil Nadu',
-      tag: 'Family Trip',
-      status: 'UPCOMING',
-      statusClass: 'status-upcoming',
-      dates: '15 Sep – 18 Sep 2026 (4 Days)',
-      spent: '₹18,450',
-      limit: '₹25,000',
-      progress: 74,
-      image: 'assets/images/kodaikanal.jpg'
-    },
-    {
-      name: 'Coorg Misty Trails',
-      destination: 'Coorg, Karnataka',
-      tag: 'Couple Getaway',
-      status: 'PLANNING',
-      statusClass: 'status-planning',
-      dates: '02 Oct – 05 Oct 2026 (4 Days)',
-      spent: '₹6,000',
-      limit: '₹30,000',
-      progress: 20,
-      image: 'assets/images/coorg.jpg'
-    },
-    {
-      name: 'Goa Beach Escapade',
-      destination: 'Goa',
-      tag: 'Friends Reunion',
-      status: 'CONFIRMED',
-      statusClass: 'status-confirmed',
-      dates: '12 Nov – 16 Nov 2026 (5 Days)',
-      spent: '₹18,000',
-      limit: '₹40,000',
-      progress: 45,
-      image: 'assets/images/goa.jpg'
-    },
-    {
-      name: 'Munnar Tea Trails',
-      destination: 'Munnar, Kerala',
-      tag: 'Nature Tour',
-      status: 'PLANNING',
-      statusClass: 'status-planning',
-      dates: '24 Dec – 28 Dec 2026 (5 Days)',
-      spent: '₹0',
-      limit: '₹20,000',
-      progress: 0,
-      image: 'assets/images/munnar.jpg'
-    }
-  ];
+  upcomingTrips: DisplayTrip[] = [];
 
   popularDestinations: PopularDestination[] = [
     {
@@ -971,28 +947,67 @@ export class DashboardComponent implements OnInit {
   loadUserTrips(): void {
     this.tripService.getMyTrips().subscribe({
       next: (apiTrips) => {
-        if (apiTrips && apiTrips.length > 0) {
-          const mappedTrips: DisplayTrip[] = apiTrips.map((t) => ({
-            id: t.id,
-            name: t.name,
-            destination: t.destination,
-            tag: `${t.tripType} Trip`,
-            status: t.status,
-            statusClass: t.status === 'UPCOMING' ? 'status-upcoming' : t.status === 'PLANNING' ? 'status-planning' : 'status-confirmed',
-            dates: `${t.startDate} - ${t.endDate}`,
-            spent: '₹0',
-            limit: `₹${t.budget.toLocaleString()}`,
-            progress: 0,
-            image: t.destination.toLowerCase().includes('goa') ? 'assets/images/goa.jpg' :
-                   t.destination.toLowerCase().includes('coorg') ? 'assets/images/coorg.jpg' :
-                   t.destination.toLowerCase().includes('munnar') ? 'assets/images/munnar.jpg' :
-                   'assets/images/kodaikanal.jpg'
-          }));
-          this.upcomingTrips = [...mappedTrips, ...this.upcomingTrips];
-        }
+        const activeTrips = (apiTrips ?? [])
+          .filter((trip) => this.isActiveUpcomingTrip(trip))
+          .sort(
+            (a, b) =>
+              new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+          );
+
+        this.upcomingTrips = activeTrips.map((trip) => this.toDisplayTrip(trip));
       },
-      error: () => {}
+      error: () => {
+        this.upcomingTrips = [];
+      }
     });
+  }
+
+  private isActiveUpcomingTrip(trip: Trip): boolean {
+    const activeStatuses = new Set(['UPCOMING', 'PLANNED', 'CONFIRMED']);
+    if (!activeStatuses.has(trip.status)) {
+      return false;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tripEndDate = new Date(`${trip.endDate}T00:00:00`);
+    return !Number.isNaN(tripEndDate.getTime()) && tripEndDate >= today;
+  }
+
+  private toDisplayTrip(trip: Trip): DisplayTrip {
+    const displayStatus = trip.status === 'PLANNED' ? 'PLANNING' : trip.status;
+
+    return {
+      id: trip.id,
+      name: trip.name,
+      destination: trip.destination,
+      tag: `${trip.tripType} Trip`,
+      status: displayStatus,
+      statusClass:
+        trip.status === 'UPCOMING'
+          ? 'status-upcoming'
+          : trip.status === 'PLANNED'
+            ? 'status-planning'
+            : 'status-confirmed',
+      dates: `${trip.startDate} - ${trip.endDate}`,
+      spent: '₹0',
+      limit: `₹${trip.budget.toLocaleString()}`,
+      progress: 0,
+      image: this.getTripImage(trip)
+    };
+  }
+
+  private getTripImage(trip: Trip): string {
+    if (trip.coverImageUrl) {
+      return trip.coverImageUrl;
+    }
+
+    const destination = trip.destination.toLowerCase();
+    if (destination.includes('goa')) return 'assets/images/goa.jpg';
+    if (destination.includes('coorg')) return 'assets/images/coorg.jpg';
+    if (destination.includes('munnar')) return 'assets/images/munnar.jpg';
+    return 'assets/images/kodaikanal.jpg';
   }
 
   scrollToUpcoming(): void {
@@ -1062,22 +1077,12 @@ export class DashboardComponent implements OnInit {
     this.tripService.createTrip(request).subscribe({
       next: (newTrip) => {
         this.isSubmitting = false;
-        this.upcomingTrips.unshift({
-          id: newTrip.id,
-          name: newTrip.name,
-          destination: newTrip.destination,
-          tag: `${newTrip.tripType} Trip`,
-          status: 'PLANNING',
-          statusClass: 'status-planning',
-          dates: `${newTrip.startDate} – ${newTrip.endDate}`,
-          spent: '₹0',
-          limit: `₹${newTrip.budget.toLocaleString()}`,
-          progress: 0,
-          image: newTrip.destination.toLowerCase().includes('goa') ? 'assets/images/goa.jpg' :
-                 newTrip.destination.toLowerCase().includes('coorg') ? 'assets/images/coorg.jpg' :
-                 newTrip.destination.toLowerCase().includes('munnar') ? 'assets/images/munnar.jpg' :
-                 'assets/images/kodaikanal.jpg'
-        });
+        if (this.isActiveUpcomingTrip(newTrip)) {
+          this.upcomingTrips = [
+            this.toDisplayTrip(newTrip),
+            ...this.upcomingTrips.filter((trip) => trip.id !== newTrip.id)
+          ].sort((a, b) => a.dates.localeCompare(b.dates));
+        }
         this.closeCreateModal();
       },
       error: (err) => {

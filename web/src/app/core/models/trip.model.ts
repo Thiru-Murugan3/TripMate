@@ -1,5 +1,5 @@
 export type TripType = 'ADVENTURE' | 'FAMILY' | 'COUPLE' | 'FRIENDS' | 'SOLO';
-export type TripStatus = 'PLANNING' | 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+export type TripStatus = 'PLANNED' | 'UPCOMING' | 'CONFIRMED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
 export type TripRole = 'OWNER' | 'EDITOR' | 'VIEWER';
 export type MemberStatus = 'PENDING' | 'ACTIVE' | 'DECLINED';
 

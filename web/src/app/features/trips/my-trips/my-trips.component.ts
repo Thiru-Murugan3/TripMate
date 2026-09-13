@@ -30,8 +30,9 @@ export class MyTripsComponent implements OnInit {
 
   readonly statusOptions: StatusFilter[] = [
     'ALL',
-    'PLANNING',
+    'PLANNED',
     'UPCOMING',
+    'CONFIRMED',
     'ONGOING',
     'COMPLETED',
     'CANCELLED'
@@ -127,6 +128,7 @@ export class MyTripsComponent implements OnInit {
   }
 
   formatStatus(status: TripStatus): string {
+    if (status === 'PLANNED') return 'Planning';
     return status.charAt(0) + status.slice(1).toLowerCase();
   }
 
