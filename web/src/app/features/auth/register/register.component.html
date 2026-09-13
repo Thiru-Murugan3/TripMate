@@ -1,0 +1,98 @@
+<main class="auth-page">
+  <section
+    class="auth-hero"
+    [style.background-image]="'linear-gradient(rgba(11, 21, 40, 0.60), rgba(11, 21, 40, 0.60)), url(' + heroImageUrl + ')'"
+  >
+    <div class="brand-block">
+      <div class="brand">
+        <img class="brand__mark" [src]="logoMarkUrl" alt="" width="28" height="24" />
+        <span class="brand__name">TripMate</span>
+      </div>
+      <h1>Start Planning Better Trips.</h1>
+      <p class="desktop-copy">Create one account for your trips, itineraries, expenses, bookings and documents.</p>
+    </div>
+  </section>
+
+  <section class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-heading">
+        <span class="eyebrow">JOIN TRIPMATE</span>
+        <h2>Create your account</h2>
+        <p>Use the same account across web and mobile.</p>
+      </div>
+
+      @if (errorMessage) {
+        <div class="alert alert--error" role="alert">{{ errorMessage }}</div>
+      }
+
+      <form [formGroup]="registerForm" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="name">FULL NAME</label>
+          <input id="name" type="text" formControlName="name" autocomplete="name" placeholder="Your name" />
+          @if (controls.name.touched && controls.name.hasError('required')) {
+            <small>Name is required.</small>
+          } @else if (serverFieldErrors['name']) {
+            <small>{{ serverFieldErrors['name'] }}</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="email">EMAIL ADDRESS</label>
+          <input id="email" type="email" formControlName="email" autocomplete="email" placeholder="yourname@email.com" />
+          @if (controls.email.touched && controls.email.hasError('required')) {
+            <small>Email is required.</small>
+          } @else if (controls.email.touched && controls.email.hasError('email')) {
+            <small>Enter a valid email address.</small>
+          } @else if (serverFieldErrors['email']) {
+            <small>{{ serverFieldErrors['email'] }}</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="mobile">MOBILE NUMBER</label>
+          <input
+            id="mobile"
+            type="tel"
+            inputmode="numeric"
+            maxlength="10"
+            formControlName="mobile"
+            autocomplete="tel"
+            placeholder="10-digit mobile number"
+          />
+          @if (controls.mobile.touched && controls.mobile.invalid) {
+            <small>Mobile number must contain exactly 10 digits.</small>
+          } @else if (serverFieldErrors['mobile']) {
+            <small>{{ serverFieldErrors['mobile'] }}</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="password">PASSWORD</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+            placeholder="Create a strong password"
+          />
+          @if (controls.password.touched && controls.password.hasError('required')) {
+            <small>Password is required.</small>
+          } @else if (controls.password.touched && controls.password.invalid) {
+            <small>Use 8–20 characters with uppercase, lowercase, number and special character.</small>
+          } @else if (serverFieldErrors['password']) {
+            <small>{{ serverFieldErrors['password'] }}</small>
+          }
+        </div>
+
+        <button class="primary-button" type="submit" [disabled]="submitting">
+          {{ submitting ? 'Creating Account...' : 'Create Account' }}
+        </button>
+      </form>
+
+      <p class="switch-auth">
+        Already have an account?
+        <a routerLink="/login">Sign In</a>
+      </p>
+    </div>
+  </section>
+</main>

@@ -1,1 +1,44 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --tm-primary: #2563eb;
+  --tm-accent: #14b8a6;
+  --tm-bg: #f8fafc;
+  --tm-surface: #ffffff;
+  --tm-text: #0f172a;
+  --tm-muted: #64748b;
+  --tm-border: #e2e8f0;
+  --tm-danger: #dc2626;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--tm-text);
+  background: var(--tm-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--tm-bg);
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}

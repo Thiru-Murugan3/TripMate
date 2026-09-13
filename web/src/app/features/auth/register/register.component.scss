@@ -1,0 +1,13 @@
+@use '../login/login.component.scss';
+
+.auth-panel {
+  padding-top: 28px;
+  padding-bottom: 36px;
+}
+
+@media (min-width: 900px) {
+  .auth-panel {
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+}
