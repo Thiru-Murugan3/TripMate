@@ -1,6 +1,8 @@
 spring:
   application:
     name: tripmate-backend
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/tripmate?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
@@ -19,17 +21,12 @@ spring:
     baseline-on-migrate: true
     baseline-version: 1
     locations: classpath:db/migration
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+
+brevo:
+  api-url: ${BREVO_API_URL:https://api.brevo.com/v3/smtp/email}
+  api-key: ${BREVO_API_KEY:}
+  sender-email: ${BREVO_SENDER_EMAIL:}
+  sender-name: ${BREVO_SENDER_NAME:TripMate}
 
 server:
   port: ${SERVER_PORT:8080}
