@@ -71,14 +71,22 @@ public class EmailService {
                     messageId
             );
         } catch (RestClientResponseException ex) {
+            String responseBody = ex.getResponseBodyAsString();
+            if (responseBody != null && responseBody.length() > 1000) {
+                responseBody = responseBody.substring(0, 1000) + "...";
+            }
+
             log.error(
-                    "Brevo rejected verification email for {} with HTTP {}",
+                    "Brevo rejected verification email for {} with HTTP {}. Provider response: {}",
                     recipientEmail,
-                    ex.getStatusCode().value()
+                    ex.getStatusCode().value(),
+                    responseBody
             );
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Unable to send verification email. Please check the TripMate email provider configuration."
+                    "Unable to send verification email (Brevo HTTP " +
+                            ex.getStatusCode().value() +
+                            "). Check the backend log for the provider error."
             );
         } catch (RestClientException ex) {
             log.error(
