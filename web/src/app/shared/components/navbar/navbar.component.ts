@@ -26,10 +26,20 @@ import { AuthService } from '../../../core/services/auth.service';
 
         <!-- Nav Links -->
         <div class="nav-links" *ngIf="authService.isAuthenticated()">
-          <a routerLink="/dashboard" routerLinkActive="active" class="nav-link nav-link--active">
+          <a
+            routerLink="/dashboard"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="nav-link"
+          >
             Home
           </a>
-          <a routerLink="/trips" routerLinkActive="active" class="nav-link">
+          <a
+            routerLink="/trips"
+            routerLinkActive="active"
+            class="nav-link"
+            aria-label="Open My Trips"
+          >
             My Trips
           </a>
           <a href="javascript:void(0)" class="nav-link">
@@ -230,11 +240,11 @@ import { AuthService } from '../../../core/services/auth.service';
     .nav-link:hover {
       color: #1e293b;
     }
-    .nav-link.active, .nav-link--active {
+    .nav-link.active {
       color: #2563eb;
       font-weight: 600;
     }
-    .nav-link.active::after, .nav-link--active::after {
+    .nav-link.active::after {
       content: '';
       position: absolute;
       bottom: -0.8rem;
