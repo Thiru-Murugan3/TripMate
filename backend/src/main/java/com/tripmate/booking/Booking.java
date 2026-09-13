@@ -38,6 +38,12 @@ public class Booking {
     @Column(name = "booking_reference", length = 120)
     private String bookingReference;
 
+    @Column(length = 180)
+    private String departure;
+
+    @Column(length = 180)
+    private String arrival;
+
     @Column(name = "start_datetime")
     private LocalDateTime startDatetime;
 

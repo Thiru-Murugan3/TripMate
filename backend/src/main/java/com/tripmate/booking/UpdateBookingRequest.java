@@ -22,6 +22,12 @@ public record UpdateBookingRequest(
         @Size(max = 120, message = "Booking reference cannot exceed 120 characters")
         String bookingReference,
 
+        @Size(max = 180, message = "Departure location cannot exceed 180 characters")
+        String departure,
+
+        @Size(max = 180, message = "Arrival location cannot exceed 180 characters")
+        String arrival,
+
         LocalDateTime startDatetime,
 
         LocalDateTime endDatetime,

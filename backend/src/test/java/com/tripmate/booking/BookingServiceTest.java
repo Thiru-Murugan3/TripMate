@@ -55,18 +55,20 @@ class BookingServiceTest {
     }
 
     @Test
-    @DisplayName("createBooking: Valid TRANSPORT booking with TRAIN succeeds")
+    @DisplayName("createBooking: Valid TRANSPORT booking with TRAIN, departure, and arrival succeeds")
     void createBooking_ValidTransport_Success() {
         CreateBookingRequest request = new CreateBookingRequest(
                 BookingType.TRANSPORT,
                 TransportType.TRAIN,
                 "Indian Railways",
                 "PNR123456",
+                "Chennai",
+                "Kodaikanal",
                 null,
                 null,
                 new BigDecimal("850.00"),
                 BookingStatus.CONFIRMED,
-                "Chennai to Kodaikanal"
+                "Night train"
         );
 
         when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
@@ -84,17 +86,21 @@ class BookingServiceTest {
         assertEquals(BookingType.TRANSPORT, response.bookingType());
         assertEquals(TransportType.TRAIN, response.transportType());
         assertEquals("Indian Railways", response.providerName());
+        assertEquals("Chennai", response.departure());
+        assertEquals("Kodaikanal", response.arrival());
         assertEquals(new BigDecimal("850.00"), response.amount());
     }
 
     @Test
-    @DisplayName("createBooking: TRANSPORT booking missing transportType throws 400 BAD REQUEST")
-    void createBooking_TransportTypeMissing_ThrowsBadRequest() {
+    @DisplayName("createBooking: TRANSPORT booking missing departure throws 400 BAD REQUEST")
+    void createBooking_TransportDepartureMissing_ThrowsBadRequest() {
         CreateBookingRequest request = new CreateBookingRequest(
                 BookingType.TRANSPORT,
-                null,
+                TransportType.TRAIN,
                 "Indian Railways",
+                "PNR123456",
                 null,
+                "Kodaikanal",
                 null,
                 null,
                 new BigDecimal("850.00"),
@@ -108,18 +114,47 @@ class BookingServiceTest {
                 () -> bookingService.createBooking(10L, 1L, request));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertTrue(ex.getReason().contains("Transport type is required for TRANSPORT bookings"));
+        assertTrue(ex.getReason().contains("Departure location is required for TRANSPORT bookings"));
         verify(bookingRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("createBooking: HOTEL booking with transportType throws 400 BAD REQUEST")
-    void createBooking_HotelWithTransportType_ThrowsBadRequest() {
+    @DisplayName("createBooking: TRANSPORT booking missing arrival throws 400 BAD REQUEST")
+    void createBooking_TransportArrivalMissing_ThrowsBadRequest() {
+        CreateBookingRequest request = new CreateBookingRequest(
+                BookingType.TRANSPORT,
+                TransportType.TRAIN,
+                "Indian Railways",
+                "PNR123456",
+                "Chennai",
+                "",
+                null,
+                null,
+                new BigDecimal("850.00"),
+                BookingStatus.CONFIRMED,
+                null
+        );
+
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> bookingService.createBooking(10L, 1L, request));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("Arrival location is required for TRANSPORT bookings"));
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("createBooking: HOTEL booking with departure/arrival locations throws 400 BAD REQUEST")
+    void createBooking_HotelWithDepartureArrival_ThrowsBadRequest() {
         CreateBookingRequest request = new CreateBookingRequest(
                 BookingType.HOTEL,
-                TransportType.CAR,
+                null,
                 "Kodai Resort",
                 null,
+                "Chennai",
+                "Kodaikanal",
                 null,
                 null,
                 new BigDecimal("3000.00"),
@@ -133,44 +168,21 @@ class BookingServiceTest {
                 () -> bookingService.createBooking(10L, 1L, request));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertTrue(ex.getReason().contains("Transport type must be null for HOTEL bookings"));
+        assertTrue(ex.getReason().contains("Departure and arrival locations must be null for HOTEL bookings"));
         verify(bookingRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("createBooking: ACTIVITY booking with transportType throws 400 BAD REQUEST")
-    void createBooking_ActivityWithTransportType_ThrowsBadRequest() {
-        CreateBookingRequest request = new CreateBookingRequest(
-                BookingType.ACTIVITY,
-                TransportType.BUS,
-                "Adventure Zone",
-                null,
-                null,
-                null,
-                new BigDecimal("500.00"),
-                BookingStatus.CONFIRMED,
-                null
-        );
-
-        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> bookingService.createBooking(10L, 1L, request));
-
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertTrue(ex.getReason().contains("Transport type must be null for ACTIVITY bookings"));
-        verify(bookingRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("updateBooking: Updates TRANSPORT booking from BUS to TRAIN")
-    void updateBooking_TransportTypeUpdated_Success() {
+    @DisplayName("updateBooking: Updates TRANSPORT booking departure and arrival locations")
+    void updateBooking_DepartureArrivalUpdated_Success() {
         Booking existingBooking = Booking.builder()
                 .id(100L)
                 .trip(trip)
                 .bookingType(BookingType.TRANSPORT)
                 .transportType(TransportType.BUS)
                 .providerName("KPN Travels")
+                .departure("Madurai")
+                .arrival("Kodaikanal")
                 .amount(new BigDecimal("600.00"))
                 .status(BookingStatus.CONFIRMED)
                 .build();
@@ -180,11 +192,13 @@ class BookingServiceTest {
                 TransportType.TRAIN,
                 "Indian Railways",
                 "PNR987654",
+                "Chennai",
+                "Kodaikanal",
                 null,
                 null,
                 new BigDecimal("850.00"),
                 BookingStatus.CONFIRMED,
-                "Updated to Train"
+                "Updated route"
         );
 
         when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
@@ -196,6 +210,7 @@ class BookingServiceTest {
         assertNotNull(response);
         assertEquals(BookingType.TRANSPORT, response.bookingType());
         assertEquals(TransportType.TRAIN, response.transportType());
-        assertEquals("Indian Railways", response.providerName());
+        assertEquals("Chennai", response.departure());
+        assertEquals("Kodaikanal", response.arrival());
     }
 }

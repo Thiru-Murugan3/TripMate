@@ -54,6 +54,7 @@ public class BookingService {
         validateAmount(request.amount());
         validateDatetimes(request.startDatetime(), request.endDatetime());
         validateTransportType(request.bookingType(), request.transportType());
+        validateDepartureAndArrival(request.bookingType(), request.departure(), request.arrival());
 
         Booking booking = Booking.builder()
                 .trip(trip)
@@ -61,6 +62,8 @@ public class BookingService {
                 .transportType(request.transportType())
                 .providerName(request.providerName().trim())
                 .bookingReference(request.bookingReference() != null ? request.bookingReference().trim() : null)
+                .departure(request.departure() != null ? request.departure().trim() : null)
+                .arrival(request.arrival() != null ? request.arrival().trim() : null)
                 .startDatetime(request.startDatetime())
                 .endDatetime(request.endDatetime())
                 .amount(request.amount() != null ? request.amount() : BigDecimal.ZERO)
@@ -80,6 +83,7 @@ public class BookingService {
         validateAmount(request.amount());
         validateDatetimes(request.startDatetime(), request.endDatetime());
         validateTransportType(request.bookingType(), request.transportType());
+        validateDepartureAndArrival(request.bookingType(), request.departure(), request.arrival());
 
         Booking booking = bookingRepository.findByIdAndTripId(bookingId, tripId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -89,6 +93,8 @@ public class BookingService {
         booking.setTransportType(request.transportType());
         booking.setProviderName(request.providerName().trim());
         booking.setBookingReference(request.bookingReference() != null ? request.bookingReference().trim() : null);
+        booking.setDeparture(request.departure() != null ? request.departure().trim() : null);
+        booking.setArrival(request.arrival() != null ? request.arrival().trim() : null);
         booking.setStartDatetime(request.startDatetime());
         booking.setEndDatetime(request.endDatetime());
         booking.setAmount(request.amount() != null ? request.amount() : BigDecimal.ZERO);
@@ -123,6 +129,24 @@ public class BookingService {
             if (transportType != null) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST, "Transport type must be null for " + bookingType + " bookings");
+            }
+        }
+    }
+
+    private void validateDepartureAndArrival(BookingType bookingType, String departure, String arrival) {
+        if (bookingType == BookingType.TRANSPORT) {
+            if (departure == null || departure.isBlank()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Departure location is required for TRANSPORT bookings");
+            }
+            if (arrival == null || arrival.isBlank()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Arrival location is required for TRANSPORT bookings");
+            }
+        } else {
+            if (departure != null || arrival != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Departure and arrival locations must be null for " + bookingType + " bookings");
             }
         }
     }
