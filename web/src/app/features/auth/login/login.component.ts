@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { ApiErrorResponse } from '../../../core/models/auth.models';
 import { AuthService } from '../../../core/services/auth.service';
@@ -64,17 +65,18 @@ export class LoginComponent {
 
     this.submitting = true;
 
-    this.authService.login(this.loginForm.getRawValue()).subscribe({
-      next: (response) => {
-        this.successMessage = 'Welcome back, ' + response.name + '. Authentication is connected.';
-      },
-      error: (error: HttpErrorResponse) => {
-        const apiError = error.error as ApiErrorResponse | undefined;
-        this.errorMessage = apiError?.message ?? 'Unable to sign in. Please check your email and password.';
-      },
-      complete: () => {
-        this.submitting = false;
-      }
-    });
+    this.authService
+      .login(this.loginForm.getRawValue())
+      .pipe(finalize(() => (this.submitting = false)))
+      .subscribe({
+        next: (response) => {
+          this.successMessage = 'Welcome back, ' + response.name + '. Authentication is connected.';
+        },
+        error: (error: HttpErrorResponse) => {
+          const apiError = error.error as ApiErrorResponse | undefined;
+          this.errorMessage =
+            apiError?.message ?? 'Unable to sign in. Please check your email and password.';
+        }
+      });
   }
 }

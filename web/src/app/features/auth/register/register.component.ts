@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { ApiErrorResponse } from '../../../core/models/auth.models';
 import { AuthService } from '../../../core/services/auth.service';
@@ -57,22 +58,23 @@ export class RegisterComponent {
 
     this.submitting = true;
 
-    this.authService.register(this.registerForm.getRawValue()).subscribe({
-      next: () => {
-        void this.router.navigate(['/login'], {
-          queryParams: {
-            registered: 1
-          }
-        });
-      },
-      error: (error: HttpErrorResponse) => {
-        const apiError = error.error as ApiErrorResponse | undefined;
-        this.serverFieldErrors = apiError?.validationErrors ?? {};
-        this.errorMessage = apiError?.message ?? 'Unable to create your account. Please try again.';
-      },
-      complete: () => {
-        this.submitting = false;
-      }
-    });
+    this.authService
+      .register(this.registerForm.getRawValue())
+      .pipe(finalize(() => (this.submitting = false)))
+      .subscribe({
+        next: () => {
+          void this.router.navigate(['/login'], {
+            queryParams: {
+              registered: 1
+            }
+          });
+        },
+        error: (error: HttpErrorResponse) => {
+          const apiError = error.error as ApiErrorResponse | undefined;
+          this.serverFieldErrors = apiError?.validationErrors ?? {};
+          this.errorMessage =
+            apiError?.message ?? 'Unable to create your account. Please try again.';
+        }
+      });
   }
 }
