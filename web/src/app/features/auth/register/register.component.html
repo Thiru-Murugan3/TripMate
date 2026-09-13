@@ -1,36 +1,50 @@
-<main class="auth-page">
+<main class="register-page">
   <section
-    class="auth-hero"
+    class="register-hero"
     [style.background-image]="'linear-gradient(rgba(11, 21, 40, 0.60), rgba(11, 21, 40, 0.60)), url(' + heroImageUrl + ')'"
   >
-    <div class="brand-block">
+    <div class="hero-content">
       <div class="brand">
         <img class="brand__mark" [src]="logoMarkUrl" alt="" width="28" height="24" />
         <span class="brand__name">TripMate</span>
       </div>
-      <h1>Start Planning Better Trips.</h1>
-      <p class="desktop-copy">Create one account for your trips, itineraries, expenses, bookings and documents.</p>
+
+      <h1>Plan Your Journey. Your Way.</h1>
+      <p class="hero-copy">
+        Keep your trips, itinerary, expenses, bookings and documents together in one place.
+      </p>
     </div>
   </section>
 
-  <section class="auth-panel">
-    <div class="auth-card">
-      <div class="auth-heading">
+  <section class="register-panel">
+    <div class="register-card">
+      <header class="register-heading">
         <span class="eyebrow">JOIN TRIPMATE</span>
         <h2>Create your account</h2>
-        <p>Use the same account across web and mobile.</p>
-      </div>
+        <p>Start planning smarter trips across web and mobile.</p>
+      </header>
 
       @if (errorMessage) {
-        <div class="alert alert--error" role="alert">{{ errorMessage }}</div>
+        <div class="alert alert--error" role="alert">
+          {{ errorMessage }}
+        </div>
       }
 
       <form [formGroup]="registerForm" (ngSubmit)="submit()" novalidate>
         <div class="field">
           <label for="name">FULL NAME</label>
-          <input id="name" type="text" formControlName="name" autocomplete="name" placeholder="Your name" />
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            autocomplete="name"
+            placeholder="Your full name"
+          />
+
           @if (controls.name.touched && controls.name.hasError('required')) {
             <small>Name is required.</small>
+          } @else if (controls.name.touched && controls.name.hasError('maxlength')) {
+            <small>Name cannot exceed 120 characters.</small>
           } @else if (serverFieldErrors['name']) {
             <small>{{ serverFieldErrors['name'] }}</small>
           }
@@ -38,11 +52,20 @@
 
         <div class="field">
           <label for="email">EMAIL ADDRESS</label>
-          <input id="email" type="email" formControlName="email" autocomplete="email" placeholder="yourname@email.com" />
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="yourname@email.com"
+          />
+
           @if (controls.email.touched && controls.email.hasError('required')) {
             <small>Email is required.</small>
           } @else if (controls.email.touched && controls.email.hasError('email')) {
             <small>Enter a valid email address.</small>
+          } @else if (controls.email.touched && controls.email.hasError('maxlength')) {
+            <small>Email cannot exceed 180 characters.</small>
           } @else if (serverFieldErrors['email']) {
             <small>{{ serverFieldErrors['email'] }}</small>
           }
@@ -59,7 +82,10 @@
             autocomplete="tel"
             placeholder="10-digit mobile number"
           />
-          @if (controls.mobile.touched && controls.mobile.invalid) {
+
+          @if (controls.mobile.touched && controls.mobile.hasError('required')) {
+            <small>Mobile number is required.</small>
+          } @else if (controls.mobile.touched && controls.mobile.hasError('pattern')) {
             <small>Mobile number must contain exactly 10 digits.</small>
           } @else if (serverFieldErrors['mobile']) {
             <small>{{ serverFieldErrors['mobile'] }}</small>
@@ -68,13 +94,24 @@
 
         <div class="field">
           <label for="password">PASSWORD</label>
-          <input
-            id="password"
-            type="password"
-            formControlName="password"
-            autocomplete="new-password"
-            placeholder="Create a strong password"
-          />
+          <div class="password-field">
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              placeholder="Create a strong password"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePassword()"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+            >
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+
           @if (controls.password.touched && controls.password.hasError('required')) {
             <small>Password is required.</small>
           } @else if (controls.password.touched && controls.password.invalid) {
@@ -84,14 +121,51 @@
           }
         </div>
 
-        <button class="primary-button" type="submit" [disabled]="submitting">
-          {{ submitting ? 'Creating Account...' : 'Create Account' }}
+        <div class="field">
+          <label for="confirmPassword">CONFIRM PASSWORD</label>
+          <div class="password-field">
+            <input
+              id="confirmPassword"
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+              placeholder="Re-enter your password"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="toggleConfirmPassword()"
+              [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
+            >
+              {{ showConfirmPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+
+          @if (controls.confirmPassword.touched && controls.confirmPassword.hasError('required')) {
+            <small>Please confirm your password.</small>
+          } @else if (
+            controls.confirmPassword.touched &&
+            registerForm.hasError('passwordsMismatch')
+          ) {
+            <small>Passwords do not match.</small>
+          }
+        </div>
+
+        <button class="primary-button" type="submit" [disabled]="isLoading">
+          <span>{{ isLoading ? 'Creating Account...' : 'Create Account' }}</span>
+          @if (!isLoading) {
+            <span aria-hidden="true">→</span>
+          }
         </button>
       </form>
 
       <p class="switch-auth">
         Already have an account?
         <a routerLink="/login">Sign In</a>
+      </p>
+
+      <p class="legal-copy">
+        By creating an account, you agree to use TripMate responsibly and keep your account details secure.
       </p>
     </div>
   </section>
