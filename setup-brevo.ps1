@@ -84,6 +84,9 @@ Set-EnvValue -Path $envPath -Key 'BREVO_API_URL' -Value 'https://api.brevo.com/v
 Set-EnvValue -Path $envPath -Key 'BREVO_API_KEY' -Value $apiKey
 Set-EnvValue -Path $envPath -Key 'BREVO_SENDER_EMAIL' -Value $senderEmail.Trim()
 Set-EnvValue -Path $envPath -Key 'BREVO_SENDER_NAME' -Value $senderName.Trim()
+Set-EnvValue -Path $envPath -Key 'TRIPMATE_BREVO_API_KEY' -Value $apiKey
+Set-EnvValue -Path $envPath -Key 'TRIPMATE_BREVO_SENDER_EMAIL' -Value $senderEmail.Trim()
+Set-EnvValue -Path $envPath -Key 'TRIPMATE_BREVO_SENDER_NAME' -Value $senderName.Trim()
 
 Write-Host ''
 Write-Host 'Brevo settings saved to backend\.env.' -ForegroundColor Green
