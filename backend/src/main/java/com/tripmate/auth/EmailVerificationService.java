@@ -74,7 +74,8 @@ public class EmailVerificationService {
         return new RegistrationPendingResponse(
                 "OTP verification code sent to your email",
                 email,
-                OTP_EXPIRY_MINUTES * 60L
+                OTP_EXPIRY_MINUTES * 60L,
+                otpCode
         );
     }
 
@@ -149,7 +150,7 @@ public class EmailVerificationService {
     }
 
     @Transactional
-    public void resendOtp(String emailRaw) {
+    public Map<String, String> resendOtp(String emailRaw) {
         String email = emailRaw.trim().toLowerCase();
 
         EmailVerificationOtp pending = otpRepository.findByEmailIgnoreCase(email)
@@ -167,5 +168,10 @@ public class EmailVerificationService {
         otpRepository.save(pending);
 
         emailService.sendVerificationOtpEmail(email, newOtpCode);
+
+        return Map.of(
+                "message", "OTP resent successfully",
+                "devOtp", newOtpCode
+        );
     }
 }

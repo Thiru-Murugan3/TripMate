@@ -42,10 +42,8 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> resendOtp(
             @Valid @RequestBody ResendEmailOtpRequest request) {
 
-        emailVerificationService.resendOtp(request.email());
-
         return ResponseEntity.ok(
-                Map.of("message", "OTP resent successfully")
+                emailVerificationService.resendOtp(request.email())
         );
     }
 

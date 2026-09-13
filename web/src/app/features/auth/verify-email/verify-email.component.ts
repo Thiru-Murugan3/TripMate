@@ -42,6 +42,19 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
           </p>
         </header>
 
+        @if (devOtp) {
+          <div class="alert alert--dev-info" role="alert">
+            <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <div>
+              <strong>Development OTP Code:</strong> <span class="dev-otp-code">{{ devOtp }}</span>
+              <div class="dev-note">(Check Spring Boot console log for full verification details)</div>
+            </div>
+          </div>
+        }
+
         @if (errorMessage) {
           <div class="alert alert--error" role="alert">
             <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -233,6 +246,24 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
       border: 1px solid rgba(16, 185, 129, 0.3);
       color: #6ee7b7;
     }
+    .alert--dev-info {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
+    }
+    .dev-otp-code {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.1em;
+      margin-left: 0.3rem;
+    }
+    .dev-note {
+      font-size: 0.725rem;
+      color: #94a3b8;
+      font-weight: 400;
+      margin-top: 2px;
+    }
     .alert-icon { width: 18px; height: 18px; flex-shrink: 0; }
 
     /* 6-Digit OTP Boxes */
@@ -330,6 +361,7 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
 
   email = '';
   maskedEmail = '';
+  devOtp = '';
   otpDigits = ['', '', '', '', '', ''];
   isLoading = false;
   isResending = false;
@@ -340,12 +372,26 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.email = this.route.snapshot.queryParams['email'] || '';
+    this.devOtp = this.route.snapshot.queryParams['devOtp'] || '';
+
     if (!this.email) {
       void this.router.navigate(['/register']);
       return;
     }
+
+    if (this.devOtp && this.devOtp.length === 6) {
+      this.autoFillOtp(this.devOtp);
+    }
+
     this.maskedEmail = this.maskEmail(this.email);
     this.startCountdownTimer();
+  }
+
+  autoFillOtp(code: string): void {
+    const digits = code.split('');
+    for (let i = 0; i < 6; i++) {
+      this.otpDigits[i] = digits[i] || '';
+    }
   }
 
   ngOnDestroy(): void {
@@ -445,7 +491,12 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.isResending = false;
         this.successMessage = res.message || 'New OTP verification code sent!';
-        this.otpDigits = ['', '', '', '', '', ''];
+        if (res.devOtp) {
+          this.devOtp = res.devOtp;
+          this.autoFillOtp(res.devOtp);
+        } else {
+          this.otpDigits = ['', '', '', '', '', ''];
+        }
         this.startCountdownTimer();
       },
       error: (error: HttpErrorResponse) => {
