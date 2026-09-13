@@ -1,10 +1,4 @@
 @echo off
-setlocal
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup-email.ps1"
-if errorlevel 1 (
-    echo.
-    echo Email setup failed.
-    exit /b 1
-)
-echo.
-echo Email setup completed.
+echo TripMate no longer uses Gmail App Passwords.
+echo Opening Brevo transactional email setup...
+call "%~dp0setup-brevo.bat"
