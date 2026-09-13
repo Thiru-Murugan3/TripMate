@@ -51,6 +51,32 @@ try {
     exit 1
 }
 
+Write-Host 'Checking sender registration in Brevo...' -ForegroundColor Cyan
+try {
+    $senderResponse = Invoke-RestMethod -Uri 'https://api.brevo.com/v3/senders' -Method Get -Headers @{ 'api-key' = $apiKey; 'accept' = 'application/json' } -TimeoutSec 15
+    $matchingSender = @($senderResponse.senders) | Where-Object { $_.email -ieq $senderEmail.Trim() } | Select-Object -First 1
+
+    if ($null -eq $matchingSender) {
+        Write-Host "Sender '$($senderEmail.Trim())' was not found in your Brevo account." -ForegroundColor Red
+        Write-Host 'Create and verify this sender in Brevo, then run setup-brevo.bat again.' -ForegroundColor Yellow
+        exit 1
+    }
+
+    if ($null -ne $matchingSender.active -and -not [bool]$matchingSender.active) {
+        Write-Host "Sender '$($senderEmail.Trim())' exists but is not active/verified." -ForegroundColor Red
+        Write-Host 'Complete the sender verification in Brevo and run this setup again.' -ForegroundColor Yellow
+        exit 1
+    }
+
+    Write-Host 'Brevo sender was found.' -ForegroundColor Green
+} catch {
+    Write-Host 'Unable to validate the sender using the Brevo API.' -ForegroundColor Red
+    if ($_.ErrorDetails.Message) {
+        Write-Host $_.ErrorDetails.Message -ForegroundColor Yellow
+    }
+    exit 1
+}
+
 if (-not (Test-Path (Split-Path -Parent $envPath))) { New-Item -ItemType Directory -Path (Split-Path -Parent $envPath) -Force | Out-Null }
 if (-not (Test-Path $envPath)) { @('# TripMate local environment','# This file is ignored by Git. Never commit real credentials.','') | Set-Content -Path $envPath -Encoding UTF8 }
 
