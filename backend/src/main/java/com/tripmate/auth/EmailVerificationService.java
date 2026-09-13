@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -74,8 +75,7 @@ public class EmailVerificationService {
         return new RegistrationPendingResponse(
                 "OTP verification code sent to your email",
                 email,
-                OTP_EXPIRY_MINUTES * 60L,
-                otpCode
+                OTP_EXPIRY_MINUTES * 60L
         );
     }
 
@@ -170,8 +170,7 @@ public class EmailVerificationService {
         emailService.sendVerificationOtpEmail(email, newOtpCode);
 
         return Map.of(
-                "message", "OTP resent successfully",
-                "devOtp", newOtpCode
+                "message", "OTP resent successfully"
         );
     }
 }

@@ -159,7 +159,7 @@ export class RegisterComponent {
       .subscribe({
         next: (res) => {
           void this.router.navigate(['/verify-email'], {
-            queryParams: { email: res.email || email, devOtp: res.devOtp }
+            queryParams: { email: res.email || email }
           });
         },
         error: (error: HttpErrorResponse) => {

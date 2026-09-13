@@ -1,6 +1,7 @@
 package com.tripmate.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tripmate.auth.EmailService;
 import com.tripmate.booking.BookingStatus;
 import com.tripmate.booking.BookingType;
 import com.tripmate.booking.CreateBookingRequest;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,7 +34,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -46,6 +52,9 @@ class TripMateE2EIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private EmailService emailService;
 
     @Test
     @DisplayName("E2E Journey: Register -> Login -> Trip Lifecycle -> Members -> Places -> Itinerary -> Expense -> Booking -> Document -> Dashboard -> Logout")
@@ -61,11 +70,7 @@ class TripMateE2EIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(ownerRegisterJson))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("alice.owner@example.com"));
+        registerAndVerify(ownerRegisterJson, "alice.owner@example.com");
 
         // 2. REGISTER TRAVELER USER (For member invitation test)
         String travelerRegisterJson = """
@@ -77,10 +82,7 @@ class TripMateE2EIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(travelerRegisterJson))
-                .andExpect(status().isCreated());
+        registerAndVerify(travelerRegisterJson, "bob.traveler@example.com");
 
         // 3. LOGIN OWNER
         String ownerLoginJson = """
@@ -318,8 +320,7 @@ class TripMateE2EIntegrationTest {
                     "password": "Password@123"
                 }
                 """;
-        mockMvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(userRegister))
-                .andExpect(status().isCreated());
+        registerAndVerify(userRegister, "normal.user@example.com");
 
         String userLogin = """
                 {
@@ -347,8 +348,7 @@ class TripMateE2EIntegrationTest {
                     "password": "Password@123"
                 }
                 """;
-        mockMvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(ownerRegister))
-                .andExpect(status().isCreated());
+        registerAndVerify(ownerRegister, "owner.trip@example.com");
 
         String ownerLogin = """
                 {
@@ -429,4 +429,29 @@ class TripMateE2EIntegrationTest {
                         .content(objectMapper.writeValueAsString(invalidBookingReq)))
                 .andExpect(status().isBadRequest());
     }
+
+    private void registerAndVerify(String registrationJson, String email) throws Exception {
+        reset(emailService);
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registrationJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(email));
+
+        org.mockito.ArgumentCaptor<String> otpCaptor =
+                org.mockito.ArgumentCaptor.forClass(String.class);
+
+        verify(emailService).sendVerificationOtpEmail(eq(email), otpCaptor.capture());
+
+        String verificationJson = objectMapper.writeValueAsString(
+                Map.of("email", email, "otp", otpCaptor.getValue())
+        );
+
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(verificationJson))
+                .andExpect(status().isOk());
+    }
+
 }
