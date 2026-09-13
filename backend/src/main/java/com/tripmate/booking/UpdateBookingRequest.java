@@ -13,6 +13,8 @@ public record UpdateBookingRequest(
         @NotNull(message = "Booking type is required")
         BookingType bookingType,
 
+        TransportType transportType,
+
         @NotBlank(message = "Provider name is required")
         @Size(max = 180, message = "Provider name cannot exceed 180 characters")
         String providerName,

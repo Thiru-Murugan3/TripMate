@@ -53,10 +53,12 @@ public class BookingService {
 
         validateAmount(request.amount());
         validateDatetimes(request.startDatetime(), request.endDatetime());
+        validateTransportType(request.bookingType(), request.transportType());
 
         Booking booking = Booking.builder()
                 .trip(trip)
                 .bookingType(request.bookingType())
+                .transportType(request.transportType())
                 .providerName(request.providerName().trim())
                 .bookingReference(request.bookingReference() != null ? request.bookingReference().trim() : null)
                 .startDatetime(request.startDatetime())
@@ -77,12 +79,14 @@ public class BookingService {
 
         validateAmount(request.amount());
         validateDatetimes(request.startDatetime(), request.endDatetime());
+        validateTransportType(request.bookingType(), request.transportType());
 
         Booking booking = bookingRepository.findByIdAndTripId(bookingId, tripId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Booking not found in this trip"));
 
         booking.setBookingType(request.bookingType());
+        booking.setTransportType(request.transportType());
         booking.setProviderName(request.providerName().trim());
         booking.setBookingReference(request.bookingReference() != null ? request.bookingReference().trim() : null);
         booking.setStartDatetime(request.startDatetime());
@@ -107,6 +111,20 @@ public class BookingService {
                         HttpStatus.NOT_FOUND, "Booking not found in this trip"));
 
         bookingRepository.delete(booking);
+    }
+
+    private void validateTransportType(BookingType bookingType, TransportType transportType) {
+        if (bookingType == BookingType.TRANSPORT) {
+            if (transportType == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Transport type is required for TRANSPORT bookings");
+            }
+        } else {
+            if (transportType != null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Transport type must be null for " + bookingType + " bookings");
+            }
+        }
     }
 
     private void validateAmount(BigDecimal amount) {
