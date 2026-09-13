@@ -1,0 +1,132 @@
+<main class="my-trips-page">
+  <section class="page-hero">
+    <div>
+      <span class="eyebrow">YOUR JOURNEYS</span>
+      <h1>My Trips</h1>
+      <p>View and manage every trip you are planning or travelling on.</p>
+    </div>
+
+    <button type="button" class="create-button" (click)="createTrip()">
+      <span aria-hidden="true">＋</span>
+      Plan New Trip
+    </button>
+  </section>
+
+  <section class="toolbar" aria-label="Trip filters">
+    <label class="search-field">
+      <span>Search</span>
+      <input
+        type="search"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="updateSearch($event)"
+        placeholder="Search by trip or destination"
+      />
+    </label>
+
+    <label class="select-field">
+      <span>Status</span>
+      <select [ngModel]="statusFilter()" (ngModelChange)="updateStatus($event)">
+        @for (status of statusOptions; track status) {
+          <option [value]="status">{{ status === 'ALL' ? 'All statuses' : formatStatus(status) }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="select-field">
+      <span>Trip type</span>
+      <select [ngModel]="typeFilter()" (ngModelChange)="updateType($event)">
+        @for (type of typeOptions; track type) {
+          <option [value]="type">{{ type === 'ALL' ? 'All types' : formatTripType(type) }}</option>
+        }
+      </select>
+    </label>
+
+    <button type="button" class="clear-button" (click)="clearFilters()">Clear</button>
+  </section>
+
+  @if (loading()) {
+    <section class="state-card">
+      <div class="spinner" aria-hidden="true"></div>
+      <h2>Loading your trips</h2>
+      <p>Getting your latest trip plans...</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="state-card state-card--error">
+      <h2>Couldn’t load trips</h2>
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="retry-button" (click)="loadTrips()">Try Again</button>
+    </section>
+  } @else if (filteredTrips().length === 0) {
+    <section class="state-card">
+      <div class="empty-icon" aria-hidden="true">✈</div>
+      <h2>No trips found</h2>
+      <p>
+        @if (trips().length === 0) {
+          Start planning your first TripMate journey.
+        } @else {
+          Try changing the search or filters.
+        }
+      </p>
+      @if (trips().length === 0) {
+        <button type="button" class="retry-button" (click)="createTrip()">Create Your First Trip</button>
+      }
+    </section>
+  } @else {
+    <section class="results-header">
+      <div>
+        <h2>{{ filteredTrips().length }} trip{{ filteredTrips().length === 1 ? '' : 's' }}</h2>
+        <p>Your current TripMate travel plans.</p>
+      </div>
+    </section>
+
+    <section class="trip-grid">
+      @for (trip of filteredTrips(); track trip.id) {
+        <article class="trip-card" (click)="openTrip(trip)" tabindex="0" (keydown.enter)="openTrip(trip)">
+          <div
+            class="trip-image"
+            [style.background-image]="'linear-gradient(180deg, transparent 45%, rgba(15, 23, 42, 0.72)), url(' + getTripImage(trip) + ')'"
+          >
+            <div class="image-badges">
+              <span class="type-badge">{{ formatTripType(trip.tripType) }}</span>
+              <span class="status-badge" [attr.data-status]="trip.status">
+                {{ formatStatus(trip.status) }}
+              </span>
+            </div>
+
+            <div class="image-title">
+              <h3>{{ trip.name }}</h3>
+              <p>{{ trip.destination }}</p>
+            </div>
+          </div>
+
+          <div class="trip-content">
+            <div class="meta-row">
+              <div>
+                <span class="meta-label">DATES</span>
+                <strong>{{ trip.startDate }} → {{ trip.endDate }}</strong>
+                <small>{{ tripDuration(trip) }}</small>
+              </div>
+              <div class="meta-right">
+                <span class="meta-label">BUDGET</span>
+                <strong>{{ formatBudget(trip.budget) }}</strong>
+                <small>{{ trip.travelerCount }} traveler{{ trip.travelerCount === 1 ? '' : 's' }}</small>
+              </div>
+            </div>
+
+            @if (trip.description) {
+              <p class="description">{{ trip.description }}</p>
+            }
+
+            <div class="card-footer">
+              <span class="role">{{ trip.userRole ?? 'OWNER' }}</span>
+              <button type="button" class="view-button" (click)="$event.stopPropagation(); openTrip(trip)">
+                View Trip
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+        </article>
+      }
+    </section>
+  }
+</main>

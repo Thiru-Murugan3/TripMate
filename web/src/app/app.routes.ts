@@ -5,7 +5,6 @@ import { guestGuard } from './core/guards/guest.guard';
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
-  // Auth Routes (Guest Only)
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent),
@@ -29,7 +28,6 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
 
-  // Protected App Routes (Auth Required)
   {
     path: 'dashboard',
     loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
@@ -37,15 +35,16 @@ export const routes: Routes = [
   },
   {
     path: 'trips',
-    loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+    loadComponent: () =>
+      import('./features/trips/my-trips/my-trips.component').then((m) => m.MyTripsComponent),
     canActivate: [authGuard]
   },
   {
     path: 'trips/:id',
-    loadComponent: () => import('./features/trips/trip-details/trip-details.component').then((m) => m.TripDetailsComponent),
+    loadComponent: () =>
+      import('./features/trips/trip-details/trip-details.component').then((m) => m.TripDetailsComponent),
     canActivate: [authGuard]
   },
 
-  // Fallback Wildcard
   { path: '**', redirectTo: 'dashboard' }
 ];

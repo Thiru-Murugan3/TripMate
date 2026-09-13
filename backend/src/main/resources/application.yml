@@ -2,13 +2,13 @@ spring:
   application:
     name: tripmate-backend
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/tripmate?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     show-sql: true
     properties:
@@ -16,7 +16,7 @@ spring:
         format_sql: true
   flyway:
     enabled: true
-    baseline-on-migrate: true
+    baseline-on-migrate: false
     baseline-version: 1
     locations: classpath:db/migration
 
@@ -24,7 +24,7 @@ server:
   port: ${SERVER_PORT:8080}
 
 jwt:
-  secret: ${JWT_SECRET:dGhpcmlzYWRldjUzY3JldGtleWZvcnRyaXBtYXRlYXBwbG9jYWw=}
+  secret: ${JWT_SECRET}
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 

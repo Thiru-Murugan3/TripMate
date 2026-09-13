@@ -10,7 +10,7 @@ import { Booking, BookingType, TransportType, BookingStatus, CreateBookingReques
 @Component({
   selector: 'app-trip-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="trip-details-container" *ngIf="trip">
       <!-- Hero Banner -->

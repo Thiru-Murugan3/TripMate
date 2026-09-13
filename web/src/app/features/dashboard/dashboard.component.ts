@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TripService } from '../../core/services/trip.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Trip, TripType, CreateTripRequest } from '../../core/models/trip.model';
@@ -31,7 +31,7 @@ interface PopularDestination {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="home-page">
       <!-- Hero Section -->
@@ -855,6 +855,8 @@ export class DashboardComponent implements OnInit {
   authService = inject(AuthService);
   private tripService = inject(TripService);
   private fb = inject(FormBuilder);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   quickDestination = 'Kodaikanal, Tamil Nadu';
   quickTripType: TripType = 'FAMILY';
@@ -960,6 +962,10 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUserTrips();
+
+    if (this.route.snapshot.queryParamMap.get('createTrip') === '1') {
+      this.openCreateModal();
+    }
   }
 
   loadUserTrips(): void {
@@ -990,10 +996,7 @@ export class DashboardComponent implements OnInit {
   }
 
   scrollToUpcoming(): void {
-    const el = document.getElementById('upcoming-trips-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
+    void this.router.navigate(['/trips']);
   }
 
   openCreateModal(): void {
@@ -1024,7 +1027,7 @@ export class DashboardComponent implements OnInit {
 
   openTripDetails(trip: DisplayTrip): void {
     if (trip.id) {
-      // Navigate to trip details if real API trip
+      void this.router.navigate(['/trips', trip.id]);
     }
   }
 
@@ -1082,23 +1085,7 @@ export class DashboardComponent implements OnInit {
         if (err.error && err.error.message) {
           this.modalError = err.error.message;
         } else {
-          // Fallback UI insertion if backend offline
-          this.upcomingTrips.unshift({
-            name: request.name,
-            destination: request.destination,
-            tag: `${request.tripType} Trip`,
-            status: 'PLANNING',
-            statusClass: 'status-planning',
-            dates: `${request.startDate} – ${request.endDate}`,
-            spent: '₹0',
-            limit: `₹${request.budget.toLocaleString()}`,
-            progress: 0,
-            image: request.destination.toLowerCase().includes('goa') ? 'assets/images/goa.jpg' :
-                   request.destination.toLowerCase().includes('coorg') ? 'assets/images/coorg.jpg' :
-                   request.destination.toLowerCase().includes('munnar') ? 'assets/images/munnar.jpg' :
-                   'assets/images/kodaikanal.jpg'
-          });
-          this.closeCreateModal();
+          this.modalError = 'Unable to create the trip. Please make sure the backend is running and try again.';
         }
       }
     });

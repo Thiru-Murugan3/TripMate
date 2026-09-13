@@ -1,0 +1,393 @@
+:host {
+  display: block;
+  min-height: 100%;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.my-trips-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 44px 24px 72px;
+}
+
+.page-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.page-hero h1 {
+  font-size: clamp(32px, 4vw, 46px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.page-hero p,
+.results-header p {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.create-button,
+.retry-button {
+  min-height: 46px;
+  border: 0;
+  border-radius: 11px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgb(37 99 235 / 18%);
+}
+
+.toolbar {
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  display: grid;
+  grid-template-columns: minmax(250px, 1.6fr) minmax(160px, 0.7fr) minmax(160px, 0.7fr) auto;
+  align-items: end;
+  gap: 14px;
+  background: #ffffff;
+  box-shadow: 0 6px 20px rgb(15 23 42 / 4%);
+  margin-bottom: 30px;
+}
+
+.search-field,
+.select-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-field span,
+.select-field span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+input,
+select {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 10%);
+}
+
+.clear-button {
+  height: 44px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 15px;
+  background: #f8fafc;
+  color: #475569;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.results-header {
+  margin-bottom: 16px;
+}
+
+.results-header h2 {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.trip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.trip-card {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 25px rgb(15 23 42 / 5%);
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.trip-card:hover,
+.trip-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 35px rgb(15 23 42 / 10%);
+  outline: none;
+}
+
+.trip-image {
+  height: 210px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-position: center;
+  background-size: cover;
+  color: #ffffff;
+}
+
+.image-badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.type-badge,
+.status-badge {
+  padding: 6px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.type-badge {
+  background: rgb(255 255 255 / 90%);
+  color: #1e293b;
+}
+
+.status-badge {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-badge[data-status='PLANNING'] {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge[data-status='ONGOING'] {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.status-badge[data-status='COMPLETED'] {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.status-badge[data-status='CANCELLED'] {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.image-title h3 {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.image-title p {
+  margin-top: 4px;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+
+.trip-content {
+  padding: 18px;
+}
+
+.meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.meta-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.meta-right {
+  text-align: right;
+}
+
+.meta-label {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.meta-row strong {
+  font-size: 13px;
+}
+
+.meta-row small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.description {
+  margin-top: 16px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.role {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.view-button {
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  gap: 6px;
+  background: transparent;
+  color: #2563eb;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.state-card {
+  min-height: 300px;
+  padding: 40px 24px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.state-card h2 {
+  font-size: 21px;
+}
+
+.state-card p {
+  max-width: 420px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.state-card--error {
+  border-color: #fecaca;
+  background: #fffafa;
+}
+
+.empty-icon {
+  font-size: 34px;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #dbeafe;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .trip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .search-field {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 620px) {
+  .my-trips-page {
+    padding: 28px 18px 56px;
+  }
+
+  .page-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .create-button {
+    width: 100%;
+  }
+
+  .toolbar,
+  .trip-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-field {
+    grid-column: auto;
+  }
+
+  .trip-image {
+    height: 195px;
+  }
+}
