@@ -31,10 +31,19 @@ public class SecurityConfig {
                         )
                 )
 
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
+                )
+
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers(
-                                "/api/v1/auth/**",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password",
                                 "/api/v1/health",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
@@ -46,6 +55,8 @@ public class SecurityConfig {
                         ).permitAll()
 
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/v1/auth/change-password").authenticated()
 
                         .anyRequest().authenticated()
                 )
