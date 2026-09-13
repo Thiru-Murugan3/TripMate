@@ -1,106 +1,203 @@
 <main class="register-page">
-  <section
-    class="register-hero"
-    [style.background-image]="'linear-gradient(rgba(11, 21, 40, 0.60), rgba(11, 21, 40, 0.60)), url(' + heroImageUrl + ')'"
-  >
+  <!-- Ambient background glow elements -->
+  <div class="glow-sphere glow-sphere-1" aria-hidden="true"></div>
+  <div class="glow-sphere glow-sphere-2" aria-hidden="true"></div>
+
+  <!-- Left Hero Banner Panel -->
+  <section class="register-hero">
+    <div class="hero-overlay"></div>
     <div class="hero-content">
       <div class="brand">
-        <img class="brand__mark" [src]="logoMarkUrl" alt="" width="28" height="24" />
+        <div class="brand__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3.414 13.778 2 15.192l4.95 4.95 2.12-2.122-2.828-2.828 5.657-5.657 5.657 5.657-2.829 2.828 2.122 2.122 4.95-4.95-1.414-1.414L12 6.707l-8.586 7.071z"/>
+            <path d="M12 2 2 12h3v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8h3L12 2zm0 3.828L18 11.8v7.2H6v-7.2l6-5.972z"/>
+          </svg>
+        </div>
         <span class="brand__name">TripMate</span>
       </div>
 
-      <h1>Plan Your Journey. Your Way.</h1>
-      <p class="hero-copy">
-        Keep your trips, itinerary, expenses, bookings and documents together in one place.
-      </p>
+      <div class="hero-text">
+        <span class="hero-badge">🚀 Join 500k+ Happy Travelers</span>
+        <h1>Start Planning Your<br><span class="gradient-text">Next Big Adventure.</span></h1>
+        <p class="hero-description">
+          Create your free account today and discover how easy trip planning, expense tracking, and group collaboration can be.
+        </p>
+      </div>
+
+      <div class="hero-features">
+        <div class="feature-card">
+          <div class="feature-icon">✨</div>
+          <div class="feature-info">
+            <strong>Free Forever Account</strong>
+            <span>Unlimited itineraries & expense splitting</span>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <div class="feature-info">
+            <strong>Bank-Grade Security</strong>
+            <span>Your personal data is encrypted & safe</span>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
+  <!-- Right Form Panel -->
   <section class="register-panel">
     <div class="register-card">
-      <header class="register-heading">
-        <span class="eyebrow">JOIN TRIPMATE</span>
-        <h2>Create your account</h2>
-        <p>Start planning smarter trips across web and mobile.</p>
+      <header class="register-header">
+        <span class="eyebrow">SIGN UP</span>
+        <h2>Create Your Account</h2>
+        <p class="subtitle">Join TripMate and start organizing your journeys in minutes</p>
       </header>
 
       @if (errorMessage) {
         <div class="alert alert--error" role="alert">
-          {{ errorMessage }}
+          <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ errorMessage }}</span>
         </div>
       }
 
       <form [formGroup]="registerForm" (ngSubmit)="submit()" novalidate>
-        <div class="field">
-          <label for="name">FULL NAME</label>
-          <input
-            id="name"
-            type="text"
-            formControlName="name"
-            autocomplete="name"
-            placeholder="Your full name"
-          />
-
+        <!-- Full Name -->
+        <div class="field" [class.field--error]="controls.name.touched && controls.name.invalid">
+          <label for="name">Full Name</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              autocomplete="name"
+              placeholder="Alex Morgan"
+            />
+          </div>
           @if (controls.name.touched && controls.name.hasError('required')) {
-            <small>Name is required.</small>
-          } @else if (controls.name.touched && controls.name.hasError('maxlength')) {
-            <small>Name cannot exceed 120 characters.</small>
-          } @else if (serverFieldErrors['name']) {
-            <small>{{ serverFieldErrors['name'] }}</small>
+            <span class="field-error-msg">Full name is required</span>
           }
         </div>
 
-        <div class="field">
-          <label for="email">EMAIL ADDRESS</label>
-          <input
-            id="email"
-            type="email"
-            formControlName="email"
-            autocomplete="email"
-            placeholder="yourname@email.com"
-          />
-
+        <!-- Email Address -->
+        <div class="field" [class.field--error]="controls.email.touched && controls.email.invalid">
+          <label for="email">Email Address</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              placeholder="alex@example.com"
+            />
+          </div>
           @if (controls.email.touched && controls.email.hasError('required')) {
-            <small>Email is required.</small>
+            <span class="field-error-msg">Email is required</span>
           } @else if (controls.email.touched && controls.email.hasError('email')) {
-            <small>Enter a valid email address.</small>
-          } @else if (controls.email.touched && controls.email.hasError('maxlength')) {
-            <small>Email cannot exceed 180 characters.</small>
-          } @else if (serverFieldErrors['email']) {
-            <small>{{ serverFieldErrors['email'] }}</small>
+            <span class="field-error-msg">Please enter a valid email address</span>
           }
         </div>
 
-        <div class="field">
-          <label for="mobile">MOBILE NUMBER</label>
-          <input
-            id="mobile"
-            type="tel"
-            inputmode="numeric"
-            maxlength="10"
-            formControlName="mobile"
-            autocomplete="tel"
-            placeholder="10-digit mobile number"
-          />
-
+        <!-- Mobile Number -->
+        <div class="field" [class.field--error]="controls.mobile.touched && controls.mobile.invalid">
+          <label for="mobile">Mobile Number</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+              <line x1="12" y1="18" x2="12.01" y2="18"/>
+            </svg>
+            <input
+              id="mobile"
+              type="tel"
+              inputmode="numeric"
+              maxlength="10"
+              formControlName="mobile"
+              autocomplete="tel"
+              placeholder="10-digit phone number"
+            />
+          </div>
           @if (controls.mobile.touched && controls.mobile.hasError('required')) {
-            <small>Mobile number is required.</small>
+            <span class="field-error-msg">Mobile number is required</span>
           } @else if (controls.mobile.touched && controls.mobile.hasError('pattern')) {
-            <small>Mobile number must contain exactly 10 digits.</small>
-          } @else if (serverFieldErrors['mobile']) {
-            <small>{{ serverFieldErrors['mobile'] }}</small>
+            <span class="field-error-msg">Must be a valid 10-digit mobile number</span>
           }
         </div>
 
-        <div class="field">
-          <label for="password">PASSWORD</label>
-          <div class="password-field">
+        <!-- Password -->
+        <div class="field" [class.field--error]="controls.password.touched && controls.password.invalid">
+          <div class="label-with-info">
+            <label for="password">Password</label>
+            
+            <div class="info-tooltip-container">
+              <button type="button" class="info-btn" aria-label="Password rules info">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="info-icon">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+              </button>
+
+              <!-- Floating Tooltip Popover -->
+              <div class="info-popover">
+                <span class="popover-heading">MUST CONTAIN:</span>
+                <div class="popover-list">
+                  <div class="popover-item" [class.valid]="hasMinLength">
+                    <svg class="req-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>8–20 Characters</span>
+                  </div>
+                  <div class="popover-item" [class.valid]="hasUppercase">
+                    <svg class="req-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>Uppercase Letter (A-Z)</span>
+                  </div>
+                  <div class="popover-item" [class.valid]="hasLowercase">
+                    <svg class="req-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>Lowercase Letter (a-z)</span>
+                  </div>
+                  <div class="popover-item" [class.valid]="hasNumber">
+                    <svg class="req-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>Number (0-9)</span>
+                  </div>
+                  <div class="popover-item" [class.valid]="hasSpecialChar">
+                    <svg class="req-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>Special Symbol (!&#64;#$)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
             <input
               id="password"
               [type]="showPassword ? 'text' : 'password'"
               formControlName="password"
               autocomplete="new-password"
-              placeholder="Create a strong password"
+              placeholder="••••••••••••"
             />
             <button
               type="button"
@@ -108,28 +205,54 @@
               (click)="togglePassword()"
               [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
             >
-              {{ showPassword ? 'Hide' : 'Show' }}
+              @if (showPassword) {
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              }
             </button>
           </div>
 
+          <!-- Password Health Indicator Bar -->
+          @if (passwordValue) {
+            <div class="password-health">
+              <div class="health-header">
+                <span class="health-title">Password Strength</span>
+                <span class="health-badge" [attr.data-strength]="passwordStrengthLabel">
+                  {{ passwordStrengthLabel }}
+                </span>
+              </div>
+              <div class="health-bar-track">
+                <div class="health-bar-fill" [style.width.%]="passwordScore" [attr.data-score]="passwordScore"></div>
+              </div>
+            </div>
+          }
+
           @if (controls.password.touched && controls.password.hasError('required')) {
-            <small>Password is required.</small>
-          } @else if (controls.password.touched && controls.password.invalid) {
-            <small>Use 8–20 characters with uppercase, lowercase, number and special character.</small>
-          } @else if (serverFieldErrors['password']) {
-            <small>{{ serverFieldErrors['password'] }}</small>
+            <span class="field-error-msg">Password is required</span>
           }
         </div>
 
-        <div class="field">
-          <label for="confirmPassword">CONFIRM PASSWORD</label>
-          <div class="password-field">
+        <!-- Confirm Password -->
+        <div class="field" [class.field--error]="(controls.confirmPassword.touched || controls.confirmPassword.dirty) && (controls.confirmPassword.invalid || registerForm.hasError('passwordsMismatch'))">
+          <label for="confirmPassword">Confirm Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
             <input
               id="confirmPassword"
               [type]="showConfirmPassword ? 'text' : 'password'"
               formControlName="confirmPassword"
               autocomplete="new-password"
-              placeholder="Re-enter your password"
+              placeholder="Re-enter password"
             />
             <button
               type="button"
@@ -137,36 +260,47 @@
               (click)="toggleConfirmPassword()"
               [attr.aria-label]="showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'"
             >
-              {{ showConfirmPassword ? 'Hide' : 'Show' }}
+              @if (showConfirmPassword) {
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              }
             </button>
           </div>
-
-          @if (controls.confirmPassword.touched && controls.confirmPassword.hasError('required')) {
-            <small>Please confirm your password.</small>
-          } @else if (
-            controls.confirmPassword.touched &&
-            registerForm.hasError('passwordsMismatch')
-          ) {
-            <small>Passwords do not match.</small>
+          @if ((controls.confirmPassword.touched || controls.confirmPassword.dirty) && controls.confirmPassword.hasError('required')) {
+            <span class="field-error-msg">Please confirm your password</span>
+          } @else if ((controls.confirmPassword.touched || controls.confirmPassword.dirty) && (controls.confirmPassword.hasError('passwordsMismatch') || registerForm.hasError('passwordsMismatch'))) {
+            <span class="field-error-msg">Passwords do not match</span>
           }
         </div>
 
-        <button class="primary-button" type="submit" [disabled]="isLoading">
-          <span>{{ isLoading ? 'Creating Account...' : 'Create Account' }}</span>
-          @if (!isLoading) {
-            <span aria-hidden="true">→</span>
+        <!-- Submit Button - Emerald Teal "Sign Up" -->
+        <button type="submit" class="submit-btn get-started-btn" [disabled]="isLoading">
+          @if (isLoading) {
+            <span class="spinner"></span>
+            <span>Creating Account...</span>
+          } @else {
+            <span>SIGN UP</span>
+            <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
           }
         </button>
       </form>
 
-      <p class="switch-auth">
-        Already have an account?
-        <a routerLink="/login">Sign In</a>
-      </p>
-
-      <p class="legal-copy">
-        By creating an account, you agree to use TripMate responsibly and keep your account details secure.
-      </p>
+      <!-- Footer -->
+      <div class="auth-footer">
+        <span>Already have an account?</span>
+        <a routerLink="/login" class="login-link">Sign In</a>
+      </div>
     </div>
   </section>
 </main>
+

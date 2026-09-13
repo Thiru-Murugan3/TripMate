@@ -68,13 +68,24 @@ export class RegisterComponent {
 
   static passwordsMatchValidator(control: AbstractControl): ValidationErrors | null {
     const password = control.get('password')?.value;
-    const confirmPassword = control.get('confirmPassword')?.value;
+    const confirmPasswordControl = control.get('confirmPassword');
+    const confirmPassword = confirmPasswordControl?.value;
 
     if (!password || !confirmPassword) {
       return null;
     }
 
-    return password === confirmPassword ? null : { passwordsMismatch: true };
+    if (password !== confirmPassword) {
+      confirmPasswordControl?.setErrors({ ...confirmPasswordControl.errors, passwordsMismatch: true });
+      return { passwordsMismatch: true };
+    } else {
+      if (confirmPasswordControl?.hasError('passwordsMismatch')) {
+        const errors = { ...confirmPasswordControl.errors };
+        delete errors['passwordsMismatch'];
+        confirmPasswordControl.setErrors(Object.keys(errors).length ? errors : null);
+      }
+      return null;
+    }
   }
 
   togglePassword(): void {
@@ -83,6 +94,51 @@ export class RegisterComponent {
 
   toggleConfirmPassword(): void {
     this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  get passwordValue(): string {
+    return this.registerForm.controls.password.value || '';
+  }
+
+  get hasMinLength(): boolean {
+    const val = this.passwordValue;
+    return val.length >= 8 && val.length <= 20;
+  }
+
+  get hasUppercase(): boolean {
+    return /[A-Z]/.test(this.passwordValue);
+  }
+
+  get hasLowercase(): boolean {
+    return /[a-z]/.test(this.passwordValue);
+  }
+
+  get hasNumber(): boolean {
+    return /\d/.test(this.passwordValue);
+  }
+
+  get hasSpecialChar(): boolean {
+    return /[^A-Za-z0-9]/.test(this.passwordValue);
+  }
+
+  get passwordScore(): number {
+    if (!this.passwordValue) return 0;
+    let score = 0;
+    if (this.hasMinLength) score += 20;
+    if (this.hasUppercase) score += 20;
+    if (this.hasLowercase) score += 20;
+    if (this.hasNumber) score += 20;
+    if (this.hasSpecialChar) score += 20;
+    return score;
+  }
+
+  get passwordStrengthLabel(): string {
+    const score = this.passwordScore;
+    if (score === 0) return '';
+    if (score <= 40) return 'Weak';
+    if (score <= 60) return 'Fair';
+    if (score <= 80) return 'Good';
+    return 'Strong 💪';
   }
 
   submit(): void {
@@ -109,11 +165,15 @@ export class RegisterComponent {
         error: (error: HttpErrorResponse) => {
           const apiError = error.error as ApiErrorResponse | undefined;
           this.serverFieldErrors = apiError?.validationErrors ?? {};
-          this.errorMessage =
-            apiError?.message ??
-            (error.status === 409
-              ? 'An account already exists with this email or mobile number.'
-              : 'Registration failed. Please check your details and try again.');
+          if (error.status === 0) {
+            this.errorMessage = 'Backend server unreachable. Please ensure the Spring Boot server is running on http://localhost:8080.';
+          } else if (error.status === 409) {
+            this.errorMessage = 'An account already exists with this email or mobile number.';
+          } else {
+            this.errorMessage =
+              apiError?.message ??
+              'Registration failed. Please check your details and try again.';
+          }
         }
       });
   }

@@ -1,15 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
-
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-
-interface ApiErrorResponse {
-  message?: string;
-}
 
 @Component({
   selector: 'app-login',
@@ -19,64 +12,55 @@ interface ApiErrorResponse {
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-  private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-
-  readonly heroImageUrl =
-    'https://www.figma.com/api/mcp/asset/452be6a7-1a5d-4e35-9c3b-9fd7a9b9582c.png';
-  readonly logoMarkUrl =
-    'https://www.figma.com/api/mcp/asset/9eb8d94f-455c-4dbc-8538-702e6f198cd2.svg';
-
-  readonly loginForm = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
-  });
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   isLoading = false;
-  errorMessage = '';
   showPassword = false;
+  errorMessage = '';
 
-  readonly registrationSuccess =
-    this.route.snapshot.queryParamMap.get('registered') === '1';
-
-  get controls() {
-    return this.loginForm.controls;
-  }
+  loginForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required]],
+    rememberMe: [false]
+  });
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
   }
 
-  submit(): void {
-    this.errorMessage = '';
+  isFieldInvalid(field: string): boolean {
+    const control = this.loginForm.get(field);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
 
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      return;
-    }
+  onSubmit(): void {
+    if (this.loginForm.invalid) return;
 
     this.isLoading = true;
+    this.errorMessage = '';
 
-    this.authService
-      .login(this.loginForm.getRawValue())
-      .pipe(finalize(() => (this.isLoading = false)))
-      .subscribe({
-        next: () => {
-          const returnUrl =
-            this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
-          void this.router.navigateByUrl(returnUrl);
-        },
-        error: (error: HttpErrorResponse) => {
-          const apiError = error.error as ApiErrorResponse | undefined;
+    const credentials = this.loginForm.value as { email: string; password: string };
 
-          this.errorMessage =
-            apiError?.message ??
-            (error.status === 401
-              ? 'Invalid email or password.'
-              : 'Unable to sign in right now. Please try again.');
+    this.authService.login(credentials).subscribe({
+      next: () => {
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+        this.router.navigateByUrl(returnUrl);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        if (err.status === 0) {
+          this.errorMessage = 'Backend server unreachable. Please ensure the Spring Boot server is running on http://localhost:8080.';
+        } else if (err.error && err.error.message) {
+          this.errorMessage = err.error.message;
+        } else if (err.status === 401) {
+          this.errorMessage = 'Invalid email or password';
+        } else {
+          this.errorMessage = 'An error occurred during login. Please try again.';
         }
-      });
+      }
+    });
   }
 }
