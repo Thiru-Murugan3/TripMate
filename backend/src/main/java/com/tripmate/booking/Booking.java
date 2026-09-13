@@ -28,6 +28,10 @@ public class Booking {
     @Column(name = "booking_type", nullable = false, length = 30)
     private BookingType bookingType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transport_type", length = 30)
+    private TransportType transportType;
+
     @Column(name = "provider_name", nullable = false, length = 180)
     private String providerName;
 
