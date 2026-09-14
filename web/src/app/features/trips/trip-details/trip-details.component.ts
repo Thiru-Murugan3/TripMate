@@ -7,6 +7,8 @@ import {
   Trip,
   TripDashboard,
   TripDashboardBooking,
+  TripMember,
+  TripRole,
   TripType,
   UpdateTripRequest
 } from '../../../core/models/trip.model';
@@ -18,8 +20,9 @@ import {
 } from '../../../core/models/booking.model';
 import { BookingService } from '../../../core/services/booking.service';
 import { TripService } from '../../../core/services/trip.service';
+import { TripMemberService } from '../../../core/services/trip-member.service';
 
-type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
+type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS' | 'MEMBERS';
 
 @Component({
   selector: 'app-trip-details',
@@ -96,7 +99,7 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
             type="button"
             class="tab-btn"
             [class.active]="activeTab === 'OVERVIEW'"
-            (click)="activeTab = 'OVERVIEW'"
+            (click)="setActiveTab('OVERVIEW')"
           >
             <span class="material-symbols-outlined">dashboard</span>
             Overview
@@ -106,11 +109,22 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
             type="button"
             class="tab-btn"
             [class.active]="activeTab === 'BOOKINGS'"
-            (click)="activeTab = 'BOOKINGS'"
+            (click)="setActiveTab('BOOKINGS')"
           >
             <span class="material-symbols-outlined">airplane_ticket</span>
             Bookings
             <span class="tab-count">{{ bookings.length }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="tab-btn"
+            [class.active]="activeTab === 'MEMBERS'"
+            (click)="setActiveTab('MEMBERS')"
+          >
+            <span class="material-symbols-outlined">group</span>
+            Members
+            <span class="tab-count">{{ dashboard?.memberCount ?? members.length }}</span>
           </button>
         </nav>
 
@@ -253,7 +267,7 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
                     *ngIf="overview.bookings.length > 0"
                     type="button"
                     class="text-button"
-                    (click)="activeTab = 'BOOKINGS'"
+                    (click)="setActiveTab('BOOKINGS')"
                   >
                     View all
                   </button>
@@ -450,6 +464,145 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
             </article>
           </div>
         </section>
+
+        <section *ngIf="activeTab === 'MEMBERS'" class="tab-content">
+          <div class="members-toolbar card">
+            <div>
+              <span class="eyebrow">TRIP ACCESS</span>
+              <h2>Trip Members</h2>
+              <p>
+                Members have access to this trip. Owner can add users and manage Editor/Viewer permissions.
+              </p>
+            </div>
+
+            <button
+              *ngIf="canManageMembers"
+              type="button"
+              class="btn btn-primary"
+              (click)="openAddMemberModal()"
+            >
+              <span class="material-symbols-outlined">person_add</span>
+              Add Member
+            </button>
+          </div>
+
+          <div *ngIf="isLoadingMembers" class="overview-loading card">
+            <div class="spinner small"></div>
+            <span>Loading members...</span>
+          </div>
+
+          <div *ngIf="!isLoadingMembers && membersError" class="overview-error card">
+            <div>
+              <strong>Unable to load members.</strong>
+              <p>{{ membersError }}</p>
+            </div>
+            <button type="button" class="btn btn-secondary" (click)="loadMembers()">Retry</button>
+          </div>
+
+          <div *ngIf="!isLoadingMembers && !membersError" class="members-grid">
+            <article *ngFor="let member of members" class="member-card card">
+              <div class="member-avatar">
+                {{ member.userName?.charAt(0)?.toUpperCase() || '?' }}
+              </div>
+
+              <div class="member-info">
+                <div class="member-name-row">
+                  <strong>{{ member.userName }}</strong>
+                  <span *ngIf="member.role === 'OWNER'" class="owner-pill">Owner</span>
+                </div>
+                <span>{{ member.userEmail }}</span>
+                <span *ngIf="member.userMobile">{{ member.userMobile }}</span>
+              </div>
+
+              <div class="member-role">
+                <ng-container *ngIf="canManageMembers && member.role !== 'OWNER'; else roleLabel">
+                  <select
+                    class="form-control compact-select"
+                    [value]="member.role"
+                    [disabled]="updatingMemberId === member.id"
+                    (change)="changeMemberRole(member, $any($event.target).value)"
+                  >
+                    <option value="EDITOR">Editor</option>
+                    <option value="VIEWER">Viewer</option>
+                  </select>
+                </ng-container>
+                <ng-template #roleLabel>
+                  <span class="role-pill">{{ member.role }}</span>
+                </ng-template>
+              </div>
+
+              <button
+                *ngIf="canManageMembers && member.role !== 'OWNER'"
+                type="button"
+                class="btn btn-danger compact"
+                [disabled]="removingMemberId === member.id"
+                (click)="removeMember(member)"
+              >
+                {{ removingMemberId === member.id ? 'Removing...' : 'Remove' }}
+              </button>
+            </article>
+
+            <div *ngIf="members.length === 0" class="empty-state card">
+              <span class="material-symbols-outlined empty-icon">group_off</span>
+              <h3>No members found</h3>
+              <p>The trip owner should normally appear here.</p>
+            </div>
+          </div>
+        </section>
+
+        <div *ngIf="showAddMemberModal" class="modal-backdrop" (click)="closeAddMemberModal()">
+          <div class="modal-content card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <div>
+                <h3>Add Trip Member</h3>
+                <p>Add a registered TripMate user by email and choose their permission.</p>
+              </div>
+              <button type="button" class="close-btn" (click)="closeAddMemberModal()" aria-label="Close">
+                &times;
+              </button>
+            </div>
+
+            <div *ngIf="memberModalError" class="alert-danger">{{ memberModalError }}</div>
+
+            <form [formGroup]="addMemberForm" (ngSubmit)="submitAddMember()">
+              <div class="form-group">
+                <label class="form-label">Registered User Email *</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  formControlName="email"
+                  placeholder="member@example.com"
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Role *</label>
+                <select class="form-control" formControlName="role">
+                  <option value="EDITOR">Editor - can modify trip content</option>
+                  <option value="VIEWER">Viewer - read only</option>
+                </select>
+              </div>
+
+              <div class="edit-note">
+                <span class="material-symbols-outlined">info</span>
+                The dashboard Members count updates immediately after the member is added.
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" (click)="closeAddMemberModal()">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="addMemberForm.invalid || isAddingMember"
+                >
+                  {{ isAddingMember ? 'Adding...' : 'Add Member' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
 
         <div *ngIf="showCancelBookingModal && bookingToCancel as cancelBooking" class="modal-backdrop" (click)="closeCancelBookingModal()">
           <div class="modal-content cancel-booking-modal card" (click)="$event.stopPropagation()">
@@ -1611,6 +1764,94 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
       font-size: 0.82rem;
     }
 
+    .members-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .members-toolbar h2 {
+      margin: 0.15rem 0 0.25rem;
+    }
+
+    .members-toolbar p {
+      margin: 0;
+      color: #64748b;
+      font-size: 0.84rem;
+    }
+
+    .members-grid {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .member-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) minmax(120px, auto) auto;
+      align-items: center;
+      gap: 0.9rem;
+      padding: 1rem 1.1rem;
+    }
+
+    .member-avatar {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      color: #1d4ed8;
+      background: #dbeafe;
+      font-weight: 850;
+    }
+
+    .member-info {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      gap: 0.16rem;
+    }
+
+    .member-info > span {
+      overflow: hidden;
+      color: #64748b;
+      font-size: 0.78rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .member-name-row {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .owner-pill,
+    .role-pill {
+      display: inline-flex;
+      padding: 0.24rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 850;
+    }
+
+    .owner-pill {
+      color: #7c3aed;
+      background: #ede9fe;
+    }
+
+    .role-pill {
+      color: #1d4ed8;
+      background: #dbeafe;
+    }
+
+    .compact-select {
+      min-width: 125px;
+      padding: 0.5rem 0.6rem;
+    }
+
     .spinner {
       width: 34px;
       height: 34px;
@@ -1686,6 +1927,20 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
       .rebook-banner .empty-booking-actions .btn {
         width: 100%;
       }
+
+      .members-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .member-card {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .member-role,
+      .member-card > .btn {
+        grid-column: 2;
+      }
     }
   `]
 })
@@ -1694,12 +1949,14 @@ export class TripDetailsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly tripService = inject(TripService);
   private readonly bookingService = inject(BookingService);
+  private readonly tripMemberService = inject(TripMemberService);
   private readonly fb = inject(FormBuilder);
 
   tripId = 0;
   trip: Trip | null = null;
   dashboard: TripDashboard | null = null;
   bookings: Booking[] = [];
+  members: TripMember[] = [];
 
   activeTab: TripDetailsTab = 'OVERVIEW';
 
@@ -1709,6 +1966,8 @@ export class TripDetailsComponent implements OnInit {
   dashboardError = '';
   isLoadingBookings = true;
   bookingsError = '';
+  isLoadingMembers = false;
+  membersError = '';
 
   showBookingModal = false;
   isSubmittingBooking = false;
@@ -1721,11 +1980,22 @@ export class TripDetailsComponent implements OnInit {
 
   readonly tripTypes: TripType[] = ['ADVENTURE', 'FAMILY', 'COUPLE', 'FRIENDS', 'SOLO'];
 
+  showAddMemberModal = false;
+  isAddingMember = false;
+  memberModalError = '';
+  updatingMemberId: number | null = null;
+  removingMemberId: number | null = null;
+
   showCancelBookingModal = false;
   bookingToCancel: Booking | null = null;
   cancelReason = '';
   cancelBookingError = '';
   isCancellingBooking = false;
+
+  addMemberForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    role: ['VIEWER' as TripRole, Validators.required]
+  });
 
   editTripForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(160)]],
@@ -1756,6 +2026,10 @@ export class TripDetailsComponent implements OnInit {
     return this.trip?.userRole === 'OWNER' || this.trip?.userRole === 'EDITOR';
   }
 
+  get canManageMembers(): boolean {
+    return this.trip?.userRole === 'OWNER';
+  }
+
   get hasActiveBookings(): boolean {
     return this.bookings.some(
       (booking) => booking.status === 'PENDING' || booking.status === 'CONFIRMED'
@@ -1776,6 +2050,7 @@ export class TripDetailsComponent implements OnInit {
     this.loadTripDetails();
     this.loadDashboard();
     this.loadBookings();
+    this.loadMembers();
   }
 
   retryTrip(): void {
@@ -1831,6 +2106,142 @@ export class TripDetailsComponent implements OnInit {
         this.bookings = [];
         this.bookingsError = err?.error?.message || 'Please try again.';
         this.isLoadingBookings = false;
+      }
+    });
+  }
+
+  setActiveTab(tab: TripDetailsTab): void {
+    this.activeTab = tab;
+
+    if (tab === 'OVERVIEW') {
+      this.loadTripDetails();
+      this.loadDashboard();
+      this.loadBookings();
+    } else if (tab === 'BOOKINGS') {
+      this.loadBookings();
+    } else if (tab === 'MEMBERS') {
+      this.loadMembers();
+      this.loadDashboard();
+    }
+  }
+
+  loadMembers(): void {
+    if (!Number.isFinite(this.tripId) || this.tripId <= 0) return;
+
+    this.isLoadingMembers = true;
+    this.membersError = '';
+
+    this.tripMemberService.getMembers(this.tripId).subscribe({
+      next: (members) => {
+        this.members = members ?? [];
+        this.isLoadingMembers = false;
+      },
+      error: (err) => {
+        this.members = [];
+        this.membersError = err?.error?.message || 'Please try again.';
+        this.isLoadingMembers = false;
+      }
+    });
+  }
+
+  openAddMemberModal(): void {
+    if (!this.canManageMembers) return;
+
+    this.memberModalError = '';
+    this.addMemberForm.reset({
+      email: '',
+      role: 'VIEWER'
+    });
+    this.showAddMemberModal = true;
+  }
+
+  closeAddMemberModal(): void {
+    if (this.isAddingMember) return;
+    this.showAddMemberModal = false;
+    this.memberModalError = '';
+  }
+
+  submitAddMember(): void {
+    if (!this.canManageMembers || this.addMemberForm.invalid) return;
+
+    const value = this.addMemberForm.getRawValue();
+    this.isAddingMember = true;
+    this.memberModalError = '';
+
+    this.tripMemberService.addMember(
+      this.tripId,
+      value.email!.trim(),
+      value.role as TripRole
+    ).subscribe({
+      next: (member) => {
+        this.isAddingMember = false;
+        this.showAddMemberModal = false;
+        this.members = [
+          ...this.members.filter((existing) => existing.id !== member.id),
+          member
+        ].sort((a, b) => {
+          if (a.role === 'OWNER') return -1;
+          if (b.role === 'OWNER') return 1;
+          return a.userName.localeCompare(b.userName);
+        });
+        this.tripUpdateMessage = `${member.userName} added to the trip.`;
+        this.loadDashboard();
+      },
+      error: (err) => {
+        this.isAddingMember = false;
+        this.memberModalError = err?.error?.message || 'Unable to add member.';
+      }
+    });
+  }
+
+  changeMemberRole(member: TripMember, role: string): void {
+    if (!this.canManageMembers || member.role === 'OWNER') return;
+
+    const nextRole = role as TripRole;
+    if (nextRole !== 'EDITOR' && nextRole !== 'VIEWER') return;
+    if (member.role === nextRole) return;
+
+    this.updatingMemberId = member.id;
+    this.membersError = '';
+
+    this.tripMemberService.updateMemberRole(this.tripId, member.id, nextRole).subscribe({
+      next: (updated) => {
+        this.updatingMemberId = null;
+        this.members = this.members.map((item) =>
+          item.id === updated.id ? updated : item
+        );
+        this.tripUpdateMessage = `${updated.userName} is now ${updated.role.toLowerCase()}.`;
+        this.loadDashboard();
+      },
+      error: (err) => {
+        this.updatingMemberId = null;
+        this.membersError = err?.error?.message || 'Unable to update member role.';
+        this.loadMembers();
+      }
+    });
+  }
+
+  removeMember(member: TripMember): void {
+    if (!this.canManageMembers || member.role === 'OWNER') return;
+
+    const confirmed = window.confirm(
+      `Remove ${member.userName} from this trip?`
+    );
+    if (!confirmed) return;
+
+    this.removingMemberId = member.id;
+    this.membersError = '';
+
+    this.tripMemberService.removeMember(this.tripId, member.id).subscribe({
+      next: () => {
+        this.removingMemberId = null;
+        this.members = this.members.filter((item) => item.id !== member.id);
+        this.tripUpdateMessage = `${member.userName} removed from the trip.`;
+        this.loadDashboard();
+      },
+      error: (err) => {
+        this.removingMemberId = null;
+        this.membersError = err?.error?.message || 'Unable to remove member.';
       }
     });
   }
@@ -2045,7 +2456,10 @@ export class TripDetailsComponent implements OnInit {
         this.isUpdatingTrip = false;
         this.showEditTripModal = false;
         this.tripUpdateMessage = 'Trip details updated successfully.';
+        this.loadTripDetails();
         this.loadDashboard();
+        this.loadBookings();
+        this.loadMembers();
       },
       error: (err) => {
         this.isUpdatingTrip = false;

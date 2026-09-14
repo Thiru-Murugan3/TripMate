@@ -1,7 +1,7 @@
 export type TripType = 'ADVENTURE' | 'FAMILY' | 'COUPLE' | 'FRIENDS' | 'SOLO';
 export type TripStatus = 'PLANNED' | 'UPCOMING' | 'CONFIRMED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
 export type TripRole = 'OWNER' | 'EDITOR' | 'VIEWER';
-export type MemberStatus = 'PENDING' | 'ACTIVE' | 'DECLINED';
+export type MemberStatus = 'ACTIVE' | 'REMOVED';
 
 export interface Trip {
   id: number;
@@ -53,6 +53,7 @@ export interface TripMember {
   userId: number;
   userName: string;
   userEmail: string;
+  userMobile?: string;
   role: TripRole;
   memberStatus: MemberStatus;
   joinedAt?: string;
