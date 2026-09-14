@@ -10,6 +10,7 @@ import com.tripmate.trip.TripRepository;
 import com.tripmate.user.User;
 import com.tripmate.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,25 @@ public class DocumentService {
                         HttpStatus.NOT_FOUND, "Document not found in this trip"));
 
         return DocumentResponse.from(document);
+    }
+
+    @Transactional(readOnly = true)
+    public DocumentDownload downloadDocument(Long tripId, Long documentId, Long userId) {
+        Trip trip = findTripOrThrow(tripId);
+        verifyCanView(trip, userId);
+
+        Document document = documentRepository.findByIdAndTripId(documentId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Document not found in this trip"));
+
+        Resource resource = fileStorageService.loadFile(document.getStorageUrl());
+
+        return new DocumentDownload(
+                resource,
+                document.getFileName(),
+                document.getFileType(),
+                document.getFileSize()
+        );
     }
 
     @Transactional

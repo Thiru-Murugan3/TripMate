@@ -24,6 +24,7 @@ import { TripMemberService } from '../../../core/services/trip-member.service';
 import { ItineraryPlannerComponent } from '../itinerary-planner/itinerary-planner.component';
 import { PlaceManagerComponent } from '../place-manager/place-manager.component';
 import { ExpenseManagerComponent } from '../expense-manager/expense-manager.component';
+import { DocumentManagerComponent } from '../document-manager/document-manager.component';
 
 type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
@@ -36,7 +37,8 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
     ReactiveFormsModule,
     ItineraryPlannerComponent,
     PlaceManagerComponent,
-    ExpenseManagerComponent
+    ExpenseManagerComponent,
+    DocumentManagerComponent
   ],
   template: `
     <main class="trip-details-page">
@@ -246,7 +248,7 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
                     <span class="material-symbols-outlined arrow">chevron_right</span>
                   </button>
 
-                  <button type="button" class="quick-action-row" (click)="setActiveTab('DOCUMENTS')">
+                  <button type="button" class="quick-action-row" (click)="openDocumentQuickUpload()">
                     <span class="quick-action-icon violet">
                       <span class="material-symbols-outlined">upload</span>
                     </span>
@@ -313,13 +315,12 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
         </section>
 
         <section *ngIf="activeTab === 'DOCUMENTS'" class="tab-content">
-          <article class="feature-panel card">
-            <div class="dashboard-empty">
-              <span class="material-symbols-outlined">folder_open</span>
-              <h3>Documents</h3>
-              <p>{{ dashboard?.documentCount || 0 }} document{{ (dashboard?.documentCount || 0) === 1 ? '' : 's' }} currently saved for this trip.</p>
-            </div>
-          </article>
+          <app-document-manager
+            [tripId]="tripId"
+            [canEdit]="canEditTrip"
+            [openRequest]="documentOpenRequest"
+            (documentsChanged)="onDocumentsChanged()"
+          ></app-document-manager>
         </section>
 
         <section *ngIf="activeTab === 'BOOKINGS'" class="tab-content">
@@ -2433,6 +2434,7 @@ export class TripDetailsComponent implements OnInit {
 
   activeTab: TripDetailsTab = 'OVERVIEW';
   expenseOpenRequest = 0;
+  documentOpenRequest = 0;
 
   isLoadingTrip = true;
   tripLoadError = '';
@@ -2782,6 +2784,16 @@ export class TripDetailsComponent implements OnInit {
   onExpensesChanged(): void {
     this.loadDashboard();
     this.tripUpdateMessage = 'Expenses updated successfully.';
+  }
+
+  openDocumentQuickUpload(): void {
+    this.activeTab = 'DOCUMENTS';
+    this.documentOpenRequest += 1;
+  }
+
+  onDocumentsChanged(): void {
+    this.loadDashboard();
+    this.tripUpdateMessage = 'Documents updated successfully.';
   }
 
   budgetProgressWidth(value: number): number {

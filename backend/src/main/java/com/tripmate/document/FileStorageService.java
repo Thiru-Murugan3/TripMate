@@ -1,5 +1,7 @@
 package com.tripmate.document;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -106,18 +108,54 @@ public class FileStorageService {
         }
     }
 
+    public Resource loadFile(String storageUrl) {
+        if (storageUrl == null || storageUrl.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Stored document file is missing");
+        }
+
+        try {
+            Path filePath = resolveStoragePath(storageUrl);
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Stored document file was not found");
+            }
+
+            return resource;
+        } catch (ResponseStatusException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Could not read stored document", ex);
+        }
+    }
+
     public void deleteFile(String storageUrl) {
         if (storageUrl == null || storageUrl.isBlank()) {
             return;
         }
 
         try {
-            String relativePath = storageUrl.startsWith("/") ? storageUrl.substring(1) : storageUrl;
-            Path filePath = Paths.get(relativePath).toAbsolutePath().normalize();
+            Path filePath = resolveStoragePath(storageUrl);
             Files.deleteIfExists(filePath);
         } catch (IOException ex) {
             // Log warning but continue
         }
+    }
+
+    private Path resolveStoragePath(String storageUrl) {
+        String relativePath = storageUrl.startsWith("/") ? storageUrl.substring(1) : storageUrl;
+        Path uploadRoot = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
+        Path filePath = Paths.get(relativePath).toAbsolutePath().normalize();
+
+        if (!filePath.startsWith(uploadRoot)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Invalid stored file path");
+        }
+
+        return filePath;
     }
 
     private String getFileExtension(String fileName) {
