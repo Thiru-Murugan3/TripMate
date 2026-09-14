@@ -22,7 +22,7 @@ import { BookingService } from '../../../core/services/booking.service';
 import { TripService } from '../../../core/services/trip.service';
 import { TripMemberService } from '../../../core/services/trip-member.service';
 
-type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS' | 'MEMBERS';
+type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
 @Component({
   selector: 'app-trip-details',
@@ -44,48 +44,56 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS' | 'MEMBERS';
       </section>
 
       <div *ngIf="!isLoadingTrip && trip as currentTrip" class="trip-details-container">
-        <section class="hero-banner card">
-          <div class="hero-content">
-            <div class="header-badges">
-              <span class="badge status" [attr.data-status]="currentTrip.status">
-                {{ formatStatus(currentTrip.status) }}
-              </span>
-              <span class="badge type">{{ formatTripType(currentTrip.tripType) }}</span>
+        <section class="trip-header card">
+          <div class="trip-header-main">
+            <div>
+              <div class="title-row">
+                <h1>{{ currentTrip.name }}</h1>
+                <span class="status-chip" [attr.data-status]="currentTrip.status">
+                  {{ formatStatus(currentTrip.status) }}
+                </span>
+              </div>
+
+              <div class="trip-meta-row">
+                <span>
+                  <span class="material-symbols-outlined">location_on</span>
+                  {{ currentTrip.destination }}
+                </span>
+                <span>
+                  <span class="material-symbols-outlined">calendar_month</span>
+                  {{ formatDate(currentTrip.startDate) }} – {{ formatDate(currentTrip.endDate) }}
+                </span>
+                <span>
+                  <span class="material-symbols-outlined">groups</span>
+                  {{ currentTrip.travelerCount }} traveler{{ currentTrip.travelerCount === 1 ? '' : 's' }}
+                </span>
+                <span>
+                  <span class="material-symbols-outlined">account_balance_wallet</span>
+                  {{ formatCurrency(currentTrip.budget) }} budget
+                </span>
+              </div>
+
+              <p *ngIf="currentTrip.description" class="trip-header-description">
+                {{ currentTrip.description }}
+              </p>
             </div>
 
-            <h1 class="trip-title">{{ currentTrip.name }}</h1>
+            <div class="trip-header-actions">
+              <button type="button" class="btn btn-outline" (click)="openShareTrip()">
+                <span class="material-symbols-outlined">group_add</span>
+                Share Trip
+              </button>
 
-            <div class="hero-meta">
-              <span class="meta-item">
-                <span class="material-symbols-outlined">location_on</span>
-                {{ currentTrip.destination }}
-              </span>
-              <span class="meta-item">
-                <span class="material-symbols-outlined">calendar_month</span>
-                {{ formatDate(currentTrip.startDate) }} – {{ formatDate(currentTrip.endDate) }}
-              </span>
-              <span class="meta-item">
-                <span class="material-symbols-outlined">group</span>
-                {{ currentTrip.travelerCount }} traveler{{ currentTrip.travelerCount === 1 ? '' : 's' }}
-              </span>
-              <span class="meta-item">
-                <span class="material-symbols-outlined">account_balance_wallet</span>
-                {{ formatCurrency(currentTrip.budget) }} budget
-              </span>
+              <button
+                *ngIf="canEditTrip"
+                type="button"
+                class="btn btn-primary"
+                (click)="openEditTripModal()"
+              >
+                <span class="material-symbols-outlined">edit</span>
+                Edit Details
+              </button>
             </div>
-
-            <p class="description" *ngIf="currentTrip.description">{{ currentTrip.description }}</p>
-          </div>
-
-          <div class="hero-actions" *ngIf="canEditTrip">
-            <button type="button" (click)="openEditTripModal()" class="btn btn-light">
-              <span class="material-symbols-outlined">edit</span>
-              Edit Trip
-            </button>
-            <button type="button" (click)="openBookNow()" class="btn btn-primary">
-              <span class="material-symbols-outlined">travel_explore</span>
-              Book Now
-            </button>
           </div>
         </section>
 
@@ -94,253 +102,246 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS' | 'MEMBERS';
           {{ tripUpdateMessage }}
         </div>
 
-        <nav class="details-tabs" aria-label="Trip details sections">
-          <button
-            type="button"
-            class="tab-btn"
-            [class.active]="activeTab === 'OVERVIEW'"
-            (click)="setActiveTab('OVERVIEW')"
-          >
-            <span class="material-symbols-outlined">dashboard</span>
+        <nav class="details-tabs dashboard-tabs" aria-label="Trip dashboard sections">
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'OVERVIEW'" (click)="setActiveTab('OVERVIEW')">
             Overview
           </button>
-
-          <button
-            type="button"
-            class="tab-btn"
-            [class.active]="activeTab === 'BOOKINGS'"
-            (click)="setActiveTab('BOOKINGS')"
-          >
-            <span class="material-symbols-outlined">airplane_ticket</span>
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'ITINERARY'" (click)="setActiveTab('ITINERARY')">
+            Itinerary
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'PLACES'" (click)="setActiveTab('PLACES')">
+            Places
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'EXPENSES'" (click)="setActiveTab('EXPENSES')">
+            Expenses
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'BOOKINGS'" (click)="setActiveTab('BOOKINGS')">
             Bookings
             <span class="tab-count">{{ bookings.length }}</span>
           </button>
-
-          <button
-            type="button"
-            class="tab-btn"
-            [class.active]="activeTab === 'MEMBERS'"
-            (click)="setActiveTab('MEMBERS')"
-          >
-            <span class="material-symbols-outlined">group</span>
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'DOCUMENTS'" (click)="setActiveTab('DOCUMENTS')">
+            Documents
+            <span class="tab-count" *ngIf="dashboard?.documentCount">{{ dashboard?.documentCount }}</span>
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'MEMBERS'" (click)="setActiveTab('MEMBERS')">
             Members
             <span class="tab-count">{{ dashboard?.memberCount ?? members.length }}</span>
           </button>
         </nav>
 
-        <section *ngIf="activeTab === 'OVERVIEW'" class="tab-content overview-content">
+        <section *ngIf="activeTab === 'OVERVIEW'" class="tab-content dashboard-overview">
           <div *ngIf="isLoadingDashboard" class="overview-loading card">
             <div class="spinner small"></div>
-            <span>Loading trip overview...</span>
+            <span>Loading trip dashboard...</span>
           </div>
 
           <div *ngIf="!isLoadingDashboard && dashboardError" class="overview-error card">
             <div>
-              <strong>Unable to load the trip overview.</strong>
+              <strong>Unable to load the trip dashboard.</strong>
               <p>{{ dashboardError }}</p>
             </div>
             <button type="button" class="btn btn-secondary" (click)="loadDashboard()">Retry</button>
           </div>
 
           <ng-container *ngIf="!isLoadingDashboard && !dashboardError && dashboard as overview">
-            <div class="summary-grid">
-              <article class="summary-card">
-                <div class="summary-icon">
-                  <span class="material-symbols-outlined">account_balance_wallet</span>
-                </div>
-                <span class="summary-label">Trip Budget</span>
-                <strong>{{ formatCurrency(overview.budget) }}</strong>
-              </article>
+            <div class="dashboard-main-grid">
+              <div class="dashboard-left">
+                <div class="compact-summary-grid">
+                  <article class="compact-stat card">
+                    <span class="stat-label">Duration</span>
+                    <strong>{{ tripDurationDays }} Day{{ tripDurationDays === 1 ? '' : 's' }}</strong>
+                  </article>
 
-              <article class="summary-card">
-                <div class="summary-icon">
-                  <span class="material-symbols-outlined">payments</span>
-                </div>
-                <span class="summary-label">Total Expenses</span>
-                <strong>{{ formatCurrency(overview.totalExpenses) }}</strong>
-              </article>
+                  <article class="compact-stat card">
+                    <span class="stat-label">Total Budget</span>
+                    <strong>{{ formatCurrency(overview.budget) }}</strong>
+                  </article>
 
-              <article class="summary-card">
-                <div class="summary-icon">
-                  <span class="material-symbols-outlined">savings</span>
-                </div>
-                <span class="summary-label">Remaining Budget</span>
-                <strong [class.negative-value]="overview.remainingBudget < 0">
-                  {{ formatCurrency(overview.remainingBudget) }}
-                </strong>
-              </article>
+                  <article class="compact-stat card">
+                    <span class="stat-label">Total Spent</span>
+                    <strong class="spent-value">{{ formatCurrency(overview.totalExpenses) }}</strong>
+                  </article>
 
-              <article class="summary-card">
-                <div class="summary-icon">
-                  <span class="material-symbols-outlined">groups</span>
-                </div>
-                <span class="summary-label">Travelers</span>
-                <strong>{{ overview.travelerCount }}</strong>
-              </article>
-
-              <article class="summary-card">
-                <div class="summary-icon">
-                  <span class="material-symbols-outlined">group</span>
-                </div>
-                <span class="summary-label">Members</span>
-                <strong>{{ overview.memberCount }}</strong>
-              </article>
-
-              <article class="summary-card">
-                <div class="summary-icon">
-                  <span class="material-symbols-outlined">description</span>
-                </div>
-                <span class="summary-label">Documents</span>
-                <strong>{{ overview.documentCount }}</strong>
-              </article>
-            </div>
-
-            <article class="budget-card card">
-              <div class="card-heading">
-                <div>
-                  <span class="eyebrow">BUDGET TRACKING</span>
-                  <h2>Budget Utilization</h2>
-                </div>
-                <strong class="utilization-value">
-                  {{ overview.budgetUtilizationPercentage | number:'1.0-1' }}%
-                </strong>
-              </div>
-
-              <div class="budget-track" aria-label="Budget utilization">
-                <div
-                  class="budget-fill"
-                  [class.over-budget]="overview.budgetUtilizationPercentage > 100"
-                  [style.width.%]="budgetProgressWidth(overview.budgetUtilizationPercentage)"
-                ></div>
-              </div>
-
-              <div class="budget-breakdown">
-                <span>Spent <strong>{{ formatCurrency(overview.totalExpenses) }}</strong></span>
-                <span>Remaining <strong>{{ formatCurrency(overview.remainingBudget) }}</strong></span>
-                <span>Budget <strong>{{ formatCurrency(overview.budget) }}</strong></span>
-              </div>
-            </article>
-
-            <div class="overview-columns">
-              <article class="overview-panel card">
-                <div class="panel-heading">
-                  <div>
-                    <span class="eyebrow">ITINERARY</span>
-                    <h2>Upcoming Activities</h2>
-                  </div>
-                  <span class="panel-count">{{ overview.upcomingActivities.length }}</span>
+                  <article class="compact-stat card">
+                    <span class="stat-label">Remaining</span>
+                    <strong [class.negative-value]="overview.remainingBudget < 0" class="remaining-value">
+                      {{ formatCurrency(overview.remainingBudget) }}
+                    </strong>
+                  </article>
                 </div>
 
-                <div *ngIf="overview.upcomingActivities.length === 0" class="panel-empty">
-                  <span class="material-symbols-outlined">event_available</span>
-                  <h3>No upcoming activities</h3>
-                  <p>Your future itinerary activities will appear here.</p>
-                </div>
-
-                <div *ngIf="overview.upcomingActivities.length > 0" class="activity-list">
-                  <div
-                    *ngFor="let activity of overview.upcomingActivities.slice(0, 6)"
-                    class="activity-row"
-                  >
-                    <div class="activity-date">
-                      <strong>{{ formatActivityDay(activity.date) }}</strong>
-                      <span>{{ formatActivityMonth(activity.date) }}</span>
+                <article class="itinerary-board card">
+                  <div class="section-heading-row">
+                    <div>
+                      <h2>{{ itineraryHeading }}</h2>
+                      <p>{{ itinerarySubheading }}</p>
                     </div>
-                    <div class="activity-info">
-                      <strong>{{ activity.activity }}</strong>
-                      <span>
-                        <span class="material-symbols-outlined">schedule</span>
+                    <button type="button" class="mini-action" (click)="setActiveTab('ITINERARY')">
+                      + Add Activity
+                    </button>
+                  </div>
+
+                  <div *ngIf="overview.upcomingActivities.length === 0" class="dashboard-empty">
+                    <span class="material-symbols-outlined">event_note</span>
+                    <h3>No itinerary activities yet</h3>
+                    <p>Add activities to build the trip timeline.</p>
+                  </div>
+
+                  <div *ngIf="overview.upcomingActivities.length > 0" class="timeline-list">
+                    <div
+                      *ngFor="let activity of overview.upcomingActivities.slice(0, 6)"
+                      class="timeline-row"
+                    >
+                      <div class="timeline-time">
                         {{ formatActivityTime(activity.time) }}
-                      </span>
+                      </div>
+                      <div class="timeline-track">
+                        <span class="timeline-dot"></span>
+                        <span class="timeline-line"></span>
+                      </div>
+                      <div class="timeline-content">
+                        <strong>{{ activity.activity }}</strong>
+                        <span>{{ formatDate(activity.date) }}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              </div>
 
-              <article class="overview-panel card">
-                <div class="panel-heading">
-                  <div>
-                    <span class="eyebrow">BOOKINGS</span>
-                    <h2>Booking Summary</h2>
-                  </div>
-                  <button
-                    *ngIf="overview.bookings.length > 0"
-                    type="button"
-                    class="text-button"
-                    (click)="setActiveTab('BOOKINGS')"
-                  >
-                    View all
-                  </button>
-                </div>
+              <aside class="dashboard-sidebar">
+                <article class="quick-actions-card card">
+                  <h3>Quick Actions</h3>
 
-                <div *ngIf="!hasActiveBookings" class="panel-empty">
-                  <span class="material-symbols-outlined">airplane_ticket</span>
-                  <h3>{{ bookings.length === 0 ? 'No bookings yet' : 'No active bookings' }}</h3>
-                  <p>
-                    {{
-                      bookings.length === 0
-                        ? 'Add hotel, transport or activity booking details.'
-                        : 'Your previous booking was cancelled. You can book again or add another existing booking.'
-                    }}
-                  </p>
-                  <div *ngIf="canEditTrip" class="empty-booking-actions">
-                    <button type="button" class="btn btn-primary compact" (click)="openBookNow()">
-                      Book inside TripMate
-                    </button>
-                    <button type="button" class="btn btn-secondary compact" (click)="openBookingModal()">
-                      Add Existing
-                    </button>
-                  </div>
-                </div>
-
-                <div *ngIf="hasActiveBookings" class="booking-summary-list">
-                  <div
-                    *ngFor="let booking of overview.bookings.slice(0, 6)"
-                    class="booking-summary-row"
-                  >
-                    <div class="booking-summary-icon">
-                      <span class="material-symbols-outlined">
-                        {{ getDashboardBookingIcon(booking) }}
-                      </span>
-                    </div>
-                    <div class="booking-summary-info">
-                      <strong>{{ booking.providerName }}</strong>
-                      <span>{{ formatBookingType(booking.bookingType) }}</span>
-                    </div>
-                    <span class="booking-status" [attr.data-status]="booking.status">
-                      {{ booking.status }}
+                  <button type="button" class="quick-action-row" (click)="setActiveTab('ITINERARY')">
+                    <span class="quick-action-icon blue">
+                      <span class="material-symbols-outlined">add</span>
                     </span>
+                    <span>Add Itinerary</span>
+                    <span class="material-symbols-outlined arrow">chevron_right</span>
+                  </button>
+
+                  <button type="button" class="quick-action-row" (click)="setActiveTab('EXPENSES')">
+                    <span class="quick-action-icon green">
+                      <span class="material-symbols-outlined">currency_rupee</span>
+                    </span>
+                    <span>Add Expense</span>
+                    <span class="material-symbols-outlined arrow">chevron_right</span>
+                  </button>
+
+                  <button type="button" class="quick-action-row" (click)="openBookNow()">
+                    <span class="quick-action-icon orange">
+                      <span class="material-symbols-outlined">confirmation_number</span>
+                    </span>
+                    <span>Add Booking</span>
+                    <span class="material-symbols-outlined arrow">chevron_right</span>
+                  </button>
+
+                  <button type="button" class="quick-action-row" (click)="setActiveTab('DOCUMENTS')">
+                    <span class="quick-action-icon violet">
+                      <span class="material-symbols-outlined">upload</span>
+                    </span>
+                    <span>Upload Document</span>
+                    <span class="material-symbols-outlined arrow">chevron_right</span>
+                  </button>
+                </article>
+
+                <article class="sidebar-members-card card">
+                  <div class="sidebar-heading">
+                    <h3>Trip Members ({{ overview.memberCount }})</h3>
+                    <button type="button" class="text-link" (click)="setActiveTab('MEMBERS')">
+                      Manage
+                    </button>
                   </div>
-                </div>
-              </article>
-            </div>
 
-            <div class="overview-footer-grid">
-              <article class="info-card card">
-                <span class="material-symbols-outlined">calendar_month</span>
-                <div>
-                  <span class="summary-label">Trip Dates</span>
-                  <strong>{{ formatDate(overview.startDate) }} – {{ formatDate(overview.endDate) }}</strong>
-                </div>
-              </article>
+                  <div class="sidebar-member-list">
+                    <div *ngFor="let member of members.slice(0, 5)" class="sidebar-member-row">
+                      <div class="sidebar-avatar">
+                        {{ member.userName?.charAt(0)?.toUpperCase() || '?' }}
+                      </div>
+                      <div>
+                        <strong>{{ member.userName }}</strong>
+                        <span>{{ member.role === 'OWNER' ? 'Organizer' : formatMemberRole(member.role) }}</span>
+                      </div>
+                    </div>
+                  </div>
 
-              <article class="info-card card">
-                <span class="material-symbols-outlined">travel_explore</span>
-                <div>
-                  <span class="summary-label">Trip Type</span>
-                  <strong>{{ formatTripType(overview.tripType) }}</strong>
-                </div>
-              </article>
-
-              <article class="info-card card">
-                <span class="material-symbols-outlined">location_on</span>
-                <div>
-                  <span class="summary-label">Destination</span>
-                  <strong>{{ overview.destination }}</strong>
-                </div>
-              </article>
+                  <div *ngIf="members.length === 0" class="sidebar-members-empty">
+                    No member details loaded.
+                  </div>
+                </article>
+              </aside>
             </div>
           </ng-container>
+        </section>
+
+        <section *ngIf="activeTab === 'ITINERARY'" class="tab-content">
+          <article class="feature-panel card">
+            <div class="feature-panel-heading">
+              <div>
+                <span class="eyebrow">ITINERARY</span>
+                <h2>Trip Itinerary</h2>
+              </div>
+            </div>
+
+            <div *ngIf="dashboard?.upcomingActivities?.length; else noItinerary" class="timeline-list full-timeline">
+              <div *ngFor="let activity of dashboard?.upcomingActivities" class="timeline-row">
+                <div class="timeline-time">{{ formatActivityTime(activity.time) }}</div>
+                <div class="timeline-track">
+                  <span class="timeline-dot"></span>
+                  <span class="timeline-line"></span>
+                </div>
+                <div class="timeline-content">
+                  <strong>{{ activity.activity }}</strong>
+                  <span>{{ formatDate(activity.date) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #noItinerary>
+              <div class="dashboard-empty">
+                <span class="material-symbols-outlined">route</span>
+                <h3>No itinerary added yet</h3>
+                <p>Your planned activities will appear here.</p>
+              </div>
+            </ng-template>
+          </article>
+        </section>
+
+        <section *ngIf="activeTab === 'PLACES'" class="tab-content">
+          <article class="feature-panel card">
+            <div class="dashboard-empty">
+              <span class="material-symbols-outlined">place</span>
+              <h3>Places</h3>
+              <p>Saved places for this trip will appear here.</p>
+            </div>
+          </article>
+        </section>
+
+        <section *ngIf="activeTab === 'EXPENSES'" class="tab-content">
+          <div class="compact-summary-grid expenses-summary">
+            <article class="compact-stat card">
+              <span class="stat-label">Total Budget</span>
+              <strong>{{ formatCurrency(dashboard?.budget || 0) }}</strong>
+            </article>
+            <article class="compact-stat card">
+              <span class="stat-label">Total Spent</span>
+              <strong class="spent-value">{{ formatCurrency(dashboard?.totalExpenses || 0) }}</strong>
+            </article>
+            <article class="compact-stat card">
+              <span class="stat-label">Remaining</span>
+              <strong class="remaining-value">{{ formatCurrency(dashboard?.remainingBudget || 0) }}</strong>
+            </article>
+          </div>
+        </section>
+
+        <section *ngIf="activeTab === 'DOCUMENTS'" class="tab-content">
+          <article class="feature-panel card">
+            <div class="dashboard-empty">
+              <span class="material-symbols-outlined">folder_open</span>
+              <h3>Documents</h3>
+              <p>{{ dashboard?.documentCount || 0 }} document{{ (dashboard?.documentCount || 0) === 1 ? '' : 's' }} currently saved for this trip.</p>
+            </div>
+          </article>
         </section>
 
         <section *ngIf="activeTab === 'BOOKINGS'" class="tab-content">
@@ -1872,7 +1873,472 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS' | 'MEMBERS';
       to { transform: rotate(360deg); }
     }
 
+    .trip-header {
+      padding: 1.4rem 1.6rem;
+      margin-bottom: 0;
+      border-radius: 16px 16px 0 0;
+      border-bottom: 0;
+      box-shadow: none;
+    }
+
+    .trip-header-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+
+    .title-row h1 {
+      margin: 0;
+      color: #0f172a;
+      font-size: 1.55rem;
+      letter-spacing: -0.025em;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      padding: 0.22rem 0.48rem;
+      border-radius: 999px;
+      color: #047857;
+      background: #d1fae5;
+      font-size: 0.62rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .status-chip[data-status='PLANNED'] {
+      color: #b45309;
+      background: #fef3c7;
+    }
+
+    .status-chip[data-status='ONGOING'] {
+      color: #1d4ed8;
+      background: #dbeafe;
+    }
+
+    .status-chip[data-status='COMPLETED'],
+    .status-chip[data-status='CANCELLED'] {
+      color: #475569;
+      background: #e2e8f0;
+    }
+
+    .trip-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      margin-top: 0.5rem;
+      color: #64748b;
+      font-size: 0.78rem;
+    }
+
+    .trip-meta-row > span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .trip-meta-row .material-symbols-outlined {
+      color: #2563eb;
+      font-size: 1rem;
+    }
+
+    .trip-header-description {
+      max-width: 760px;
+      margin: 0.7rem 0 0;
+      color: #64748b;
+      font-size: 0.82rem;
+    }
+
+    .trip-header-actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-shrink: 0;
+    }
+
+    .btn-outline {
+      color: #0f172a;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+    }
+
+    .dashboard-tabs {
+      margin-top: 0;
+      border-radius: 0 0 16px 16px;
+      border-top: 1px solid #eef2f7;
+      box-shadow: none;
+    }
+
+    .dashboard-tabs .tab-btn {
+      position: relative;
+      padding: 0.85rem 1rem;
+      border-radius: 0;
+      color: #64748b;
+      background: transparent;
+    }
+
+    .dashboard-tabs .tab-btn.active {
+      color: #2563eb;
+      background: transparent;
+    }
+
+    .dashboard-tabs .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      right: 0.9rem;
+      bottom: 0;
+      left: 0.9rem;
+      height: 2px;
+      background: #2563eb;
+      border-radius: 999px;
+    }
+
+    .dashboard-overview {
+      padding-top: 1rem;
+    }
+
+    .dashboard-main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .dashboard-left {
+      min-width: 0;
+    }
+
+    .compact-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .compact-stat {
+      min-height: 82px;
+      padding: 0.95rem 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+    }
+
+    .stat-label {
+      display: block;
+      margin-bottom: 0.4rem;
+      color: #64748b;
+      font-size: 0.62rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .compact-stat strong {
+      color: #0f172a;
+      font-size: 1rem;
+    }
+
+    .compact-stat .spent-value {
+      color: #2563eb;
+    }
+
+    .compact-stat .remaining-value {
+      color: #16a34a;
+    }
+
+    .itinerary-board {
+      min-height: 355px;
+      padding: 1.15rem;
+      border-radius: 12px;
+    }
+
+    .section-heading-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-heading-row h2 {
+      margin: 0;
+      color: #0f172a;
+      font-size: 1rem;
+    }
+
+    .section-heading-row p {
+      margin: 0.15rem 0 0;
+      color: #94a3b8;
+      font-size: 0.7rem;
+    }
+
+    .mini-action {
+      border: 0;
+      color: #2563eb;
+      background: #eff6ff;
+      padding: 0.45rem 0.7rem;
+      border-radius: 8px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .timeline-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 68px 20px minmax(0, 1fr);
+      gap: 0.7rem;
+      min-height: 58px;
+    }
+
+    .timeline-time {
+      padding-top: 0.1rem;
+      color: #64748b;
+      font-size: 0.68rem;
+      font-weight: 750;
+      text-align: right;
+    }
+
+    .timeline-track {
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+
+    .timeline-dot {
+      position: relative;
+      z-index: 2;
+      width: 7px;
+      height: 7px;
+      margin-top: 0.3rem;
+      border-radius: 50%;
+      background: #2563eb;
+    }
+
+    .timeline-line {
+      position: absolute;
+      top: 0.8rem;
+      bottom: 0;
+      width: 1px;
+      background: #dbeafe;
+    }
+
+    .timeline-row:last-child .timeline-line {
+      display: none;
+    }
+
+    .timeline-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.18rem;
+      padding-bottom: 0.8rem;
+    }
+
+    .timeline-content strong {
+      color: #0f172a;
+      font-size: 0.78rem;
+    }
+
+    .timeline-content span {
+      color: #94a3b8;
+      font-size: 0.68rem;
+    }
+
+    .dashboard-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .quick-actions-card,
+    .sidebar-members-card {
+      padding: 1rem;
+      border-radius: 12px;
+    }
+
+    .quick-actions-card h3,
+    .sidebar-members-card h3 {
+      margin: 0 0 0.8rem;
+      color: #0f172a;
+      font-size: 0.86rem;
+    }
+
+    .quick-action-row {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr) 20px;
+      align-items: center;
+      gap: 0.65rem;
+      width: 100%;
+      padding: 0.65rem 0.55rem;
+      margin-bottom: 0.45rem;
+      border: 0;
+      border-radius: 9px;
+      color: #334155;
+      background: #f8fafc;
+      font-size: 0.72rem;
+      font-weight: 750;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .quick-action-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .quick-action-icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+    }
+
+    .quick-action-icon .material-symbols-outlined {
+      font-size: 1rem;
+    }
+
+    .quick-action-icon.blue { color: #2563eb; background: #eff6ff; }
+    .quick-action-icon.green { color: #16a34a; background: #ecfdf5; }
+    .quick-action-icon.orange { color: #d97706; background: #fff7ed; }
+    .quick-action-icon.violet { color: #7c3aed; background: #f5f3ff; }
+
+    .quick-action-row .arrow {
+      color: #94a3b8;
+      font-size: 1rem;
+    }
+
+    .sidebar-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+    }
+
+    .text-link {
+      padding: 0;
+      border: 0;
+      color: #2563eb;
+      background: transparent;
+      font-size: 0.66rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .sidebar-member-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .sidebar-member-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .sidebar-avatar {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #fff;
+      background: linear-gradient(135deg, #0f172a, #2563eb);
+      font-size: 0.72rem;
+      font-weight: 850;
+    }
+
+    .sidebar-member-row > div:last-child {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+    }
+
+    .sidebar-member-row strong {
+      overflow: hidden;
+      color: #0f172a;
+      font-size: 0.72rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-member-row span {
+      color: #94a3b8;
+      font-size: 0.62rem;
+    }
+
+    .sidebar-members-empty {
+      color: #94a3b8;
+      font-size: 0.7rem;
+    }
+
+    .dashboard-empty {
+      display: grid;
+      min-height: 220px;
+      place-items: center;
+      align-content: center;
+      color: #94a3b8;
+      text-align: center;
+    }
+
+    .dashboard-empty .material-symbols-outlined {
+      font-size: 2.4rem;
+      color: #bfdbfe;
+    }
+
+    .dashboard-empty h3 {
+      margin: 0.4rem 0 0.2rem;
+      color: #0f172a;
+      font-size: 0.95rem;
+    }
+
+    .dashboard-empty p {
+      margin: 0;
+      font-size: 0.76rem;
+    }
+
+    .feature-panel {
+      min-height: 360px;
+      padding: 1.2rem;
+    }
+
+    .feature-panel-heading h2 {
+      margin: 0.15rem 0 1rem;
+      font-size: 1.05rem;
+    }
+
+    .full-timeline {
+      max-width: 760px;
+    }
+
+    .expenses-summary {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     @media (max-width: 1050px) {
+      .dashboard-main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-sidebar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .compact-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .summary-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
@@ -1881,6 +2347,35 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS' | 'MEMBERS';
     @media (max-width: 760px) {
       .trip-details-container {
         padding: 1rem 0.85rem 3rem;
+      }
+
+      .trip-header-main,
+      .section-heading-row {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .trip-header-actions,
+      .trip-header-actions .btn {
+        width: 100%;
+      }
+
+      .dashboard-tabs {
+        overflow-x: auto;
+        justify-content: flex-start;
+      }
+
+      .dashboard-tabs .tab-btn {
+        flex: 0 0 auto;
+      }
+
+      .dashboard-sidebar {
+        grid-template-columns: 1fr;
+      }
+
+      .compact-summary-grid,
+      .expenses-summary {
+        grid-template-columns: 1fr 1fr;
       }
 
       .hero-banner {
@@ -2117,10 +2612,18 @@ export class TripDetailsComponent implements OnInit {
       this.loadTripDetails();
       this.loadDashboard();
       this.loadBookings();
+      this.loadMembers();
     } else if (tab === 'BOOKINGS') {
       this.loadBookings();
     } else if (tab === 'MEMBERS') {
       this.loadMembers();
+      this.loadDashboard();
+    } else if (
+      tab === 'ITINERARY' ||
+      tab === 'EXPENSES' ||
+      tab === 'DOCUMENTS' ||
+      tab === 'PLACES'
+    ) {
       this.loadDashboard();
     }
   }
@@ -2244,6 +2747,43 @@ export class TripDetailsComponent implements OnInit {
         this.membersError = err?.error?.message || 'Unable to remove member.';
       }
     });
+  }
+
+  get tripDurationDays(): number {
+    if (!this.trip) return 0;
+    const start = new Date(`${this.trip.startDate}T00:00:00`);
+    const end = new Date(`${this.trip.endDate}T00:00:00`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+    return Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
+  }
+
+  get itineraryHeading(): string {
+    const firstActivity = this.dashboard?.upcomingActivities?.[0];
+    if (!firstActivity) return 'Upcoming Itinerary';
+
+    const today = new Date();
+    const todayKey = today.toISOString().slice(0, 10);
+    return firstActivity.date === todayKey ? "Today's Itinerary" : 'Upcoming Itinerary';
+  }
+
+  get itinerarySubheading(): string {
+    const firstActivity = this.dashboard?.upcomingActivities?.[0];
+    if (!firstActivity) return 'Plan your day-by-day trip activities.';
+    return this.formatDate(firstActivity.date);
+  }
+
+  formatMemberRole(role: TripRole): string {
+    if (role === 'EDITOR') return 'Contributor';
+    if (role === 'VIEWER') return 'Viewer';
+    return 'Organizer';
+  }
+
+  openShareTrip(): void {
+    if (this.canManageMembers) {
+      this.openAddMemberModal();
+      return;
+    }
+    this.setActiveTab('MEMBERS');
   }
 
   budgetProgressWidth(value: number): number {
