@@ -1,6 +1,6 @@
 export type BookingType = 'HOTEL' | 'TRANSPORT' | 'ACTIVITY';
 export type TransportType = 'FLIGHT' | 'TRAIN' | 'BUS' | 'CAB' | 'OTHER';
-export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
 
 export interface Booking {
   id: number;

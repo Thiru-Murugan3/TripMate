@@ -57,3 +57,34 @@ export interface TripMember {
   memberStatus: MemberStatus;
   joinedAt?: string;
 }
+
+
+export interface TripDashboardActivity {
+  activity: string;
+  date: string;
+  time?: string;
+}
+
+export interface TripDashboardBooking {
+  bookingType: 'HOTEL' | 'TRANSPORT' | 'ACTIVITY';
+  providerName: string;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+}
+
+export interface TripDashboard {
+  tripId: number;
+  tripName: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  tripType: TripType;
+  travelerCount: number;
+  budget: number;
+  totalExpenses: number;
+  remainingBudget: number;
+  budgetUtilizationPercentage: number;
+  upcomingActivities: TripDashboardActivity[];
+  bookings: TripDashboardBooking[];
+  documentCount: number;
+  memberCount: number;
+}

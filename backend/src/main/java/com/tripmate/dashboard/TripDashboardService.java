@@ -9,6 +9,7 @@ import com.tripmate.itinerary.ItineraryDay;
 import com.tripmate.itinerary.ItineraryDayRepository;
 import com.tripmate.itinerary.ItineraryItem;
 import com.tripmate.member.MemberStatus;
+import com.tripmate.member.TripMember;
 import com.tripmate.member.TripMemberRepository;
 import com.tripmate.trip.Trip;
 import com.tripmate.trip.TripRepository;
@@ -20,8 +21,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -60,20 +66,10 @@ public class TripDashboardService {
                     .doubleValue();
         }
 
-        // Upcoming Activities
+        // Upcoming Activities: only today/future activities are shown on the dashboard.
         List<ItineraryDay> days = itineraryDayRepository.findByTripIdOrderByDayNumberAsc(tripId);
-        List<TripDashboardResponse.UpcomingActivityResponse> upcomingActivities = new ArrayList<>();
-        for (ItineraryDay day : days) {
-            if (day.getItems() != null) {
-                for (ItineraryItem item : day.getItems()) {
-                    upcomingActivities.add(TripDashboardResponse.UpcomingActivityResponse.builder()
-                            .activity(item.getTitle())
-                            .date(day.getDayDate())
-                            .time(item.getStartTime())
-                            .build());
-                }
-            }
-        }
+        List<TripDashboardResponse.UpcomingActivityResponse> upcomingActivities =
+                buildUpcomingActivities(trip, days);
 
         // Bookings
         List<Booking> bookingsList = bookingRepository.findByTripIdOrderByStartDatetimeAscIdDesc(tripId);
@@ -88,9 +84,17 @@ public class TripDashboardService {
         // Counts
         long documentCount = documentRepository.findByTripIdOrderByCreatedAtDesc(tripId).size();
 
-        // Member count includes owner + active members
-        long activeMemberCount = tripMemberRepository.findByTripIdAndMemberStatus(tripId, MemberStatus.ACTIVE).size();
-        long totalMemberCount = 1 + activeMemberCount; // 1 for owner
+        // Count active trip users once. The owner is normally stored in trip_members as OWNER.
+        List<TripMember> activeMembers =
+                tripMemberRepository.findByTripIdAndMemberStatus(tripId, MemberStatus.ACTIVE);
+        Set<Long> activeUserIds = new HashSet<>();
+        for (TripMember member : activeMembers) {
+            if (member.getUser() != null && member.getUser().getId() != null) {
+                activeUserIds.add(member.getUser().getId());
+            }
+        }
+        activeUserIds.add(trip.getOwner().getId());
+        long totalMemberCount = activeUserIds.size();
 
         return TripDashboardResponse.builder()
                 .tripId(trip.getId())
@@ -109,6 +113,53 @@ public class TripDashboardService {
                 .documentCount(documentCount)
                 .memberCount(totalMemberCount)
                 .build();
+    }
+
+    private List<TripDashboardResponse.UpcomingActivityResponse> buildUpcomingActivities(
+            Trip trip,
+            List<ItineraryDay> days
+    ) {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        List<TripDashboardResponse.UpcomingActivityResponse> activities = new ArrayList<>();
+
+        for (ItineraryDay day : days) {
+            LocalDate activityDate = day.getDayDate();
+            if (activityDate == null && trip.getStartDate() != null && day.getDayNumber() != null) {
+                activityDate = trip.getStartDate().plusDays(Math.max(0, day.getDayNumber() - 1L));
+            }
+
+            if (activityDate == null || activityDate.isBefore(today) || day.getItems() == null) {
+                continue;
+            }
+
+            for (ItineraryItem item : day.getItems()) {
+                if (activityDate.equals(today)
+                        && item.getStartTime() != null
+                        && item.getStartTime().isBefore(now)) {
+                    continue;
+                }
+
+                activities.add(TripDashboardResponse.UpcomingActivityResponse.builder()
+                        .activity(item.getTitle())
+                        .date(activityDate)
+                        .time(item.getStartTime())
+                        .build());
+            }
+        }
+
+        activities.sort(
+                Comparator.comparing(
+                                TripDashboardResponse.UpcomingActivityResponse::getDate,
+                                Comparator.nullsLast(Comparator.naturalOrder())
+                        )
+                        .thenComparing(
+                                TripDashboardResponse.UpcomingActivityResponse::getTime,
+                                Comparator.nullsLast(Comparator.naturalOrder())
+                        )
+        );
+
+        return activities;
     }
 
     private void verifyCanView(Trip trip, Long userId) {
