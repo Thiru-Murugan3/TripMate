@@ -422,7 +422,7 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
                     <option value="FLIGHT">Flight</option>
                     <option value="TRAIN">Train</option>
                     <option value="BUS">Bus</option>
-                    <option value="CAB">Cab</option>
+                    <option value="TAXI">Taxi / Cab</option>
                     <option value="OTHER">Other</option>
                   </select>
                 </div>

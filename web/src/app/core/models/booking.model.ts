@@ -1,5 +1,5 @@
 export type BookingType = 'HOTEL' | 'TRANSPORT' | 'ACTIVITY';
-export type TransportType = 'FLIGHT' | 'TRAIN' | 'BUS' | 'CAB' | 'OTHER';
+export type TransportType = 'CAR' | 'BIKE' | 'BUS' | 'TRAIN' | 'FLIGHT' | 'TAXI' | 'AUTO' | 'METRO' | 'RENTAL_CAR' | 'OTHER';
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
 export type BookingSource = 'EXTERNAL_MANUAL' | 'TRIPMATE_SANDBOX' | 'TRIPMATE_PROVIDER';
 export type PaymentStatus = 'NOT_REQUIRED' | 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';

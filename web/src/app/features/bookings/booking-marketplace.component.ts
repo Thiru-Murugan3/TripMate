@@ -10,10 +10,10 @@ import {
   BookingType,
   BookNowResponse,
   TransportType
-} from '../../../core/models/booking.model';
-import { Trip } from '../../../core/models/trip.model';
-import { BookingService } from '../../../core/services/booking.service';
-import { TripService } from '../../../core/services/trip.service';
+} from '../../core/models/booking.model';
+import { Trip } from '../../core/models/trip.model';
+import { BookingService } from '../../core/services/booking.service';
+import { TripService } from '../../core/services/trip.service';
 
 type MarketplaceStep = 'SEARCH' | 'RESULTS' | 'TRAVELER' | 'CONFIRMED';
 
