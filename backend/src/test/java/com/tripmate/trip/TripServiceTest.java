@@ -116,6 +116,7 @@ class TripServiceTest {
         assertEquals("Goa Trip", response.name());
         assertEquals("Goa", response.destination());
         assertEquals(TripStatus.UPCOMING, response.status());
+        assertEquals(TripRole.OWNER, response.userRole());
 
         verify(tripMemberRepository, times(1)).save(any(TripMember.class));
         verify(auditLogService, times(1)).log(eq(1L), eq(10L), any(), any(), eq(10L), any());
@@ -154,27 +155,36 @@ class TripServiceTest {
         assertNotNull(response);
         assertEquals(10L, response.id());
         assertEquals("Goa Trip", response.name());
+        assertEquals(TripRole.OWNER, response.userRole());
     }
 
     @Test
     @DisplayName("getTripById: Active member can view trip details")
     void getTripById_ActiveMember_Success() {
+        TripMember editorMember = TripMember.builder()
+                .trip(trip)
+                .user(editorUser)
+                .role(TripRole.EDITOR)
+                .memberStatus(MemberStatus.ACTIVE)
+                .build();
+
         when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
-        when(tripMemberRepository.existsByTripIdAndUserIdAndMemberStatus(10L, 2L, MemberStatus.ACTIVE))
-                .thenReturn(true);
+        when(tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(10L, 2L, MemberStatus.ACTIVE))
+                .thenReturn(Optional.of(editorMember));
 
         TripResponse response = tripService.getTripById(10L, 2L);
 
         assertNotNull(response);
         assertEquals(10L, response.id());
+        assertEquals(TripRole.EDITOR, response.userRole());
     }
 
     @Test
     @DisplayName("getTripById: Outside user cannot view trip and gets 403 FORBIDDEN")
     void getTripById_OutsideUser_ThrowsForbidden() {
         when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
-        when(tripMemberRepository.existsByTripIdAndUserIdAndMemberStatus(10L, 99L, MemberStatus.ACTIVE))
-                .thenReturn(false);
+        when(tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(10L, 99L, MemberStatus.ACTIVE))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> tripService.getTripById(10L, 99L));
@@ -220,6 +230,7 @@ class TripServiceTest {
         assertEquals("Updated Goa Trip", response.name());
         assertEquals("North Goa", response.destination());
         assertEquals(TripType.COUPLE, response.tripType());
+        assertEquals(TripRole.OWNER, response.userRole());
     }
 
     @Test
@@ -254,6 +265,7 @@ class TripServiceTest {
 
         assertNotNull(response);
         assertEquals(4, response.travelerCount());
+        assertEquals(TripRole.EDITOR, response.userRole());
     }
 
     @Test
@@ -345,6 +357,8 @@ class TripServiceTest {
         assertNotNull(myTrips);
         assertEquals(2, myTrips.size());
         assertEquals("Manali Trip", myTrips.get(0).name()); // Starts later (plusDays 15)
+        assertEquals(TripRole.EDITOR, myTrips.get(0).userRole());
         assertEquals("Goa Trip", myTrips.get(1).name());    // Starts earlier (plusDays 5)
+        assertEquals(TripRole.OWNER, myTrips.get(1).userRole());
     }
 }

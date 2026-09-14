@@ -1,5 +1,7 @@
 package com.tripmate.trip;
 
+import com.tripmate.member.TripRole;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,10 +20,15 @@ public record TripResponse(
         TripStatus status,
         Long ownerId,
         String ownerName,
+        TripRole userRole,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
     public static TripResponse from(Trip trip) {
+        return from(trip, TripRole.OWNER);
+    }
+
+    public static TripResponse from(Trip trip, TripRole userRole) {
         return new TripResponse(
                 trip.getId(),
                 trip.getName(),
@@ -36,6 +43,7 @@ public record TripResponse(
                 resolveDisplayStatus(trip),
                 trip.getOwner().getId(),
                 trip.getOwner().getName(),
+                userRole,
                 trip.getCreatedAt(),
                 trip.getUpdatedAt()
         );

@@ -17,7 +17,7 @@ export interface Trip {
   status: TripStatus;
   ownerId: number;
   ownerName: string;
-  userRole?: TripRole;
+  userRole: TripRole;
   createdAt: string;
   updatedAt: string;
 }

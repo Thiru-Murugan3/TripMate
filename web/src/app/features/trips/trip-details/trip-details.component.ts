@@ -6,7 +6,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
   Trip,
   TripDashboard,
-  TripDashboardBooking
+  TripDashboardBooking,
+  TripType,
+  UpdateTripRequest
 } from '../../../core/models/trip.model';
 import {
   Booking,
@@ -72,13 +74,22 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
             <p class="description" *ngIf="currentTrip.description">{{ currentTrip.description }}</p>
           </div>
 
-          <div class="hero-actions">
+          <div class="hero-actions" *ngIf="canEditTrip">
+            <button type="button" (click)="openEditTripModal()" class="btn btn-light">
+              <span class="material-symbols-outlined">edit</span>
+              Edit Trip
+            </button>
             <button type="button" (click)="openBookNow()" class="btn btn-primary">
               <span class="material-symbols-outlined">travel_explore</span>
               Book Now
             </button>
           </div>
         </section>
+
+        <div *ngIf="tripUpdateMessage" class="success-banner">
+          <span class="material-symbols-outlined">check_circle</span>
+          {{ tripUpdateMessage }}
+        </div>
 
         <nav class="details-tabs" aria-label="Trip details sections">
           <button
@@ -252,7 +263,7 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
                   <span class="material-symbols-outlined">airplane_ticket</span>
                   <h3>No bookings yet</h3>
                   <p>Add hotel, transport or activity booking details.</p>
-                  <div class="empty-booking-actions">
+                  <div *ngIf="canEditTrip" class="empty-booking-actions">
                     <button type="button" class="btn btn-primary compact" (click)="openBookNow()">
                       Book inside TripMate
                     </button>
@@ -330,7 +341,7 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
             <span class="material-symbols-outlined empty-icon">airplane_ticket</span>
             <h3>No bookings added yet</h3>
             <p>Add flight, hotel, train or activity bookings to keep your trip information together.</p>
-            <div class="empty-booking-actions">
+            <div *ngIf="canEditTrip" class="empty-booking-actions">
               <button type="button" (click)="openBookNow()" class="btn btn-primary">
                 <span class="material-symbols-outlined">travel_explore</span>
                 Book inside TripMate
@@ -388,6 +399,90 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
             </article>
           </div>
         </section>
+
+        <div *ngIf="showEditTripModal" class="modal-backdrop" (click)="closeEditTripModal()">
+          <div class="modal-content edit-trip-modal card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <div>
+                <h3>Edit Trip</h3>
+                <p>Update the trip details. Changes are saved for everyone who has access to this trip.</p>
+              </div>
+              <button type="button" (click)="closeEditTripModal()" class="close-btn" aria-label="Close">
+                &times;
+              </button>
+            </div>
+
+            <div *ngIf="editTripError" class="alert-danger">{{ editTripError }}</div>
+
+            <form [formGroup]="editTripForm" (ngSubmit)="onEditTripSubmit()">
+              <div class="form-group">
+                <label class="form-label">Trip Name *</label>
+                <input class="form-control" formControlName="name" maxlength="160" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Destination *</label>
+                <input class="form-control" formControlName="destination" maxlength="180" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label class="form-label">Trip Type *</label>
+                  <select class="form-control" formControlName="tripType">
+                    <option *ngFor="let type of tripTypes" [value]="type">
+                      {{ formatTripType(type) }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="form-group half">
+                  <label class="form-label">Travelers *</label>
+                  <input type="number" class="form-control" formControlName="travelerCount" min="1" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label class="form-label">Start Date *</label>
+                  <input type="date" class="form-control" formControlName="startDate" />
+                </div>
+                <div class="form-group half">
+                  <label class="form-label">End Date *</label>
+                  <input type="date" class="form-control" formControlName="endDate" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Budget (₹)</label>
+                <input type="number" class="form-control" formControlName="budget" min="0" step="1" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" formControlName="description" rows="3"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Cover Image URL</label>
+                <input class="form-control" formControlName="coverImageUrl" maxlength="500" />
+              </div>
+
+              <div class="edit-note">
+                <span class="material-symbols-outlined">info</span>
+                Ongoing and Completed status are calculated automatically from the trip dates.
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" (click)="closeEditTripModal()">
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="editTripForm.invalid || isUpdatingTrip">
+                  {{ isUpdatingTrip ? 'Saving...' : 'Save Changes' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
 
         <div *ngIf="showBookingModal" class="modal-backdrop" (click)="closeBookingModal()">
           <div class="modal-content card" (click)="$event.stopPropagation()">
@@ -646,7 +741,23 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
     }
 
     .hero-actions {
+      display: flex;
       flex-shrink: 0;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .success-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1rem;
+      margin-bottom: 1rem;
+      color: #047857;
+      background: #d1fae5;
+      border: 1px solid #a7f3d0;
+      border-radius: 12px;
+      font-weight: 700;
     }
 
     .details-tabs {
@@ -1137,6 +1248,32 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
       margin: 0;
     }
 
+    .modal-header p {
+      margin: 0.25rem 0 0;
+      color: #64748b;
+      font-size: 0.82rem;
+    }
+
+    .edit-trip-modal {
+      width: min(100%, 680px);
+    }
+
+    .edit-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      padding: 0.7rem 0.8rem;
+      color: #475569;
+      background: #f8fafc;
+      border-radius: 9px;
+      font-size: 0.78rem;
+    }
+
+    .edit-note .material-symbols-outlined {
+      font-size: 1rem;
+      color: #2563eb;
+    }
+
     .close-btn {
       color: #64748b;
       background: none;
@@ -1206,6 +1343,11 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
     .btn-primary {
       color: #ffffff;
       background: #2563eb;
+    }
+
+    .btn-light {
+      color: #0f172a;
+      background: #ffffff;
     }
 
     .btn-secondary {
@@ -1314,6 +1456,25 @@ export class TripDetailsComponent implements OnInit {
   isSubmittingBooking = false;
   bookingModalError = '';
 
+  showEditTripModal = false;
+  isUpdatingTrip = false;
+  editTripError = '';
+  tripUpdateMessage = '';
+
+  readonly tripTypes: TripType[] = ['ADVENTURE', 'FAMILY', 'COUPLE', 'FRIENDS', 'SOLO'];
+
+  editTripForm = this.fb.group({
+    name: ['', [Validators.required, Validators.maxLength(160)]],
+    destination: ['', [Validators.required, Validators.maxLength(180)]],
+    tripType: ['FRIENDS' as TripType, Validators.required],
+    startDate: ['', Validators.required],
+    endDate: ['', Validators.required],
+    travelerCount: [1, [Validators.required, Validators.min(1)]],
+    budget: [0, [Validators.required, Validators.min(0)]],
+    description: [''],
+    coverImageUrl: ['', Validators.maxLength(500)]
+  });
+
   bookingForm = this.fb.group({
     bookingType: ['TRANSPORT' as BookingType, Validators.required],
     transportType: ['FLIGHT' as TransportType],
@@ -1326,6 +1487,10 @@ export class TripDetailsComponent implements OnInit {
     amount: [0, [Validators.required, Validators.min(0)]],
     notes: ['']
   });
+
+  get canEditTrip(): boolean {
+    return this.trip?.userRole === 'OWNER' || this.trip?.userRole === 'EDITOR';
+  }
 
   ngOnInit(): void {
     this.tripId = Number(this.route.snapshot.paramMap.get('id'));
@@ -1492,6 +1657,84 @@ export class TripDetailsComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  openEditTripModal(): void {
+    if (!this.trip || !this.canEditTrip) return;
+
+    this.editTripError = '';
+    this.tripUpdateMessage = '';
+    this.editTripForm.reset({
+      name: this.trip.name,
+      destination: this.trip.destination,
+      tripType: this.trip.tripType,
+      startDate: this.trip.startDate,
+      endDate: this.trip.endDate,
+      travelerCount: this.trip.travelerCount,
+      budget: this.trip.budget ?? 0,
+      description: this.trip.description ?? '',
+      coverImageUrl: this.trip.coverImageUrl ?? ''
+    });
+    this.showEditTripModal = true;
+  }
+
+  closeEditTripModal(): void {
+    if (this.isUpdatingTrip) return;
+    this.showEditTripModal = false;
+    this.editTripError = '';
+  }
+
+  onEditTripSubmit(): void {
+    if (!this.trip || !this.canEditTrip || this.editTripForm.invalid) return;
+
+    const value = this.editTripForm.getRawValue();
+    if (value.endDate! < value.startDate!) {
+      this.editTripError = 'End date cannot be before start date.';
+      return;
+    }
+
+    this.isUpdatingTrip = true;
+    this.editTripError = '';
+
+    const request: UpdateTripRequest = {
+      name: value.name!.trim(),
+      destination: value.destination!.trim(),
+      tripType: value.tripType as TripType,
+      startDate: value.startDate!,
+      endDate: value.endDate!,
+      travelerCount: Number(value.travelerCount),
+      budget: Number(value.budget ?? 0),
+      description: value.description?.trim() || undefined,
+      coverImageUrl: value.coverImageUrl?.trim() || undefined,
+      status: this.preservedEditableStatus()
+    };
+
+    this.tripService.updateTrip(this.tripId, request).subscribe({
+      next: (updatedTrip) => {
+        this.trip = updatedTrip;
+        this.isUpdatingTrip = false;
+        this.showEditTripModal = false;
+        this.tripUpdateMessage = 'Trip details updated successfully.';
+        this.loadDashboard();
+      },
+      error: (err) => {
+        this.isUpdatingTrip = false;
+        this.editTripError = err?.error?.message || 'Unable to update the trip.';
+      }
+    });
+  }
+
+  private preservedEditableStatus(): UpdateTripRequest['status'] {
+    const status = this.trip?.status;
+    if (
+      status === 'PLANNED' ||
+      status === 'UPCOMING' ||
+      status === 'CONFIRMED' ||
+      status === 'CANCELLED'
+    ) {
+      return status;
+    }
+    return undefined;
   }
 
   openBookNow(): void {

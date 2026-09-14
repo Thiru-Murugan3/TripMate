@@ -74,18 +74,20 @@ public class TripService {
         // Audit Log
         auditLogService.log(userId, savedTrip.getId(), AuditAction.TRIP_CREATED, "TRIP", savedTrip.getId(), "Created trip: " + savedTrip.getName());
 
-        return TripResponse.from(savedTrip);
+        return TripResponse.from(savedTrip, TripRole.OWNER);
     }
 
     @Transactional(readOnly = true)
     public List<TripResponse> getMyTrips(Long userId) {
 
         Map<Long, Trip> tripMap = new LinkedHashMap<>();
+        Map<Long, TripRole> roleMap = new LinkedHashMap<>();
 
         // Trips owned by user
         List<Trip> ownedTrips = tripRepository.findByOwnerIdOrderByStartDateDesc(userId);
         for (Trip t : ownedTrips) {
             tripMap.put(t.getId(), t);
+            roleMap.put(t.getId(), TripRole.OWNER);
         }
 
         // Trips shared with user
@@ -93,12 +95,13 @@ public class TripService {
         for (TripMember member : memberships) {
             Trip t = member.getTrip();
             tripMap.putIfAbsent(t.getId(), t);
+            roleMap.putIfAbsent(t.getId(), member.getRole());
         }
 
         return new ArrayList<>(tripMap.values())
                 .stream()
                 .sorted((a, b) -> b.getStartDate().compareTo(a.getStartDate()))
-                .map(TripResponse::from)
+                .map(trip -> TripResponse.from(trip, roleMap.get(trip.getId())))
                 .toList();
     }
 
@@ -109,10 +112,10 @@ public class TripService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Trip not found"));
 
-        // Verify user has view access (Owner or active Member)
-        verifyUserCanView(trip, userId);
+        // Verify user has view access and expose the user's trip role to the client.
+        TripRole userRole = resolveUserRole(trip, userId);
 
-        return TripResponse.from(trip);
+        return TripResponse.from(trip, userRole);
     }
 
     @Transactional
@@ -125,7 +128,7 @@ public class TripService {
                         HttpStatus.NOT_FOUND, "Trip not found"));
 
         // Verify user has edit access (Owner or active Editor)
-        verifyUserCanEdit(trip, userId);
+        TripRole userRole = verifyUserCanEdit(trip, userId);
 
         trip.setName(request.name().trim());
         trip.setDestination(request.destination().trim());
@@ -148,7 +151,7 @@ public class TripService {
         // Audit Log
         auditLogService.log(userId, updatedTrip.getId(), AuditAction.TRIP_UPDATED, "TRIP", updatedTrip.getId(), "Updated trip: " + updatedTrip.getName());
 
-        return TripResponse.from(updatedTrip);
+        return TripResponse.from(updatedTrip, userRole);
     }
 
     @Transactional
@@ -189,28 +192,26 @@ public class TripService {
         }
     }
 
-    private void verifyUserCanView(Trip trip, Long userId) {
+    private TripRole resolveUserRole(Trip trip, Long userId) {
         if (trip.getOwner().getId().equals(userId)) {
-            return;
+            return TripRole.OWNER;
         }
-        boolean isMember = tripMemberRepository.existsByTripIdAndUserIdAndMemberStatus(
-                trip.getId(), userId, MemberStatus.ACTIVE);
-        if (!isMember) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN, "You do not have access to this trip");
-        }
+
+        return tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(
+                        trip.getId(), userId, MemberStatus.ACTIVE)
+                .map(TripMember::getRole)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.FORBIDDEN, "You do not have access to this trip"));
     }
 
-    private void verifyUserCanEdit(Trip trip, Long userId) {
-        if (trip.getOwner().getId().equals(userId)) {
-            return;
-        }
-        var memberOpt = tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(
-                trip.getId(), userId, MemberStatus.ACTIVE);
+    private TripRole verifyUserCanEdit(Trip trip, Long userId) {
+        TripRole role = resolveUserRole(trip, userId);
 
-        if (memberOpt.isEmpty() || memberOpt.get().getRole() == TripRole.VIEWER) {
+        if (role == TripRole.VIEWER) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, "You do not have edit permission for this trip");
         }
+
+        return role;
     }
 }
