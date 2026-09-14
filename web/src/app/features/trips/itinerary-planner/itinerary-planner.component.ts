@@ -193,7 +193,7 @@ import { PlaceService } from '../../../core/services/place.service';
         </div>
       </ng-container>
 
-      <div *ngIf="showDayModal" class="modal-backdrop" (click)="closeDayModal()">
+      <div *ngIf="showDayModal" class="modal-backdrop">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <div>
@@ -248,7 +248,7 @@ import { PlaceService } from '../../../core/services/place.service';
         </div>
       </div>
 
-      <div *ngIf="showActivityModal" class="modal-backdrop" (click)="closeActivityModal()">
+      <div *ngIf="showActivityModal" class="modal-backdrop">
         <div class="modal activity-modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <div>
