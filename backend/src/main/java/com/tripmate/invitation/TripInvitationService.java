@@ -1,6 +1,7 @@
 package com.tripmate.invitation;
 
 import com.tripmate.audit.AuditAction;
+import com.tripmate.auth.EmailService;
 import com.tripmate.audit.AuditLogService;
 import com.tripmate.member.MemberStatus;
 import com.tripmate.member.TripMember;
@@ -34,6 +35,7 @@ public class TripInvitationService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
 
     @Value("${app.frontend-url:http://localhost:4200}")
     private String frontendBaseUrl;
@@ -130,7 +132,27 @@ public class TripInvitationService {
         }
 
         // Audit Log
-        auditLogService.log(inviterUserId, tripId, AuditAction.INVITATION_CREATED, "INVITATION", saved.getId(), "Created invitation for " + (email != null ? email : mobile) + " as " + request.getRole());
+        auditLogService.log(
+                inviterUserId,
+                tripId,
+                AuditAction.INVITATION_CREATED,
+                "INVITATION",
+                saved.getId(),
+                "Created invitation for " +
+                        (email != null ? email : mobile != null ? mobile : "share link") +
+                        " as " + request.getRole()
+        );
+
+        if (invitationType == InvitationType.EMAIL) {
+            String invitationLink = buildInvitationLink(rawToken);
+            emailService.sendTripInvitationEmail(
+                    email,
+                    trip.getOwner().getName(),
+                    trip.getName(),
+                    request.getRole().name(),
+                    invitationLink
+            );
+        }
 
         return InvitationResponse.from(saved, rawToken, frontendBaseUrl);
     }
@@ -315,6 +337,21 @@ public class TripInvitationService {
 
         invitation.setStatus(InvitationStatus.CANCELLED);
         tripInvitationRepository.save(invitation);
+    }
+
+    private String buildInvitationLink(String rawToken) {
+        String normalizedBaseUrl = frontendBaseUrl == null
+                ? ""
+                : frontendBaseUrl.replaceAll("/+$", "");
+
+        if (normalizedBaseUrl.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "TripMate frontend URL is not configured"
+            );
+        }
+
+        return normalizedBaseUrl + "/invite/" + rawToken;
     }
 
     private void validateInvitationRecipient(TripInvitation invitation, User user) {
