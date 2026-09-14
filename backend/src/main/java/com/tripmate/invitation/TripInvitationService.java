@@ -20,6 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
@@ -41,7 +45,12 @@ public class TripInvitationService {
     private String frontendBaseUrl;
 
     @Transactional
-    public InvitationResponse createInvitation(Long tripId, Long inviterUserId, CreateInvitationRequest request) {
+    public InvitationResponse createInvitation(
+            Long tripId,
+            Long inviterUserId,
+            CreateInvitationRequest request,
+            String requestOrigin
+    ) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
 
@@ -143,8 +152,10 @@ public class TripInvitationService {
                         " as " + request.getRole()
         );
 
+        String effectiveFrontendBaseUrl = resolveFrontendBaseUrl(requestOrigin);
+
         if (invitationType == InvitationType.EMAIL) {
-            String invitationLink = buildInvitationLink(rawToken);
+            String invitationLink = buildInvitationLink(rawToken, effectiveFrontendBaseUrl);
             emailService.sendTripInvitationEmail(
                     email,
                     trip.getOwner().getName(),
@@ -154,7 +165,7 @@ public class TripInvitationService {
             );
         }
 
-        return InvitationResponse.from(saved, rawToken, frontendBaseUrl);
+        return InvitationResponse.from(saved, rawToken, effectiveFrontendBaseUrl);
     }
 
     @Transactional(readOnly = true)
@@ -339,14 +350,97 @@ public class TripInvitationService {
         tripInvitationRepository.save(invitation);
     }
 
-    private String buildInvitationLink(String rawToken) {
-        String configuredBaseUrl =
-                frontendBaseUrl == null || frontendBaseUrl.isBlank()
-                        ? "http://localhost:4200"
-                        : frontendBaseUrl;
+    private String buildInvitationLink(String rawToken, String baseUrl) {
+        return normalizeBaseUrl(baseUrl) + "/invite/" + rawToken;
+    }
 
-        String normalizedBaseUrl = configuredBaseUrl.replaceAll("/+$", "");
-        return normalizedBaseUrl + "/invite/" + rawToken;
+    private String resolveFrontendBaseUrl(String requestOrigin) {
+        String configured = normalizeBaseUrl(frontendBaseUrl);
+
+        if (isReachableHost(configured)) {
+            return configured;
+        }
+
+        String origin = normalizeBaseUrl(requestOrigin);
+        if (isReachableHost(origin)) {
+            return origin;
+        }
+
+        Optional<String> lanIp = detectLanIpv4Address();
+        if (lanIp.isPresent()) {
+            try {
+                URI configuredUri = URI.create(configured);
+                String scheme = configuredUri.getScheme() != null ? configuredUri.getScheme() : "http";
+                int port = configuredUri.getPort() > 0 ? configuredUri.getPort() : 4200;
+                return scheme + "://" + lanIp.get() + ":" + port;
+            } catch (IllegalArgumentException ignored) {
+                return "http://" + lanIp.get() + ":4200";
+            }
+        }
+
+        if (!origin.isBlank()) {
+            return origin;
+        }
+
+        return configured;
+    }
+
+    private String normalizeBaseUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return "http://localhost:4200";
+        }
+        return url.trim().replaceAll("/+$", "");
+    }
+
+    private boolean isReachableHost(String url) {
+        try {
+            URI uri = URI.create(url);
+            String host = uri.getHost();
+            if (host == null || host.isBlank()) {
+                return false;
+            }
+
+            String normalizedHost = host.toLowerCase(Locale.ROOT);
+            return !normalizedHost.equals("localhost")
+                    && !normalizedHost.equals("127.0.0.1")
+                    && !normalizedHost.equals("0.0.0.0")
+                    && !normalizedHost.equals("::1");
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    private Optional<String> detectLanIpv4Address() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            if (interfaces == null) {
+                return Optional.empty();
+            }
+
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+
+                if (!networkInterface.isUp()
+                        || networkInterface.isLoopback()
+                        || networkInterface.isVirtual()) {
+                    continue;
+                }
+
+                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress address = addresses.nextElement();
+                    if (address instanceof Inet4Address
+                            && !address.isLoopbackAddress()
+                            && address.isSiteLocalAddress()) {
+                        return Optional.of(address.getHostAddress());
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Fall back to the configured/request origin when interface discovery is unavailable.
+        }
+
+        return Optional.empty();
     }
 
     private void validateInvitationRecipient(TripInvitation invitation, User user) {
