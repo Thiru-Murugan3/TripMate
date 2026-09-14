@@ -21,6 +21,17 @@ export interface LoginResponse {
   expiresIn?: number;
 }
 
+export interface RefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType?: string;
+  expiresIn?: number;
+}
+
+export interface LogoutResponse {
+  message: string;
+}
+
 export interface RegisterRequest {
   name: string;
   email: string;
