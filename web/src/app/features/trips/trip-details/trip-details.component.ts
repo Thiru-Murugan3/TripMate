@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import {
   Trip,
@@ -73,9 +73,9 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
           </div>
 
           <div class="hero-actions">
-            <button type="button" (click)="openBookingModal()" class="btn btn-primary">
-              <span class="material-symbols-outlined">confirmation_number</span>
-              Add Booking
+            <button type="button" (click)="openBookNow()" class="btn btn-primary">
+              <span class="material-symbols-outlined">travel_explore</span>
+              Book Now
             </button>
           </div>
         </section>
@@ -252,9 +252,14 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
                   <span class="material-symbols-outlined">airplane_ticket</span>
                   <h3>No bookings yet</h3>
                   <p>Add hotel, transport or activity booking details.</p>
-                  <button type="button" class="btn btn-primary compact" (click)="openBookingModal()">
-                    Add Booking
-                  </button>
+                  <div class="empty-booking-actions">
+                    <button type="button" class="btn btn-primary compact" (click)="openBookNow()">
+                      Book inside TripMate
+                    </button>
+                    <button type="button" class="btn btn-secondary compact" (click)="openBookingModal()">
+                      Add Existing
+                    </button>
+                  </div>
                 </div>
 
                 <div *ngIf="overview.bookings.length > 0" class="booking-summary-list">
@@ -325,10 +330,16 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
             <span class="material-symbols-outlined empty-icon">airplane_ticket</span>
             <h3>No bookings added yet</h3>
             <p>Add flight, hotel, train or activity bookings to keep your trip information together.</p>
-            <button type="button" (click)="openBookingModal()" class="btn btn-primary">
-              <span class="material-symbols-outlined">add</span>
-              Add First Booking
-            </button>
+            <div class="empty-booking-actions">
+              <button type="button" (click)="openBookNow()" class="btn btn-primary">
+                <span class="material-symbols-outlined">travel_explore</span>
+                Book inside TripMate
+              </button>
+              <button type="button" (click)="openBookingModal()" class="btn btn-secondary">
+                <span class="material-symbols-outlined">add</span>
+                Add Existing Booking
+              </button>
+            </div>
           </div>
 
           <div *ngIf="!isLoadingBookings && !bookingsError && bookings.length > 0" class="bookings-grid">
@@ -381,7 +392,7 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
         <div *ngIf="showBookingModal" class="modal-backdrop" (click)="closeBookingModal()">
           <div class="modal-content card" (click)="$event.stopPropagation()">
             <div class="modal-header">
-              <h3>Add New Booking</h3>
+              <h3>Add Existing Booking</h3>
               <button type="button" (click)="closeBookingModal()" class="close-btn" aria-label="Close">
                 &times;
               </button>
@@ -1207,6 +1218,13 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
       font-size: 0.8rem;
     }
 
+    .empty-booking-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.55rem;
+    }
+
     .spinner {
       width: 34px;
       height: 34px;
@@ -1273,6 +1291,7 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
 })
 export class TripDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly tripService = inject(TripService);
   private readonly bookingService = inject(BookingService);
   private readonly fb = inject(FormBuilder);
@@ -1473,6 +1492,10 @@ export class TripDetailsComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  openBookNow(): void {
+    void this.router.navigate(['/trips', this.tripId, 'bookings', 'new']);
   }
 
   openBookingModal(): void {

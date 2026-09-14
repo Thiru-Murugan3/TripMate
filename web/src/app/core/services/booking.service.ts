@@ -2,7 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Booking, CreateBookingRequest, UpdateBookingRequest } from '../models/booking.model';
+import {
+  Booking,
+  BookingSearchRequest,
+  BookingSearchResponse,
+  BookNowRequest,
+  BookNowResponse,
+  CreateBookingRequest,
+  UpdateBookingRequest
+} from '../models/booking.model';
 
 @Injectable({
   providedIn: 'root'
@@ -22,6 +30,23 @@ export class BookingService {
 
   createBooking(tripId: number, request: CreateBookingRequest): Observable<Booking> {
     return this.http.post<Booking>(`${this.baseUrl}/trips/${tripId}/bookings`, request);
+  }
+
+  searchBookingOffers(
+    tripId: number,
+    request: BookingSearchRequest
+  ): Observable<BookingSearchResponse> {
+    return this.http.post<BookingSearchResponse>(
+      `${this.baseUrl}/trips/${tripId}/bookings/search`,
+      request
+    );
+  }
+
+  bookNow(tripId: number, request: BookNowRequest): Observable<BookNowResponse> {
+    return this.http.post<BookNowResponse>(
+      `${this.baseUrl}/trips/${tripId}/bookings/book-now`,
+      request
+    );
   }
 
   updateBooking(tripId: number, bookingId: number, request: UpdateBookingRequest): Observable<Booking> {

@@ -60,4 +60,30 @@ public class Booking {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "booking_source", nullable = false, length = 30)
+    @Builder.Default
+    private BookingSource bookingSource = BookingSource.EXTERNAL_MANUAL;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 20)
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.NOT_REQUIRED;
+
+    @Column(nullable = false, length = 3)
+    @Builder.Default
+    private String currency = "INR";
+
+    @Column(name = "provider_offer_id", length = 120)
+    private String providerOfferId;
+
+    @Column(name = "traveler_name", length = 120)
+    private String travelerName;
+
+    @Column(name = "traveler_email", length = 180)
+    private String travelerEmail;
+
+    @Column(name = "traveler_mobile", length = 20)
+    private String travelerMobile;
 }

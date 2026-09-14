@@ -16,7 +16,11 @@ public record BookingResponse(
         LocalDateTime endDatetime,
         BigDecimal amount,
         BookingStatus status,
-        String notes
+        String notes,
+        BookingSource bookingSource,
+        PaymentStatus paymentStatus,
+        String currency,
+        String travelerName
 ) {
     public static BookingResponse from(Booking booking) {
         return new BookingResponse(
@@ -32,7 +36,11 @@ public record BookingResponse(
                 booking.getEndDatetime(),
                 booking.getAmount(),
                 booking.getStatus(),
-                booking.getNotes()
+                booking.getNotes(),
+                booking.getBookingSource(),
+                booking.getPaymentStatus(),
+                booking.getCurrency(),
+                booking.getTravelerName()
         );
     }
 }

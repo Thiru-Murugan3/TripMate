@@ -69,6 +69,9 @@ public class BookingService {
                 .amount(request.amount() != null ? request.amount() : BigDecimal.ZERO)
                 .status(request.status() != null ? request.status() : BookingStatus.CONFIRMED)
                 .notes(request.notes())
+                .bookingSource(BookingSource.EXTERNAL_MANUAL)
+                .paymentStatus(PaymentStatus.NOT_REQUIRED)
+                .currency("INR")
                 .build();
 
         Booking saved = bookingRepository.save(booking);
