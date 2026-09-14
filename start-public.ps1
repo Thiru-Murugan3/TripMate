@@ -39,19 +39,24 @@ function Set-DotEnvValue {
 function Wait-ForUrl {
     param(
         [string]$Url,
-        [int]$Attempts = 45
+        [int]$Attempts = 60,
+        [int]$DelaySeconds = 2,
+        [int]$TimeoutSeconds = 5
     )
 
     for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
-        Start-Sleep -Seconds 1
         try {
-            $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 2
+            $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec $TimeoutSeconds
             if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
                 return $true
             }
         } catch {
-            # Service is still starting.
+            if ($attempt -eq 1 -or $attempt % 10 -eq 0) {
+                Write-Host ("  Retry {0}/{1}: waiting for {2}" -f $attempt, $Attempts, $Url) -ForegroundColor DarkGray
+            }
         }
+
+        Start-Sleep -Seconds $DelaySeconds
     }
 
     return $false
@@ -133,23 +138,6 @@ if ([string]::IsNullOrWhiteSpace($publicUrl)) {
     exit 1
 }
 
-Write-Host ''
-Write-Host 'Checking the public HTTPS frontend...' -ForegroundColor Yellow
-if (-not (Wait-ForUrl -Url $publicUrl -Attempts 30)) {
-    Write-Host 'The Cloudflare URL was created, but the public frontend is not reachable.' -ForegroundColor Red
-    Write-Host ''
-    Write-Host 'Public URL:' -ForegroundColor Yellow
-    Write-Host $publicUrl
-    Write-Host ''
-    Write-Host 'Cloudflare output:' -ForegroundColor Yellow
-    if (Test-Path $tunnelErr) {
-        Get-Content $tunnelErr | Select-Object -Last 30
-    }
-    Write-Host ''
-    Write-Host 'Do not send invitations yet. The tunnel is not healthy.'
-    exit 1
-}
-
 Set-DotEnvValue -Path $envPath -Name 'APP_FRONTEND_URL' -Value $publicUrl
 Set-DotEnvValue -Path $envPath -Name 'APP_CORS_ALLOWED_ORIGINS' -Value ($publicUrl + ',http://localhost:4200,http://127.0.0.1:4200')
 
@@ -157,22 +145,39 @@ Write-Host ''
 Write-Host 'Public TripMate URL created:' -ForegroundColor Green
 Write-Host $publicUrl -ForegroundColor Cyan
 Write-Host ''
-Write-Host 'Starting Spring Boot with the public invitation URL...'
+Write-Host 'Starting Spring Boot while Cloudflare finishes warming up...'
 
 $backendCommand = '"' + (Join-Path $root 'run-backend.bat') + '"'
 Start-Process -FilePath 'cmd.exe' -ArgumentList '/k', $backendCommand
 
 Write-Host 'Waiting for the backend API...'
-if (-not (Wait-ForUrl -Url 'http://127.0.0.1:8080/api/v1/health')) {
+if (-not (Wait-ForUrl -Url 'http://127.0.0.1:8080/api/v1/health' -Attempts 90 -DelaySeconds 2 -TimeoutSeconds 5)) {
     Write-Host 'Backend did not become reachable on port 8080.' -ForegroundColor Red
     Write-Host 'Check the backend terminal for the error.'
     exit 1
 }
 
+Write-Host ''
+Write-Host 'Checking the public HTTPS frontend. First Cloudflare propagation can take a minute or two...' -ForegroundColor Yellow
+if (-not (Wait-ForUrl -Url $publicUrl -Attempts 90 -DelaySeconds 2 -TimeoutSeconds 8)) {
+    Write-Host 'The Cloudflare URL was created, but the public frontend did not become reachable within about 3 minutes.' -ForegroundColor Red
+    Write-Host ''
+    Write-Host 'Public URL:' -ForegroundColor Yellow
+    Write-Host $publicUrl
+    Write-Host ''
+    Write-Host 'Cloudflare output:' -ForegroundColor Yellow
+    if (Test-Path $tunnelErr) {
+        Get-Content $tunnelErr | Select-Object -Last 40
+    }
+    Write-Host ''
+    Write-Host 'Do not send invitations yet.'
+    exit 1
+}
+
 Write-Host 'Checking the backend through the public HTTPS tunnel...' -ForegroundColor Yellow
 $publicHealthUrl = $publicUrl + '/api/v1/health'
-if (-not (Wait-ForUrl -Url $publicHealthUrl -Attempts 30)) {
-    Write-Host 'Frontend is public, but /api/v1 is not reaching Spring Boot through the Angular proxy.' -ForegroundColor Red
+if (-not (Wait-ForUrl -Url $publicHealthUrl -Attempts 90 -DelaySeconds 2 -TimeoutSeconds 8)) {
+    Write-Host 'The public frontend works, but /api/v1 is not reaching Spring Boot through the Angular proxy.' -ForegroundColor Red
     Write-Host ''
     Write-Host 'Failed URL:' -ForegroundColor Yellow
     Write-Host $publicHealthUrl
