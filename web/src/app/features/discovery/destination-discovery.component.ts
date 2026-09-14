@@ -163,7 +163,7 @@ import { TripService } from '../../core/services/trip.service';
               </ng-template>
 
               <span class="category-badge">{{ formatCategory(place.category) }}</span>
-              <label *ngIf="canEdit && activeTripId > 0" class="select-box" title="Select place">
+              <label *ngIf="effectiveCanEdit && activeTripId > 0" class="select-box" title="Select place">
                 <input
                   type="checkbox"
                   [checked]="isSelected(place)"
@@ -222,7 +222,7 @@ import { TripService } from '../../core/services/trip.service';
                 </a>
 
                 <button
-                  *ngIf="canEdit && activeTripId > 0 && !isAlreadySaved(place)"
+                  *ngIf="effectiveCanEdit && activeTripId > 0 && !isAlreadySaved(place)"
                   type="button"
                   class="mini-add"
                   [disabled]="isSaving"
@@ -233,7 +233,7 @@ import { TripService } from '../../core/services/trip.service';
               </div>
 
               <label
-                *ngIf="canEdit && activeTripId > 0 && isSelected(place)"
+                *ngIf="effectiveCanEdit && activeTripId > 0 && isSelected(place)"
                 class="day-picker"
               >
                 <span>Add to itinerary</span>
@@ -252,7 +252,7 @@ import { TripService } from '../../core/services/trip.service';
         </div>
 
         <div
-          *ngIf="canEdit && activeTripId > 0 && selectedCount > 0"
+          *ngIf="effectiveCanEdit && activeTripId > 0 && selectedCount > 0"
           class="selection-bar"
         >
           <div>
@@ -437,6 +437,12 @@ export class DestinationDiscoveryComponent implements OnInit {
     return this.tripId > 0;
   }
 
+  get effectiveCanEdit(): boolean {
+    if (this.embeddedMode) return this.canEdit;
+    const trip = this.availableTrips.find((item) => item.id === this.activeTripId);
+    return trip?.userRole === 'OWNER' || trip?.userRole === 'EDITOR';
+  }
+
   get filteredPlaces(): DiscoveredPlace[] {
     const term = this.filterText.trim().toLowerCase();
     if (!term) return this.result?.places ?? [];
@@ -509,6 +515,8 @@ export class DestinationDiscoveryComponent implements OnInit {
       this.discover();
     } else {
       this.savedPlaces = [];
+      this.activeStartDate = '';
+      this.activeEndDate = '';
     }
   }
 
@@ -598,7 +606,7 @@ export class DestinationDiscoveryComponent implements OnInit {
   }
 
   async saveSelected(addToItinerary: boolean): Promise<void> {
-    if (!this.canEdit || this.activeTripId <= 0 || this.selectedIds.size === 0 || this.isSaving) {
+    if (!this.effectiveCanEdit || this.activeTripId <= 0 || this.selectedIds.size === 0 || this.isSaving) {
       return;
     }
 
@@ -702,9 +710,9 @@ export class DestinationDiscoveryComponent implements OnInit {
 
   private dateForDay(dayNumber: number): string {
     const base = this.activeStartDate || new Date().toISOString().slice(0, 10);
-    const date = new Date(`${base}T00:00:00`);
-    date.setDate(date.getDate() + dayNumber - 1);
-    return date.toISOString().slice(0, 10);
+    const [year, month, day] = base.split('-').map(Number);
+    const utc = new Date(Date.UTC(year, month - 1, day + dayNumber - 1));
+    return utc.toISOString().slice(0, 10);
   }
 
   private selectedPlaces(): DiscoveredPlace[] {
