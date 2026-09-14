@@ -259,10 +259,16 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
                   </button>
                 </div>
 
-                <div *ngIf="overview.bookings.length === 0" class="panel-empty">
+                <div *ngIf="!hasActiveBookings" class="panel-empty">
                   <span class="material-symbols-outlined">airplane_ticket</span>
-                  <h3>No bookings yet</h3>
-                  <p>Add hotel, transport or activity booking details.</p>
+                  <h3>{{ bookings.length === 0 ? 'No bookings yet' : 'No active bookings' }}</h3>
+                  <p>
+                    {{
+                      bookings.length === 0
+                        ? 'Add hotel, transport or activity booking details.'
+                        : 'Your previous booking was cancelled. You can book again or add another existing booking.'
+                    }}
+                  </p>
                   <div *ngIf="canEditTrip" class="empty-booking-actions">
                     <button type="button" class="btn btn-primary compact" (click)="openBookNow()">
                       Book inside TripMate
@@ -273,7 +279,7 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
                   </div>
                 </div>
 
-                <div *ngIf="overview.bookings.length > 0" class="booking-summary-list">
+                <div *ngIf="hasActiveBookings" class="booking-summary-list">
                   <div
                     *ngFor="let booking of overview.bookings.slice(0, 6)"
                     class="booking-summary-row"
@@ -349,6 +355,29 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
               <button type="button" (click)="openBookingModal()" class="btn btn-secondary">
                 <span class="material-symbols-outlined">add</span>
                 Add Existing Booking
+              </button>
+            </div>
+          </div>
+
+          <div
+            *ngIf="!isLoadingBookings && !bookingsError && bookings.length > 0 && !hasActiveBookings && canEditTrip"
+            class="rebook-banner card"
+          >
+            <div class="rebook-copy">
+              <span class="material-symbols-outlined">event_repeat</span>
+              <div>
+                <strong>No active bookings</strong>
+                <p>Your booking was cancelled. Create another booking or add an existing one.</p>
+              </div>
+            </div>
+            <div class="empty-booking-actions">
+              <button type="button" (click)="openBookNow()" class="btn btn-primary">
+                <span class="material-symbols-outlined">travel_explore</span>
+                Book inside TripMate
+              </button>
+              <button type="button" (click)="openBookingModal()" class="btn btn-secondary">
+                <span class="material-symbols-outlined">add</span>
+                Add Existing
               </button>
             </div>
           </div>
@@ -1551,6 +1580,37 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
       gap: 0.55rem;
     }
 
+    .rebook-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.15rem;
+      margin-bottom: 1rem;
+      border-color: #bfdbfe;
+      background: #eff6ff;
+    }
+
+    .rebook-copy {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+    }
+
+    .rebook-copy > .material-symbols-outlined {
+      color: #2563eb;
+    }
+
+    .rebook-copy strong {
+      color: #0f172a;
+    }
+
+    .rebook-copy p {
+      margin: 0.2rem 0 0;
+      color: #475569;
+      font-size: 0.82rem;
+    }
+
     .spinner {
       width: 34px;
       height: 34px;
@@ -1615,6 +1675,16 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
 
       .cancel-summary {
         grid-template-columns: 1fr;
+      }
+
+      .rebook-banner {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .rebook-banner .empty-booking-actions,
+      .rebook-banner .empty-booking-actions .btn {
+        width: 100%;
       }
     }
   `]
@@ -1684,6 +1754,12 @@ export class TripDetailsComponent implements OnInit {
 
   get canEditTrip(): boolean {
     return this.trip?.userRole === 'OWNER' || this.trip?.userRole === 'EDITOR';
+  }
+
+  get hasActiveBookings(): boolean {
+    return this.bookings.some(
+      (booking) => booking.status === 'PENDING' || booking.status === 'CONFIRMED'
+    );
   }
 
   ngOnInit(): void {
