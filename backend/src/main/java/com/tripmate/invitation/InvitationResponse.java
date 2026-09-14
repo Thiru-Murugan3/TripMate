@@ -35,7 +35,10 @@ public class InvitationResponse {
     ) {
         String link = null;
 
-        if (rawToken != null && frontendBaseUrl != null && !frontendBaseUrl.isBlank()) {
+        if (invitation.getType() == InvitationType.LINK
+                && rawToken != null
+                && frontendBaseUrl != null
+                && !frontendBaseUrl.isBlank()) {
             String normalizedBaseUrl = frontendBaseUrl.replaceAll("/+$", "");
             link = normalizedBaseUrl + "/invite/" + rawToken;
         }
