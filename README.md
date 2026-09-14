@@ -66,14 +66,14 @@ TripMate can discover tourist places for a selected destination and add them to 
 Example flow:
 
 1. Open **Explore** from the main navigation to casually search any destination; no trip is required.
-2. Enter any city/town/destination such as `Ooty, Tamil Nadu`, `Jaipur, Rajasthan`, `Goa`, or `Mysuru, Karnataka`.
-3. Optionally select an existing trip only when you want to save discovered places or add them to that trip's itinerary.
-4. You can also open a trip's **Explore** tab, which starts with that trip's destination but still allows another destination to be searched.
-5. Search within 5, 10, 25, or 50 km.
-6. Filter by attraction, nature, waterfall, lake, viewpoint, temple, church, museum, park, adventure, shopping, food, or historical place.
-7. If a trip is selected, select places and save them to **Places**.
-8. Optionally assign Day 1 / Day 2 / Day 3 (or any available trip day) and use **Save & Add to Itinerary**.
-9. Use the 1-day, 2-day, or 3-day suggested-plan buttons as a starting point, then adjust day assignments before saving.
+2. Enter any city, town, or destination.
+3. Select one or more tourist places while still in browse-only mode.
+4. When ready to save, choose an existing trip where you have Owner or Editor access.
+5. Save the selected places to **Places**, or use **Save & Add to Itinerary**.
+6. You can also open a trip's **Explore** tab, which starts with that trip's destination but still allows another destination to be searched.
+7. Search within 5, 10, 25, or 50 km.
+8. Filter by attraction, nature, waterfall, lake, viewpoint, temple, church, museum, park, adventure, shopping, food, or historical place.
+9. Optionally assign Day 1 / Day 2 / Day 3 (or any available trip day), or use the 1-day, 2-day, or 3-day suggested-plan buttons before saving.
 
 Development discovery uses OpenStreetMap-compatible public services through the Spring Boot backend. Results depend on the place data available from the configured provider and are not guaranteed to represent every real-world attraction.
 
