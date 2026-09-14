@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import {
@@ -24,7 +24,7 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
 @Component({
   selector: 'app-trip-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
     <main class="trip-details-page">
       <section *ngIf="isLoadingTrip" class="page-state card">
@@ -394,11 +394,109 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
                   {{ booking.status }}
                 </span>
 
+                <div *ngIf="booking.paymentStatus && booking.paymentStatus !== 'NOT_REQUIRED'" class="payment-state">
+                  <strong>Payment:</strong> {{ booking.paymentStatus }}
+                </div>
+
+                <div *ngIf="booking.cancellationReason" class="cancellation-info">
+                  <strong>Cancellation:</strong> {{ booking.cancellationReason }}
+                </div>
+
                 <p class="notes" *ngIf="booking.notes">{{ booking.notes }}</p>
+
+                <div
+                  *ngIf="canEditTrip && canCancelBooking(booking)"
+                  class="booking-actions"
+                >
+                  <button
+                    type="button"
+                    class="btn btn-danger compact"
+                    (click)="openCancelBookingModal(booking)"
+                  >
+                    <span class="material-symbols-outlined">cancel</span>
+                    Cancel Booking
+                  </button>
+                </div>
               </div>
             </article>
           </div>
         </section>
+
+        <div *ngIf="showCancelBookingModal && bookingToCancel as cancelBooking" class="modal-backdrop" (click)="closeCancelBookingModal()">
+          <div class="modal-content cancel-booking-modal card" (click)="$event.stopPropagation()">
+            <div class="cancel-icon">
+              <span class="material-symbols-outlined">cancel</span>
+            </div>
+
+            <div class="modal-header cancel-header">
+              <div>
+                <h3>Cancel Booking?</h3>
+                <p>
+                  {{ cancelBooking.providerName }}
+                  <ng-container *ngIf="cancelBooking.bookingReference">
+                    · {{ cancelBooking.bookingReference }}
+                  </ng-container>
+                </p>
+              </div>
+              <button type="button" (click)="closeCancelBookingModal()" class="close-btn" aria-label="Close">
+                &times;
+              </button>
+            </div>
+
+            <div class="cancel-summary">
+              <div>
+                <span>Booking</span>
+                <strong>{{ formatBookingType(cancelBooking.bookingType) }}</strong>
+              </div>
+              <div>
+                <span>Amount</span>
+                <strong>{{ formatCurrency(cancelBooking.amount) }}</strong>
+              </div>
+              <div *ngIf="cancelBooking.bookingSource === 'TRIPMATE_SANDBOX'">
+                <span>Refund</span>
+                <strong>
+                  {{ cancelBooking.refundable ? 'Sandbox refund after cancellation' : 'Non-refundable fare' }}
+                </strong>
+              </div>
+            </div>
+
+            <label class="form-group">
+              <span class="form-label">Reason for cancellation</span>
+              <select class="form-control" [(ngModel)]="cancelReason">
+                <option value="">Select a reason</option>
+                <option value="Change of plans">Change of plans</option>
+                <option value="Travel dates changed">Travel dates changed</option>
+                <option value="Booked another option">Booked another option</option>
+                <option value="Duplicate booking">Duplicate booking</option>
+                <option value="Personal reason">Personal reason</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+
+            <div *ngIf="cancelBookingError" class="alert-danger">{{ cancelBookingError }}</div>
+
+            <div class="cancel-warning">
+              <span class="material-symbols-outlined">warning</span>
+              <span>
+                This will mark the booking as CANCELLED. In sandbox mode, refundable paid bookings are refunded automatically.
+              </span>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" (click)="closeCancelBookingModal()">
+                Keep Booking
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                [disabled]="isCancellingBooking"
+                (click)="confirmCancelBooking()"
+              >
+                {{ isCancellingBooking ? 'Cancelling...' : 'Confirm Cancellation' }}
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div *ngIf="showEditTripModal" class="modal-backdrop" (click)="closeEditTripModal()">
           <div class="modal-content edit-trip-modal card" (click)="$event.stopPropagation()">
@@ -1204,6 +1302,82 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
       margin: 0;
     }
 
+    .payment-state,
+    .cancellation-info {
+      color: #475569;
+      font-size: 0.78rem;
+    }
+
+    .booking-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.35rem;
+      padding-top: 0.7rem;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .cancel-booking-modal {
+      width: min(100%, 560px);
+    }
+
+    .cancel-icon {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      margin-bottom: 0.8rem;
+      color: #b91c1c;
+      background: #fee2e2;
+      border-radius: 14px;
+    }
+
+    .cancel-icon .material-symbols-outlined {
+      font-size: 1.8rem;
+    }
+
+    .cancel-header {
+      align-items: flex-start;
+    }
+
+    .cancel-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+    }
+
+    .cancel-summary > div {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 10px;
+    }
+
+    .cancel-summary span {
+      color: #64748b;
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .cancel-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.45rem;
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      color: #92400e;
+      background: #fffbeb;
+      border-radius: 9px;
+      font-size: 0.78rem;
+    }
+
+    .cancel-warning .material-symbols-outlined {
+      font-size: 1rem;
+    }
+
     .empty-state {
       padding: 4rem 2rem;
       text-align: center;
@@ -1355,6 +1529,16 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
       background: #e2e8f0;
     }
 
+    .btn-danger {
+      color: #ffffff;
+      background: #dc2626;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .btn.compact {
       padding: 0.48rem 0.75rem;
       font-size: 0.8rem;
@@ -1428,6 +1612,10 @@ type TripDetailsTab = 'OVERVIEW' | 'BOOKINGS';
         align-items: flex-start;
         flex-direction: column;
       }
+
+      .cancel-summary {
+        grid-template-columns: 1fr;
+      }
     }
   `]
 })
@@ -1462,6 +1650,12 @@ export class TripDetailsComponent implements OnInit {
   tripUpdateMessage = '';
 
   readonly tripTypes: TripType[] = ['ADVENTURE', 'FAMILY', 'COUPLE', 'FRIENDS', 'SOLO'];
+
+  showCancelBookingModal = false;
+  bookingToCancel: Booking | null = null;
+  cancelReason = '';
+  cancelBookingError = '';
+  isCancellingBooking = false;
 
   editTripForm = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(160)]],
@@ -1656,6 +1850,66 @@ export class TripDetailsComponent implements OnInit {
       month: 'short',
       hour: '2-digit',
       minute: '2-digit'
+    });
+  }
+
+  canCancelBooking(booking: Booking): boolean {
+    if (booking.status === 'CANCELLED' || booking.status === 'COMPLETED') {
+      return false;
+    }
+
+    if (!booking.startDatetime) {
+      return true;
+    }
+
+    const start = new Date(booking.startDatetime);
+    return Number.isNaN(start.getTime()) || start.getTime() > Date.now();
+  }
+
+  openCancelBookingModal(booking: Booking): void {
+    if (!this.canEditTrip || !this.canCancelBooking(booking)) return;
+
+    this.bookingToCancel = booking;
+    this.cancelReason = '';
+    this.cancelBookingError = '';
+    this.showCancelBookingModal = true;
+  }
+
+  closeCancelBookingModal(): void {
+    if (this.isCancellingBooking) return;
+
+    this.showCancelBookingModal = false;
+    this.bookingToCancel = null;
+    this.cancelReason = '';
+    this.cancelBookingError = '';
+  }
+
+  confirmCancelBooking(): void {
+    if (!this.bookingToCancel) return;
+
+    this.isCancellingBooking = true;
+    this.cancelBookingError = '';
+
+    this.bookingService.cancelBooking(
+      this.tripId,
+      this.bookingToCancel.id,
+      this.cancelReason || undefined
+    ).subscribe({
+      next: (response) => {
+        this.isCancellingBooking = false;
+        this.bookings = this.bookings.map((booking) =>
+          booking.id === response.booking.id ? response.booking : booking
+        );
+        this.showCancelBookingModal = false;
+        this.bookingToCancel = null;
+        this.cancelReason = '';
+        this.tripUpdateMessage = response.message;
+        this.loadDashboard();
+      },
+      error: (err) => {
+        this.isCancellingBooking = false;
+        this.cancelBookingError = err?.error?.message || 'Unable to cancel the booking.';
+      }
     });
   }
 

@@ -8,6 +8,7 @@ import {
   BookingSearchResponse,
   BookNowRequest,
   BookNowResponse,
+  CancelBookingResponse,
   CreateBookingRequest,
   UpdateBookingRequest
 } from '../models/booking.model';
@@ -46,6 +47,17 @@ export class BookingService {
     return this.http.post<BookNowResponse>(
       `${this.baseUrl}/trips/${tripId}/bookings/book-now`,
       request
+    );
+  }
+
+  cancelBooking(
+    tripId: number,
+    bookingId: number,
+    reason?: string
+  ): Observable<CancelBookingResponse> {
+    return this.http.patch<CancelBookingResponse>(
+      `${this.baseUrl}/trips/${tripId}/bookings/${bookingId}/cancel`,
+      { reason: reason || undefined }
     );
   }
 

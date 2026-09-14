@@ -80,6 +80,15 @@ public class Booking {
     @Column(name = "provider_offer_id", length = 120)
     private String providerOfferId;
 
+    @Column
+    private Boolean refundable;
+
+    @Column(name = "cancellation_reason", length = 500)
+    private String cancellationReason;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
     @Column(name = "traveler_name", length = 120)
     private String travelerName;
 

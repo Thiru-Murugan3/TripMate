@@ -21,6 +21,9 @@ public record BookingResponse(
         BookingSource bookingSource,
         PaymentStatus paymentStatus,
         String currency,
+        Boolean refundable,
+        String cancellationReason,
+        LocalDateTime cancelledAt,
         String travelerName,
         List<BookingTravelerResponse> travelers
 ) {
@@ -42,6 +45,9 @@ public record BookingResponse(
                 booking.getBookingSource(),
                 booking.getPaymentStatus(),
                 booking.getCurrency(),
+                booking.getRefundable(),
+                booking.getCancellationReason(),
+                booking.getCancelledAt(),
                 booking.getTravelerName(),
                 booking.getTravelers() == null
                         ? List.of()

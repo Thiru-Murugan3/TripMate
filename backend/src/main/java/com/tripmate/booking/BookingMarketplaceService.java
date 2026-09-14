@@ -57,6 +57,7 @@ public class BookingMarketplaceService {
                 .paymentStatus(providerResult.paymentStatus())
                 .currency(offer.currency())
                 .providerOfferId(offer.offerId())
+                .refundable(offer.refundable())
                 .travelerName(primaryTraveler.fullName().trim())
                 .travelerEmail(primaryTraveler.email().trim().toLowerCase())
                 .travelerMobile(normalizeNullable(primaryTraveler.mobile()))

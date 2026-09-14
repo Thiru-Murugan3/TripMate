@@ -70,7 +70,25 @@ public class BookingController {
         );
     }
 
-    // 5. DELETE /api/v1/trips/{tripId}/bookings/{bookingId}
+    // 5. PATCH /api/v1/trips/{tripId}/bookings/{bookingId}/cancel
+    @PatchMapping("/{bookingId}/cancel")
+    public ResponseEntity<CancelBookingResponse> cancelBooking(
+            @PathVariable Long tripId,
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody CancelBookingRequest request
+    ) {
+        return ResponseEntity.ok(
+                bookingService.cancelBooking(
+                        tripId,
+                        bookingId,
+                        userPrincipal.getId(),
+                        request
+                )
+        );
+    }
+
+    // 6. DELETE /api/v1/trips/{tripId}/bookings/{bookingId}
     @DeleteMapping("/{bookingId}")
     public ResponseEntity<Map<String, String>> deleteBooking(
             @PathVariable Long tripId,

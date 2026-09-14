@@ -213,4 +213,72 @@ class BookingServiceTest {
         assertEquals("Chennai", response.departure());
         assertEquals("Kodaikanal", response.arrival());
     }
+    @Test
+    @DisplayName("cancelBooking: Refundable sandbox booking is cancelled and refunded")
+    void cancelBooking_RefundableSandbox_RefundsPayment() {
+        Booking booking = Booking.builder()
+                .id(100L)
+                .trip(trip)
+                .bookingType(BookingType.TRANSPORT)
+                .transportType(TransportType.FLIGHT)
+                .providerName("TripMate Air Sandbox")
+                .departure("Chennai")
+                .arrival("Goa")
+                .startDatetime(java.time.LocalDateTime.now().plusDays(3))
+                .amount(new BigDecimal("5000.00"))
+                .status(BookingStatus.CONFIRMED)
+                .bookingSource(BookingSource.TRIPMATE_SANDBOX)
+                .paymentStatus(PaymentStatus.PAID)
+                .currency("INR")
+                .refundable(true)
+                .build();
+
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+        when(bookingRepository.findByIdAndTripId(100L, 10L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CancelBookingResponse response = bookingService.cancelBooking(
+                10L,
+                100L,
+                1L,
+                new CancelBookingRequest("Plans changed")
+        );
+
+        assertEquals(BookingStatus.CANCELLED, response.booking().status());
+        assertEquals(PaymentStatus.REFUNDED, response.booking().paymentStatus());
+        assertEquals("Plans changed", response.booking().cancellationReason());
+        assertNotNull(response.booking().cancelledAt());
+    }
+
+    @Test
+    @DisplayName("cancelBooking: Completed booking cannot be cancelled")
+    void cancelBooking_Completed_ThrowsBadRequest() {
+        Booking booking = Booking.builder()
+                .id(100L)
+                .trip(trip)
+                .bookingType(BookingType.HOTEL)
+                .providerName("Test Hotel")
+                .status(BookingStatus.COMPLETED)
+                .bookingSource(BookingSource.EXTERNAL_MANUAL)
+                .paymentStatus(PaymentStatus.NOT_REQUIRED)
+                .build();
+
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+        when(bookingRepository.findByIdAndTripId(100L, 10L)).thenReturn(Optional.of(booking));
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> bookingService.cancelBooking(
+                        10L,
+                        100L,
+                        1L,
+                        new CancelBookingRequest("Too late")
+                )
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("Completed bookings cannot be cancelled"));
+        verify(bookingRepository, never()).save(any());
+    }
+
 }

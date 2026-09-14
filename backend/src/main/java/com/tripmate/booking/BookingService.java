@@ -111,6 +111,62 @@ public class BookingService {
     }
 
     @Transactional
+    public CancelBookingResponse cancelBooking(
+            Long tripId,
+            Long bookingId,
+            Long userId,
+            CancelBookingRequest request
+    ) {
+        Trip trip = findTripOrThrow(tripId);
+        verifyCanEdit(trip, userId);
+
+        Booking booking = bookingRepository.findByIdAndTripId(bookingId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Booking not found in this trip"));
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Booking is already cancelled");
+        }
+
+        if (booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Completed bookings cannot be cancelled");
+        }
+
+        if (booking.getStartDatetime() != null
+                && booking.getStartDatetime().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Booking cannot be cancelled after the journey or activity has started");
+        }
+
+        if (booking.getBookingSource() == BookingSource.TRIPMATE_PROVIDER) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_IMPLEMENTED,
+                    "Live provider cancellation is not configured yet");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setCancellationReason(normalizeCancellationReason(request.reason()));
+        booking.setCancelledAt(LocalDateTime.now());
+
+        String message = "Booking cancelled successfully.";
+
+        if (booking.getBookingSource() == BookingSource.TRIPMATE_SANDBOX
+                && booking.getPaymentStatus() == PaymentStatus.PAID) {
+            if (Boolean.TRUE.equals(booking.getRefundable())) {
+                booking.setPaymentStatus(PaymentStatus.REFUNDED);
+                message = "Booking cancelled successfully. Sandbox refund completed.";
+            } else {
+                message = "Booking cancelled successfully. This sandbox fare is non-refundable.";
+            }
+        }
+
+        Booking cancelled = bookingRepository.save(booking);
+        return new CancelBookingResponse(BookingResponse.from(cancelled), message);
+    }
+
+    @Transactional
     public void deleteBooking(Long tripId, Long bookingId, Long userId) {
         Trip trip = findTripOrThrow(tripId);
         verifyCanEdit(trip, userId);
@@ -120,6 +176,10 @@ public class BookingService {
                         HttpStatus.NOT_FOUND, "Booking not found in this trip"));
 
         bookingRepository.delete(booking);
+    }
+
+    private String normalizeCancellationReason(String reason) {
+        return reason == null || reason.isBlank() ? null : reason.trim();
     }
 
     private void validateTransportType(BookingType bookingType, TransportType transportType) {

@@ -33,6 +33,9 @@ export interface Booking {
   bookingSource?: BookingSource;
   paymentStatus?: PaymentStatus;
   currency?: string;
+  refundable?: boolean;
+  cancellationReason?: string;
+  cancelledAt?: string;
   travelerName?: string;
   travelers?: BookingTraveler[];
   createdAt?: string;
@@ -116,5 +119,11 @@ export interface BookNowResponse {
   providerMode: string;
   liveBookingEnabled: boolean;
   paymentStatus: PaymentStatus;
+  message: string;
+}
+
+
+export interface CancelBookingResponse {
+  booking: Booking;
   message: string;
 }
