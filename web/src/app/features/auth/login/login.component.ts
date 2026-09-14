@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -51,14 +52,31 @@ export class LoginComponent {
       },
       error: (err) => {
         this.isLoading = false;
+
         if (err.status === 0) {
-          this.errorMessage = 'Backend server unreachable. Please ensure the Spring Boot server is running on http://localhost:8080.';
-        } else if (err.error && err.error.message) {
-          this.errorMessage = err.error.message;
-        } else if (err.status === 401) {
-          this.errorMessage = 'Invalid email or password';
+          this.errorMessage =
+            `Backend is unreachable from this device. Check that Spring Boot is running and accessible at ${environment.apiUrl}.`;
+          return;
+        }
+
+        const serverMessage =
+          err?.error?.message ||
+          err?.error?.detail ||
+          (typeof err?.error === 'string' ? err.error : '');
+
+        if (err.status === 401) {
+          this.errorMessage = serverMessage || 'Invalid email or password';
+        } else if (
+          err.status === 403 &&
+          typeof serverMessage === 'string' &&
+          serverMessage.toLowerCase().includes('cors')
+        ) {
+          this.errorMessage =
+            'This device is not allowed by the backend CORS configuration. Restart the backend after updating the latest TripMate code.';
+        } else if (serverMessage) {
+          this.errorMessage = serverMessage;
         } else {
-          this.errorMessage = 'An error occurred during login. Please try again.';
+          this.errorMessage = `Login failed (HTTP ${err.status}). Please try again.`;
         }
       }
     });
