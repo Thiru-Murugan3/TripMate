@@ -67,7 +67,7 @@ import { TripService } from '../../core/services/trip.service';
             [(ngModel)]="searchDestination"
             [ngModelOptions]="{ standalone: true }"
             maxlength="180"
-            placeholder="Search Ooty, Kodaikanal, Goa, Jaipur, Mysuru..."
+            placeholder="Search any city, town or destination"
             (keyup.enter)="discover()"
           />
         </label>
@@ -110,13 +110,6 @@ import { TripService } from '../../core/services/trip.service';
             You do not need to create a trip first. Search any place now; select a trip only if you want to save the results.
           </span>
         </div>
-      </div>
-
-      <div *ngIf="!embeddedMode" class="quick-destinations" aria-label="Example destination searches">
-        <span>Try:</span>
-        <button type="button" *ngFor="let place of exampleDestinations" (click)="searchExample(place)">
-          {{ place }}
-        </button>
       </div>
 
       <div *ngIf="errorMessage" class="message error">
@@ -339,9 +332,6 @@ import { TripService } from '../../core/services/trip.service';
     .casual-search-note,.browse-only-banner { display:flex; align-items:flex-start; gap:.55rem; padding:.75rem .9rem; margin-bottom:.7rem; border:1px solid #dbeafe; border-radius:10px; color:#1e3a8a; background:#eff6ff; font-size:.73rem; }
     .casual-search-note div,.browse-only-banner div { display:flex; flex-direction:column; gap:.12rem; }
     .casual-search-note .material-symbols-outlined,.browse-only-banner .material-symbols-outlined { color:#2563eb; font-size:1rem; }
-    .quick-destinations { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; margin:0 0 1rem; color:#64748b; font-size:.68rem; }
-    .quick-destinations button { padding:.32rem .55rem; border:1px solid #cbd5e1; border-radius:999px; color:#334155; background:#fff; font-size:.65rem; font-weight:800; cursor:pointer; }
-    .quick-destinations button:hover { border-color:#93c5fd; color:#2563eb; background:#eff6ff; }
     .message { display:flex; gap:.55rem; align-items:center; padding:.75rem .9rem; margin-bottom:1rem; border-radius:10px; font-size:.78rem; }
     .message div { display:flex; flex-direction:column; gap:.1rem; }
     .message.error { color:#991b1b; background:#fef2f2; border:1px solid #fecaca; }
@@ -457,14 +447,6 @@ export class DestinationDiscoveryComponent implements OnInit {
   isSaving = false;
   errorMessage = '';
   successMessage = '';
-
-  readonly exampleDestinations = [
-    'Ooty, Tamil Nadu',
-    'Kodaikanal, Tamil Nadu',
-    'Mysuru, Karnataka',
-    'Goa',
-    'Jaipur, Rajasthan'
-  ];
 
   readonly categories: DiscoveryCategory[] = [
     'ALL',
@@ -583,11 +565,6 @@ export class DestinationDiscoveryComponent implements OnInit {
 
   useTripDestination(trip: Trip): void {
     this.searchDestination = trip.destination;
-    this.discover();
-  }
-
-  searchExample(destination: string): void {
-    this.searchDestination = destination;
     this.discover();
   }
 
