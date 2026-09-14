@@ -58,5 +58,17 @@ if errorlevel 1 (
 echo.
 echo Transactional email provider: Brevo
 echo Sender: %TRIPMATE_BREVO_SENDER_EMAIL%
-echo Starting TripMate Backend with the validated backend\.env Brevo credentials...
+
+echo.
+echo Checking whether the known Flyway V7 history mismatch needs safe repair...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0repair-flyway-v7.ps1"
+if errorlevel 1 (
+    echo.
+    echo Backend was NOT started because the Flyway V7 repair guard failed.
+    echo No database history was changed unless the schema matched the expected V7 structure exactly.
+    exit /b 1
+)
+
+echo.
+echo Starting TripMate Backend with the validated backend\.env configuration...
 mvn spring-boot:run
