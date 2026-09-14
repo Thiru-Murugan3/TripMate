@@ -1,11 +1,23 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, throwError } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  finalize,
+  map,
+  of,
+  shareReplay,
+  tap,
+  throwError,
+  timeout
+} from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   User,
   LoginRequest,
   LoginResponse,
+  RefreshResponse,
+  LogoutResponse,
   RegisterRequest,
   RegistrationPendingResponse,
   VerifyEmailRequest,
@@ -23,6 +35,8 @@ export class AuthService {
   private readonly REFRESH_TOKEN_KEY = 'tripmate_refresh_token';
   private readonly USER_KEY = 'tripmate_user';
 
+  private refreshRequest$: Observable<RefreshResponse> | null = null;
+
   public currentUser = signal<User | null>(this.getStoredUser());
   public isAuthenticated = signal<boolean>(!!this.getToken());
 
@@ -31,8 +45,7 @@ export class AuthService {
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
       tap((res) => {
-        this.saveToken(res.accessToken);
-        this.saveRefreshToken(res.refreshToken);
+        this.saveSessionTokens(res.accessToken, res.refreshToken);
         this.fetchCurrentUser().subscribe();
       })
     );
@@ -58,7 +71,7 @@ export class AuthService {
         this.isAuthenticated.set(true);
       }),
       catchError((err) => {
-        this.logout();
+        this.clearSession();
         return throwError(() => err);
       })
     );
@@ -72,7 +85,59 @@ export class AuthService {
     return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password`, data);
   }
 
-  logout(): void {
+  /**
+   * Returns the currently active refresh request when multiple API calls fail
+   * with 401 at the same time. This guarantees one refresh-token rotation and
+   * lets all waiting requests retry with the same newly issued access token.
+   */
+  refreshSession(): Observable<RefreshResponse> {
+    if (this.refreshRequest$) {
+      return this.refreshRequest$;
+    }
+
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return throwError(() => new Error('Refresh token is not available'));
+    }
+
+    this.refreshRequest$ = this.http
+      .post<RefreshResponse>(`${this.apiUrl}/refresh`, { refreshToken })
+      .pipe(
+        tap((response) => {
+          this.saveSessionTokens(response.accessToken, response.refreshToken);
+        }),
+        finalize(() => {
+          this.refreshRequest$ = null;
+        }),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+
+    return this.refreshRequest$;
+  }
+
+  /**
+   * Revokes the server-side refresh token before clearing browser session data.
+   * Logout remains successful locally even when the backend is unavailable.
+   */
+  logout(): Observable<void> {
+    const refreshToken = this.getRefreshToken();
+
+    if (!refreshToken) {
+      this.clearSession();
+      return of(void 0);
+    }
+
+    return this.http
+      .post<LogoutResponse>(`${this.apiUrl}/logout`, { refreshToken })
+      .pipe(
+        timeout(5000),
+        catchError(() => of({ message: 'Local logout completed' })),
+        tap(() => this.clearSession()),
+        map(() => void 0)
+      );
+  }
+
+  clearSession(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
@@ -86,6 +151,11 @@ export class AuthService {
 
   getRefreshToken(): string | null {
     return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+  }
+
+  private saveSessionTokens(accessToken: string, refreshToken: string): void {
+    this.saveToken(accessToken);
+    this.saveRefreshToken(refreshToken);
   }
 
   private saveToken(token: string): void {
