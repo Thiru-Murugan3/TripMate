@@ -37,21 +37,3 @@ BREVO_SENDER_NAME=TripMate
 ```
 
 Never commit `backend/.env` or a real Brevo API key.
-
-
-## Google Sign-In Setup
-
-TripMate uses Google Identity Services on the Angular login page and verifies the Google ID token on the Spring Boot backend.
-
-One-time local setup:
-1. In Google Cloud / Google Auth Platform, create an OAuth 2.0 Client ID with application type **Web application**.
-2. Add `http://localhost:4200` as an **Authorized JavaScript origin**.
-3. Copy `backend/.env.example` to `backend/.env` if needed.
-4. Set the public Web Client ID:
-   ```env
-   GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
-   ```
-5. Restart the Spring Boot backend and Angular web app.
-6. Open `http://localhost:4200/login` and use **Sign in with Google**.
-
-The Google client secret is not required for this flow. The browser receives a Google ID token and the backend validates its signature, expiry, issuer, audience, verified email, and Google account subject before issuing TripMate access and refresh tokens.
