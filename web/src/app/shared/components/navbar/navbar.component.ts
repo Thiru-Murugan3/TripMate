@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-navbar',
@@ -67,12 +68,23 @@ import { AuthService } from '../../../core/services/auth.service';
               </svg>
             </button>
 
-            <button class="icon-btn notification-btn" aria-label="Notifications">
+            <button
+              class="icon-btn notification-btn"
+              type="button"
+              routerLink="/notifications"
+              aria-label="Open notifications"
+              title="Notifications"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="header-icon">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
-              <span class="notification-badge"></span>
+              <span
+                class="notification-badge"
+                *ngIf="(notificationService.unreadCount$ | async) as unreadCount"
+              >
+                {{ unreadCount > 99 ? '99+' : unreadCount }}
+              </span>
             </button>
 
             <div class="header-divider"></div>
@@ -282,13 +294,21 @@ import { AuthService } from '../../../core/services/auth.service';
     }
     .notification-badge {
       position: absolute;
-      top: 5px;
-      right: 5px;
-      width: 7px;
-      height: 7px;
+      top: -4px;
+      right: -6px;
+      min-width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
       background-color: #ef4444;
-      border-radius: 50%;
+      color: #ffffff;
+      border-radius: 999px;
       border: 1.5px solid #ffffff;
+      font-size: 0.62rem;
+      font-weight: 800;
+      line-height: 1;
     }
     .header-divider {
       width: 1px;
@@ -522,9 +542,22 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class NavbarComponent {
   authService = inject(AuthService);
+  readonly notificationService = inject(NotificationService);
   private router = inject(Router);
 
   showProfileDropdown = false;
+
+  constructor() {
+    effect(() => {
+      if (this.authService.isAuthenticated()) {
+        this.notificationService.refreshUnreadCount().subscribe({
+          error: () => {
+            // Keep navigation usable if the unread-count request is temporarily unavailable.
+          }
+        });
+      }
+    });
+  }
 
   toggleProfileDropdown(): void {
     this.showProfileDropdown = !this.showProfileDropdown;
