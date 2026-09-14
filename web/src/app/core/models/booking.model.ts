@@ -78,6 +78,11 @@ export interface BookingOffer {
   amount: number;
   currency: string;
   refundable: boolean;
+  durationMinutes?: number;
+  stops?: number;
+  serviceClass?: string;
+  availableSeats?: number;
+  amenities?: string[];
 }
 
 export interface BookingSearchResponse {

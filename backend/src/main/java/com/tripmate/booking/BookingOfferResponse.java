@@ -2,6 +2,7 @@ package com.tripmate.booking;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record BookingOfferResponse(
         String offerId,
@@ -15,6 +16,11 @@ public record BookingOfferResponse(
         LocalDateTime endDatetime,
         BigDecimal amount,
         String currency,
-        boolean refundable
+        boolean refundable,
+        Integer durationMinutes,
+        Integer stops,
+        String serviceClass,
+        Integer availableSeats,
+        List<String> amenities
 ) {
 }
