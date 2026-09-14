@@ -69,6 +69,19 @@ import { NotificationService } from '../../../core/services/notification.service
             </button>
 
             <button
+              class="icon-btn"
+              type="button"
+              routerLink="/invitations"
+              aria-label="Open invitations"
+              title="Invitations"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="header-icon">
+                <rect x="3" y="5" width="18" height="14" rx="2"/>
+                <path d="m3 7 9 6 9-6"/>
+              </svg>
+            </button>
+
+            <button
               class="icon-btn notification-btn"
               type="button"
               routerLink="/notifications"

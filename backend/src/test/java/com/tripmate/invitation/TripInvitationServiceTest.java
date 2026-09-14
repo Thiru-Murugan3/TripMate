@@ -147,6 +147,7 @@ class TripInvitationServiceTest {
                 .trip(testTrip)
                 .inviter(owner)
                 .inviteeEmail("friend@example.com")
+                .type(InvitationType.EMAIL)
                 .role(TripRole.EDITOR)
                 .status(InvitationStatus.PENDING)
                 .expiresAt(LocalDateTime.now().plusDays(5))
@@ -166,6 +167,35 @@ class TripInvitationServiceTest {
                 member.getUser().getId().equals(2L)
         ));
         verify(notificationService).createAndSendNotification(eq(owner), eq(testTrip), anyString(), anyString(), any());
+    }
+
+
+    @Test
+    @DisplayName("acceptInvitation: Rejects a signed-in user whose email does not match the email invitation")
+    void acceptInvitation_EmailRecipientMismatchForbidden() {
+        TripInvitation invitation = TripInvitation.builder()
+                .id(101L)
+                .trip(testTrip)
+                .inviter(owner)
+                .inviteeEmail("someone-else@example.com")
+                .type(InvitationType.EMAIL)
+                .role(TripRole.VIEWER)
+                .status(InvitationStatus.PENDING)
+                .expiresAt(LocalDateTime.now().plusDays(5))
+                .build();
+
+        when(tripInvitationRepository.findById(101L)).thenReturn(Optional.of(invitation));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(invitee));
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> tripInvitationService.acceptInvitation(101L, 2L)
+        );
+
+        assertEquals(403, ex.getStatusCode().value());
+        assertTrue(ex.getReason().contains("different email address"));
+        assertEquals(InvitationStatus.PENDING, invitation.getStatus());
+        verify(tripMemberRepository, never()).save(any(TripMember.class));
     }
 
     @Test

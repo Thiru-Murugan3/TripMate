@@ -28,8 +28,17 @@ public class InvitationResponse {
     private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
 
-    public static InvitationResponse from(TripInvitation invitation, String rawToken) {
-        String link = rawToken != null ? "http://localhost:4200/invite/" + rawToken : null;
+    public static InvitationResponse from(
+            TripInvitation invitation,
+            String rawToken,
+            String frontendBaseUrl
+    ) {
+        String link = null;
+
+        if (rawToken != null && frontendBaseUrl != null && !frontendBaseUrl.isBlank()) {
+            String normalizedBaseUrl = frontendBaseUrl.replaceAll("/+$", "");
+            link = normalizedBaseUrl + "/invite/" + rawToken;
+        }
 
         return InvitationResponse.builder()
                 .id(invitation.getId())
