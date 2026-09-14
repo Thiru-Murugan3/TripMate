@@ -1,5 +1,7 @@
 import { Component, OnDestroy } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
+
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { FooterComponent } from './shared/components/footer/footer.component';
 
@@ -9,11 +11,17 @@ import { FooterComponent } from './shared/components/footer/footer.component';
   imports: [RouterOutlet, NavbarComponent, FooterComponent],
   template: `
     <div class="app-layout">
-      <app-navbar></app-navbar>
+      @if (showAppShell) {
+        <app-navbar></app-navbar>
+      }
+
       <main class="main-content">
         <router-outlet></router-outlet>
       </main>
-      <app-footer></app-footer>
+
+      @if (showAppShell) {
+        <app-footer></app-footer>
+      }
     </div>
   `,
   styles: [`
@@ -22,6 +30,7 @@ import { FooterComponent } from './shared/components/footer/footer.component';
       display: flex;
       flex-direction: column;
     }
+
     .main-content {
       flex: 1;
     }
@@ -29,8 +38,18 @@ import { FooterComponent } from './shared/components/footer/footer.component';
 })
 export class AppComponent implements OnDestroy {
   title = 'TripMate';
+  showAppShell = false;
 
   private selectionGestureStartedInField = false;
+  private readonly routerSubscription: Subscription;
+
+  private readonly authOnlyRoutes = [
+    '/login',
+    '/register',
+    '/verify-email',
+    '/forgot-password',
+    '/reset-password'
+  ];
 
   private readonly handlePointerDownCapture = (event: PointerEvent): void => {
     const target = event.target as HTMLElement | null;
@@ -58,13 +77,39 @@ export class AppComponent implements OnDestroy {
     this.selectionGestureStartedInField = false;
   };
 
-  constructor() {
+  constructor(private readonly router: Router) {
+    this.showAppShell = !this.isAuthOnlyRoute(window.location.pathname);
+
+    this.routerSubscription = this.router.events
+      .pipe(
+        filter(
+          (event): event is NavigationEnd =>
+            event instanceof NavigationEnd
+        )
+      )
+      .subscribe((event) => {
+        this.showAppShell = !this.isAuthOnlyRoute(event.urlAfterRedirects);
+      });
+
     document.addEventListener('pointerdown', this.handlePointerDownCapture, true);
     document.addEventListener('click', this.handleClickCapture, true);
   }
 
   ngOnDestroy(): void {
+    this.routerSubscription.unsubscribe();
     document.removeEventListener('pointerdown', this.handlePointerDownCapture, true);
     document.removeEventListener('click', this.handleClickCapture, true);
+  }
+
+  private isAuthOnlyRoute(url: string): boolean {
+    const path = url.split('?')[0].split('#')[0];
+
+    if (path === '/' || path === '') {
+      return true;
+    }
+
+    return this.authOnlyRoutes.some(
+      (route) => path === route || path.startsWith(`${route}/`)
+    );
   }
 }
