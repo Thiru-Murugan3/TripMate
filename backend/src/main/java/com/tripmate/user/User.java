@@ -12,8 +12,6 @@ public class User {
     @Column(nullable=false,unique=true,length=180) private String email;
     @Column(unique=true,length=20) private String mobile;
     @Column(name="password_hash",nullable=false,length=255) private String passwordHash;
-    @Column(name="google_subject", unique=true, length=255)
-    private String googleSubject;
     @Enumerated(EnumType.STRING) @Column(name="system_role",nullable=false,length=20)
     @Builder.Default private SystemRole systemRole = SystemRole.USER;
     @Enumerated(EnumType.STRING) @Column(nullable=false,length=20)

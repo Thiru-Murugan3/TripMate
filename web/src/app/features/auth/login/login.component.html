@@ -163,26 +163,6 @@
         </button>
       </form>
 
-      <!-- Google Sign-In -->
-      <div class="divider">
-        <span>Or continue with</span>
-      </div>
-
-      <div class="google-login-section">
-        <div #googleButton class="google-button-host" aria-label="Sign in with Google"></div>
-
-        @if (isGoogleLoading) {
-          <div class="google-loading" role="status">
-            <span class="google-spinner"></span>
-            <span>Signing in with Google...</span>
-          </div>
-        }
-
-        @if (googleStatusMessage) {
-          <p class="google-status">{{ googleStatusMessage }}</p>
-        }
-      </div>
-
       <!-- Footer Link -->
       <div class="auth-footer">
         <span>Don't have an account yet?</span>
