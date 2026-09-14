@@ -32,6 +32,13 @@ app:
   frontend-url: ${APP_FRONTEND_URL:http://localhost:4200}
   cors-allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:${APP_FRONTEND_URL:http://localhost:4200}}
 
+discovery:
+  nominatim-url: ${DISCOVERY_NOMINATIM_URL:https://nominatim.openstreetmap.org}
+  overpass-url: ${DISCOVERY_OVERPASS_URL:https://overpass-api.de/api/interpreter}
+  user-agent: ${DISCOVERY_USER_AGENT:TripMate/1.0 (development)}
+  cache-minutes: ${DISCOVERY_CACHE_MINUTES:60}
+  max-results: ${DISCOVERY_MAX_RESULTS:200}
+
 server:
   port: ${SERVER_PORT:8080}
 

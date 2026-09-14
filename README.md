@@ -4,7 +4,7 @@ TripMate is a smart trip planning and management platform.
 
 ## Stack
 - Web: Angular + TypeScript
-- Mobile: Flutter
+- Mobile: Ionic + Angular + Capacitor
 - Backend: Java + Spring Boot
 - Database: MySQL
 - API: REST / OpenAPI
@@ -57,3 +57,32 @@ For invitation links that must open from another network or device, use:
     start-public.bat
 
 This starts TripMate with a temporary public HTTPS development URL. Send a new invitation only after the script reports that public mode is ready. See `DEPLOYMENT.md` for details.
+
+
+## Destination Discovery
+
+TripMate can discover tourist places for a selected destination and add them to a trip.
+
+Example flow:
+
+1. Create or open a trip with destination `Ooty`.
+2. Open **Explore** from the main navigation or the trip's **Explore** tab.
+3. Search within 5, 10, 25, or 50 km.
+4. Filter by attraction, nature, waterfall, lake, viewpoint, temple, church, museum, park, adventure, shopping, food, or historical place.
+5. Select places and save them to **Places**.
+6. Optionally assign Day 1 / Day 2 / Day 3 (or any available trip day) and use **Save & Add to Itinerary**.
+7. Use the 1-day, 2-day, or 3-day suggested-plan buttons as a starting point, then adjust day assignments before saving.
+
+Development discovery uses OpenStreetMap-compatible public services through the Spring Boot backend. Results depend on the place data available from the configured provider and are not guaranteed to represent every real-world attraction.
+
+Optional backend configuration:
+
+```env
+DISCOVERY_NOMINATIM_URL=https://nominatim.openstreetmap.org
+DISCOVERY_OVERPASS_URL=https://overpass-api.de/api/interpreter
+DISCOVERY_USER_AGENT=TripMate/1.0
+DISCOVERY_CACHE_MINUTES=60
+DISCOVERY_MAX_RESULTS=200
+```
+
+For production, use a provider/service deployment suitable for your expected traffic and keep discovery calls behind the TripMate backend rather than calling map providers directly from Angular.

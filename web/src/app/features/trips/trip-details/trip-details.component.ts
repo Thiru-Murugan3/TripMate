@@ -25,8 +25,9 @@ import { ItineraryPlannerComponent } from '../itinerary-planner/itinerary-planne
 import { PlaceManagerComponent } from '../place-manager/place-manager.component';
 import { ExpenseManagerComponent } from '../expense-manager/expense-manager.component';
 import { DocumentManagerComponent } from '../document-manager/document-manager.component';
+import { DestinationDiscoveryComponent } from '../../discovery/destination-discovery.component';
 
-type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
+type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
 @Component({
   selector: 'app-trip-details',
@@ -36,6 +37,7 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
     FormsModule,
     ReactiveFormsModule,
     ItineraryPlannerComponent,
+    DestinationDiscoveryComponent,
     PlaceManagerComponent,
     ExpenseManagerComponent,
     DocumentManagerComponent
@@ -117,6 +119,9 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
         <nav class="details-tabs dashboard-tabs" aria-label="Trip dashboard sections">
           <button type="button" class="tab-btn" [class.active]="activeTab === 'OVERVIEW'" (click)="setActiveTab('OVERVIEW')">
             Overview
+          </button>
+          <button type="button" class="tab-btn" [class.active]="activeTab === 'EXPLORE'" (click)="setActiveTab('EXPLORE')">
+            Explore
           </button>
           <button type="button" class="tab-btn" [class.active]="activeTab === 'ITINERARY'" (click)="setActiveTab('ITINERARY')">
             Itinerary
@@ -224,8 +229,16 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
                 <article class="quick-actions-card card">
                   <h3>Quick Actions</h3>
 
-                  <button type="button" class="quick-action-row" (click)="setActiveTab('ITINERARY')">
+                  <button type="button" class="quick-action-row" (click)="setActiveTab('EXPLORE')">
                     <span class="quick-action-icon blue">
+                      <span class="material-symbols-outlined">travel_explore</span>
+                    </span>
+                    <span>Explore {{ currentTrip.destination }}</span>
+                    <span class="material-symbols-outlined arrow">chevron_right</span>
+                  </button>
+
+                  <button type="button" class="quick-action-row" (click)="setActiveTab('ITINERARY')">
+                    <span class="quick-action-icon green">
                       <span class="material-symbols-outlined">add</span>
                     </span>
                     <span>Add Itinerary</span>
@@ -284,6 +297,18 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
               </aside>
             </div>
           </ng-container>
+        </section>
+
+        <section *ngIf="activeTab === 'EXPLORE'" class="tab-content">
+          <app-destination-discovery
+            [tripId]="tripId"
+            [destination]="currentTrip.destination"
+            [startDate]="currentTrip.startDate"
+            [endDate]="currentTrip.endDate"
+            [canEdit]="canEditTrip"
+            (placesChanged)="onDiscoveredPlacesChanged()"
+            (itineraryChanged)="onDiscoveryItineraryChanged()"
+          ></app-destination-discovery>
         </section>
 
         <section *ngIf="activeTab === 'ITINERARY'" class="tab-content">
@@ -2600,6 +2625,7 @@ export class TripDetailsComponent implements OnInit {
       this.loadMembers();
       this.loadDashboard();
     } else if (
+      tab === 'EXPLORE' ||
       tab === 'ITINERARY' ||
       tab === 'EXPENSES' ||
       tab === 'DOCUMENTS' ||
@@ -2775,6 +2801,16 @@ export class TripDetailsComponent implements OnInit {
 
   onPlacesChanged(): void {
     this.tripUpdateMessage = 'Saved places updated successfully.';
+  }
+
+  onDiscoveredPlacesChanged(): void {
+    this.tripUpdateMessage = 'Tourist places added to this trip.';
+    this.loadDashboard();
+  }
+
+  onDiscoveryItineraryChanged(): void {
+    this.tripUpdateMessage = 'Tourist places added to the trip itinerary.';
+    this.loadDashboard();
   }
 
   openExpenseQuickAdd(): void {
