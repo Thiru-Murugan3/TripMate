@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import {
@@ -22,7 +22,7 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
 @Component({
   selector: 'app-booking-marketplace',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
     <main class="marketplace-page">
       <div class="page-shell">

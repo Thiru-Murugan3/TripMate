@@ -23,4 +23,38 @@ public record BookingOfferResponse(
         Integer availableSeats,
         List<String> amenities
 ) {
+    public BookingOfferResponse(
+            String offerId,
+            BookingType bookingType,
+            TransportType transportType,
+            String providerName,
+            String title,
+            String departure,
+            String arrival,
+            LocalDateTime startDatetime,
+            LocalDateTime endDatetime,
+            BigDecimal amount,
+            String currency,
+            boolean refundable
+    ) {
+        this(
+                offerId,
+                bookingType,
+                transportType,
+                providerName,
+                title,
+                departure,
+                arrival,
+                startDatetime,
+                endDatetime,
+                amount,
+                currency,
+                refundable,
+                null,
+                null,
+                null,
+                null,
+                List.of()
+        );
+    }
 }
