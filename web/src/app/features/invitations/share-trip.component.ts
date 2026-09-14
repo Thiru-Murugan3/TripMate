@@ -86,7 +86,7 @@ import { TripService } from '../../core/services/trip.service';
                       formControlName="email"
                       placeholder="traveler@example.com"
                     />
-                    <small>The account email must match when the invite is accepted.</small>
+                    <small>TripMate will email a secure invitation link to this address.</small>
                   </div>
 
                   <div class="form-group" *ngIf="inviteForm.controls.type.value === 'MOBILE'">
@@ -119,13 +119,14 @@ import { TripService } from '../../core/services/trip.service';
                   </div>
 
                   <div *ngIf="formError" class="alert error-alert">{{ formError }}</div>
+                  <div *ngIf="successMessage" class="alert success-alert">{{ successMessage }}</div>
 
                   <button
                     class="primary-btn"
                     type="submit"
                     [disabled]="inviteForm.invalid || creating"
                   >
-                    {{ creating ? 'Creating invitation...' : 'Create invitation' }}
+                    {{ submitButtonLabel }}
                   </button>
                 </form>
 
@@ -266,6 +267,7 @@ import { TripService } from '../../core/services/trip.service';
     .empty-state p { margin: 0; }
     .alert { padding: .75rem; border-radius: 10px; font-size: .85rem; }
     .error-alert { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    .success-alert { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
     .spinner { width: 30px; height: 30px; border: 3px solid #dbeafe; border-top-color: #2563eb; border-radius: 50%; animation: spin .8s linear infinite; }
     .spinner.small { width: 20px; height: 20px; border-width: 2px; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -280,7 +282,7 @@ export class ShareTripComponent implements OnInit {
   private readonly invitationService = inject(InvitationService);
 
   readonly methods: Array<{ value: InvitationType; label: string; help: string; icon: string }> = [
-    { value: 'EMAIL', label: 'Email', help: 'Match account email', icon: 'mail' },
+    { value: 'EMAIL', label: 'Email', help: 'Send invite link by email', icon: 'mail' },
     { value: 'MOBILE', label: 'Mobile', help: 'Match account mobile', icon: 'smartphone' },
     { value: 'LINK', label: 'Link', help: 'Share manually', icon: 'link' }
   ];
@@ -297,6 +299,7 @@ export class ShareTripComponent implements OnInit {
   tripError = '';
   invitationsError = '';
   formError = '';
+  successMessage = '';
   copyMessage = '';
 
   inviteForm = this.fb.group({
@@ -308,6 +311,20 @@ export class ShareTripComponent implements OnInit {
 
   get canManageInvitations(): boolean {
     return this.trip?.userRole === 'OWNER';
+  }
+
+  get submitButtonLabel(): string {
+    const type = this.inviteForm.controls.type.value;
+
+    if (this.creating) {
+      return type === 'EMAIL'
+        ? 'Sending invitation...'
+        : 'Creating invitation...';
+    }
+
+    if (type === 'EMAIL') return 'Send invitation email';
+    if (type === 'LINK') return 'Create share link';
+    return 'Create invitation';
   }
 
   ngOnInit(): void {
@@ -330,6 +347,7 @@ export class ShareTripComponent implements OnInit {
       mobileNumber: type === 'MOBILE' ? this.inviteForm.controls.mobileNumber.value : ''
     });
     this.formError = '';
+    this.successMessage = '';
     this.lastCreatedInvitation = null;
     this.copyMessage = '';
     this.updateMethodValidators(type);
@@ -392,6 +410,7 @@ export class ShareTripComponent implements OnInit {
 
     this.creating = true;
     this.formError = '';
+    this.successMessage = '';
     this.lastCreatedInvitation = null;
     this.copyMessage = '';
 
@@ -399,6 +418,15 @@ export class ShareTripComponent implements OnInit {
       next: (invitation) => {
         this.creating = false;
         this.lastCreatedInvitation = invitation;
+
+        if (type === 'EMAIL') {
+          this.successMessage = `Invitation link sent to ${request.email}.`;
+        } else if (type === 'LINK') {
+          this.successMessage = 'Share link created successfully.';
+        } else {
+          this.successMessage = 'Mobile invitation created successfully.';
+        }
+
         this.loadInvitations();
       },
       error: (err) => {

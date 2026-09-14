@@ -1,5 +1,6 @@
 package com.tripmate.invitation;
 
+import com.tripmate.auth.EmailService;
 import com.tripmate.member.MemberStatus;
 import com.tripmate.member.TripMember;
 import com.tripmate.member.TripMemberRepository;
@@ -44,6 +45,9 @@ class TripInvitationServiceTest {
     private NotificationService notificationService;
 
     @Mock
+    private EmailService emailService;
+
+    @Mock
     private com.tripmate.audit.AuditLogService auditLogService;
 
     @InjectMocks
@@ -81,6 +85,13 @@ class TripInvitationServiceTest {
         assertEquals(InvitationStatus.PENDING, response.getStatus());
         verify(tripInvitationRepository).save(any(TripInvitation.class));
         verify(notificationService).createAndSendNotification(eq(invitee), eq(testTrip), anyString(), anyString(), any());
+        verify(emailService).sendTripInvitationEmail(
+                eq("friend@example.com"),
+                eq("Owner User"),
+                eq("Kodaikanal Trip"),
+                eq("EDITOR"),
+                contains("/invite/")
+        );
     }
 
     @Test
