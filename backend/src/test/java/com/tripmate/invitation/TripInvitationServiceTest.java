@@ -78,7 +78,7 @@ class TripInvitationServiceTest {
         when(tripInvitationRepository.existsByTripIdAndInviteeEmailIgnoreCaseAndStatus(10L, "friend@example.com", InvitationStatus.PENDING)).thenReturn(false);
         when(tripInvitationRepository.save(any(TripInvitation.class))).thenAnswer(i -> i.getArgument(0));
 
-        InvitationResponse response = tripInvitationService.createInvitation(10L, 1L, request);
+        InvitationResponse response = tripInvitationService.createInvitation(10L, 1L, request, "http://192.168.1.20:4200");
 
         assertNotNull(response);
         assertEquals(TripRole.EDITOR, response.getRole());
@@ -90,7 +90,7 @@ class TripInvitationServiceTest {
                 eq("Owner User"),
                 eq("Kodaikanal Trip"),
                 eq("EDITOR"),
-                contains("/invite/")
+                startsWith("http://192.168.1.20:4200/invite/")
         );
     }
 
@@ -106,7 +106,7 @@ class TripInvitationServiceTest {
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> tripInvitationService.createInvitation(10L, 99L, request) // 99L is not owner
+                () -> tripInvitationService.createInvitation(10L, 99L, request, "http://192.168.1.20:4200") // 99L is not owner
         );
 
         assertTrue(ex.getReason().contains("Only the trip owner"));
@@ -124,7 +124,7 @@ class TripInvitationServiceTest {
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> tripInvitationService.createInvitation(10L, 1L, request)
+                () -> tripInvitationService.createInvitation(10L, 1L, request, "http://192.168.1.20:4200")
         );
 
         assertTrue(ex.getReason().contains("Cannot invite user with OWNER role"));
@@ -144,7 +144,7 @@ class TripInvitationServiceTest {
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> tripInvitationService.createInvitation(10L, 1L, request)
+                () -> tripInvitationService.createInvitation(10L, 1L, request, "http://192.168.1.20:4200")
         );
 
         assertTrue(ex.getReason().contains("already an active member"));
