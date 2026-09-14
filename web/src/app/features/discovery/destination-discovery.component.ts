@@ -684,15 +684,40 @@ export class DestinationDiscoveryComponent implements OnInit {
   }
 
   async addPlace(place: DiscoveredPlace): Promise<void> {
-    if (this.activeTripId > 0 && this.isAlreadySaved(place)) return;
+    if (this.activeTripId > 0 && this.effectiveCanEdit) {
+      if (this.isAlreadySaved(place) || this.isSaving) return;
+
+      this.isSaving = true;
+      this.errorMessage = '';
+      this.successMessage = '';
+
+      try {
+        const created = await firstValueFrom(
+          this.placeService.createPlace(this.activeTripId, {
+            name: place.name,
+            category: place.saveCategory,
+            latitude: place.latitude,
+            longitude: place.longitude,
+            estimatedCost: 0,
+            notes: this.discoveryNotes(place)
+          })
+        );
+
+        this.savedPlaces = [...this.savedPlaces, created];
+        this.selectedIds.delete(place.externalId);
+        delete this.dayAssignments[place.externalId];
+        this.placesChanged.emit();
+        this.successMessage = `${place.name} added to ${this.selectedTrip?.name || 'the trip'}.`;
+      } catch (err: any) {
+        this.errorMessage = err?.error?.message || 'Unable to add this place to the trip.';
+      } finally {
+        this.isSaving = false;
+      }
+      return;
+    }
 
     this.selectedIds.add(place.externalId);
     this.dayAssignments[place.externalId] = this.dayAssignments[place.externalId] || 1;
-
-    if (this.activeTripId > 0 && this.effectiveCanEdit) {
-      await this.saveSelected(false);
-      return;
-    }
 
     if (!this.embeddedMode) {
       this.successMessage = 'Place selected. Choose a trip to add it.';
