@@ -340,17 +340,12 @@ public class TripInvitationService {
     }
 
     private String buildInvitationLink(String rawToken) {
-        String normalizedBaseUrl = frontendBaseUrl == null
-                ? ""
-                : frontendBaseUrl.replaceAll("/+$", "");
+        String configuredBaseUrl =
+                frontendBaseUrl == null || frontendBaseUrl.isBlank()
+                        ? "http://localhost:4200"
+                        : frontendBaseUrl;
 
-        if (normalizedBaseUrl.isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.SERVICE_UNAVAILABLE,
-                    "TripMate frontend URL is not configured"
-            );
-        }
-
+        String normalizedBaseUrl = configuredBaseUrl.replaceAll("/+$", "");
         return normalizedBaseUrl + "/invite/" + rawToken;
     }
 
