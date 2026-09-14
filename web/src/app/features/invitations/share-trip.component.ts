@@ -5,7 +5,7 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import {
   CreateInvitationRequest,
@@ -275,7 +275,6 @@ import { TripService } from '../../core/services/trip.service';
 })
 export class ShareTripComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly tripService = inject(TripService);
   private readonly invitationService = inject(InvitationService);
