@@ -6,10 +6,10 @@ import {
   User,
   LoginRequest,
   LoginResponse,
-  GoogleAuthConfig,
   RegisterRequest,
   RegistrationPendingResponse,
   VerifyEmailRequest,
+  ResendEmailOtpRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest
 } from '../models/auth.model';
@@ -30,20 +30,11 @@ export class AuthService {
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
-      tap((res) => this.completeLogin(res))
-    );
-  }
-
-  getGoogleAuthConfig(): Observable<GoogleAuthConfig> {
-    return this.http.get<GoogleAuthConfig>(`${this.apiUrl}/google/config`);
-  }
-
-  loginWithGoogle(credential: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(
-      `${this.apiUrl}/google`,
-      { credential }
-    ).pipe(
-      tap((res) => this.completeLogin(res))
+      tap((res) => {
+        this.saveToken(res.accessToken);
+        this.saveRefreshToken(res.refreshToken);
+        this.fetchCurrentUser().subscribe();
+      })
     );
   }
 
@@ -87,9 +78,6 @@ export class AuthService {
     localStorage.removeItem(this.USER_KEY);
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
-
-    const google = (window as Window & { google?: { accounts?: { id?: { disableAutoSelect?: () => void } } } }).google;
-    google?.accounts?.id?.disableAutoSelect?.();
   }
 
   getToken(): string | null {
@@ -98,16 +86,6 @@ export class AuthService {
 
   getRefreshToken(): string | null {
     return localStorage.getItem(this.REFRESH_TOKEN_KEY);
-  }
-
-  private completeLogin(response: LoginResponse): void {
-    this.saveToken(response.accessToken);
-    this.saveRefreshToken(response.refreshToken);
-    this.fetchCurrentUser().subscribe({
-      error: () => {
-        // fetchCurrentUser handles cleanup when the stored session cannot be loaded.
-      }
-    });
   }
 
   private saveToken(token: string): void {
@@ -126,7 +104,6 @@ export class AuthService {
   private getStoredUser(): User | null {
     const raw = localStorage.getItem(this.USER_KEY);
     if (!raw) return null;
-
     try {
       return JSON.parse(raw) as User;
     } catch {
