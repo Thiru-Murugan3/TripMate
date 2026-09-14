@@ -390,6 +390,7 @@ export class DestinationDiscoveryComponent implements OnInit {
   @Input() tripId = 0;
   @Input() destination = '';
   @Input() startDate = '';
+  @Input() endDate = '';
   @Input() canEdit = true;
 
   @Output() placesChanged = new EventEmitter<void>();
@@ -398,6 +399,7 @@ export class DestinationDiscoveryComponent implements OnInit {
   activeTripId = 0;
   searchDestination = '';
   activeStartDate = '';
+  activeEndDate = '';
   availableTrips: Trip[] = [];
 
   radiusKm = 25;
@@ -452,7 +454,7 @@ export class DestinationDiscoveryComponent implements OnInit {
   get availableDayNumbers(): number[] {
     const trip = this.availableTrips.find((item) => item.id === this.activeTripId);
     const start = this.activeStartDate || trip?.startDate;
-    const end = trip?.endDate;
+    const end = this.activeEndDate || trip?.endDate;
 
     if (start && end) {
       const startTime = new Date(`${start}T00:00:00`).getTime();
@@ -469,6 +471,7 @@ export class DestinationDiscoveryComponent implements OnInit {
       this.activeTripId = this.tripId;
       this.searchDestination = this.destination;
       this.activeStartDate = this.startDate;
+      this.activeEndDate = this.endDate;
       void this.loadSavedPlaces();
       if (this.searchDestination.trim().length >= 2) {
         this.discover();
@@ -501,6 +504,7 @@ export class DestinationDiscoveryComponent implements OnInit {
     if (trip) {
       this.searchDestination = trip.destination;
       this.activeStartDate = trip.startDate;
+      this.activeEndDate = trip.endDate;
       void this.loadSavedPlaces();
       this.discover();
     } else {
