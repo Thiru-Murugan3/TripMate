@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "start:network": "ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.json"
+    "start:network": "ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.json --allowed-hosts=true"
   },
   "private": true,
   "dependencies": {
