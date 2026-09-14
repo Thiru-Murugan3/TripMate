@@ -226,7 +226,7 @@ public class DestinationDiscoveryService {
                 .toList();
     }
 
-    private String buildOverpassQuery(double lat, double lon, int radiusMeters, DiscoveryCategory category) {
+    String buildOverpassQuery(double lat, double lon, int radiusMeters, DiscoveryCategory category) {
         String around = "(around:" + radiusMeters + "," + lat + "," + lon + ")";
         List<String> selectors = new ArrayList<>();
 
@@ -248,7 +248,7 @@ public class DestinationDiscoveryService {
         return "[out:json][timeout:25];(" + String.join("", selectors) + ");out center tags;";
     }
 
-    private DiscoveryCategory classify(JsonNode tags, String name) {
+    DiscoveryCategory classify(JsonNode tags, String name) {
         String tourism = tags.path("tourism").asText("");
         String natural = tags.path("natural").asText("");
         String water = tags.path("water").asText("");
@@ -308,7 +308,7 @@ public class DestinationDiscoveryService {
         return DiscoveryCategory.ATTRACTION;
     }
 
-    private PlaceCategory toSavedPlaceCategory(DiscoveryCategory category) {
+    PlaceCategory toSavedPlaceCategory(DiscoveryCategory category) {
         return switch (category) {
             case FOOD -> PlaceCategory.RESTAURANT;
             case SHOPPING -> PlaceCategory.SHOPPING;
@@ -317,7 +317,7 @@ public class DestinationDiscoveryService {
         };
     }
 
-    private int suggestedVisitMinutes(DiscoveryCategory category) {
+    int suggestedVisitMinutes(DiscoveryCategory category) {
         return switch (category) {
             case MUSEUM, HISTORICAL, ADVENTURE -> 120;
             case PARK, NATURE, WATERFALL, LAKE -> 90;
