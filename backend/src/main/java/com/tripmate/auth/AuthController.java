@@ -17,6 +17,7 @@ public class AuthController {
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
+    private final GoogleAuthService googleAuthService;
 
     @PostMapping("/register")
     public ResponseEntity<RegistrationPendingResponse> register(
@@ -54,6 +55,20 @@ public class AuthController {
         LoginResponse response = authService.login(request);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/google/config")
+    public ResponseEntity<GoogleAuthConfigResponse> googleConfig() {
+        return ResponseEntity.ok(googleAuthService.getConfig());
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> googleLogin(
+            @Valid @RequestBody GoogleLoginRequest request) {
+
+        return ResponseEntity.ok(
+                googleAuthService.login(request.credential())
+        );
     }
 
     @PostMapping("/refresh")
