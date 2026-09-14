@@ -22,7 +22,7 @@ if ($null -eq $network) {
     exit 1
 }
 
-$ip = $network.IPv4Address.IPAddress
+$ip = ($network.IPv4Address | Select-Object -First 1).IPAddress
 
 if ([string]::IsNullOrWhiteSpace($ip) -or $ip.StartsWith('169.254.')) {
     Write-Host 'Could not detect a usable LAN IPv4 address.' -ForegroundColor Red
