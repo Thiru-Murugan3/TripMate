@@ -11,9 +11,12 @@ class DestinationDiscoveryServiceTest {
 
     private final DestinationDiscoveryService service =
             new DestinationDiscoveryService(
-                    "http://localhost:1",
-                    "http://localhost:1",
-                    "TripMate-Test",
+                    "https://nominatim.example.test",
+                    "https://photon.example.test",
+                    "https://overpass-1.example.test/api/interpreter,https://overpass-2.example.test/api/interpreter",
+                    "TripMate-Test/1.0",
+                    1000,
+                    3000,
                     60,
                     200
             );
@@ -76,6 +79,17 @@ class DestinationDiscoveryServiceTest {
         String foodQuery = service.buildOverpassQuery(11.4064, 76.6932, 5000, DiscoveryCategory.FOOD);
         assertTrue(foodQuery.contains("restaurant|cafe|fast_food|food_court"));
         assertFalse(foodQuery.contains("[\"historic\"]"));
+    }
+
+    @Test
+    void keepsConfiguredOverpassFallbackOrder() {
+        assertEquals(
+                java.util.List.of(
+                        "https://overpass-1.example.test/api/interpreter",
+                        "https://overpass-2.example.test/api/interpreter"
+                ),
+                service.configuredOverpassUrls()
+        );
     }
 
     @Test

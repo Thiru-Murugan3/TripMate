@@ -34,8 +34,11 @@ app:
 
 discovery:
   nominatim-url: ${DISCOVERY_NOMINATIM_URL:https://nominatim.openstreetmap.org}
-  overpass-url: ${DISCOVERY_OVERPASS_URL:https://overpass-api.de/api/interpreter}
-  user-agent: ${DISCOVERY_USER_AGENT:TripMate/1.0 (development)}
+  photon-url: ${DISCOVERY_PHOTON_URL:https://photon.komoot.io}
+  overpass-urls: ${DISCOVERY_OVERPASS_URLS:${DISCOVERY_OVERPASS_URL:https://overpass-api.de/api/interpreter,https://maps.mail.ru/osm/tools/overpass/api/interpreter,https://overpass.maprva.org/api/interpreter}}
+  user-agent: ${DISCOVERY_USER_AGENT:TripMate/1.0 (+https://github.com/Thiru-Murugan3/TripMate)}
+  connect-timeout-ms: ${DISCOVERY_CONNECT_TIMEOUT_MS:8000}
+  read-timeout-ms: ${DISCOVERY_READ_TIMEOUT_MS:35000}
   cache-minutes: ${DISCOVERY_CACHE_MINUTES:60}
   max-results: ${DISCOVERY_MAX_RESULTS:200}
 
