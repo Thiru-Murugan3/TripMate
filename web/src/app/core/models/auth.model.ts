@@ -21,6 +21,11 @@ export interface LoginResponse {
   expiresIn?: number;
 }
 
+export interface GoogleAuthConfig {
+  clientId: string;
+  enabled: boolean;
+}
+
 export interface RegisterRequest {
   name: string;
   email: string;
