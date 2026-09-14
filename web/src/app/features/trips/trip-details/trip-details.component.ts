@@ -21,13 +21,14 @@ import {
 import { BookingService } from '../../../core/services/booking.service';
 import { TripService } from '../../../core/services/trip.service';
 import { TripMemberService } from '../../../core/services/trip-member.service';
+import { ItineraryPlannerComponent } from '../itinerary-planner/itinerary-planner.component';
 
 type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
 @Component({
   selector: 'app-trip-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ItineraryPlannerComponent],
   template: `
     <main class="trip-details-page">
       <section *ngIf="isLoadingTrip" class="page-state card">
@@ -275,36 +276,12 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
         </section>
 
         <section *ngIf="activeTab === 'ITINERARY'" class="tab-content">
-          <article class="feature-panel card">
-            <div class="feature-panel-heading">
-              <div>
-                <span class="eyebrow">ITINERARY</span>
-                <h2>Trip Itinerary</h2>
-              </div>
-            </div>
-
-            <div *ngIf="dashboard?.upcomingActivities?.length; else noItinerary" class="timeline-list full-timeline">
-              <div *ngFor="let activity of dashboard?.upcomingActivities" class="timeline-row">
-                <div class="timeline-time">{{ formatActivityTime(activity.time) }}</div>
-                <div class="timeline-track">
-                  <span class="timeline-dot"></span>
-                  <span class="timeline-line"></span>
-                </div>
-                <div class="timeline-content">
-                  <strong>{{ activity.activity }}</strong>
-                  <span>{{ formatDate(activity.date) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noItinerary>
-              <div class="dashboard-empty">
-                <span class="material-symbols-outlined">route</span>
-                <h3>No itinerary added yet</h3>
-                <p>Your planned activities will appear here.</p>
-              </div>
-            </ng-template>
-          </article>
+          <app-itinerary-planner
+            [tripId]="tripId"
+            [trip]="currentTrip"
+            [canEdit]="canEditTrip"
+            (itineraryChanged)="onItineraryChanged()"
+          ></app-itinerary-planner>
         </section>
 
         <section *ngIf="activeTab === 'PLACES'" class="tab-content">
@@ -2784,6 +2761,11 @@ export class TripDetailsComponent implements OnInit {
       return;
     }
     this.setActiveTab('MEMBERS');
+  }
+
+  onItineraryChanged(): void {
+    this.loadDashboard();
+    this.tripUpdateMessage = 'Itinerary updated successfully.';
   }
 
   budgetProgressWidth(value: number): number {
