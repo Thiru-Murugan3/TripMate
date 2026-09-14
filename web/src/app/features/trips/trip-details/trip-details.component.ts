@@ -2761,9 +2761,10 @@ export class TripDetailsComponent implements OnInit {
 
   openShareTrip(): void {
     if (this.canManageMembers) {
-      this.openAddMemberModal();
+      void this.router.navigate(['/trips', this.tripId, 'share']);
       return;
     }
+
     this.setActiveTab('MEMBERS');
   }
 
