@@ -43,17 +43,13 @@ import { NotificationService } from '../../../core/services/notification.service
           >
             My Trips
           </a>
-          <a href="javascript:void(0)" class="nav-link">
+          <a
+            routerLink="/explore"
+            routerLinkActive="active"
+            class="nav-link"
+            aria-label="Explore tourist places"
+          >
             Explore
-          </a>
-          <a href="javascript:void(0)" class="nav-link">
-            Expenses
-          </a>
-          <a href="javascript:void(0)" class="nav-link">
-            Bookings
-          </a>
-          <a href="javascript:void(0)" class="nav-link">
-            Documents
           </a>
         </div>
 
