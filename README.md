@@ -48,3 +48,12 @@ For local testing on another phone or computer connected to the same Wi-Fi, run:
 TripMate will detect the PC LAN IP, configure the invitation URL and backend CORS, then start the backend and Angular for network access.
 
 For public internet users, deploy TripMate to a public HTTPS frontend URL and set `APP_FRONTEND_URL` / `APP_CORS_ALLOWED_ORIGINS` accordingly. See `DEPLOYMENT.md`.
+
+
+## Public invitation testing
+
+For invitation links that must open from another network or device, use:
+
+    start-public.bat
+
+This starts TripMate with a temporary public HTTPS development URL. Send a new invitation only after the script reports that public mode is ready. See `DEPLOYMENT.md` for details.

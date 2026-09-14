@@ -1,11 +1,7 @@
-const browserHostname =
-  typeof window !== 'undefined' && window.location.hostname
-    ? window.location.hostname
-    : 'localhost';
-
 export const environment = {
   production: false,
-  // localhost when opened locally, or the PC's LAN IP when another device
-  // opens Angular through http://<PC-IP>:4200.
-  apiUrl: `http://${browserHostname}:8080/api/v1`
+  // Development uses the Angular dev-server proxy. Browser requests stay on
+  // the same origin (localhost, LAN, or a public tunnel) and Angular forwards
+  // /api requests to Spring Boot on 127.0.0.1:8080.
+  apiUrl: '/api/v1'
 };

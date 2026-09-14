@@ -14,3 +14,4 @@ mobile/www/
 !*.env.example
 uploads/
 coverage/
+.tools/
