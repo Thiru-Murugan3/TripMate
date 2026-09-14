@@ -528,7 +528,7 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
           </div>
         </section>
 
-        <div *ngIf="showAddMemberModal" class="modal-backdrop" (click)="closeAddMemberModal()">
+        <div *ngIf="showAddMemberModal" class="modal-backdrop">
           <div class="modal-content card" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <div>
@@ -582,7 +582,7 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
           </div>
         </div>
 
-        <div *ngIf="showCancelBookingModal && bookingToCancel as cancelBooking" class="modal-backdrop" (click)="closeCancelBookingModal()">
+        <div *ngIf="showCancelBookingModal && bookingToCancel as cancelBooking" class="modal-backdrop">
           <div class="modal-content cancel-booking-modal card" (click)="$event.stopPropagation()">
             <div class="cancel-icon">
               <span class="material-symbols-outlined">cancel</span>
@@ -658,7 +658,7 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
           </div>
         </div>
 
-        <div *ngIf="showEditTripModal" class="modal-backdrop" (click)="closeEditTripModal()">
+        <div *ngIf="showEditTripModal" class="modal-backdrop">
           <div class="modal-content edit-trip-modal card" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <div>
@@ -742,7 +742,7 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
           </div>
         </div>
 
-        <div *ngIf="showBookingModal" class="modal-backdrop" (click)="closeBookingModal()">
+        <div *ngIf="showBookingModal" class="modal-backdrop">
           <div class="modal-content card" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <h3>Add Existing Booking</h3>
