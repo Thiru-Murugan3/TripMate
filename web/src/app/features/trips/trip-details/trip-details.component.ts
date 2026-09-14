@@ -22,13 +22,20 @@ import { BookingService } from '../../../core/services/booking.service';
 import { TripService } from '../../../core/services/trip.service';
 import { TripMemberService } from '../../../core/services/trip-member.service';
 import { ItineraryPlannerComponent } from '../itinerary-planner/itinerary-planner.component';
+import { PlaceManagerComponent } from '../place-manager/place-manager.component';
 
 type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
 @Component({
   selector: 'app-trip-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, ItineraryPlannerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    ItineraryPlannerComponent,
+    PlaceManagerComponent
+  ],
   template: `
     <main class="trip-details-page">
       <section *ngIf="isLoadingTrip" class="page-state card">
@@ -285,13 +292,11 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
         </section>
 
         <section *ngIf="activeTab === 'PLACES'" class="tab-content">
-          <article class="feature-panel card">
-            <div class="dashboard-empty">
-              <span class="material-symbols-outlined">place</span>
-              <h3>Places</h3>
-              <p>Saved places for this trip will appear here.</p>
-            </div>
-          </article>
+          <app-place-manager
+            [tripId]="tripId"
+            [canEdit]="canEditTrip"
+            (placesChanged)="onPlacesChanged()"
+          ></app-place-manager>
         </section>
 
         <section *ngIf="activeTab === 'EXPENSES'" class="tab-content">
@@ -2766,6 +2771,10 @@ export class TripDetailsComponent implements OnInit {
   onItineraryChanged(): void {
     this.loadDashboard();
     this.tripUpdateMessage = 'Itinerary updated successfully.';
+  }
+
+  onPlacesChanged(): void {
+    this.tripUpdateMessage = 'Saved places updated successfully.';
   }
 
   budgetProgressWidth(value: number): number {

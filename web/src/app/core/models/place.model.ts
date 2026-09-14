@@ -18,3 +18,14 @@ export interface Place {
   estimatedCost?: number;
   notes?: string;
 }
+
+export interface CreatePlaceRequest {
+  name: string;
+  category: PlaceCategory;
+  latitude?: number;
+  longitude?: number;
+  estimatedCost?: number;
+  notes?: string;
+}
+
+export interface UpdatePlaceRequest extends CreatePlaceRequest {}
