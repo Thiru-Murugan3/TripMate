@@ -45,6 +45,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./features/notifications/notifications.component').then((m) => m.NotificationsComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'trips/:id/bookings/new',
     loadComponent: () =>
       import('./features/bookings/booking-marketplace.component').then((m) => m.BookingMarketplaceComponent),
