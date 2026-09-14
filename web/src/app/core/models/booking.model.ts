@@ -4,6 +4,18 @@ export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
 export type BookingSource = 'EXTERNAL_MANUAL' | 'TRIPMATE_SANDBOX' | 'TRIPMATE_PROVIDER';
 export type PaymentStatus = 'NOT_REQUIRED' | 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
+export type BookingTravelerGender = 'MALE' | 'FEMALE' | 'OTHER' | 'PREFER_NOT_TO_SAY';
+
+export interface BookingTraveler {
+  id?: number;
+  travelerOrder?: number;
+  fullName: string;
+  gender: BookingTravelerGender;
+  dateOfBirth: string;
+  email?: string;
+  mobile?: string;
+}
+
 export interface Booking {
   id: number;
   tripId: number;
@@ -22,6 +34,7 @@ export interface Booking {
   paymentStatus?: PaymentStatus;
   currency?: string;
   travelerName?: string;
+  travelers?: BookingTraveler[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -94,9 +107,7 @@ export interface BookingSearchResponse {
 
 export interface BookNowRequest {
   offerId: string;
-  travelerName: string;
-  travelerEmail: string;
-  travelerMobile?: string;
+  travelers: BookingTraveler[];
   paymentMethod: string;
 }
 

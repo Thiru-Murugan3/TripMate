@@ -21,6 +21,7 @@ public class SandboxBookingProvider implements BookingProvider {
             "Sandbox mode: results are simulated for development. Real availability, fares, PNRs and payments require licensed travel-provider integrations.";
 
     private final Map<String, BookingOfferResponse> offers = new ConcurrentHashMap<>();
+    private final Map<String, Integer> offerTravelerCounts = new ConcurrentHashMap<>();
 
     @Override
     public BookingSearchResponse search(SearchBookingRequest request) {
@@ -30,8 +31,10 @@ public class SandboxBookingProvider implements BookingProvider {
             case TRANSPORT -> transportOffers(request);
         };
 
+        int travelerCount = request.travelers() != null ? request.travelers() : 1;
         for (BookingOfferResponse offer : results) {
             offers.put(offer.offerId(), offer);
+            offerTravelerCounts.put(offer.offerId(), travelerCount);
         }
 
         return new BookingSearchResponse(
@@ -49,6 +52,14 @@ public class SandboxBookingProvider implements BookingProvider {
             throw new ResponseStatusException(
                     HttpStatus.GONE,
                     "This booking offer has expired. Search again to get a fresh offer."
+            );
+        }
+
+        int expectedTravelers = offerTravelerCounts.getOrDefault(request.offerId(), 1);
+        if (request.travelers() == null || request.travelers().size() != expectedTravelers) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Traveler details count must match the traveler count used in the search"
             );
         }
 

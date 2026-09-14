@@ -34,8 +34,11 @@ public class BookingMarketplaceService {
         Trip trip = findTripOrThrow(tripId);
         verifyCanEdit(trip, userId);
 
+        validateTravelerContacts(request);
+
         ProviderBookingResult providerResult = bookingProvider.book(request);
         BookingOfferResponse offer = providerResult.offer();
+        BookingTravelerRequest primaryTraveler = request.travelers().get(0);
 
         Booking booking = Booking.builder()
                 .trip(trip)
@@ -54,10 +57,24 @@ public class BookingMarketplaceService {
                 .paymentStatus(providerResult.paymentStatus())
                 .currency(offer.currency())
                 .providerOfferId(offer.offerId())
-                .travelerName(request.travelerName().trim())
-                .travelerEmail(request.travelerEmail().trim().toLowerCase())
-                .travelerMobile(normalizeNullable(request.travelerMobile()))
+                .travelerName(primaryTraveler.fullName().trim())
+                .travelerEmail(primaryTraveler.email().trim().toLowerCase())
+                .travelerMobile(normalizeNullable(primaryTraveler.mobile()))
                 .build();
+
+        for (int index = 0; index < request.travelers().size(); index++) {
+            BookingTravelerRequest travelerRequest = request.travelers().get(index);
+            BookingTraveler traveler = BookingTraveler.builder()
+                    .booking(booking)
+                    .travelerOrder(index + 1)
+                    .fullName(travelerRequest.fullName().trim())
+                    .gender(travelerRequest.gender())
+                    .dateOfBirth(travelerRequest.dateOfBirth())
+                    .email(normalizeEmail(travelerRequest.email()))
+                    .mobile(normalizeNullable(travelerRequest.mobile()))
+                    .build();
+            booking.getTravelers().add(traveler);
+        }
 
         Booking saved = bookingRepository.save(booking);
 
@@ -99,6 +116,26 @@ public class BookingMarketplaceService {
                     "You do not have permission to book for this trip"
             );
         }
+    }
+
+    private void validateTravelerContacts(BookNowRequest request) {
+        BookingTravelerRequest primaryTraveler = request.travelers().get(0);
+        if (primaryTraveler.email() == null || primaryTraveler.email().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Primary traveler email is required"
+            );
+        }
+        if (primaryTraveler.mobile() == null || primaryTraveler.mobile().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Primary traveler mobile is required"
+            );
+        }
+    }
+
+    private String normalizeEmail(String value) {
+        return value == null || value.isBlank() ? null : value.trim().toLowerCase();
     }
 
     private String normalizeNullable(String value) {

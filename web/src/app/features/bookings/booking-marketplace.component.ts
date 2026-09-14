@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import {
   BookingOffer,
   BookingSearchRequest,
+  BookingTraveler,
+  BookingTravelerGender,
   BookingSearchResponse,
   BookingType,
   BookNowResponse,
@@ -295,35 +297,77 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
             </div>
 
             <form [formGroup]="travelerForm" (ngSubmit)="confirmBooking()">
-              <div class="form-grid one-column">
-                <label class="field">
-                  <span>Traveler full name</span>
-                  <input formControlName="travelerName" placeholder="Full name as per ID" />
-                </label>
-                <label class="field">
-                  <span>Email</span>
-                  <input type="email" formControlName="travelerEmail" placeholder="name@example.com" />
-                </label>
-                <label class="field">
-                  <span>Mobile</span>
-                  <input formControlName="travelerMobile" placeholder="+91..." />
-                </label>
-                <label class="field">
-                  <span>Payment method</span>
-                  <select formControlName="paymentMethod">
-                    <option value="UPI">UPI</option>
-                    <option value="CARD">Card</option>
-                    <option value="NET_BANKING">Net Banking</option>
-                  </select>
-                </label>
+              <div class="traveler-count-note">
+                <span class="material-symbols-outlined">groups</span>
+                <div>
+                  <strong>{{ travelerCount }} traveler{{ travelerCount === 1 ? '' : 's' }}</strong>
+                  <p>Please enter details for every traveler before continuing.</p>
+                </div>
               </div>
+
+              <div formArrayName="travelers" class="traveler-list">
+                <article
+                  *ngFor="let travelerGroup of travelerControls; let i = index"
+                  [formGroupName]="i"
+                  class="traveler-card"
+                >
+                  <div class="traveler-card-title">
+                    <div>
+                      <span class="traveler-number">{{ i + 1 }}</span>
+                      <strong>Traveler {{ i + 1 }}</strong>
+                      <small *ngIf="i === 0">Primary contact</small>
+                    </div>
+                  </div>
+
+                  <div class="traveler-form-grid">
+                    <label class="field wide">
+                      <span>Full name *</span>
+                      <input formControlName="fullName" placeholder="Name as per travel ID" />
+                    </label>
+
+                    <label class="field">
+                      <span>Gender *</span>
+                      <select formControlName="gender">
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                        <option value="OTHER">Other</option>
+                        <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <span>Date of birth *</span>
+                      <input type="date" formControlName="dateOfBirth" [max]="maxDateOfBirth" />
+                    </label>
+
+                    <label class="field">
+                      <span>Email {{ i === 0 ? '*' : '(optional)' }}</span>
+                      <input type="email" formControlName="email" placeholder="name@example.com" />
+                    </label>
+
+                    <label class="field">
+                      <span>Mobile {{ i === 0 ? '*' : '(optional)' }}</span>
+                      <input formControlName="mobile" placeholder="+91..." />
+                    </label>
+                  </div>
+                </article>
+              </div>
+
+              <label class="field payment-field">
+                <span>Payment method</span>
+                <select formControlName="paymentMethod">
+                  <option value="UPI">UPI</option>
+                  <option value="CARD">Card</option>
+                  <option value="NET_BANKING">Net Banking</option>
+                </select>
+              </label>
 
               <div *ngIf="errorMessage" class="error-box">{{ errorMessage }}</div>
 
               <div class="actions">
                 <button type="button" class="secondary-button" (click)="step = 'RESULTS'">Back</button>
-                <button type="submit" class="primary-button" [disabled]="booking">
-                  {{ booking ? 'Processing...' : 'Pay & Book' }}
+                <button type="submit" class="primary-button" [disabled]="booking || travelerForm.invalid">
+                  {{ booking ? 'Processing...' : 'Pay & Book for ' + travelerCount + (travelerCount === 1 ? ' Traveler' : ' Travelers') }}
                 </button>
               </div>
             </form>
@@ -365,6 +409,7 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
             <div><span>Booking reference</span><strong>{{ confirmation.booking.bookingReference }}</strong></div>
             <div><span>Amount</span><strong>{{ formatCurrency(confirmation.booking.amount) }}</strong></div>
             <div><span>Payment status</span><strong>{{ confirmation.paymentStatus }}</strong></div>
+            <div><span>Travelers</span><strong>{{ confirmation.booking.travelers?.length || travelerCount }}</strong></div>
             <div><span>Mode</span><strong>{{ confirmation.providerMode }}</strong></div>
           </div>
 
@@ -459,6 +504,17 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
     .empty-state p { margin:0 0 1rem; }
 
     .checkout-layout { display:grid; grid-template-columns:1.5fr .8fr; gap:1rem; }
+    .traveler-count-note { display:flex; gap:.7rem; align-items:flex-start; padding:.85rem 1rem; margin-bottom:1rem; border-radius:12px; background:#eff6ff; color:#1d4ed8; }
+    .traveler-count-note p { margin:.15rem 0 0; color:#475569; font-size:.8rem; }
+    .traveler-list { display:flex; flex-direction:column; gap:.9rem; }
+    .traveler-card { padding:1rem; border:1px solid #e2e8f0; border-radius:14px; background:#f8fafc; }
+    .traveler-card-title { margin-bottom:.8rem; }
+    .traveler-card-title > div { display:flex; align-items:center; gap:.5rem; }
+    .traveler-card-title small { color:#2563eb; font-weight:700; }
+    .traveler-number { display:grid; place-items:center; width:26px; height:26px; border-radius:50%; background:#2563eb; color:#fff; font-size:.75rem; font-weight:800; }
+    .traveler-form-grid { display:grid; grid-template-columns:2fr 1fr 1.2fr; gap:.75rem; }
+    .traveler-form-grid .wide { grid-column:span 1; }
+    .payment-field { margin-top:1rem; max-width:320px; }
     .review-card h2 { margin:.25rem 0; }
     .review-card > p { color:#64748b; }
     .review-row,.review-total { display:flex; justify-content:space-between; gap:1rem; padding:.7rem 0; border-top:1px solid #f1f5f9; font-size:.85rem; }
@@ -479,6 +535,7 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
       .booking-type-grid{grid-template-columns:repeat(3,1fr)}
       .form-grid{grid-template-columns:repeat(2,1fr)}
       .checkout-layout{grid-template-columns:1fr}
+      .traveler-form-grid{grid-template-columns:1fr 1fr}
       .confirmation-grid{grid-template-columns:repeat(2,1fr)}
     }
     @media(max-width:620px){
@@ -486,6 +543,7 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
       .steps{grid-template-columns:1fr 1fr}
       .booking-type-grid{grid-template-columns:1fr 1fr}
       .form-grid{grid-template-columns:1fr}
+      .traveler-form-grid{grid-template-columns:1fr}
       .offer-card{flex-wrap:wrap}
       .offer-price{width:100%; align-items:stretch}
       .route-line{grid-template-columns:1fr; text-align:left}
@@ -512,6 +570,8 @@ export class BookingMarketplaceComponent implements OnInit {
   offers: BookingOffer[] = [];
   selectedOffer: BookingOffer | null = null;
   confirmation: BookNowResponse | null = null;
+  travelerCount = 1;
+  readonly maxDateOfBirth = new Date().toISOString().slice(0, 10);
 
   sortBy: SortOption = 'PRICE_ASC';
   departureWindow: DepartureWindow = 'ALL';
@@ -545,9 +605,7 @@ export class BookingMarketplaceComponent implements OnInit {
   });
 
   travelerForm = this.fb.group({
-    travelerName: ['', Validators.required],
-    travelerEmail: ['', [Validators.required, Validators.email]],
-    travelerMobile: [''],
+    travelers: this.fb.array([]),
     paymentMethod: ['UPI', Validators.required]
   });
 
@@ -569,6 +627,10 @@ export class BookingMarketplaceComponent implements OnInit {
         });
       }
     });
+  }
+
+  get travelerControls() {
+    return (this.travelerForm.get('travelers') as FormArray).controls;
   }
 
   get isTransport(): boolean {
@@ -718,6 +780,7 @@ export class BookingMarketplaceComponent implements OnInit {
         this.searching = false;
         this.searchResponse = response;
         this.offers = response.offers ?? [];
+        this.travelerCount = request.travelers;
         this.resetFilters();
         this.maxPrice = this.maximumOfferPrice;
         this.step = 'RESULTS';
@@ -742,6 +805,7 @@ export class BookingMarketplaceComponent implements OnInit {
   chooseOffer(offer: BookingOffer): void {
     this.selectedOffer = offer;
     this.errorMessage = '';
+    this.buildTravelerForms(this.travelerCount);
     this.step = 'TRAVELER';
   }
 
@@ -754,12 +818,22 @@ export class BookingMarketplaceComponent implements OnInit {
     this.booking = true;
     this.errorMessage = '';
     const value = this.travelerForm.getRawValue();
+    const travelers = (value.travelers ?? []).map((traveler: any) => ({
+      fullName: traveler.fullName!,
+      gender: traveler.gender as BookingTravelerGender,
+      dateOfBirth: traveler.dateOfBirth!,
+      email: traveler.email || undefined,
+      mobile: traveler.mobile || undefined
+    } satisfies BookingTraveler));
+
+    if (travelers.length !== this.travelerCount) {
+      this.errorMessage = 'Please enter details for every traveler.';
+      return;
+    }
 
     this.bookingService.bookNow(this.tripId, {
       offerId: this.selectedOffer.offerId,
-      travelerName: value.travelerName!,
-      travelerEmail: value.travelerEmail!,
-      travelerMobile: value.travelerMobile || undefined,
+      travelers,
       paymentMethod: value.paymentMethod!
     }).subscribe({
       next: (response) => {
@@ -779,13 +853,32 @@ export class BookingMarketplaceComponent implements OnInit {
     this.selectedOffer = null;
     this.offers = [];
     this.searchResponse = null;
-    this.travelerForm.reset({
-      travelerName: '',
-      travelerEmail: '',
-      travelerMobile: '',
-      paymentMethod: 'UPI'
-    });
+    this.clearTravelerForms();
+    this.travelerForm.patchValue({ paymentMethod: 'UPI' });
+    this.travelerCount = 1;
     this.step = 'SEARCH';
+  }
+
+  private buildTravelerForms(count: number): void {
+    const travelersArray = this.travelerForm.get('travelers') as FormArray;
+    travelersArray.clear();
+
+    for (let index = 0; index < count; index++) {
+      const isPrimary = index === 0;
+      travelersArray.push(
+        this.fb.group({
+          fullName: ['', Validators.required],
+          gender: ['MALE' as BookingTravelerGender, Validators.required],
+          dateOfBirth: ['', Validators.required],
+          email: ['', isPrimary ? [Validators.required, Validators.email] : [Validators.email]],
+          mobile: ['', isPrimary ? Validators.required : []]
+        })
+      );
+    }
+  }
+
+  private clearTravelerForms(): void {
+    (this.travelerForm.get('travelers') as FormArray).clear();
   }
 
   backToTrip(): void {

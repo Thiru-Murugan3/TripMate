@@ -2,6 +2,7 @@ package com.tripmate.booking;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record BookingResponse(
         Long id,
@@ -20,7 +21,8 @@ public record BookingResponse(
         BookingSource bookingSource,
         PaymentStatus paymentStatus,
         String currency,
-        String travelerName
+        String travelerName,
+        List<BookingTravelerResponse> travelers
 ) {
     public static BookingResponse from(Booking booking) {
         return new BookingResponse(
@@ -40,7 +42,10 @@ public record BookingResponse(
                 booking.getBookingSource(),
                 booking.getPaymentStatus(),
                 booking.getCurrency(),
-                booking.getTravelerName()
+                booking.getTravelerName(),
+                booking.getTravelers() == null
+                        ? List.of()
+                        : booking.getTravelers().stream().map(BookingTravelerResponse::from).toList()
         );
     }
 }

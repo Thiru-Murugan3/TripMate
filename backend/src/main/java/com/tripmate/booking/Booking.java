@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "bookings")
@@ -86,4 +88,9 @@ public class Booking {
 
     @Column(name = "traveler_mobile", length = 20)
     private String travelerMobile;
+
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("travelerOrder ASC, id ASC")
+    @Builder.Default
+    private List<BookingTraveler> travelers = new ArrayList<>();
 }

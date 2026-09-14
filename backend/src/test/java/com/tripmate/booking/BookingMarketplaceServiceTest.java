@@ -108,9 +108,15 @@ class BookingMarketplaceServiceTest {
 
         BookNowRequest request = new BookNowRequest(
                 "offer-1",
-                "Test Traveler",
-                "traveler@example.com",
-                "9999999999",
+                List.of(
+                        new BookingTravelerRequest(
+                                "Test Traveler",
+                                BookingTravelerGender.MALE,
+                                LocalDate.of(1998, 5, 10),
+                                "traveler@example.com",
+                                "9999999999"
+                        )
+                ),
                 "UPI"
         );
 
@@ -135,6 +141,8 @@ class BookingMarketplaceServiceTest {
         assertEquals(100L, response.booking().id());
         assertEquals(BookingSource.TRIPMATE_SANDBOX, response.booking().bookingSource());
         assertEquals(PaymentStatus.PAID, response.paymentStatus());
+        assertEquals(1, response.booking().travelers().size());
+        assertEquals("Test Traveler", response.booking().travelers().get(0).fullName());
         assertFalse(response.liveBookingEnabled());
     }
 }
