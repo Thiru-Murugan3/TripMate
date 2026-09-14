@@ -37,3 +37,14 @@ BREVO_SENDER_NAME=TripMate
 ```
 
 Never commit `backend/.env` or a real Brevo API key.
+
+
+## Invitation links on another device
+
+For local testing on another phone or computer connected to the same Wi-Fi, run:
+
+    start-network.bat
+
+TripMate will detect the PC LAN IP, configure the invitation URL and backend CORS, then start the backend and Angular for network access.
+
+For public internet users, deploy TripMate to a public HTTPS frontend URL and set `APP_FRONTEND_URL` / `APP_CORS_ALLOWED_ORIGINS` accordingly. See `DEPLOYMENT.md`.
