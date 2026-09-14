@@ -13,6 +13,7 @@ import com.tripmate.trip.TripRepository;
 import com.tripmate.user.User;
 import com.tripmate.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,9 @@ public class TripInvitationService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final AuditLogService auditLogService;
+
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendBaseUrl;
 
     @Transactional
     public InvitationResponse createInvitation(Long tripId, Long inviterUserId, CreateInvitationRequest request) {
@@ -128,7 +132,7 @@ public class TripInvitationService {
         // Audit Log
         auditLogService.log(inviterUserId, tripId, AuditAction.INVITATION_CREATED, "INVITATION", saved.getId(), "Created invitation for " + (email != null ? email : mobile) + " as " + request.getRole());
 
-        return InvitationResponse.from(saved, rawToken);
+        return InvitationResponse.from(saved, rawToken, frontendBaseUrl);
     }
 
     @Transactional(readOnly = true)
@@ -143,7 +147,7 @@ public class TripInvitationService {
 
         return tripInvitationRepository.findByTripIdOrderByCreatedAtDesc(tripId)
                 .stream()
-                .map(inv -> InvitationResponse.from(inv, null))
+                .map(inv -> InvitationResponse.from(inv, null, frontendBaseUrl))
                 .toList();
     }
 
@@ -167,7 +171,7 @@ public class TripInvitationService {
                 inv.setStatus(InvitationStatus.EXPIRED);
                 tripInvitationRepository.save(inv);
             } else {
-                responseList.add(InvitationResponse.from(inv, null));
+                responseList.add(InvitationResponse.from(inv, null, frontendBaseUrl));
             }
         }
 
@@ -188,7 +192,7 @@ public class TripInvitationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invitation has expired");
         }
 
-        return InvitationResponse.from(invitation, rawToken);
+        return InvitationResponse.from(invitation, rawToken, frontendBaseUrl);
     }
 
     @Transactional
@@ -222,6 +226,8 @@ public class TripInvitationService {
 
         User acceptingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        validateInvitationRecipient(invitation, acceptingUser);
 
         Trip trip = invitation.getTrip();
 
@@ -259,7 +265,7 @@ public class TripInvitationService {
         auditLogService.log(userId, trip.getId(), AuditAction.INVITATION_ACCEPTED, "INVITATION", invitation.getId(), "Accepted invitation to join trip: " + trip.getName());
         auditLogService.log(userId, trip.getId(), AuditAction.MEMBER_ADDED, "TRIP_MEMBER", member.getId(), "Added as " + invitation.getRole() + " to trip: " + trip.getName());
 
-        return InvitationResponse.from(invitation, null);
+        return InvitationResponse.from(invitation, null, frontendBaseUrl);
     }
 
     @Transactional
@@ -272,11 +278,13 @@ public class TripInvitationService {
                     HttpStatus.BAD_REQUEST, "Invitation is no longer valid or has already been processed");
         }
 
-        invitation.setStatus(InvitationStatus.REJECTED);
-        TripInvitation updated = tripInvitationRepository.save(invitation);
-
         User rejectingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        validateInvitationRecipient(invitation, rejectingUser);
+
+        invitation.setStatus(InvitationStatus.REJECTED);
+        TripInvitation updated = tripInvitationRepository.save(invitation);
 
         // Notify Trip Owner
         notificationService.createAndSendNotification(
@@ -290,7 +298,7 @@ public class TripInvitationService {
         // Audit Log
         auditLogService.log(userId, invitation.getTrip().getId(), AuditAction.INVITATION_REJECTED, "INVITATION", invitation.getId(), "Rejected invitation for trip: " + invitation.getTrip().getName());
 
-        return InvitationResponse.from(updated, null);
+        return InvitationResponse.from(updated, null, frontendBaseUrl);
     }
 
     @Transactional
@@ -307,6 +315,37 @@ public class TripInvitationService {
 
         invitation.setStatus(InvitationStatus.CANCELLED);
         tripInvitationRepository.save(invitation);
+    }
+
+    private void validateInvitationRecipient(TripInvitation invitation, User user) {
+        if (invitation.getType() == InvitationType.LINK) {
+            return;
+        }
+
+        if (invitation.getType() == InvitationType.EMAIL) {
+            String inviteeEmail = invitation.getInviteeEmail();
+            if (inviteeEmail == null
+                    || user.getEmail() == null
+                    || !inviteeEmail.equalsIgnoreCase(user.getEmail())) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "This invitation was sent to a different email address"
+                );
+            }
+            return;
+        }
+
+        if (invitation.getType() == InvitationType.MOBILE) {
+            String inviteeMobile = invitation.getInviteeMobile();
+            if (inviteeMobile == null
+                    || user.getMobile() == null
+                    || !inviteeMobile.equals(user.getMobile())) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "This invitation was sent to a different mobile number"
+                );
+            }
+        }
     }
 
     private String hashToken(String token) {
