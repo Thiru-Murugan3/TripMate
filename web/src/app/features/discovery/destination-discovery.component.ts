@@ -33,8 +33,8 @@ import { TripService } from '../../core/services/trip.service';
           <span class="eyebrow">DESTINATION DISCOVERY</span>
           <h2>Explore {{ searchDestination || 'your destination' }}</h2>
           <p>
-            Find tourist places from OpenStreetMap, save the ones you like, and add them directly
-            to your trip itinerary.
+            Search any city, town or destination even when you are only browsing. A trip is optional
+            and is needed only when you want to save places or add them to an itinerary.
           </p>
         </div>
         <div class="hero-icon">
@@ -44,13 +44,21 @@ import { TripService } from '../../core/services/trip.service';
 
       <div class="search-panel">
         <label *ngIf="!embeddedMode" class="field trip-field">
-          <span>Trip</span>
+          <span>Save to Trip <small>(optional)</small></span>
           <select [ngModel]="activeTripId" (ngModelChange)="selectTrip($event)">
-            <option [ngValue]="0">Browse without selecting a trip</option>
+            <option [ngValue]="0">Browse only — no trip selected</option>
             <option *ngFor="let trip of availableTrips" [ngValue]="trip.id">
               {{ trip.name }} · {{ trip.destination }}
             </option>
           </select>
+          <button
+            *ngIf="selectedTrip as trip"
+            type="button"
+            class="use-trip-link"
+            (click)="useTripDestination(trip)"
+          >
+            Use {{ trip.destination }} as search destination
+          </button>
         </label>
 
         <label class="field destination-field">
@@ -59,7 +67,7 @@ import { TripService } from '../../core/services/trip.service';
             [(ngModel)]="searchDestination"
             [ngModelOptions]="{ standalone: true }"
             maxlength="180"
-            placeholder="Ooty, Tamil Nadu"
+            placeholder="Search Ooty, Kodaikanal, Goa, Jaipur, Mysuru..."
             (keyup.enter)="discover()"
           />
         </label>
@@ -94,6 +102,23 @@ import { TripService } from '../../core/services/trip.service';
         </button>
       </div>
 
+      <div *ngIf="!embeddedMode" class="casual-search-note">
+        <span class="material-symbols-outlined">public</span>
+        <div>
+          <strong>Browse any destination</strong>
+          <span>
+            You do not need to create a trip first. Search any place now; select a trip only if you want to save the results.
+          </span>
+        </div>
+      </div>
+
+      <div *ngIf="!embeddedMode" class="quick-destinations" aria-label="Example destination searches">
+        <span>Try:</span>
+        <button type="button" *ngFor="let place of exampleDestinations" (click)="searchExample(place)">
+          {{ place }}
+        </button>
+      </div>
+
       <div *ngIf="errorMessage" class="message error">
         <span class="material-symbols-outlined">error</span>
         <div>
@@ -116,6 +141,14 @@ import { TripService } from '../../core/services/trip.service';
       </div>
 
       <ng-container *ngIf="!isLoading && result as discovery">
+        <div *ngIf="!embeddedMode && activeTripId === 0" class="browse-only-banner">
+          <span class="material-symbols-outlined">visibility</span>
+          <div>
+            <strong>Browse-only mode</strong>
+            <span>These results are not tied to any planned trip. Select a trip above only when you want to save places.</span>
+          </div>
+        </div>
+
         <div class="result-toolbar">
           <div>
             <h3>{{ discovery.resultCount }} places found</h3>
@@ -292,6 +325,9 @@ import { TripService } from '../../core/services/trip.service';
     .search-panel { display:grid; grid-template-columns:minmax(180px,1.5fr) minmax(130px,.7fr) minmax(160px,.8fr) auto; gap:.7rem; align-items:end; padding:1rem; margin-bottom:1rem; border:1px solid #e2e8f0; border-radius:14px; background:#fff; }
     .search-panel:has(.trip-field) { grid-template-columns:minmax(180px,1fr) minmax(200px,1.4fr) minmax(120px,.6fr) minmax(150px,.7fr) auto; }
     .field { display:flex; flex-direction:column; gap:.3rem; color:#475569; font-size:.7rem; font-weight:800; }
+    .field small { color:#94a3b8; font-size:.62rem; font-weight:700; }
+    .use-trip-link { align-self:flex-start; padding:0; border:0; color:#2563eb; background:transparent; font-size:.62rem; font-weight:800; cursor:pointer; text-align:left; }
+    .use-trip-link:hover { text-decoration:underline; }
     .field input,.field select { min-width:0; padding:.68rem .72rem; border:1px solid #cbd5e1; border-radius:9px; color:#0f172a; background:#fff; font:inherit; font-weight:600; }
     .field input:focus,.field select:focus { outline:2px solid #bfdbfe; border-color:#2563eb; }
     .btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; padding:.68rem .85rem; border:0; border-radius:9px; font-weight:850; cursor:pointer; }
@@ -300,6 +336,12 @@ import { TripService } from '../../core/services/trip.service';
     .btn:disabled { opacity:.55; cursor:not-allowed; }
     .search-btn { min-height:41px; white-space:nowrap; }
 
+    .casual-search-note,.browse-only-banner { display:flex; align-items:flex-start; gap:.55rem; padding:.75rem .9rem; margin-bottom:.7rem; border:1px solid #dbeafe; border-radius:10px; color:#1e3a8a; background:#eff6ff; font-size:.73rem; }
+    .casual-search-note div,.browse-only-banner div { display:flex; flex-direction:column; gap:.12rem; }
+    .casual-search-note .material-symbols-outlined,.browse-only-banner .material-symbols-outlined { color:#2563eb; font-size:1rem; }
+    .quick-destinations { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; margin:0 0 1rem; color:#64748b; font-size:.68rem; }
+    .quick-destinations button { padding:.32rem .55rem; border:1px solid #cbd5e1; border-radius:999px; color:#334155; background:#fff; font-size:.65rem; font-weight:800; cursor:pointer; }
+    .quick-destinations button:hover { border-color:#93c5fd; color:#2563eb; background:#eff6ff; }
     .message { display:flex; gap:.55rem; align-items:center; padding:.75rem .9rem; margin-bottom:1rem; border-radius:10px; font-size:.78rem; }
     .message div { display:flex; flex-direction:column; gap:.1rem; }
     .message.error { color:#991b1b; background:#fef2f2; border:1px solid #fecaca; }
@@ -416,6 +458,14 @@ export class DestinationDiscoveryComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  readonly exampleDestinations = [
+    'Ooty, Tamil Nadu',
+    'Kodaikanal, Tamil Nadu',
+    'Mysuru, Karnataka',
+    'Goa',
+    'Jaipur, Rajasthan'
+  ];
+
   readonly categories: DiscoveryCategory[] = [
     'ALL',
     'ATTRACTION',
@@ -437,10 +487,13 @@ export class DestinationDiscoveryComponent implements OnInit {
     return this.tripId > 0;
   }
 
+  get selectedTrip(): Trip | undefined {
+    return this.availableTrips.find((item) => item.id === this.activeTripId);
+  }
+
   get effectiveCanEdit(): boolean {
     if (this.embeddedMode) return this.canEdit;
-    const trip = this.availableTrips.find((item) => item.id === this.activeTripId);
-    return trip?.userRole === 'OWNER' || trip?.userRole === 'EDITOR';
+    return this.selectedTrip?.userRole === 'OWNER' || this.selectedTrip?.userRole === 'EDITOR';
   }
 
   get filteredPlaces(): DiscoveredPlace[] {
@@ -491,13 +544,18 @@ export class DestinationDiscoveryComponent implements OnInit {
   loadTrips(): void {
     this.tripService.getMyTrips().subscribe({
       next: (trips) => {
+        // Global Explore always starts in casual browse mode.
+        // Trips are available only as an optional save destination.
         this.availableTrips = trips ?? [];
-        if (this.availableTrips.length > 0) {
-          this.selectTrip(this.availableTrips[0].id);
-        }
+        this.activeTripId = 0;
+        this.savedPlaces = [];
+        this.activeStartDate = '';
+        this.activeEndDate = '';
       },
       error: () => {
+        // Casual destination search must still work even if the user's trips fail to load.
         this.availableTrips = [];
+        this.activeTripId = 0;
       }
     });
   }
@@ -505,19 +563,32 @@ export class DestinationDiscoveryComponent implements OnInit {
   selectTrip(value: number | string): void {
     const tripId = Number(value);
     this.activeTripId = Number.isFinite(tripId) ? tripId : 0;
-    const trip = this.availableTrips.find((item) => item.id === this.activeTripId);
+    const trip = this.selectedTrip;
 
+    // Selecting a trip changes only where places will be saved.
+    // It must never replace the destination that the user is casually browsing.
     if (trip) {
-      this.searchDestination = trip.destination;
       this.activeStartDate = trip.startDate;
       this.activeEndDate = trip.endDate;
       void this.loadSavedPlaces();
-      this.discover();
     } else {
       this.savedPlaces = [];
       this.activeStartDate = '';
       this.activeEndDate = '';
     }
+
+    this.selectedIds.clear();
+    this.dayAssignments = {};
+  }
+
+  useTripDestination(trip: Trip): void {
+    this.searchDestination = trip.destination;
+    this.discover();
+  }
+
+  searchExample(destination: string): void {
+    this.searchDestination = destination;
+    this.discover();
   }
 
   discover(): void {
