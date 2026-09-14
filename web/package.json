@@ -9,7 +9,8 @@
     "test": "ng test",
     "start:network": "ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.json --allowed-hosts=true",
     "test:auth": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/interceptors/auth.interceptor.spec.ts",
-    "test:discovery": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/discovery.service.spec.ts"
+    "test:discovery": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/discovery.service.spec.ts",
+    "test:explore": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/discovery/destination-discovery.component.spec.ts"
   },
   "private": true,
   "dependencies": {
