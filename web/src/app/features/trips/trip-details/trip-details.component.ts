@@ -23,6 +23,7 @@ import { TripService } from '../../../core/services/trip.service';
 import { TripMemberService } from '../../../core/services/trip-member.service';
 import { ItineraryPlannerComponent } from '../itinerary-planner/itinerary-planner.component';
 import { PlaceManagerComponent } from '../place-manager/place-manager.component';
+import { ExpenseManagerComponent } from '../expense-manager/expense-manager.component';
 
 type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
@@ -34,7 +35,8 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
     FormsModule,
     ReactiveFormsModule,
     ItineraryPlannerComponent,
-    PlaceManagerComponent
+    PlaceManagerComponent,
+    ExpenseManagerComponent
   ],
   template: `
     <main class="trip-details-page">
@@ -228,7 +230,7 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
                     <span class="material-symbols-outlined arrow">chevron_right</span>
                   </button>
 
-                  <button type="button" class="quick-action-row" (click)="setActiveTab('EXPENSES')">
+                  <button type="button" class="quick-action-row" (click)="openExpenseQuickAdd()">
                     <span class="quick-action-icon green">
                       <span class="material-symbols-outlined">currency_rupee</span>
                     </span>
@@ -300,20 +302,14 @@ type TripDetailsTab = 'OVERVIEW' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKIN
         </section>
 
         <section *ngIf="activeTab === 'EXPENSES'" class="tab-content">
-          <div class="compact-summary-grid expenses-summary">
-            <article class="compact-stat card">
-              <span class="stat-label">Total Budget</span>
-              <strong>{{ formatCurrency(dashboard?.budget || 0) }}</strong>
-            </article>
-            <article class="compact-stat card">
-              <span class="stat-label">Total Spent</span>
-              <strong class="spent-value">{{ formatCurrency(dashboard?.totalExpenses || 0) }}</strong>
-            </article>
-            <article class="compact-stat card">
-              <span class="stat-label">Remaining</span>
-              <strong class="remaining-value">{{ formatCurrency(dashboard?.remainingBudget || 0) }}</strong>
-            </article>
-          </div>
+          <app-expense-manager
+            [tripId]="tripId"
+            [trip]="currentTrip"
+            [members]="members"
+            [canEdit]="canEditTrip"
+            [openRequest]="expenseOpenRequest"
+            (expensesChanged)="onExpensesChanged()"
+          ></app-expense-manager>
         </section>
 
         <section *ngIf="activeTab === 'DOCUMENTS'" class="tab-content">
@@ -2436,6 +2432,7 @@ export class TripDetailsComponent implements OnInit {
   members: TripMember[] = [];
 
   activeTab: TripDetailsTab = 'OVERVIEW';
+  expenseOpenRequest = 0;
 
   isLoadingTrip = true;
   tripLoadError = '';
@@ -2775,6 +2772,16 @@ export class TripDetailsComponent implements OnInit {
 
   onPlacesChanged(): void {
     this.tripUpdateMessage = 'Saved places updated successfully.';
+  }
+
+  openExpenseQuickAdd(): void {
+    this.activeTab = 'EXPENSES';
+    this.expenseOpenRequest += 1;
+  }
+
+  onExpensesChanged(): void {
+    this.loadDashboard();
+    this.tripUpdateMessage = 'Expenses updated successfully.';
   }
 
   budgetProgressWidth(value: number): number {
