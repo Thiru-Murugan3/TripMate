@@ -133,6 +133,23 @@ if ([string]::IsNullOrWhiteSpace($publicUrl)) {
     exit 1
 }
 
+Write-Host ''
+Write-Host 'Checking the public HTTPS frontend...' -ForegroundColor Yellow
+if (-not (Wait-ForUrl -Url $publicUrl -Attempts 30)) {
+    Write-Host 'The Cloudflare URL was created, but the public frontend is not reachable.' -ForegroundColor Red
+    Write-Host ''
+    Write-Host 'Public URL:' -ForegroundColor Yellow
+    Write-Host $publicUrl
+    Write-Host ''
+    Write-Host 'Cloudflare output:' -ForegroundColor Yellow
+    if (Test-Path $tunnelErr) {
+        Get-Content $tunnelErr | Select-Object -Last 30
+    }
+    Write-Host ''
+    Write-Host 'Do not send invitations yet. The tunnel is not healthy.'
+    exit 1
+}
+
 Set-DotEnvValue -Path $envPath -Name 'APP_FRONTEND_URL' -Value $publicUrl
 Set-DotEnvValue -Path $envPath -Name 'APP_CORS_ALLOWED_ORIGINS' -Value ($publicUrl + ',http://localhost:4200,http://127.0.0.1:4200')
 
@@ -152,6 +169,25 @@ if (-not (Wait-ForUrl -Url 'http://127.0.0.1:8080/api/v1/health')) {
     exit 1
 }
 
+Write-Host 'Checking the backend through the public HTTPS tunnel...' -ForegroundColor Yellow
+$publicHealthUrl = $publicUrl + '/api/v1/health'
+if (-not (Wait-ForUrl -Url $publicHealthUrl -Attempts 30)) {
+    Write-Host 'Frontend is public, but /api/v1 is not reaching Spring Boot through the Angular proxy.' -ForegroundColor Red
+    Write-Host ''
+    Write-Host 'Failed URL:' -ForegroundColor Yellow
+    Write-Host $publicHealthUrl
+    Write-Host ''
+    Write-Host 'Check the Angular terminal for proxy errors and the backend terminal for startup errors.'
+    Write-Host 'Do not send invitations yet.'
+    exit 1
+}
+
+Write-Host ''
+Write-Host 'SELF-CHECK PASSED:' -ForegroundColor Green
+Write-Host '  Local Angular      OK'
+Write-Host '  Public HTTPS URL   OK'
+Write-Host '  Local Spring Boot  OK'
+Write-Host '  Public /api proxy  OK'
 Write-Host ''
 Write-Host 'TripMate public development mode is ready.' -ForegroundColor Green
 Write-Host ''
