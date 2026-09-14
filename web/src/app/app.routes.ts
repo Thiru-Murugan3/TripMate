@@ -51,6 +51,23 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'invitations',
+    loadComponent: () =>
+      import('./features/invitations/my-invitations.component').then((m) => m.MyInvitationsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'invite/:token',
+    loadComponent: () =>
+      import('./features/invitations/invitation-link.component').then((m) => m.InvitationLinkComponent)
+  },
+  {
+    path: 'trips/:id/share',
+    loadComponent: () =>
+      import('./features/invitations/share-trip.component').then((m) => m.ShareTripComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'trips/:id/bookings/new',
     loadComponent: () =>
       import('./features/bookings/booking-marketplace.component').then((m) => m.BookingMarketplaceComponent),
