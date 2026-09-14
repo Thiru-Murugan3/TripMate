@@ -47,7 +47,7 @@ import { TripService } from '../../core/services/trip.service';
           <span>Save to Trip <small>(optional)</small></span>
           <select [ngModel]="activeTripId" (ngModelChange)="selectTrip($event)">
             <option [ngValue]="0">Browse only — no trip selected</option>
-            <option *ngFor="let trip of availableTrips" [ngValue]="trip.id">
+            <option *ngFor="let trip of editableTrips" [ngValue]="trip.id">
               {{ trip.name }} · {{ trip.destination }}
             </option>
           </select>
@@ -107,7 +107,7 @@ import { TripService } from '../../core/services/trip.service';
         <div>
           <strong>Browse any destination</strong>
           <span>
-            You do not need to create a trip first. Search any place now; select a trip only if you want to save the results.
+            Search first, select the places you like, then choose an editable trip only when you are ready to add them.
           </span>
         </div>
       </div>
@@ -137,8 +137,8 @@ import { TripService } from '../../core/services/trip.service';
         <div *ngIf="!embeddedMode && activeTripId === 0" class="browse-only-banner">
           <span class="material-symbols-outlined">visibility</span>
           <div>
-            <strong>Browse-only mode</strong>
-            <span>These results are not tied to any planned trip. Select a trip above only when you want to save places.</span>
+            <strong>Browse and select freely</strong>
+            <span>Select one or more places now. You can choose the trip to save them into afterwards.</span>
           </div>
         </div>
 
@@ -189,7 +189,7 @@ import { TripService } from '../../core/services/trip.service';
               </ng-template>
 
               <span class="category-badge">{{ formatCategory(place.category) }}</span>
-              <label *ngIf="effectiveCanEdit && activeTripId > 0" class="select-box" title="Select place">
+              <label *ngIf="canSelectPlaces" class="select-box" title="Select place">
                 <input
                   type="checkbox"
                   [checked]="isSelected(place)"
@@ -248,13 +248,13 @@ import { TripService } from '../../core/services/trip.service';
                 </a>
 
                 <button
-                  *ngIf="effectiveCanEdit && activeTripId > 0 && !isAlreadySaved(place)"
+                  *ngIf="canSelectPlaces && (activeTripId === 0 || !isAlreadySaved(place))"
                   type="button"
                   class="mini-add"
                   [disabled]="isSaving"
-                  (click)="saveSingle(place)"
+                  (click)="addPlace(place)"
                 >
-                  + Add to Trip
+                  {{ activeTripId > 0 ? '+ Add to Trip' : '+ Add' }}
                 </button>
               </div>
 
@@ -278,15 +278,29 @@ import { TripService } from '../../core/services/trip.service';
         </div>
 
         <div
-          *ngIf="effectiveCanEdit && activeTripId > 0 && selectedCount > 0"
+          *ngIf="canSelectPlaces && selectedCount > 0"
           class="selection-bar"
         >
           <div>
             <strong>{{ selectedCount }} place{{ selectedCount === 1 ? '' : 's' }} selected</strong>
-            <span>Choose a quick plan or set each place's day manually.</span>
+            <span>
+              {{ activeTripId > 0
+                ? 'Save the selected places or add them to the itinerary.'
+                : 'Choose a trip below to add the selected places.' }}
+            </span>
           </div>
 
-          <div class="plan-buttons">
+          <label *ngIf="!embeddedMode" class="selection-trip-picker">
+            <span>Save to</span>
+            <select [ngModel]="activeTripId" (ngModelChange)="selectTrip($event)">
+              <option [ngValue]="0">Choose a trip</option>
+              <option *ngFor="let trip of editableTrips" [ngValue]="trip.id">
+                {{ trip.name }}
+              </option>
+            </select>
+          </label>
+
+          <div *ngIf="activeTripId > 0" class="plan-buttons">
             <span>Suggested:</span>
             <button type="button" (click)="applySuggestedPlan(1)">1 Day</button>
             <button type="button" (click)="applySuggestedPlan(2)">2 Days</button>
@@ -294,10 +308,20 @@ import { TripService } from '../../core/services/trip.service';
           </div>
 
           <div class="bulk-actions">
-            <button type="button" class="btn secondary" [disabled]="isSaving" (click)="saveSelected(false)">
+            <button
+              type="button"
+              class="btn secondary"
+              [disabled]="isSaving || activeTripId <= 0 || !effectiveCanEdit"
+              (click)="saveSelected(false)"
+            >
               Save to Places
             </button>
-            <button type="button" class="btn primary" [disabled]="isSaving" (click)="saveSelected(true)">
+            <button
+              type="button"
+              class="btn primary"
+              [disabled]="isSaving || activeTripId <= 0 || !effectiveCanEdit"
+              (click)="saveSelected(true)"
+            >
               {{ isSaving ? 'Saving...' : 'Save & Add to Itinerary' }}
             </button>
           </div>
@@ -391,6 +415,8 @@ import { TripService } from '../../core/services/trip.service';
     .plan-buttons { display:flex; align-items:center; gap:.35rem; margin-left:auto; }
     .plan-buttons button { border:1px solid #cbd5e1; border-radius:7px; padding:.38rem .52rem; color:#334155; background:#fff; font-size:.64rem; font-weight:800; cursor:pointer; }
     .plan-buttons button:hover { border-color:#93c5fd; color:#2563eb; }
+    .selection-trip-picker { display:flex; flex-direction:column; gap:.25rem; min-width:165px; color:#475569; font-size:.65rem; font-weight:800; }
+    .selection-trip-picker select { padding:.48rem .55rem; border:1px solid #cbd5e1; border-radius:7px; color:#0f172a; background:#fff; font-size:.7rem; font-weight:700; }
     .bulk-actions { display:flex; gap:.45rem; }
 
     @media(max-width:1080px){
@@ -469,6 +495,12 @@ export class DestinationDiscoveryComponent implements OnInit {
     return this.tripId > 0;
   }
 
+  get editableTrips(): Trip[] {
+    return this.availableTrips.filter(
+      (trip) => trip.userRole === 'OWNER' || trip.userRole === 'EDITOR'
+    );
+  }
+
   get selectedTrip(): Trip | undefined {
     return this.availableTrips.find((item) => item.id === this.activeTripId);
   }
@@ -476,6 +508,10 @@ export class DestinationDiscoveryComponent implements OnInit {
   get effectiveCanEdit(): boolean {
     if (this.embeddedMode) return this.canEdit;
     return this.selectedTrip?.userRole === 'OWNER' || this.selectedTrip?.userRole === 'EDITOR';
+  }
+
+  get canSelectPlaces(): boolean {
+    return this.embeddedMode ? this.effectiveCanEdit : this.editableTrips.length > 0;
   }
 
   get filteredPlaces(): DiscoveredPlace[] {
@@ -559,7 +595,8 @@ export class DestinationDiscoveryComponent implements OnInit {
       this.activeEndDate = '';
     }
 
-    this.selectedIds.clear();
+    // Keep selected tourist places when the user chooses/switches the save target.
+    // Day assignments are reset because trip duration may differ.
     this.dayAssignments = {};
   }
 
@@ -646,15 +683,35 @@ export class DestinationDiscoveryComponent implements OnInit {
     this.successMessage = `Suggested ${days}-day plan prepared. Review the day assignments, then save it.`;
   }
 
+  async addPlace(place: DiscoveredPlace): Promise<void> {
+    if (this.activeTripId > 0 && this.isAlreadySaved(place)) return;
+
+    this.selectedIds.add(place.externalId);
+    this.dayAssignments[place.externalId] = this.dayAssignments[place.externalId] || 1;
+
+    if (this.activeTripId > 0 && this.effectiveCanEdit) {
+      await this.saveSelected(false);
+      return;
+    }
+
+    if (!this.embeddedMode) {
+      this.successMessage = 'Place selected. Choose a trip to add it.';
+      this.errorMessage = '';
+    }
+  }
+
   async saveSingle(place: DiscoveredPlace): Promise<void> {
-    if (this.isAlreadySaved(place)) return;
-    this.selectedIds = new Set([place.externalId]);
-    this.dayAssignments = { [place.externalId]: 1 };
-    await this.saveSelected(false);
+    await this.addPlace(place);
   }
 
   async saveSelected(addToItinerary: boolean): Promise<void> {
-    if (!this.effectiveCanEdit || this.activeTripId <= 0 || this.selectedIds.size === 0 || this.isSaving) {
+    if (this.selectedIds.size === 0 || this.isSaving) {
+      return;
+    }
+
+    if (this.activeTripId <= 0 || !this.effectiveCanEdit) {
+      this.errorMessage = 'Choose a trip where you have Owner or Editor access before saving places.';
+      this.successMessage = '';
       return;
     }
 
