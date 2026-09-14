@@ -57,16 +57,61 @@ public class EmailService {
     }
 
     public void sendVerificationOtpEmail(String recipientEmail, String otpCode) {
+        String content =
+                "Welcome to TripMate!\n\n" +
+                "Your email verification code is: " + otpCode + "\n\n" +
+                "This code expires in 5 minutes.\n" +
+                "If you did not request this account, you can safely ignore this email.";
+
+        sendTransactionalEmail(
+                recipientEmail,
+                "TripMate Email Verification Code",
+                content,
+                "verification"
+        );
+    }
+
+    public void sendTripInvitationEmail(
+            String recipientEmail,
+            String inviterName,
+            String tripName,
+            String role,
+            String invitationLink
+    ) {
+        String friendlyRole =
+                "EDITOR".equalsIgnoreCase(role) ? "Editor" : "Viewer";
+
+        String content =
+                "You have been invited to join a trip on TripMate.\n\n" +
+                inviterName + " invited you to join \"" + tripName + "\" as " +
+                friendlyRole + ".\n\n" +
+                "Open this secure invitation link to review and accept the invitation:\n" +
+                invitationLink + "\n\n" +
+                "This invitation expires in 7 days. " +
+                "If you are not signed in, TripMate will ask you to sign in first and then return you to the invitation.\n\n" +
+                "If you were not expecting this invitation, you can ignore this email.";
+
+        sendTransactionalEmail(
+                recipientEmail,
+                "You're invited to join " + tripName + " on TripMate",
+                content,
+                "trip invitation"
+        );
+    }
+
+    private void sendTransactionalEmail(
+            String recipientEmail,
+            String subject,
+            String textContent,
+            String emailPurpose
+    ) {
         validateConfiguration();
 
         SendTransactionalEmailRequest request = new SendTransactionalEmailRequest(
                 new Sender(senderName, senderEmail),
                 List.of(new Recipient(recipientEmail)),
-                "TripMate Email Verification Code",
-                "Welcome to TripMate!\n\n" +
-                        "Your email verification code is: " + otpCode + "\n\n" +
-                        "This code expires in 5 minutes.\n" +
-                        "If you did not request this account, you can safely ignore this email."
+                subject,
+                textContent
         );
 
         try {
@@ -84,7 +129,8 @@ public class EmailService {
                     : "not-returned";
 
             log.info(
-                    "TripMate verification email accepted by Brevo for {} (messageId={})",
+                    "TripMate {} email accepted by Brevo for {} (messageId={})",
+                    emailPurpose,
                     recipientEmail,
                     messageId
             );
@@ -95,26 +141,28 @@ public class EmailService {
             }
 
             log.error(
-                    "Brevo rejected verification email for {} with HTTP {}. Provider response: {}",
+                    "Brevo rejected {} email for {} with HTTP {}. Provider response: {}",
+                    emailPurpose,
                     recipientEmail,
                     ex.getStatusCode().value(),
                     responseBody
             );
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Unable to send verification email (Brevo HTTP " +
+                    "Unable to send " + emailPurpose + " email (Brevo HTTP " +
                             ex.getStatusCode().value() +
                             "). Check the backend log for the provider error."
             );
         } catch (RestClientException ex) {
             log.error(
-                    "Unable to reach Brevo while sending verification email to {}: {}",
+                    "Unable to reach Brevo while sending {} email to {}: {}",
+                    emailPurpose,
                     recipientEmail,
                     ex.getMessage()
             );
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Verification email service is temporarily unavailable. Please try again."
+                    "Email service is temporarily unavailable. Please try again."
             );
         }
     }
