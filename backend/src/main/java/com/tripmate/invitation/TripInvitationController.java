@@ -22,9 +22,15 @@ public class TripInvitationController {
     public ResponseEntity<InvitationResponse> createInvitation(
             @PathVariable Long tripId,
             @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestHeader(value = "Origin", required = false) String requestOrigin,
             @Valid @RequestBody CreateInvitationRequest request
     ) {
-        InvitationResponse response = invitationService.createInvitation(tripId, userPrincipal.getId(), request);
+        InvitationResponse response = invitationService.createInvitation(
+                tripId,
+                userPrincipal.getId(),
+                request,
+                requestOrigin
+        );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
