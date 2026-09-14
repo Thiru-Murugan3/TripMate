@@ -36,6 +36,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
+  overscroll-behavior-x: none;
   font-family: var(--tm-font);
   background-color: var(--tm-bg);
   color: var(--tm-text);
@@ -59,4 +60,24 @@ html, body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+/*
+ * Prevent horizontal trackpad/touch overscroll from triggering browser history
+ * navigation while users drag/select text. Normal text selection remains enabled.
+ */
+html {
+  overscroll-behavior-x: none;
+}
+
+body {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
+input,
+textarea,
+[contenteditable='true'] {
+  user-select: text;
+  -webkit-user-select: text;
 }

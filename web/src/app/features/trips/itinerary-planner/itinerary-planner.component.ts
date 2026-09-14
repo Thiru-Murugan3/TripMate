@@ -275,15 +275,42 @@ import { PlaceService } from '../../../core/services/place.service';
               <input formControlName="title" maxlength="180" placeholder="Ooty Lake boating" />
             </label>
 
-            <div class="form-grid two">
-              <label class="field">
+            <div class="form-grid two time-fields">
+              <div class="field">
                 <span>Start Time</span>
-                <input type="time" formControlName="startTime" />
-              </label>
-              <label class="field">
+                <div class="time-picker">
+                  <select formControlName="startHour" aria-label="Start hour">
+                    <option value="">Hour</option>
+                    <option *ngFor="let hour of hourOptions" [value]="hour">{{ hour }}</option>
+                  </select>
+                  <span class="time-separator">:</span>
+                  <select formControlName="startMinute" aria-label="Start minute">
+                    <option *ngFor="let minute of minuteOptions" [value]="minute">{{ minute }}</option>
+                  </select>
+                  <select formControlName="startPeriod" aria-label="Start AM or PM">
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
                 <span>End Time</span>
-                <input type="time" formControlName="endTime" />
-              </label>
+                <div class="time-picker">
+                  <select formControlName="endHour" aria-label="End hour">
+                    <option value="">Hour</option>
+                    <option *ngFor="let hour of hourOptions" [value]="hour">{{ hour }}</option>
+                  </select>
+                  <span class="time-separator">:</span>
+                  <select formControlName="endMinute" aria-label="End minute">
+                    <option *ngFor="let minute of minuteOptions" [value]="minute">{{ minute }}</option>
+                  </select>
+                  <select formControlName="endPeriod" aria-label="End AM or PM">
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <div class="form-grid two">
@@ -397,6 +424,9 @@ import { PlaceService } from '../../../core/services/place.service';
     .field input,.field select,.field textarea { width:100%; box-sizing:border-box; padding:.65rem .72rem; border:1px solid #cbd5e1; border-radius:8px; color:#0f172a; background:#fff; font:inherit; font-weight:500; }
     .field input:focus,.field select:focus,.field textarea:focus { outline:2px solid #bfdbfe; border-color:#2563eb; }
     .form-grid.two { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+    .time-picker { display:grid; grid-template-columns:minmax(70px,1fr) auto minmax(72px,1fr) minmax(76px,1fr); align-items:center; gap:.35rem; }
+    .time-picker select { min-width:0; }
+    .time-separator { color:#64748b; font-weight:850; text-align:center; }
     .modal-actions { display:flex; justify-content:flex-end; gap:.6rem; margin-top:1rem; }
     @media(max-width:700px){
       .planner-toolbar,.day-header,.activity-title-row { align-items:stretch; flex-direction:column; }
@@ -444,13 +474,22 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
   activityForm = this.fb.group({
     dayId: [0, [Validators.required, Validators.min(1)]],
     title: ['', [Validators.required, Validators.maxLength(180)]],
-    startTime: [''],
-    endTime: [''],
+    startHour: [''],
+    startMinute: ['00'],
+    startPeriod: ['AM'],
+    endHour: [''],
+    endMinute: ['00'],
+    endPeriod: ['AM'],
     placeId: [''],
     location: ['', Validators.maxLength(255)],
     estimatedCost: [0, Validators.min(0)],
     description: ['']
   });
+
+  readonly hourOptions = Array.from({ length: 12 }, (_, index) => index + 1);
+  readonly minuteOptions = Array.from({ length: 60 }, (_, index) =>
+    String(index).padStart(2, '0')
+  );
 
   ngOnInit(): void {
     this.loadAll();
@@ -622,8 +661,12 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     this.activityForm.reset({
       dayId: targetDay.id,
       title: '',
-      startTime: '',
-      endTime: '',
+      startHour: '',
+      startMinute: '00',
+      startPeriod: 'AM',
+      endHour: '',
+      endMinute: '00',
+      endPeriod: 'AM',
       placeId: '',
       location: '',
       estimatedCost: 0,
@@ -637,11 +680,19 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
 
     this.editingItem = item;
     this.activityError = '';
+
+    const start = this.to12HourParts(item.startTime);
+    const end = this.to12HourParts(item.endTime);
+
     this.activityForm.reset({
       dayId: item.dayId,
       title: item.title,
-      startTime: item.startTime || '',
-      endTime: item.endTime || '',
+      startHour: start.hour,
+      startMinute: start.minute,
+      startPeriod: start.period,
+      endHour: end.hour,
+      endMinute: end.minute,
+      endPeriod: end.period,
       placeId: item.placeId ? String(item.placeId) : '',
       location: item.location || '',
       estimatedCost: item.estimatedCost ?? 0,
@@ -661,10 +712,23 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     if (!this.canEdit || this.activityForm.invalid) return;
 
     const value = this.activityForm.getRawValue();
-    const startTime = value.startTime || undefined;
-    const endTime = value.endTime || undefined;
+    const startTime = this.to24HourTime(
+      value.startHour,
+      value.startMinute,
+      value.startPeriod
+    );
+    const endTime = this.to24HourTime(
+      value.endHour,
+      value.endMinute,
+      value.endPeriod
+    );
 
-    if (startTime && endTime && endTime < startTime) {
+    if (endTime && !startTime) {
+      this.activityError = 'Please select a start time before setting the end time.';
+      return;
+    }
+
+    if (startTime && endTime && this.timeToMinutes(endTime) < this.timeToMinutes(startTime)) {
       this.activityError = 'End time cannot be before start time.';
       return;
     }
@@ -773,6 +837,65 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
 
   formatCategory(value: string): string {
     return value.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  private to24HourTime(
+    hourValue: string | number | null | undefined,
+    minuteValue: string | null | undefined,
+    periodValue: string | null | undefined
+  ): string | undefined {
+    if (hourValue === null || hourValue === undefined || hourValue === '') {
+      return undefined;
+    }
+
+    let hour = Number(hourValue);
+    const minute = Number(minuteValue ?? '00');
+    const period = periodValue === 'PM' ? 'PM' : 'AM';
+
+    if (!Number.isInteger(hour) || hour < 1 || hour > 12) {
+      return undefined;
+    }
+
+    if (!Number.isInteger(minute) || minute < 0 || minute > 59) {
+      return undefined;
+    }
+
+    if (period === 'AM') {
+      hour = hour === 12 ? 0 : hour;
+    } else {
+      hour = hour === 12 ? 12 : hour + 12;
+    }
+
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+  }
+
+  private to12HourParts(value?: string): {
+    hour: string;
+    minute: string;
+    period: 'AM' | 'PM';
+  } {
+    if (!value) {
+      return { hour: '', minute: '00', period: 'AM' };
+    }
+
+    const [hourValue, minuteValue] = value.split(':').map(Number);
+    if (!Number.isFinite(hourValue) || !Number.isFinite(minuteValue)) {
+      return { hour: '', minute: '00', period: 'AM' };
+    }
+
+    const period: 'AM' | 'PM' = hourValue >= 12 ? 'PM' : 'AM';
+    const hour = hourValue % 12 || 12;
+
+    return {
+      hour: String(hour),
+      minute: String(minuteValue).padStart(2, '0'),
+      period
+    };
+  }
+
+  private timeToMinutes(value: string): number {
+    const [hour, minute] = value.split(':').map(Number);
+    return hour * 60 + minute;
   }
 
   private dateForDay(dayNumber: number): string {
