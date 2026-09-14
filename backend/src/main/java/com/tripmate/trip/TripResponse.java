@@ -33,11 +33,35 @@ public record TripResponse(
                 trip.getBudget(),
                 trip.getDescription(),
                 trip.getCoverImageUrl(),
-                trip.getStatus(),
+                resolveDisplayStatus(trip),
                 trip.getOwner().getId(),
                 trip.getOwner().getName(),
                 trip.getCreatedAt(),
                 trip.getUpdatedAt()
         );
+    }
+
+    private static TripStatus resolveDisplayStatus(Trip trip) {
+        if (trip.getStatus() == TripStatus.CANCELLED) {
+            return TripStatus.CANCELLED;
+        }
+
+        LocalDate today = LocalDate.now();
+
+        if (today.isAfter(trip.getEndDate())) {
+            return TripStatus.COMPLETED;
+        }
+
+        if (!today.isBefore(trip.getStartDate())) {
+            return TripStatus.ONGOING;
+        }
+
+        if (trip.getStatus() == TripStatus.PLANNED
+                || trip.getStatus() == TripStatus.UPCOMING
+                || trip.getStatus() == TripStatus.CONFIRMED) {
+            return trip.getStatus();
+        }
+
+        return TripStatus.UPCOMING;
     }
 }
