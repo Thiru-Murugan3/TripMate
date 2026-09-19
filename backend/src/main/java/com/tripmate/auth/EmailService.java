@@ -57,6 +57,7 @@ public class EmailService {
     }
 
     public void sendVerificationOtpEmail(String recipientEmail, String otpCode) {
+        log.info("TripMate email verification OTP for {}: {}", recipientEmail, otpCode);
         String content =
                 "Welcome to TripMate!\n\n" +
                 "Your email verification code is: " + otpCode + "\n\n" +
@@ -72,6 +73,7 @@ public class EmailService {
     }
 
     public void sendPasswordResetEmail(String recipientEmail, String resetLink) {
+        log.info("TripMate password reset link for {}: {}", recipientEmail, resetLink);
         String content =
                 "We received a request to reset your TripMate password.\n\n" +
                 "Open this secure link to set a new password:\n" +
