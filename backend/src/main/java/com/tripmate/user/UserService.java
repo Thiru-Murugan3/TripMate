@@ -17,8 +17,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserProfileResponse getUserProfile(Long userId) {
-        User user = findUserOrThrow(userId);
-        return UserProfileResponse.from(user);
+        return toResponse(findUserOrThrow(userId));
     }
 
     @Transactional
@@ -38,37 +37,56 @@ public class UserService {
             user.setTravelPreferences(request.getTravelPreferences().trim());
         }
 
-        User updated = userRepository.save(user);
-        return UserProfileResponse.from(updated);
+        return toResponse(userRepository.save(user));
     }
 
     @Transactional
     public UserProfileResponse uploadProfilePhoto(Long userId, MultipartFile file) {
         User user = findUserOrThrow(userId);
+        String oldPhotoReference = user.getProfilePhotoUrl();
+        String newPhotoReference = fileStorageService.storeProfilePhoto(file, userId);
 
-        // Delete old photo if exists
-        if (user.getProfilePhotoUrl() != null) {
-            fileStorageService.deleteFile(user.getProfilePhotoUrl());
+        try {
+            user.setProfilePhotoUrl(newPhotoReference);
+            User updated = userRepository.save(user);
+
+            if (oldPhotoReference != null && !oldPhotoReference.equals(newPhotoReference)) {
+                fileStorageService.deleteFile(oldPhotoReference);
+            }
+            return toResponse(updated);
+        } catch (RuntimeException ex) {
+            fileStorageService.deleteFile(newPhotoReference);
+            throw ex;
         }
-
-        String photoUrl = fileStorageService.storeProfilePhoto(file, userId);
-        user.setProfilePhotoUrl(photoUrl);
-
-        User updated = userRepository.save(user);
-        return UserProfileResponse.from(updated);
     }
 
     @Transactional
     public UserProfileResponse deleteProfilePhoto(Long userId) {
         User user = findUserOrThrow(userId);
+        String photoReference = user.getProfilePhotoUrl();
 
-        if (user.getProfilePhotoUrl() != null) {
-            fileStorageService.deleteFile(user.getProfilePhotoUrl());
+        if (photoReference != null) {
             user.setProfilePhotoUrl(null);
             userRepository.save(user);
+            fileStorageService.deleteFile(photoReference);
         }
 
-        return UserProfileResponse.from(user);
+        return toResponse(user);
+    }
+
+    private UserProfileResponse toResponse(User user) {
+        UserProfileResponse response = UserProfileResponse.from(user);
+        if (user.getProfilePhotoUrl() != null
+                && user.getProfilePhotoUrl().startsWith("r2://")) {
+            response.setProfilePhotoUrl(
+                    fileStorageService.createPresignedGetUrl(
+                            user.getProfilePhotoUrl(),
+                            "profile-photo",
+                            null
+                    )
+            );
+        }
+        return response;
     }
 
     private User findUserOrThrow(Long userId) {

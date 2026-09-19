@@ -45,12 +45,7 @@ public class DocumentService {
     public DocumentResponse getDocumentById(Long tripId, Long documentId, Long userId) {
         Trip trip = findTripOrThrow(tripId);
         verifyCanView(trip, userId);
-
-        Document document = documentRepository.findByIdAndTripId(documentId, tripId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Document not found in this trip"));
-
-        return DocumentResponse.from(document);
+        return DocumentResponse.from(findDocumentOrThrow(tripId, documentId));
     }
 
     @Transactional(readOnly = true)
@@ -58,10 +53,7 @@ public class DocumentService {
         Trip trip = findTripOrThrow(tripId);
         verifyCanView(trip, userId);
 
-        Document document = documentRepository.findByIdAndTripId(documentId, tripId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Document not found in this trip"));
-
+        Document document = findDocumentOrThrow(tripId, documentId);
         Resource resource = fileStorageService.loadFile(document.getStorageUrl());
 
         return new DocumentDownload(
@@ -72,8 +64,31 @@ public class DocumentService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public DocumentDownloadUrl createDownloadUrl(Long tripId, Long documentId, Long userId) {
+        Trip trip = findTripOrThrow(tripId);
+        verifyCanView(trip, userId);
+
+        Document document = findDocumentOrThrow(tripId, documentId);
+        String url = fileStorageService.createPresignedGetUrl(
+                document.getStorageUrl(),
+                document.getFileName(),
+                document.getFileType()
+        );
+
+        return new DocumentDownloadUrl(
+                url,
+                fileStorageService.getPresignedUrlDurationSeconds()
+        );
+    }
+
     @Transactional
-    public DocumentResponse uploadDocument(Long tripId, Long userId, MultipartFile file, DocumentType documentType) {
+    public DocumentResponse uploadDocument(
+            Long tripId,
+            Long userId,
+            MultipartFile file,
+            DocumentType documentType
+    ) {
         Trip trip = findTripOrThrow(tripId);
         verifyCanEdit(trip, userId);
 
@@ -84,22 +99,31 @@ public class DocumentService {
         String storageUrl = fileStorageService.storeFile(file, tripId);
         DocumentType type = documentType != null ? documentType : DocumentType.OTHER;
 
-        Document document = Document.builder()
-                .trip(trip)
-                .uploadedBy(uploader)
-                .fileName(file.getOriginalFilename() != null ? file.getOriginalFilename() : "document")
-                .documentType(type)
-                .fileType(file.getContentType())
-                .fileSize(file.getSize())
-                .storageUrl(storageUrl)
-                .build();
+        try {
+            Document document = Document.builder()
+                    .trip(trip)
+                    .uploadedBy(uploader)
+                    .fileName(file.getOriginalFilename() != null ? file.getOriginalFilename() : "document")
+                    .documentType(type)
+                    .fileType(file.getContentType())
+                    .fileSize(file.getSize())
+                    .storageUrl(storageUrl)
+                    .build();
 
-        Document saved = documentRepository.save(document);
-
-        // Audit Log (never storing file content or secrets)
-        auditLogService.log(userId, tripId, AuditAction.DOCUMENT_UPLOADED, "DOCUMENT", saved.getId(), "Uploaded document: " + saved.getFileName() + " (" + type + ")");
-
-        return DocumentResponse.from(saved);
+            Document saved = documentRepository.save(document);
+            auditLogService.log(
+                    userId,
+                    tripId,
+                    AuditAction.DOCUMENT_UPLOADED,
+                    "DOCUMENT",
+                    saved.getId(),
+                    "Uploaded document: " + saved.getFileName() + " (" + type + ")"
+            );
+            return DocumentResponse.from(saved);
+        } catch (RuntimeException ex) {
+            fileStorageService.deleteFile(storageUrl);
+            throw ex;
+        }
     }
 
     @Transactional
@@ -107,21 +131,30 @@ public class DocumentService {
         Trip trip = findTripOrThrow(tripId);
         verifyCanEdit(trip, userId);
 
-        Document document = documentRepository.findByIdAndTripId(documentId, tripId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Document not found in this trip"));
-
+        Document document = findDocumentOrThrow(tripId, documentId);
         fileStorageService.deleteFile(document.getStorageUrl());
         documentRepository.delete(document);
 
-        // Audit Log
-        auditLogService.log(userId, tripId, AuditAction.DOCUMENT_DELETED, "DOCUMENT", documentId, "Deleted document: " + document.getFileName());
+        auditLogService.log(
+                userId,
+                tripId,
+                AuditAction.DOCUMENT_DELETED,
+                "DOCUMENT",
+                documentId,
+                "Deleted document: " + document.getFileName()
+        );
     }
 
     private Trip findTripOrThrow(Long tripId) {
         return tripRepository.findById(tripId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Trip not found"));
+    }
+
+    private Document findDocumentOrThrow(Long tripId, Long documentId) {
+        return documentRepository.findByIdAndTripId(documentId, tripId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Document not found in this trip"));
     }
 
     private void verifyCanView(Trip trip, Long userId) {
@@ -145,7 +178,9 @@ public class DocumentService {
 
         if (memberOpt.isEmpty() || memberOpt.get().getRole() == TripRole.VIEWER) {
             throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN, "You do not have permission to modify documents for this trip");
+                    HttpStatus.FORBIDDEN,
+                    "You do not have permission to modify documents for this trip"
+            );
         }
     }
 }

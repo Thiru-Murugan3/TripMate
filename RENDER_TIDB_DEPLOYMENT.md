@@ -22,9 +22,9 @@ The frontend is a Render Static Site. The backend is one Render Free Web Service
 
 ## Important free-tier behavior
 
-Render Free web services spin down after inactivity and cold-start on the next request. The backend filesystem is ephemeral, so uploaded documents and profile photos stored under `uploads/` are not durable on the free Render service.
+Render Free web services spin down after inactivity and cold-start on the next request. The backend filesystem is ephemeral, so production document and profile-photo uploads are stored in a private Cloudflare R2 bucket instead of relying on `uploads/`.
 
-Database records are persistent in TiDB Cloud. File-upload persistence must be moved to object storage before relying on document/profile-photo uploads for long-term production use.
+Database records remain persistent in TiDB Cloud, while R2 stores the file bytes. See `CLOUDFLARE_R2_SETUP.md` before the first deployment.
 
 ## 1. Create TiDB Cloud Starter
 
@@ -82,6 +82,10 @@ DB_USERNAME
 DB_PASSWORD
 TRIPMATE_BREVO_API_KEY
 TRIPMATE_BREVO_SENDER_EMAIL
+R2_ENDPOINT
+R2_ACCESS_KEY_ID
+R2_SECRET_ACCESS_KEY
+R2_BUCKET
 ```
 
 Do not add real values to `render.yaml`.
@@ -167,22 +171,16 @@ SELECT * FROM flyway_schema_history ORDER BY installed_rank;
 
 If Flyway fails, inspect the Render backend deploy log before changing the database manually.
 
-## 8. File-upload limitation
+## 8. Cloudflare R2 file storage
 
-The current backend stores files in:
-
-```text
-uploads/
-```
-
-Render Free web services do not provide persistent disks. Files can disappear after a restart, redeploy, or spin-down.
-
-Until object storage is added, treat these as non-durable on the Render free deployment:
+The Blueprint enables private Cloudflare R2 storage for:
 
 - trip documents
 - profile photos
 
-Core relational data such as users, trips, itineraries, expenses, bookings, notifications and invitations remains stored in TiDB.
+Before deploying, create the bucket and credentials described in `CLOUDFLARE_R2_SETUP.md`. The backend stores only object references and metadata in TiDB. Direct download links are short-lived and are generated only after TripMate checks the authenticated user's access.
+
+Local development can keep `R2_ENABLED=false` to use the existing `uploads/` fallback. Do not use that fallback for durable Render storage.
 
 ## 9. Staying at ₹0/month
 

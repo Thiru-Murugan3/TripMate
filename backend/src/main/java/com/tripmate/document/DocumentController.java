@@ -9,7 +9,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
@@ -23,18 +29,14 @@ public class DocumentController {
 
     private final DocumentService documentService;
 
-    // 1. GET /api/v1/trips/{tripId}/documents
     @GetMapping
     public ResponseEntity<List<DocumentResponse>> getDocuments(
             @PathVariable Long tripId,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        return ResponseEntity.ok(
-                documentService.getDocuments(tripId, userPrincipal.getId())
-        );
+        return ResponseEntity.ok(documentService.getDocuments(tripId, userPrincipal.getId()));
     }
 
-    // 2. GET /api/v1/trips/{tripId}/documents/{documentId}
     @GetMapping("/{documentId}")
     public ResponseEntity<DocumentResponse> getDocumentById(
             @PathVariable Long tripId,
@@ -46,7 +48,6 @@ public class DocumentController {
         );
     }
 
-    // 3. GET /api/v1/trips/{tripId}/documents/{documentId}/content
     @GetMapping("/{documentId}/content")
     public ResponseEntity<Resource> getDocumentContent(
             @PathVariable Long tripId,
@@ -61,7 +62,7 @@ public class DocumentController {
             try {
                 mediaType = MediaType.parseMediaType(download.fileType());
             } catch (IllegalArgumentException ignored) {
-                // Fall back to application/octet-stream for unknown stored content types.
+                // Use application/octet-stream for unknown stored content types.
             }
         }
 
@@ -76,7 +77,17 @@ public class DocumentController {
                 .body(download.resource());
     }
 
-    // 4. POST /api/v1/trips/{tripId}/documents
+    @GetMapping("/{documentId}/download-url")
+    public ResponseEntity<DocumentDownloadUrl> getDocumentDownloadUrl(
+            @PathVariable Long tripId,
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        return ResponseEntity.ok(
+                documentService.createDownloadUrl(tripId, documentId, userPrincipal.getId())
+        );
+    }
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentResponse> uploadDocument(
             @PathVariable Long tripId,
@@ -87,13 +98,9 @@ public class DocumentController {
         DocumentResponse response = documentService.uploadDocument(
                 tripId, userPrincipal.getId(), file, documentType
         );
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // 5. DELETE /api/v1/trips/{tripId}/documents/{documentId}
     @DeleteMapping("/{documentId}")
     public ResponseEntity<Map<String, String>> deleteDocument(
             @PathVariable Long tripId,
@@ -101,7 +108,6 @@ public class DocumentController {
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         documentService.deleteDocument(tripId, documentId, userPrincipal.getId());
-
         return ResponseEntity.ok(Map.of("message", "Document deleted successfully"));
     }
 }

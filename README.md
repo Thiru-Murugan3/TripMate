@@ -6,7 +6,8 @@ TripMate is a smart trip planning and management platform.
 - Web: Angular + TypeScript
 - Mobile: Ionic + Angular + Capacitor
 - Backend: Java + Spring Boot
-- Database: MySQL
+- Database: MySQL / TiDB Cloud
+- Object storage: Cloudflare R2 (S3-compatible)
 - API: REST / OpenAPI
 - Authentication: JWT + Refresh Token + Email OTP verification
 - Transactional email: Brevo API
@@ -69,7 +70,7 @@ TripMate can also be deployed without managing a VM by using **Render + TiDB Clo
 - Database: TiDB Cloud Starter (MySQL-compatible)
 - Deployment definition: `render.yaml`
 
-See `RENDER_TIDB_DEPLOYMENT.md` for the complete setup and free-tier limitations. The current local `uploads/` storage is not persistent on Render Free, so documents/profile photos need object storage before those uploads are treated as durable production data.
+See `RENDER_TIDB_DEPLOYMENT.md` for the complete deployment flow and `CLOUDFLARE_R2_SETUP.md` for private document/profile-photo storage. With R2 enabled, new uploads remain durable across Render restarts and redeploys.
 
 ## Self-hosted production deployment
 
