@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
 import { DestinationDiscoveryComponent } from './destination-discovery.component';
@@ -92,7 +93,8 @@ describe('DestinationDiscoveryComponent', () => {
         { provide: DiscoveryService, useValue: discoveryService },
         { provide: PlaceService, useValue: placeService },
         { provide: ItineraryService, useValue: itineraryService },
-        { provide: TripService, useValue: tripService }
+        { provide: TripService, useValue: tripService },
+        { provide: ActivatedRoute, useValue: { queryParams: of({}) } }
       ]
     });
 
