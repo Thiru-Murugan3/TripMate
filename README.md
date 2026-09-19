@@ -59,6 +59,23 @@ For invitation links that must open from another network or device, use:
 This starts TripMate with a temporary public HTTPS development URL. Send a new invitation only after the script reports that public mode is ready. See `DEPLOYMENT.md` for details.
 
 
+
+## Self-hosted production deployment
+
+TripMate is prepared for self-hosted deployment with **Coolify** using the repository-level `docker-compose.coolify.yml`.
+
+The production stack contains:
+
+- Angular + Nginx web frontend
+- Spring Boot backend
+- MySQL
+- persistent MySQL storage
+- persistent document/profile-upload storage
+
+Only the web service needs a public HTTPS domain. Nginx proxies `/api/*` to the private backend container.
+
+See `COOLIFY_DEPLOYMENT.md` for the complete setup, required Brevo variables, generated Coolify variables, health checks, persistence, and smoke-test steps.
+
 ## Destination Discovery
 
 TripMate can discover tourist places for a selected destination and add them to a trip.
