@@ -1,0 +1,31 @@
+name: Deployment CI
+
+on:
+  pull_request:
+    branches: [ development ]
+    paths:
+      - "backend/Dockerfile"
+      - "backend/.dockerignore"
+      - "backend/railway.toml"
+      - "web/Dockerfile"
+      - "web/.dockerignore"
+      - "web/nginx/**"
+      - "web/railway.toml"
+      - "backend/src/main/resources/application.yml"
+      - "RAILWAY_DEPLOYMENT.md"
+      - ".github/workflows/deployment-ci.yml"
+
+jobs:
+  backend-container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend production image
+        run: docker build -t tripmate-backend:ci ./backend
+
+  web-container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build web production image
+        run: docker build -t tripmate-web:ci ./web

@@ -10,9 +10,9 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${JPA_DDL_AUTO:update}
     open-in-view: false
-    show-sql: true
+    show-sql: ${JPA_SHOW_SQL:true}
     properties:
       hibernate:
         format_sql: true
@@ -43,7 +43,7 @@ discovery:
   max-results: ${DISCOVERY_MAX_RESULTS:200}
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${PORT:${SERVER_PORT:8080}}
 
 jwt:
   secret: ${JWT_SECRET:dGhpcmlzYWRldjUzY3JldGtleWZvcnRyaXBtYXRlYXBwbG9jYWw=}
