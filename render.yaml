@@ -49,11 +49,11 @@ services:
         value: validate
       - key: JPA_SHOW_SQL
         value: "false"
-      - key: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+      - key: SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE
         value: "5"
-      - key: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
+      - key: SPRING_DATASOURCE_HIKARI_MINIMUMIDLE
         value: "1"
-      - key: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
+      - key: SPRING_DATASOURCE_HIKARI_CONNECTIONTIMEOUT
         value: "30000"
       - key: JAVA_TOOL_OPTIONS
         value: "-XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=20.0 -XX:+UseSerialGC"
