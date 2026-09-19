@@ -71,6 +71,22 @@ public class EmailService {
         );
     }
 
+    public void sendPasswordResetEmail(String recipientEmail, String resetLink) {
+        String content =
+                "We received a request to reset your TripMate password.\n\n" +
+                "Open this secure link to set a new password:\n" +
+                resetLink + "\n\n" +
+                "This link expires in 15 minutes and can be used only once.\n" +
+                "If you did not request a password reset, you can safely ignore this email.";
+
+        sendTransactionalEmail(
+                recipientEmail,
+                "Reset your TripMate password",
+                content,
+                "password reset"
+        );
+    }
+
     public void sendTripInvitationEmail(
             String recipientEmail,
             String inviterName,
@@ -179,10 +195,10 @@ public class EmailService {
 
     private void validateConfiguration() {
         if (!StringUtils.hasText(apiKey) || !StringUtils.hasText(senderEmail)) {
-            log.error("Brevo email provider is not configured. BREVO_API_KEY or BREVO_SENDER_EMAIL is missing.");
+            log.error("Brevo email provider is not configured. TRIPMATE_BREVO_API_KEY or TRIPMATE_BREVO_SENDER_EMAIL is missing.");
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
-                    "Email service is not configured. Set BREVO_API_KEY and BREVO_SENDER_EMAIL."
+                    "Email service is not configured. Set TRIPMATE_BREVO_API_KEY and TRIPMATE_BREVO_SENDER_EMAIL."
             );
         }
     }
