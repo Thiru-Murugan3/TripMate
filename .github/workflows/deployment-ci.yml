@@ -4,28 +4,31 @@ on:
   pull_request:
     branches: [ development ]
     paths:
+      - "docker-compose.coolify.yml"
       - "backend/Dockerfile"
       - "backend/.dockerignore"
-      - "backend/railway.toml"
       - "web/Dockerfile"
       - "web/.dockerignore"
       - "web/nginx/**"
-      - "web/railway.toml"
       - "backend/src/main/resources/application.yml"
-      - "RAILWAY_DEPLOYMENT.md"
+      - "COOLIFY_DEPLOYMENT.md"
       - ".github/workflows/deployment-ci.yml"
 
 jobs:
-  backend-container:
+  coolify-compose:
     runs-on: ubuntu-latest
+    env:
+      SERVICE_USER_MYSQL: tripmate_ci
+      SERVICE_PASSWORD_64_MYSQL: tripmate_ci_password
+      SERVICE_PASSWORD_64_MYSQLROOT: tripmate_ci_root_password
+      SERVICE_REALBASE64_64_JWT: dHJpcG1hdGUtY2ktand0LXNlY3JldC1sb25nLWVub3VnaC1mb3ItdGVzdGluZw==
+      SERVICE_URL_WEB_8080: https://tripmate.example.com
+      TRIPMATE_BREVO_API_KEY: ci-placeholder
+      TRIPMATE_BREVO_SENDER_EMAIL: ci@example.com
+      TRIPMATE_BREVO_SENDER_NAME: TripMate
     steps:
       - uses: actions/checkout@v4
-      - name: Build backend production image
-        run: docker build -t tripmate-backend:ci ./backend
-
-  web-container:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build web production image
-        run: docker build -t tripmate-web:ci ./web
+      - name: Validate Coolify Docker Compose
+        run: docker compose -f docker-compose.coolify.yml config
+      - name: Build production application images
+        run: docker compose -f docker-compose.coolify.yml build backend web
