@@ -1,5 +1,6 @@
 import { Component, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -7,7 +8,7 @@ import { NotificationService } from '../../../core/services/notification.service
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, FormsModule],
   template: `
     <nav class="navbar glass-panel">
       <div class="nav-container">
@@ -57,7 +58,13 @@ import { NotificationService } from '../../../core/services/notification.service
         <div class="nav-actions">
           <ng-container *ngIf="authService.isAuthenticated(); else guestActions">
             <!-- Search & Notification Icons -->
-            <button class="icon-btn" aria-label="Search">
+            <button
+              class="icon-btn"
+              type="button"
+              aria-label="Search"
+              title="Search Destinations & Activities"
+              (click)="toggleSearchModal()"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="header-icon">
                 <circle cx="11" cy="11" r="8"/>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -181,6 +188,46 @@ import { NotificationService } from '../../../core/services/notification.service
             <a routerLink="/login" class="btn btn-secondary">Login</a>
             <a routerLink="/register" class="btn btn-primary">Sign Up</a>
           </ng-template>
+        </div>
+      </div>
+
+      <!-- Search Overlay Modal -->
+      <div class="search-modal-backdrop" *ngIf="showSearchModal" (click)="closeSearchModal()">
+        <div class="search-modal-card" (click)="$event.stopPropagation()">
+          <div class="search-input-header">
+            <svg class="search-modal-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="executeSearch()"
+              placeholder="Search destinations (e.g. Ooty, Goa) or activities (e.g. Boating)..."
+              class="search-modal-input"
+              autofocus
+            />
+            <button type="button" class="btn btn-primary search-submit-btn" (click)="executeSearch()">
+              Search
+            </button>
+            <button type="button" class="search-close-btn" (click)="closeSearchModal()" aria-label="Close search">
+              &times;
+            </button>
+          </div>
+
+          <div class="search-quick-tags">
+            <span class="tag-label">Popular Searches:</span>
+            <div class="chips-container">
+              <button
+                type="button"
+                class="search-chip"
+                *ngFor="let chip of quickSearchChips"
+                (click)="executeSearch(chip)"
+              >
+                {{ chip }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </nav>
@@ -547,6 +594,136 @@ import { NotificationService } from '../../../core/services/notification.service
       background: #2563eb;
       border: 0;
     }
+
+    .search-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      padding-top: 5rem;
+      animation: fadeIn 150ms ease;
+    }
+
+    .search-modal-card {
+      background: #ffffff;
+      width: 90%;
+      max-width: 680px;
+      height: fit-content;
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e2e8f0;
+      animation: slideDown 150ms ease;
+    }
+
+    .search-input-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 0.5rem 0.85rem;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    .search-input-header:focus-within {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      background: #ffffff;
+    }
+
+    .search-modal-icon {
+      width: 22px;
+      height: 22px;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+
+    .search-modal-input {
+      flex: 1;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      font-size: 0.98rem;
+      color: #0f172a;
+      font-family: inherit;
+    }
+
+    .search-submit-btn {
+      padding: 0.45rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+
+    .search-close-btn {
+      background: transparent;
+      border: 0;
+      font-size: 1.5rem;
+      line-height: 1;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 0 0.25rem;
+    }
+    .search-close-btn:hover {
+      color: #0f172a;
+    }
+
+    .search-quick-tags {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .tag-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .search-chip {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 120ms ease;
+    }
+
+    .search-chip:hover {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
   `]
 })
 export class NavbarComponent {
@@ -555,6 +732,39 @@ export class NavbarComponent {
   private router = inject(Router);
 
   showProfileDropdown = false;
+  showSearchModal = false;
+  searchQuery = '';
+
+  readonly quickSearchChips = [
+    'Ooty',
+    'Goa',
+    'Coorg',
+    'Munnar',
+    'Rishikesh',
+    'Boating',
+    'Kayaking',
+    'Trekking',
+    'Jeep Safari'
+  ];
+
+  toggleSearchModal(): void {
+    this.showSearchModal = !this.showSearchModal;
+    if (this.showSearchModal) {
+      this.showProfileDropdown = false;
+    }
+  }
+
+  closeSearchModal(): void {
+    this.showSearchModal = false;
+  }
+
+  executeSearch(term?: string): void {
+    const query = (term || this.searchQuery).trim();
+    if (!query) return;
+    this.searchQuery = query;
+    this.showSearchModal = false;
+    void this.router.navigate(['/explore'], { queryParams: { search: query } });
+  }
 
   constructor() {
     effect(() => {

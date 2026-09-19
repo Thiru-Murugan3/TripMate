@@ -8,6 +8,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -447,6 +448,7 @@ export class DestinationDiscoveryComponent implements OnInit {
   private readonly placeService = inject(PlaceService);
   private readonly itineraryService = inject(ItineraryService);
   private readonly tripService = inject(TripService);
+  private readonly route = inject(ActivatedRoute);
 
   @Input() tripId = 0;
   @Input() destination = '';
@@ -562,6 +564,14 @@ export class DestinationDiscoveryComponent implements OnInit {
     }
 
     this.loadTrips();
+
+    this.route.queryParams.subscribe((params) => {
+      const searchParam = params['search'] || params['q'];
+      if (searchParam && searchParam.trim().length >= 2) {
+        this.searchDestination = searchParam.trim();
+        this.discover();
+      }
+    });
   }
 
   loadTrips(): void {
