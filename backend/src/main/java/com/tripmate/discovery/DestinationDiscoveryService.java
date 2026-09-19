@@ -74,10 +74,10 @@ public class DestinationDiscoveryService {
                     "Destination must be between 2 and 180 characters"
             );
         }
-        if (radiusKm < 1 || radiusKm > 50) {
+        if (radiusKm < 1 || radiusKm > 100) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Radius must be between 1 and 50 km"
+                    "Radius must be between 1 and 100 km"
             );
         }
 
@@ -131,12 +131,10 @@ public class DestinationDiscoveryService {
     ) {
         Map<String, DiscoveredPlace> map = new LinkedHashMap<>();
 
-        // Add curated places first (they take precedence)
+        // Add curated places first (they take precedence and are always included for destination)
         for (DiscoveredPlace p : curated) {
-            if (p.distanceKm() <= radiusKm + 5.0) {
-                String key = normalizeKey(p.name());
-                map.put(key, p);
-            }
+            String key = normalizeKey(p.name());
+            map.put(key, p);
         }
 
         // Add discovered places if not already covered by curated

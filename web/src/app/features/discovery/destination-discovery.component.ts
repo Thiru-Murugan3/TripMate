@@ -74,16 +74,6 @@ import { TripService } from '../../core/services/trip.service';
         </label>
 
         <label class="field">
-          <span>Radius</span>
-          <select [(ngModel)]="radiusKm" [ngModelOptions]="{ standalone: true }">
-            <option [ngValue]="5">Within 5 km</option>
-            <option [ngValue]="10">Within 10 km</option>
-            <option [ngValue]="25">Within 25 km</option>
-            <option [ngValue]="50">Within 50 km</option>
-          </select>
-        </label>
-
-        <label class="field">
           <span>Category</span>
           <select [(ngModel)]="category" [ngModelOptions]="{ standalone: true }">
             <option *ngFor="let item of categories" [value]="item">
@@ -129,46 +119,36 @@ import { TripService } from '../../core/services/trip.service';
       <div *ngIf="isLoading" class="loading-card">
         <div class="spinner"></div>
         <div>
-          <strong>Searching around {{ searchDestination }}</strong>
-          <p>Collecting tourist places from the map provider...</p>
+          <h3>Searching {{ searchDestination }}</h3>
+          <p>Finding places, activities, entry fees, and route details...</p>
         </div>
       </div>
 
-      <ng-container *ngIf="!isLoading && result as discovery">
-        <div *ngIf="!embeddedMode && activeTripId === 0" class="browse-only-banner">
-          <span class="material-symbols-outlined">visibility</span>
-          <div>
-            <strong>Browse and select freely</strong>
-            <span>Select one or more places now. You can choose the trip to save them into afterwards.</span>
-          </div>
-        </div>
-
+      <div *ngIf="result as data" class="results-container">
         <div class="result-toolbar">
           <div>
-            <h3>{{ discovery.resultCount }} places found</h3>
-            <p>
-              {{ discovery.resolvedDestination }} · {{ discovery.radiusKm }} km radius ·
-              {{ discovery.attribution }}
-            </p>
+            <h3>Found {{ filteredPlaces.length }} tourist places & activities in {{ data.query }}</h3>
+            <p>Select places to add to your saved list or trip itinerary.</p>
           </div>
 
           <label class="local-filter">
             <span class="material-symbols-outlined">filter_alt</span>
             <input
+              type="text"
               [(ngModel)]="filterText"
               [ngModelOptions]="{ standalone: true }"
-              placeholder="Filter these results..."
+              placeholder="Filter current results..."
             />
           </label>
         </div>
 
         <div *ngIf="filteredPlaces.length === 0" class="empty-state">
-          <span class="material-symbols-outlined">location_off</span>
-          <h3>No matching tourist places</h3>
-          <p>Try a larger radius, another category, or a more specific destination name.</p>
+          <span class="material-symbols-outlined">sentiment_dissatisfied</span>
+          <h3>No matching places found</h3>
+          <p>Try searching another category or clearing your filter text.</p>
         </div>
 
-        <div *ngIf="filteredPlaces.length > 0" class="places-grid">
+        <div class="places-grid">
           <article
             *ngFor="let place of filteredPlaces; trackBy: trackPlace"
             class="place-card"
@@ -214,9 +194,9 @@ import { TripService } from '../../core/services/trip.service';
                   <span class="material-symbols-outlined">schedule</span>
                   ~{{ formatDuration(place.suggestedVisitMinutes) }}
                 </span>
-                <span *ngIf="place.estimatedCostPerPerson != null && place.estimatedCostPerPerson > 0" class="cost-badge">
+                <span class="cost-badge" [class.free-badge]="!place.estimatedCostPerPerson || place.estimatedCostPerPerson === 0">
                   <span class="material-symbols-outlined">payments</span>
-                  ₹{{ place.estimatedCostPerPerson | number:'1.0-0' }} / person
+                  {{ (place.estimatedCostPerPerson && place.estimatedCostPerPerson > 0) ? ('Entry: ₹' + (place.estimatedCostPerPerson | number:'1.0-0') + ' / person') : 'Entry: Free' }}
                 </span>
               </div>
 
@@ -228,15 +208,15 @@ import { TripService } from '../../core/services/trip.service';
               </p>
 
               <div class="card-actions">
-                <a
-                  class="text-action"
-                  [href]="openStreetMapUrl(place)"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  class="btn-map-route"
+                  (click)="openMapRoute(place, $event)"
+                  title="View turn-by-turn route on Google Maps"
                 >
-                  <span class="material-symbols-outlined">map</span>
-                  Map
-                </a>
+                  <span class="material-symbols-outlined">directions</span>
+                  Map Route ↗
+                </button>
                 <a
                   *ngIf="place.website"
                   class="text-action"
@@ -327,7 +307,7 @@ import { TripService } from '../../core/services/trip.service';
             </button>
           </div>
         </div>
-      </ng-container>
+      </div>
     </section>
   `,
   styles: [`
@@ -407,6 +387,10 @@ import { TripService } from '../../core/services/trip.service';
     .card-actions { display:flex; align-items:center; gap:.55rem; margin-top:.7rem; padding-top:.65rem; border-top:1px solid #f1f5f9; }
     .text-action { display:inline-flex; align-items:center; gap:.2rem; color:#2563eb; text-decoration:none; font-size:.67rem; font-weight:800; }
     .text-action .material-symbols-outlined { font-size:.85rem; }
+    .btn-map-route { display:inline-flex; align-items:center; gap:.25rem; border:1px solid #93c5fd; background:#eff6ff; color:#1d4ed8; padding:.32rem .55rem; border-radius:7px; font-size:.67rem; font-weight:800; cursor:pointer; transition:all 150ms ease; }
+    .btn-map-route:hover { background:#dbeafe; border-color:#3b82f6; color:#1e40af; }
+    .btn-map-route .material-symbols-outlined { font-size:.85rem; }
+    .free-badge { color:#0369a1 !important; background:#e0f2fe !important; }
     .mini-add { margin-left:auto; border:0; color:#fff; background:#2563eb; padding:.4rem .55rem; border-radius:7px; font-size:.65rem; font-weight:850; cursor:pointer; }
     .mini-add:disabled { opacity:.5; }
     .day-picker { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.65rem; padding:.5rem .6rem; border-radius:8px; color:#475569; background:#f8fafc; font-size:.67rem; font-weight:800; }
@@ -893,6 +877,20 @@ export class DestinationDiscoveryComponent implements OnInit {
 
   openStreetMapUrl(place: DiscoveredPlace): string {
     return `https://www.openstreetmap.org/?mlat=${place.latitude}&mlon=${place.longitude}#map=16/${place.latitude}/${place.longitude}`;
+  }
+
+  openMapRoute(place: DiscoveredPlace, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    let url = '';
+    if (place.latitude && place.longitude && Math.abs(place.latitude) > 0.0001) {
+      url = `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`;
+    } else {
+      const query = encodeURIComponent(`${place.name} ${this.searchDestination || ''}`);
+      url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   formatCategory(category: DiscoveryCategory): string {

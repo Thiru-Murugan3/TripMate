@@ -17,7 +17,7 @@ public class DestinationDiscoveryController {
     @GetMapping("/places")
     public ResponseEntity<DestinationDiscoveryResponse> discoverPlaces(
             @RequestParam String destination,
-            @RequestParam(defaultValue = "25") int radiusKm,
+            @RequestParam(defaultValue = "50") int radiusKm,
             @RequestParam(defaultValue = "ALL") String category
     ) {
         return ResponseEntity.ok(
