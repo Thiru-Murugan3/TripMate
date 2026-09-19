@@ -31,3 +31,7 @@ jobs:
       - run: npm run test:explore
       - run: npm run build
       - run: npm run build -- --configuration development
+      - name: Validate Render production build
+        env:
+          TRIPMATE_API_BASE: https://tripmate-api.example.com
+        run: npm run build:render
