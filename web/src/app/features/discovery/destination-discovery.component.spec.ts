@@ -255,7 +255,12 @@ describe('DestinationDiscoveryComponent', () => {
     expect(discoveryService.discoverPlaces).toHaveBeenCalledWith(
       'Jaipur, Rajasthan',
       25,
-      'ALL'
+      'ALL',
+      jasmine.objectContaining({
+        itemType: 'ALL',
+        priceStatus: 'ALL',
+        sort: 'DISTANCE'
+      })
     );
   });
 
@@ -273,7 +278,52 @@ describe('DestinationDiscoveryComponent', () => {
     expect(discoveryService.discoverPlaces).toHaveBeenCalledWith(
       'Munnar, Kerala',
       25,
-      'ALL'
+      'ALL',
+      jasmine.objectContaining({
+        itemType: 'ALL',
+        priceStatus: 'ALL',
+        sort: 'DISTANCE'
+      })
     );
+  });
+
+  it('does not label an unknown price as free', () => {
+    configure();
+
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.formatPlacePrice({
+      ...discoveredPlace,
+      estimatedCostPerPerson: undefined,
+      priceStatus: 'UNKNOWN'
+    })).toBe('Price not verified');
+  });
+
+  it('labels only source-declared free entry as free', () => {
+    configure();
+
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.formatPlacePrice({
+      ...discoveredPlace,
+      estimatedCostPerPerson: 0,
+      priceStatus: 'FREE'
+    })).toBe('Entry: Free');
+  });
+
+  it('uses a neutral placeholder when no exact-place image is available', () => {
+    configure();
+
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.getPlaceImage(discoveredPlace)).toBe('/place-placeholder.svg');
+    expect(fixture.componentInstance.getPlaceImage({
+      ...discoveredPlace,
+      imageUrl: 'https://example.com/generic.jpg',
+      imageExact: false
+    })).toBe('/place-placeholder.svg');
   });
 });

@@ -14,7 +14,10 @@ import { firstValueFrom } from 'rxjs';
 import {
   DiscoveredPlace,
   DestinationDiscoveryResponse,
-  DiscoveryCategory
+  DiscoveryCategory,
+  DiscoveryItemType,
+  DiscoveryPriceStatus,
+  DiscoverySearchFilters
 } from '../../core/models/discovery.model';
 import { Place } from '../../core/models/place.model';
 import { Trip } from '../../core/models/trip.model';
@@ -125,6 +128,14 @@ import { TripService } from '../../core/services/trip.service';
       </div>
 
       <div *ngIf="result as data" class="results-container">
+        <div *ngIf="data.warnings?.length" class="data-warning">
+          <span class="material-symbols-outlined">info</span>
+          <div>
+            <strong>Live source coverage can vary</strong>
+            <span *ngFor="let warning of data.warnings">{{ warning }}</span>
+          </div>
+        </div>
+
         <div class="result-toolbar">
           <div>
             <h3>Found {{ filteredPlaces.length }} tourist places & activities in {{ data.query }}</h3>
@@ -139,6 +150,41 @@ import { TripService } from '../../core/services/trip.service';
               [ngModelOptions]="{ standalone: true }"
               placeholder="Filter current results..."
             />
+          </label>
+        </div>
+
+        <div class="catalogue-filters" aria-label="Discovery filters">
+          <label>
+            <span>Listing type</span>
+            <select [(ngModel)]="itemTypeFilter" (ngModelChange)="discover()">
+              <option value="ALL">All listings</option>
+              <option value="PLACE">Places</option>
+              <option value="ACTIVITY">Activities</option>
+              <option value="FOOD">Food</option>
+              <option value="STAY">Stays</option>
+              <option value="EVENT">Events</option>
+              <option value="TOUR_SERVICE">Tour services</option>
+            </select>
+          </label>
+          <label>
+            <span>Price information</span>
+            <select [(ngModel)]="priceStatusFilter" (ngModelChange)="discover()">
+              <option value="ALL">All price statuses</option>
+              <option value="FREE">Free entry</option>
+              <option value="VERIFIED">Source-listed price</option>
+              <option value="ESTIMATED">Estimated price</option>
+              <option value="UNKNOWN">Price not verified</option>
+            </select>
+          </label>
+          <label>
+            <span>Sort by</span>
+            <select [(ngModel)]="sortOrder" (ngModelChange)="discover()">
+              <option value="DISTANCE">Nearest</option>
+              <option value="VERIFIED">Verified information</option>
+              <option value="PRICE_LOW">Price: low to high</option>
+              <option value="PRICE_HIGH">Price: high to low</option>
+              <option value="NAME">Name</option>
+            </select>
           </label>
         </div>
 
@@ -194,20 +240,40 @@ import { TripService } from '../../core/services/trip.service';
                   <span class="material-symbols-outlined">schedule</span>
                   ~{{ formatDuration(place.suggestedVisitMinutes) }}
                 </span>
-                <span class="cost-badge" [class.free-badge]="!place.estimatedCostPerPerson || place.estimatedCostPerPerson === 0">
+                <span
+                  class="cost-badge"
+                  [class.free-badge]="place.priceStatus === 'FREE'"
+                  [class.unknown-badge]="!place.priceStatus || place.priceStatus === 'UNKNOWN'"
+                >
                   <span class="material-symbols-outlined">payments</span>
                   {{ formatPlacePrice(place) }}
                 </span>
               </div>
 
-              <p class="description">{{ place.description || 'Tourist place near this destination.' }}</p>
+              <p class="description">{{ place.description || 'Details are not available from the source.' }}</p>
 
               <p *ngIf="place.openingHours" class="opening-hours">
                 <span class="material-symbols-outlined">schedule</span>
                 {{ place.openingHours }}
               </p>
 
+              <div class="source-row">
+                <span>
+                  Source: {{ place.sourceName || data.provider }}
+                  <ng-container *ngIf="place.sourceLastCheckedAt">
+                    · checked {{ place.sourceLastCheckedAt | date:'mediumDate' }}
+                  </ng-container>
+                </span>
+                <span *ngIf="place.confidenceScore != null">
+                  {{ place.confidenceScore * 100 | number:'1.0-0' }}% data confidence
+                </span>
+              </div>
+
               <div class="card-actions">
+                <button type="button" class="text-button" (click)="openDetails(place)">
+                  <span class="material-symbols-outlined">info</span>
+                  Details
+                </button>
                 <button
                   type="button"
                   class="btn-map-route"
@@ -308,6 +374,35 @@ import { TripService } from '../../core/services/trip.service';
           </div>
         </div>
       </div>
+
+      <div *ngIf="selectedDetail as place" class="detail-backdrop" (click)="closeDetails()">
+        <article class="detail-dialog" role="dialog" aria-modal="true" [attr.aria-label]="place.name" (click)="$event.stopPropagation()">
+          <button type="button" class="detail-close" aria-label="Close details" (click)="closeDetails()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+          <img [src]="getPlaceImage(place)" [alt]="place.name" (error)="handleImageError($event, place)" />
+          <div class="detail-content">
+            <span class="eyebrow">{{ formatCategory(place.category) }} · {{ formatItemType(place.itemType) }}</span>
+            <h2>{{ place.name }}</h2>
+            <p>{{ place.description || 'Details are not available from the source.' }}</p>
+            <dl>
+              <div><dt>Price</dt><dd>{{ formatPlacePrice(place) }}</dd></div>
+              <div><dt>Suggested time</dt><dd>{{ formatDuration(place.suggestedVisitMinutes) }}</dd></div>
+              <div *ngIf="place.openingHours"><dt>Hours</dt><dd>{{ place.openingHours }}</dd></div>
+              <div *ngIf="place.address"><dt>Address</dt><dd>{{ place.address }}</dd></div>
+              <div *ngIf="place.bestTimeToVisit"><dt>Best time</dt><dd>{{ place.bestTimeToVisit }}</dd></div>
+              <div *ngIf="place.safetyInformation"><dt>Safety</dt><dd>{{ place.safetyInformation }}</dd></div>
+              <div><dt>Source</dt><dd>{{ place.sourceName || result?.provider }}</dd></div>
+              <div *ngIf="place.sourceLastCheckedAt"><dt>Last checked</dt><dd>{{ place.sourceLastCheckedAt | date:'medium' }}</dd></div>
+              <div *ngIf="place.imageAttribution"><dt>Image credit</dt><dd>{{ place.imageAttribution }}{{ place.imageLicense ? ' · ' + place.imageLicense : '' }}</dd></div>
+            </dl>
+            <div class="detail-actions">
+              <a *ngIf="place.sourceUrl" class="btn secondary" [href]="place.sourceUrl" target="_blank" rel="noopener noreferrer">View source ↗</a>
+              <button type="button" class="btn primary" (click)="openMapRoute(place)">Open map route ↗</button>
+            </div>
+          </div>
+        </article>
+      </div>
     </section>
   `,
   styles: [`
@@ -341,6 +436,9 @@ import { TripService } from '../../core/services/trip.service';
     .message div { display:flex; flex-direction:column; gap:.1rem; }
     .message.error { color:#991b1b; background:#fef2f2; border:1px solid #fecaca; }
     .message.success { color:#166534; background:#f0fdf4; border:1px solid #bbf7d0; }
+    .data-warning { display:flex; align-items:flex-start; gap:.55rem; padding:.72rem .85rem; margin-bottom:.8rem; border:1px solid #fde68a; border-radius:10px; color:#854d0e; background:#fffbeb; font-size:.7rem; }
+    .data-warning div { display:flex; flex-direction:column; gap:.16rem; }
+    .data-warning .material-symbols-outlined { font-size:1rem; }
 
     .loading-card,.empty-state { display:flex; align-items:center; justify-content:center; gap:.8rem; min-height:190px; padding:1.2rem; border:1px solid #e2e8f0; border-radius:14px; background:#fff; text-align:center; }
     .loading-card p { margin:.2rem 0 0; color:#64748b; font-size:.76rem; }
@@ -357,6 +455,9 @@ import { TripService } from '../../core/services/trip.service';
     .local-filter { display:flex; align-items:center; gap:.4rem; min-width:260px; padding:.55rem .65rem; border:1px solid #cbd5e1; border-radius:9px; background:#fff; }
     .local-filter .material-symbols-outlined { color:#94a3b8; font-size:1rem; }
     .local-filter input { width:100%; border:0; outline:0; font:inherit; }
+    .catalogue-filters { display:flex; flex-wrap:wrap; gap:.6rem; margin-bottom:.85rem; padding:.7rem; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; }
+    .catalogue-filters label { display:flex; align-items:center; gap:.4rem; color:#64748b; font-size:.67rem; font-weight:750; }
+    .catalogue-filters select { padding:.4rem .5rem; border:1px solid #cbd5e1; border-radius:7px; color:#334155; background:#fff; font-size:.67rem; }
 
     .places-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.85rem; padding-bottom:90px; }
     .place-card { overflow:hidden; border:1px solid #e2e8f0; border-radius:14px; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,.04); transition:.18s ease; }
@@ -384,6 +485,7 @@ import { TripService } from '../../core/services/trip.service';
     .description { min-height:42px; margin:.45rem 0; color:#475569; font-size:.72rem; line-height:1.45; }
     .opening-hours { display:flex; gap:.3rem; align-items:flex-start; color:#64748b; font-size:.66rem; }
     .opening-hours .material-symbols-outlined { font-size:.8rem; color:#2563eb; }
+    .source-row { display:flex; flex-direction:column; gap:.12rem; margin-top:.45rem; color:#64748b; font-size:.58rem; }
     .card-actions { display:flex; align-items:center; gap:.55rem; margin-top:.7rem; padding-top:.65rem; border-top:1px solid #f1f5f9; }
     .text-action { display:inline-flex; align-items:center; gap:.2rem; color:#2563eb; text-decoration:none; font-size:.67rem; font-weight:800; }
     .text-action .material-symbols-outlined { font-size:.85rem; }
@@ -391,6 +493,10 @@ import { TripService } from '../../core/services/trip.service';
     .btn-map-route:hover { background:#dbeafe; border-color:#3b82f6; color:#1e40af; }
     .btn-map-route .material-symbols-outlined { font-size:.85rem; }
     .free-badge { color:#0369a1 !important; background:#e0f2fe !important; }
+    .unknown-badge { color:#475569 !important; background:#f1f5f9 !important; }
+    .unknown-badge .material-symbols-outlined { color:#64748b !important; }
+    .text-button { display:inline-flex; align-items:center; gap:.2rem; padding:0; border:0; color:#2563eb; background:transparent; font-size:.67rem; font-weight:800; cursor:pointer; }
+    .text-button .material-symbols-outlined { font-size:.85rem; }
     .mini-add { margin-left:auto; border:0; color:#fff; background:#2563eb; padding:.4rem .55rem; border-radius:7px; font-size:.65rem; font-weight:850; cursor:pointer; }
     .mini-add:disabled { opacity:.5; }
     .day-picker { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.65rem; padding:.5rem .6rem; border-radius:8px; color:#475569; background:#f8fafc; font-size:.67rem; font-weight:800; }
@@ -406,6 +512,19 @@ import { TripService } from '../../core/services/trip.service';
     .selection-trip-picker { display:flex; flex-direction:column; gap:.25rem; min-width:165px; color:#475569; font-size:.65rem; font-weight:800; }
     .selection-trip-picker select { padding:.48rem .55rem; border:1px solid #cbd5e1; border-radius:7px; color:#0f172a; background:#fff; font-size:.7rem; font-weight:700; }
     .bulk-actions { display:flex; gap:.45rem; }
+
+    .detail-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:1rem; background:rgba(15,23,42,.62); }
+    .detail-dialog { position:relative; overflow:hidden; width:min(760px,100%); max-height:90vh; overflow-y:auto; border-radius:16px; background:#fff; box-shadow:0 24px 70px rgba(15,23,42,.3); }
+    .detail-dialog > img { width:100%; height:260px; object-fit:cover; background:#f1f5f9; }
+    .detail-content { padding:1.2rem; }
+    .detail-content h2 { margin:.25rem 0 .5rem; }
+    .detail-content > p { color:#475569; line-height:1.55; }
+    .detail-content dl { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; margin:1rem 0; }
+    .detail-content dl div { padding:.65rem; border-radius:8px; background:#f8fafc; }
+    .detail-content dt { color:#64748b; font-size:.62rem; font-weight:800; text-transform:uppercase; }
+    .detail-content dd { margin:.2rem 0 0; color:#0f172a; font-size:.75rem; }
+    .detail-close { position:absolute; top:.7rem; right:.7rem; z-index:1; display:grid; place-items:center; width:34px; height:34px; border:0; border-radius:50%; color:#0f172a; background:rgba(255,255,255,.92); cursor:pointer; }
+    .detail-actions { display:flex; justify-content:flex-end; gap:.5rem; }
 
     @media(max-width:1080px){
       .places-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -424,6 +543,8 @@ import { TripService } from '../../core/services/trip.service';
       .selection-bar { position:static; margin-top:0; }
       .selection-bar,.plan-buttons,.bulk-actions { align-items:stretch; flex-direction:column; }
       .bulk-actions .btn { width:100%; }
+      .detail-dialog > img { height:190px; }
+      .detail-content dl { grid-template-columns:1fr; }
     }
   `]
 })
@@ -452,8 +573,12 @@ export class DestinationDiscoveryComponent implements OnInit {
   radiusKm = 25;
   category: DiscoveryCategory = 'ALL';
   filterText = '';
+  itemTypeFilter: DiscoveryItemType | 'ALL' = 'ALL';
+  priceStatusFilter: DiscoveryPriceStatus | 'ALL' = 'ALL';
+  sortOrder: NonNullable<DiscoverySearchFilters['sort']> = 'DISTANCE';
 
   result: DestinationDiscoveryResponse | null = null;
+  selectedDetail: DiscoveredPlace | null = null;
   savedPlaces: Place[] = [];
   selectedIds = new Set<string>();
   dayAssignments: Record<string, number> = {};
@@ -469,14 +594,19 @@ export class DestinationDiscoveryComponent implements OnInit {
     'NATURE',
     'WATERFALL',
     'LAKE',
+    'BEACH',
     'VIEWPOINT',
     'TEMPLE',
     'CHURCH',
     'MUSEUM',
     'PARK',
+    'WILDLIFE',
     'ADVENTURE',
+    'ENTERTAINMENT',
     'SHOPPING',
     'FOOD',
+    'STAY',
+    'EVENT',
     'HISTORICAL'
   ];
 
@@ -614,7 +744,13 @@ export class DestinationDiscoveryComponent implements OnInit {
     this.selectedIds.clear();
     this.dayAssignments = {};
 
-    this.discoveryService.discoverPlaces(destination, this.radiusKm, this.category).subscribe({
+    this.discoveryService.discoverPlaces(destination, this.radiusKm, this.category, {
+      itemType: this.itemTypeFilter,
+      priceStatus: this.priceStatusFilter,
+      sort: this.sortOrder,
+      page: 0,
+      size: 60
+    }).subscribe({
       next: (response) => {
         this.result = response;
         this.isLoading = false;
@@ -697,7 +833,7 @@ export class DestinationDiscoveryComponent implements OnInit {
             category: place.saveCategory,
             latitude: place.latitude,
             longitude: place.longitude,
-            estimatedCost: place.estimatedCostPerPerson || 0,
+            estimatedCost: place.estimatedCostPerPerson,
             notes: this.discoveryNotes(place)
           })
         );
@@ -760,7 +896,7 @@ export class DestinationDiscoveryComponent implements OnInit {
             category: place.saveCategory,
             latitude: place.latitude,
             longitude: place.longitude,
-            estimatedCost: place.estimatedCostPerPerson || 0,
+            estimatedCost: place.estimatedCostPerPerson,
             notes: this.discoveryNotes(place)
           })
         );
@@ -828,7 +964,7 @@ export class DestinationDiscoveryComponent implements OnInit {
           title: place.name,
           description: place.description,
           location: place.name,
-          estimatedCost: place.estimatedCostPerPerson || 0,
+          estimatedCost: place.estimatedCostPerPerson,
           displayOrder: day.items.length + 1
         })
       );
@@ -864,14 +1000,18 @@ export class DestinationDiscoveryComponent implements OnInit {
 
   private discoveryNotes(place: DiscoveredPlace): string {
     const parts = [
-      `Discovered via ${this.result?.provider || 'TripMate Discovery'} (${place.category})`,
+      `Discovered via ${place.sourceName || this.result?.provider || 'TripMate Discovery'} (${place.category})`,
       `${place.distanceKm.toFixed(1)} km from ${this.searchDestination.trim()}`
     ];
     if (place.activityType) parts.push(`Activity: ${place.activityType}`);
-    if (place.estimatedCostPerPerson != null && place.estimatedCostPerPerson > 0) {
-      parts.push(`Est. Cost: ₹${place.estimatedCostPerPerson}/person`);
+    if (place.priceStatus === 'FREE') {
+      parts.push('Source lists entry as free');
+    } else if (place.estimatedCostPerPerson != null && place.priceStatus !== 'UNKNOWN') {
+      parts.push(`${place.priceStatus === 'ESTIMATED' ? 'Approx. cost' : 'Source-listed price'}: ₹${place.estimatedCostPerPerson}`);
     }
     if (place.openingHours) parts.push(`Hours: ${place.openingHours}`);
+    if (place.sourceUrl) parts.push(`Source: ${place.sourceUrl}`);
+    if (place.sourceLastCheckedAt) parts.push(`Checked: ${place.sourceLastCheckedAt}`);
     return parts.join(' · ');
   }
 
@@ -911,112 +1051,84 @@ export class DestinationDiscoveryComponent implements OnInit {
 
   formatPlacePrice(place: DiscoveredPlace): string {
     const cost = place.estimatedCostPerPerson;
-    if (!cost || cost <= 0) {
+    if (place.priceStatus === 'FREE') {
       return 'Entry: Free';
     }
-    const formattedCost = cost.toLocaleString('en-IN');
-    const name = (place.name || '').toLowerCase();
-    const type = (place.activityType || '').toLowerCase();
-    const isHotel = place.saveCategory === 'HOTEL' || name.includes('resort') || name.includes('hotel') || name.includes('stay') || name.includes('hostel') || type.includes('resort') || type.includes('hotel') || type.includes('hostel');
-
-    if (isHotel) {
-      return `Price: ₹${formattedCost} / night`;
+    if (cost == null || place.priceStatus === 'UNKNOWN' || !place.priceStatus) {
+      return 'Price not verified';
     }
-    return `Price: ₹${formattedCost} / person`;
+
+    const formattedCost = cost.toLocaleString('en-IN');
+    const prefix = place.priceStatus === 'ESTIMATED'
+      ? 'Approx.'
+      : place.priceStatus === 'STARTING_FROM'
+        ? 'From'
+        : 'Price';
+    const unit = this.priceUnit(place.priceType);
+    return `${prefix}: ₹${formattedCost}${unit}`;
+  }
+
+  private priceUnit(priceType: DiscoveredPlace['priceType']): string {
+    switch (priceType) {
+      case 'PER_NIGHT': return ' / night';
+      case 'PER_ACTIVITY': return ' / activity';
+      case 'PER_VEHICLE': return ' / vehicle';
+      case 'PER_PERSON': return ' / person';
+      default: return '';
+    }
+  }
+
+  formatItemType(itemType?: DiscoveryItemType): string {
+    if (!itemType) return 'Place';
+    return itemType
+      .toLowerCase()
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  openDetails(place: DiscoveredPlace): void {
+    this.selectedDetail = place;
+  }
+
+  closeDetails(): void {
+    this.selectedDetail = null;
   }
 
   categoryIcon(category: DiscoveredPlace['category']): string {
     switch (category) {
       case 'WATERFALL': return 'water';
       case 'LAKE': return 'waves';
+      case 'BEACH': return 'beach_access';
       case 'VIEWPOINT': return 'landscape';
       case 'TEMPLE': return 'temple_hindu';
       case 'CHURCH': return 'church';
       case 'MUSEUM': return 'museum';
       case 'PARK': return 'park';
+      case 'WILDLIFE': return 'pets';
       case 'NATURE': return 'forest';
       case 'ADVENTURE': return 'hiking';
+      case 'ENTERTAINMENT': return 'attractions';
       case 'SHOPPING': return 'shopping_bag';
       case 'FOOD': return 'restaurant';
+      case 'STAY': return 'hotel';
+      case 'EVENT': return 'event';
       case 'HISTORICAL': return 'castle';
       default: return 'attractions';
     }
   }
 
   getPlaceImage(place: DiscoveredPlace): string {
-    if (place.imageUrl && place.imageUrl.startsWith('http')) {
+    if (place.imageUrl && place.imageExact !== false && place.imageUrl.startsWith('http')) {
       return place.imageUrl;
     }
-    const name = (place.name || '').toLowerCase();
-    const activity = (place.activityType || '').toLowerCase();
-    const category = (place.category || '').toLowerCase();
-    const combined = `${name} ${activity} ${category}`;
-
-    if (combined.includes('kayak')) {
-      return 'https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('boat') || combined.includes('boating')) {
-      return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('cycle') || combined.includes('cycling') || combined.includes('bike') || combined.includes('biking')) {
-      return 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('jeep') || combined.includes('safari') || combined.includes('4x4') || combined.includes('wildlife')) {
-      return 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('trek') || combined.includes('hiking') || combined.includes('hike')) {
-      return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('rafting')) {
-      return 'https://images.unsplash.com/photo-1530866495561-507c9faab2ed?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('ropeway') || combined.includes('cable car') || combined.includes('zipline') || combined.includes('paragliding')) {
-      return 'https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('toy train') || combined.includes('railway') || combined.includes('train')) {
-      return 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('tea')) {
-      return 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('botanical') || combined.includes('flower') || combined.includes('rose garden')) {
-      return 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('thunder world') || combined.includes('amusement') || combined.includes('theme park')) {
-      return 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('waterfall') || combined.includes('falls')) {
-      return 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('lake')) {
-      return 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('viewpoint') || combined.includes('peak') || combined.includes('doddabetta')) {
-      return 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('park') || combined.includes('garden')) {
-      return 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('museum')) {
-      return 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('temple') || combined.includes('kovil') || combined.includes('mandir') || combined.includes('shrine')) {
-      return 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('church') || combined.includes('cathedral')) {
-      return 'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?auto=format&fit=crop&w=800&q=80';
-    }
-    if (combined.includes('food') || combined.includes('restaurant') || combined.includes('hotel') || combined.includes('resort') || combined.includes('inn')) {
-      return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80';
-    }
-
-    return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
+    return '/place-placeholder.svg';
   }
 
-  handleImageError(event: Event, place: DiscoveredPlace): void {
+  handleImageError(event: Event, _place: DiscoveredPlace): void {
     const img = event.target as HTMLImageElement;
-    if (img) {
-      img.src = this.getPlaceImage({ ...place, imageUrl: undefined });
+    if (img && !img.src.endsWith('/place-placeholder.svg')) {
+      img.src = '/place-placeholder.svg';
     }
   }
 

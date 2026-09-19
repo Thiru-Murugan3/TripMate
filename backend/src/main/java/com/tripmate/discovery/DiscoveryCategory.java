@@ -5,13 +5,18 @@ public enum DiscoveryCategory {
     NATURE,
     WATERFALL,
     LAKE,
+    BEACH,
     VIEWPOINT,
     TEMPLE,
     CHURCH,
     MUSEUM,
     PARK,
+    WILDLIFE,
     ADVENTURE,
+    ENTERTAINMENT,
     SHOPPING,
     FOOD,
+    STAY,
+    EVENT,
     HISTORICAL
 }
