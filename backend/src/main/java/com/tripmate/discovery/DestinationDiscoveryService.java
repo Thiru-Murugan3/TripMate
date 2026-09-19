@@ -467,6 +467,16 @@ public class DestinationDiscoveryService {
             ));
         }
 
+        // Always append full Thrill Factory adventure activities package centered on the searched destination
+        List<DiscoveredPlace> thrillFactoryActivities = buildThrillFactoryActivities(destination, center);
+        for (DiscoveredPlace act : thrillFactoryActivities) {
+            String key = normalizeKey(act.name());
+            boolean exists = list.stream().anyMatch(p -> normalizeKey(p.name()).equals(key));
+            if (!exists) {
+                list.add(act);
+            }
+        }
+
         // Apply category filter and resolve high-resolution activity images
         return list.stream()
                 .filter(p -> requestedCategory == null || p.category() == requestedCategory)
@@ -487,6 +497,270 @@ public class DestinationDiscoveryService {
                         p.activityType()
                 ))
                 .toList();
+    }
+
+    private List<DiscoveredPlace> buildThrillFactoryActivities(String destination, GeoPoint center) {
+        List<DiscoveredPlace> activities = new ArrayList<>();
+        BigDecimal lat = center != null && center.latitude() != null ? center.latitude() : new BigDecimal("11.406400");
+        BigDecimal lon = center != null && center.longitude() != null ? center.longitude() : new BigDecimal("76.693200");
+        String destName = destination == null || destination.isBlank() ? "Destination" : destination.trim();
+
+        activities.add(new DiscoveredPlace(
+                "thrill:bungee:" + destName.toLowerCase(Locale.ROOT),
+                "83m Cliff Bungee Jumping (" + destName + ")",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0120")),
+                lon.add(new BigDecimal("0.0150")),
+                2.5,
+                120,
+                "Extreme 83-meter cliff freefall jump over canyon river with certified jump masters and video recording.",
+                "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?auto=format&fit=crop&w=800&q=80",
+                "09:00 AM - 05:30 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("3550.00"),
+                "Bungee Jumping"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:swing:" + destName.toLowerCase(Locale.ROOT),
+                "Giant Tandem & Solo Swing (" + destName + ")",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0140")),
+                lon.add(new BigDecimal("0.0180")),
+                3.1,
+                90,
+                "High-altitude cliff pendulum swing launching riders over 120 km/h across the river gorge.",
+                "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=800&q=80",
+                "09:00 AM - 05:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("3000.00"),
+                "Giant Swing"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:zipline:" + destName.toLowerCase(Locale.ROOT),
+                "Flying Fox River Zipline (" + destName + ")",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0080")),
+                lon.add(new BigDecimal("0.0110")),
+                1.8,
+                60,
+                "750-meter long high-speed zipline flying 140 meters above valley canopy and river.",
+                "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=800&q=80",
+                "09:00 AM - 06:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("1800.00"),
+                "Zipline & Flying Fox"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:skycycling:" + destName.toLowerCase(Locale.ROOT),
+                "Aerial Sky Cycling (" + destName + ")",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0095")),
+                lon.add(new BigDecimal("0.0130")),
+                2.0,
+                45,
+                "Bicycle ride on a high-wire steel cable suspended 150 feet above the valley floor.",
+                "https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=800&q=80",
+                "09:30 AM - 05:30 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("1000.00"),
+                "Sky Cycling"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:slingshot:" + destName.toLowerCase(Locale.ROOT),
+                "Reverse Bungee & Slingshot Catapult",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0110")),
+                lon.add(new BigDecimal("0.0140")),
+                2.2,
+                45,
+                "High-speed vertical catapult launching riders 100 feet into the air in under 2 seconds.",
+                "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?auto=format&fit=crop&w=800&q=80",
+                "09:30 AM - 06:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("1500.00"),
+                "Reverse Bungee & Slingshot"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:atv:" + destName.toLowerCase(Locale.ROOT),
+                "ATV 4x4 Quad Biking Off-Road Track",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0160")),
+                lon.add(new BigDecimal("0.0210")),
+                4.2,
+                60,
+                "Off-road 250cc 4x4 quad bike circuit through rugged dirt, water splashes, and forest obstacles.",
+                "https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80",
+                "09:00 AM - 06:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("850.00"),
+                "ATV Quad Biking"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:rafting:" + destName.toLowerCase(Locale.ROOT),
+                "White Water River Rafting & Cliff Jump",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0210")),
+                lon.add(new BigDecimal("0.0250")),
+                5.5,
+                180,
+                "16km Grade III/IV river rafting on rapids with safety gear, raft guide, and 25-foot cliff jumping.",
+                "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?auto=format&fit=crop&w=800&q=80",
+                "07:00 AM - 04:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("1200.00"),
+                "White Water Rafting"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:ropecourse:" + destName.toLowerCase(Locale.ROOT),
+                "2-Tier High Ropes & Obstacle Course",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0070")),
+                lon.add(new BigDecimal("0.0090")),
+                1.4,
+                75,
+                "Airborne obstacle course featuring Burma bridge, log crossings, zip transitions, and cargo climbing nets.",
+                "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80",
+                "09:00 AM - 06:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("600.00"),
+                "High Ropes Course"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:paintball:" + destName.toLowerCase(Locale.ROOT),
+                "Tactical Paintball Arena (100 Pellets)",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0130")),
+                lon.add(new BigDecimal("0.0160")),
+                2.8,
+                60,
+                "Tactical battlefield arena with CO2 paintball guns, chest armor, full masks, and 100 paintball rounds.",
+                "https://images.unsplash.com/photo-1511882150382-421056c89033?auto=format&fit=crop&w=800&q=80",
+                "10:00 AM - 07:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("750.00"),
+                "Paintball Arena"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:gokart:" + destName.toLowerCase(Locale.ROOT),
+                "Go-Kart Racing Circuit",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0180")),
+                lon.add(new BigDecimal("0.0230")),
+                4.8,
+                45,
+                "Twin 200cc engine go-kart racing on a fast paved circuit with lap timing and safety helmets.",
+                "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80",
+                "10:00 AM - 08:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("700.00"),
+                "Go-Karting"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:trampoline:" + destName.toLowerCase(Locale.ROOT),
+                "Trampoline Park & Ninja Foam Pit",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0050")),
+                lon.add(new BigDecimal("0.0070")),
+                1.1,
+                60,
+                "Indoor freestyle trampoline jumpers arena, foam pit dunking, ninja warrior wall, and dodgeball.",
+                "https://images.unsplash.com/photo-1526676037777-05a232554f77?auto=format&fit=crop&w=800&q=80",
+                "10:00 AM - 08:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("450.00"),
+                "Trampoline Park"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:archery:" + destName.toLowerCase(Locale.ROOT),
+                "Air Rifle Shooting & Archery Range",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0060")),
+                lon.add(new BigDecimal("0.0080")),
+                1.2,
+                45,
+                "Target shooting with 0.177 air rifles and bow & arrow recurve archery target challenges.",
+                "https://images.unsplash.com/photo-1515523110800-9415d13b84a8?auto=format&fit=crop&w=800&q=80",
+                "09:30 AM - 06:30 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("400.00"),
+                "Target Shooting & Archery"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:paragliding:" + destName.toLowerCase(Locale.ROOT),
+                "Tandem Paragliding Mountain Flight",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0250")),
+                lon.add(new BigDecimal("0.0300")),
+                7.5,
+                150,
+                "High-altitude thermalling flight with licensed tandem pilot offering breathtaking panoramic valley views.",
+                "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=800&q=80",
+                "06:30 AM - 05:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("3200.00"),
+                "Tandem Paragliding"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:rockclimbing:" + destName.toLowerCase(Locale.ROOT),
+                "Natural Rock Climbing & 100ft Rappelling",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0150")),
+                lon.add(new BigDecimal("0.0190")),
+                3.8,
+                120,
+                "Natural granite rock climbing and 100-foot vertical rope rappelling guided by certified mountaineers.",
+                "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80",
+                "08:00 AM - 05:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("650.00"),
+                "Rock Climbing & Rappelling"
+        ));
+
+        activities.add(new DiscoveredPlace(
+                "thrill:zorbing:" + destName.toLowerCase(Locale.ROOT),
+                "Water Roller & Downhill Zorbing",
+                DiscoveryCategory.ADVENTURE,
+                lat.add(new BigDecimal("0.0090")),
+                lon.add(new BigDecimal("0.0120")),
+                1.9,
+                45,
+                "360-degree inflatable hill zorbing and aquatic water roller tumbling experience.",
+                "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80",
+                "09:00 AM - 06:00 PM",
+                "https://thrillfactory.in",
+                PlaceCategory.ACTIVITY,
+                new BigDecimal("350.00"),
+                "Water Roller & Zorbing"
+        ));
+
+        return activities;
     }
 
     private GeoPoint geocodeWithFallback(String destination) {
