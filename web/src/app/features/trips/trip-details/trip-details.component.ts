@@ -107,6 +107,16 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
                 <span class="material-symbols-outlined">edit</span>
                 Edit Details
               </button>
+
+              <button
+                *ngIf="canManageMembers"
+                type="button"
+                class="btn btn-danger-outline"
+                (click)="deleteCurrentTrip()"
+              >
+                <span class="material-symbols-outlined">delete</span>
+                Delete Trip
+              </button>
             </div>
           </div>
         </section>
@@ -1043,6 +1053,19 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
       border: 1px solid #a7f3d0;
       border-radius: 12px;
       font-weight: 700;
+    }
+
+    .btn-danger-outline {
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      background: #ffffff;
+      transition: all 150ms ease;
+
+      &:hover {
+        background: #fee2e2;
+        color: #991b1b;
+        border-color: #fca5a5;
+      }
     }
 
     .details-tabs {
@@ -2529,6 +2552,24 @@ export class TripDetailsComponent implements OnInit {
 
   get canManageMembers(): boolean {
     return this.trip?.userRole === 'OWNER';
+  }
+
+  deleteCurrentTrip(): void {
+    if (!this.trip || !this.canManageMembers) return;
+
+    if (!confirm(`Are you sure you want to delete "${this.trip.name}"? This action cannot be undone and will permanently delete all itinerary items, places, expenses, and bookings.`)) {
+      return;
+    }
+
+    this.tripService.deleteTrip(this.tripId).subscribe({
+      next: () => {
+        void this.router.navigate(['/trips']);
+      },
+      error: (err) => {
+        this.tripUpdateMessage = '';
+        this.editTripError = err?.error?.message || 'Failed to delete trip. Only the trip owner can delete this trip.';
+      }
+    });
   }
 
   get hasActiveBookings(): boolean {

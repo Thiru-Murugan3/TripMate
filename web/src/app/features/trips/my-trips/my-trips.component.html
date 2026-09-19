@@ -119,10 +119,17 @@
 
             <div class="card-footer">
               <span class="role">{{ trip.userRole ?? 'OWNER' }}</span>
-              <button type="button" class="view-button" (click)="$event.stopPropagation(); openTrip(trip)">
-                View Trip
-                <span aria-hidden="true">→</span>
-              </button>
+              <div class="card-actions">
+                <button type="button" class="view-button" (click)="$event.stopPropagation(); openTrip(trip)">
+                  View Trip
+                  <span aria-hidden="true">→</span>
+                </button>
+                @if (trip.userRole === 'OWNER' || !trip.userRole) {
+                  <button type="button" class="delete-button" title="Delete Trip" (click)="deleteTrip(trip, $event)">
+                    Delete
+                  </button>
+                }
+              </div>
             </div>
           </div>
         </article>

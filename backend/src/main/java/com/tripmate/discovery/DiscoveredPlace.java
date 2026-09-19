@@ -16,6 +16,8 @@ public record DiscoveredPlace(
         String imageUrl,
         String openingHours,
         String website,
-        PlaceCategory saveCategory
+        PlaceCategory saveCategory,
+        BigDecimal estimatedCostPerPerson,
+        String activityType
 ) {
 }

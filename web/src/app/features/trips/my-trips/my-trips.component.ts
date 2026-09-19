@@ -107,6 +107,28 @@ export class MyTripsComponent implements OnInit {
     void this.router.navigate(['/trips', trip.id]);
   }
 
+  deleteTrip(trip: Trip, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (!confirm(`Are you sure you want to delete "${trip.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.tripService.deleteTrip(trip.id).subscribe({
+      next: () => {
+        this.trips.update((items) => items.filter((item) => item.id !== trip.id));
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.errorMessage.set(err?.error?.message || 'Failed to delete trip. Only trip owners can delete a trip.');
+        this.loading.set(false);
+      }
+    });
+  }
+
   clearFilters(): void {
     this.searchTerm.set('');
     this.statusFilter.set('ALL');

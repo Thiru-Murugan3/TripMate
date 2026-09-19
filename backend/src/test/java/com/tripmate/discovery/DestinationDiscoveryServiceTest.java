@@ -99,6 +99,27 @@ class DestinationDiscoveryServiceTest {
         assertEquals(60, service.suggestedVisitMinutes(DiscoveryCategory.ATTRACTION));
     }
 
+    @Test
+    void returnsAccurateOotyActivitiesWithCostPerPerson() {
+        DestinationDiscoveryResponse response = service.search("Ooty", 25, "ALL");
+        assertNotNull(response);
+        assertTrue(response.resultCount() >= 5);
+
+        DiscoveredPlace boating = response.places().stream()
+                .filter(p -> p.name().contains("Ooty Lake"))
+                .findFirst().orElse(null);
+        assertNotNull(boating);
+        assertEquals(java.math.BigDecimal.valueOf(250).setScale(2), boating.estimatedCostPerPerson());
+        assertEquals("Boating & Cycling", boating.activityType());
+
+        DiscoveredPlace safari = response.places().stream()
+                .filter(p -> p.name().contains("Avalanche"))
+                .findFirst().orElse(null);
+        assertNotNull(safari);
+        assertEquals(java.math.BigDecimal.valueOf(1200).setScale(2), safari.estimatedCostPerPerson());
+        assertTrue(safari.activityType().contains("Jeep Safari"));
+    }
+
     private JsonNode tags(String json) throws Exception {
         return objectMapper.readTree(json);
     }

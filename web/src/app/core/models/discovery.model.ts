@@ -29,6 +29,8 @@ export interface DiscoveredPlace {
   openingHours?: string;
   website?: string;
   saveCategory: PlaceCategory;
+  estimatedCostPerPerson?: number;
+  activityType?: string;
 }
 
 export interface DestinationDiscoveryResponse {

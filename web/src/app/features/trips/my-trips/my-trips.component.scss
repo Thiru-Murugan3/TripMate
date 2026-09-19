@@ -303,6 +303,30 @@ select:focus {
   cursor: pointer;
 }
 
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.delete-button {
+  border: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #dc2626;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 150ms ease;
+
+  &:hover {
+    background: #fca5a5;
+    color: #991b1b;
+  }
+}
+
 .state-card {
   min-height: 300px;
   padding: 40px 24px;

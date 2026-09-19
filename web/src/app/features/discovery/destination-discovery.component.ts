@@ -176,19 +176,15 @@ import { TripService } from '../../core/services/trip.service';
           >
             <div class="media">
               <img
-                *ngIf="place.imageUrl; else iconFallback"
-                [src]="place.imageUrl"
+                [src]="getPlaceImage(place)"
                 [alt]="place.name"
                 loading="lazy"
                 referrerpolicy="no-referrer"
+                (error)="handleImageError($event, place)"
               />
-              <ng-template #iconFallback>
-                <div class="image-fallback">
-                  <span class="material-symbols-outlined">{{ categoryIcon(place.category) }}</span>
-                </div>
-              </ng-template>
 
               <span class="category-badge">{{ formatCategory(place.category) }}</span>
+              <span *ngIf="place.activityType" class="activity-type-badge">{{ place.activityType }}</span>
               <label *ngIf="canSelectPlaces" class="select-box" title="Select place">
                 <input
                   type="checkbox"
@@ -216,6 +212,10 @@ import { TripService } from '../../core/services/trip.service';
                 <span>
                   <span class="material-symbols-outlined">schedule</span>
                   ~{{ formatDuration(place.suggestedVisitMinutes) }}
+                </span>
+                <span *ngIf="place.estimatedCostPerPerson != null && place.estimatedCostPerPerson > 0" class="cost-badge">
+                  <span class="material-symbols-outlined">payments</span>
+                  ₹{{ place.estimatedCostPerPerson | number:'1.0-0' }} / person
                 </span>
               </div>
 
@@ -387,6 +387,7 @@ import { TripService } from '../../core/services/trip.service';
     .image-fallback { display:grid; place-items:center; width:100%; height:100%; color:#2563eb; background:linear-gradient(135deg,#dbeafe,#eff6ff); }
     .image-fallback .material-symbols-outlined { font-size:2.4rem; }
     .category-badge { position:absolute; left:.65rem; bottom:.6rem; padding:.25rem .48rem; border-radius:999px; color:#fff; background:rgba(15,23,42,.78); backdrop-filter:blur(5px); font-size:.6rem; font-weight:850; }
+    .activity-type-badge { position:absolute; left:.65rem; top:.6rem; padding:.25rem .48rem; border-radius:999px; color:#fff; background:rgba(37,99,235,.9); backdrop-filter:blur(5px); font-size:.6rem; font-weight:850; }
     .select-box { position:absolute; top:.6rem; right:.6rem; display:grid; place-items:center; width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,.92); box-shadow:0 2px 8px rgba(15,23,42,.15); cursor:pointer; }
     .select-box input { width:17px; height:17px; accent-color:#2563eb; }
     .place-body { padding:.9rem; }
@@ -397,6 +398,8 @@ import { TripService } from '../../core/services/trip.service';
     .meta-row { display:flex; flex-wrap:wrap; gap:.7rem; margin:.6rem 0; color:#64748b; font-size:.67rem; }
     .meta-row span { display:inline-flex; align-items:center; gap:.2rem; }
     .meta-row .material-symbols-outlined { color:#2563eb; font-size:.85rem; }
+    .cost-badge { color:#15803d !important; background:#dcfce7; padding:.2rem .45rem; border-radius:6px; font-weight:850; font-size:.68rem; }
+    .cost-badge .material-symbols-outlined { color:#166534 !important; font-size:.85rem; }
     .description { min-height:42px; margin:.45rem 0; color:#475569; font-size:.72rem; line-height:1.45; }
     .opening-hours { display:flex; gap:.3rem; align-items:flex-start; color:#64748b; font-size:.66rem; }
     .opening-hours .material-symbols-outlined { font-size:.8rem; color:#2563eb; }
@@ -520,7 +523,9 @@ export class DestinationDiscoveryComponent implements OnInit {
     return (this.result?.places ?? []).filter((place) =>
       place.name.toLowerCase().includes(term)
       || place.category.toLowerCase().includes(term)
+      || (place.activityType ?? '').toLowerCase().includes(term)
       || (place.description ?? '').toLowerCase().includes(term)
+      || (place.estimatedCostPerPerson != null && place.estimatedCostPerPerson.toString().includes(term))
     );
   }
 
@@ -698,7 +703,7 @@ export class DestinationDiscoveryComponent implements OnInit {
             category: place.saveCategory,
             latitude: place.latitude,
             longitude: place.longitude,
-            estimatedCost: 0,
+            estimatedCost: place.estimatedCostPerPerson || 0,
             notes: this.discoveryNotes(place)
           })
         );
@@ -761,7 +766,7 @@ export class DestinationDiscoveryComponent implements OnInit {
             category: place.saveCategory,
             latitude: place.latitude,
             longitude: place.longitude,
-            estimatedCost: 0,
+            estimatedCost: place.estimatedCostPerPerson || 0,
             notes: this.discoveryNotes(place)
           })
         );
@@ -829,7 +834,7 @@ export class DestinationDiscoveryComponent implements OnInit {
           title: place.name,
           description: place.description,
           location: place.name,
-          estimatedCost: 0,
+          estimatedCost: place.estimatedCostPerPerson || 0,
           displayOrder: day.items.length + 1
         })
       );
@@ -865,10 +870,14 @@ export class DestinationDiscoveryComponent implements OnInit {
 
   private discoveryNotes(place: DiscoveredPlace): string {
     const parts = [
-      `Discovered via OpenStreetMap (${place.category})`,
+      `Discovered via ${this.result?.provider || 'TripMate Discovery'} (${place.category})`,
       `${place.distanceKm.toFixed(1)} km from ${this.searchDestination.trim()}`
     ];
-    if (place.openingHours) parts.push(`Opening hours: ${place.openingHours}`);
+    if (place.activityType) parts.push(`Activity: ${place.activityType}`);
+    if (place.estimatedCostPerPerson != null && place.estimatedCostPerPerson > 0) {
+      parts.push(`Est. Cost: ₹${place.estimatedCostPerPerson}/person`);
+    }
+    if (place.openingHours) parts.push(`Hours: ${place.openingHours}`);
     return parts.join(' · ');
   }
 
@@ -907,6 +916,83 @@ export class DestinationDiscoveryComponent implements OnInit {
       case 'FOOD': return 'restaurant';
       case 'HISTORICAL': return 'castle';
       default: return 'attractions';
+    }
+  }
+
+  getPlaceImage(place: DiscoveredPlace): string {
+    if (place.imageUrl && place.imageUrl.startsWith('http')) {
+      return place.imageUrl;
+    }
+    const name = (place.name || '').toLowerCase();
+    const activity = (place.activityType || '').toLowerCase();
+    const category = (place.category || '').toLowerCase();
+    const combined = `${name} ${activity} ${category}`;
+
+    if (combined.includes('kayak')) {
+      return 'https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('boat') || combined.includes('boating')) {
+      return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('cycle') || combined.includes('cycling') || combined.includes('bike') || combined.includes('biking')) {
+      return 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('jeep') || combined.includes('safari') || combined.includes('4x4') || combined.includes('wildlife')) {
+      return 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('trek') || combined.includes('hiking') || combined.includes('hike')) {
+      return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('rafting')) {
+      return 'https://images.unsplash.com/photo-1530866495561-507c9faab2ed?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('ropeway') || combined.includes('cable car') || combined.includes('zipline') || combined.includes('paragliding')) {
+      return 'https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('toy train') || combined.includes('railway') || combined.includes('train')) {
+      return 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('tea')) {
+      return 'https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('botanical') || combined.includes('flower') || combined.includes('rose garden')) {
+      return 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('thunder world') || combined.includes('amusement') || combined.includes('theme park')) {
+      return 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('waterfall') || combined.includes('falls')) {
+      return 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('lake')) {
+      return 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('viewpoint') || combined.includes('peak') || combined.includes('doddabetta')) {
+      return 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('park') || combined.includes('garden')) {
+      return 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('museum')) {
+      return 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('temple') || combined.includes('kovil') || combined.includes('mandir') || combined.includes('shrine')) {
+      return 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('church') || combined.includes('cathedral')) {
+      return 'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?auto=format&fit=crop&w=800&q=80';
+    }
+    if (combined.includes('food') || combined.includes('restaurant') || combined.includes('hotel') || combined.includes('resort') || combined.includes('inn')) {
+      return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80';
+    }
+
+    return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
+  }
+
+  handleImageError(event: Event, place: DiscoveredPlace): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.src = this.getPlaceImage({ ...place, imageUrl: undefined });
     }
   }
 
