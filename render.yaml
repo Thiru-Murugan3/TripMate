@@ -29,6 +29,18 @@ services:
         sync: false
       - key: TRIPMATE_BREVO_SENDER_NAME
         value: TripMate
+      - key: R2_ENABLED
+        value: "true"
+      - key: R2_ENDPOINT
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_PRESIGNED_URL_EXPIRATION
+        value: "3600"
       - key: APP_FRONTEND_URL
         value: https://tripmate-web-thiru-murugan3.onrender.com
       - key: APP_CORS_ALLOWED_ORIGINS
