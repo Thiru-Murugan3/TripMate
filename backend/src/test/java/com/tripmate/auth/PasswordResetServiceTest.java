@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -39,6 +40,9 @@ class PasswordResetServiceTest {
     @Mock
     private com.tripmate.audit.AuditLogService auditLogService;
 
+    @Mock
+    private EmailService emailService;
+
     @InjectMocks
     private PasswordResetService passwordResetService;
 
@@ -46,6 +50,12 @@ class PasswordResetServiceTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(
+                passwordResetService,
+                "frontendUrl",
+                "https://tripmate-web-thiru-murugan3.onrender.com"
+        );
+
         testUser = User.builder()
                 .id(1L)
                 .name("Test User")
@@ -126,7 +136,7 @@ class PasswordResetServiceTest {
     // --- FORGOT PASSWORD TESTS ---
 
     @Test
-    @DisplayName("forgotPassword: Success generates token and reset link")
+    @DisplayName("forgotPassword: Success generates token and emails reset link")
     void forgotPassword_Success() {
         ForgotPasswordRequest request = new ForgotPasswordRequest("test@example.com");
 
@@ -135,9 +145,16 @@ class PasswordResetServiceTest {
         Map<String, String> response = passwordResetService.forgotPassword(request);
 
         assertNotNull(response);
-        assertTrue(response.containsKey("resetLink"));
+        assertFalse(response.containsKey("resetLink"));
+        assertFalse(response.containsKey("token"));
         verify(passwordResetTokenRepository).deleteByUserId(1L);
         verify(passwordResetTokenRepository).save(any(PasswordResetToken.class));
+        verify(emailService).sendPasswordResetEmail(
+                eq("test@example.com"),
+                argThat(link -> link.startsWith(
+                        "https://tripmate-web-thiru-murugan3.onrender.com/reset-password?token="
+                ))
+        );
     }
 
     @Test
@@ -152,6 +169,7 @@ class PasswordResetServiceTest {
         assertNotNull(response);
         assertTrue(response.get("message").contains("If an account exists"));
         verify(passwordResetTokenRepository, never()).save(any());
+        verify(emailService, never()).sendPasswordResetEmail(anyString(), anyString());
     }
 
     // --- RESET PASSWORD TESTS ---
