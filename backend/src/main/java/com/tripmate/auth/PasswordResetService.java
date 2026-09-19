@@ -5,11 +5,13 @@ import com.tripmate.audit.AuditLogService;
 import com.tripmate.user.User;
 import com.tripmate.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -27,6 +29,10 @@ public class PasswordResetService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
+    private final EmailService emailService;
+
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
 
     @Transactional
     public Map<String, String> changePassword(Long userId, ChangePasswordRequest request) {
@@ -74,8 +80,7 @@ public class PasswordResetService {
         if (user == null) {
             // Return generic message for non-existent users
             return Map.of(
-                    "message", "If an account exists with this email, a password reset link has been sent.",
-                    "resetLink", ""
+                    "message", "If an account exists with this email, a password reset link has been sent."
             );
         }
 
@@ -95,12 +100,19 @@ public class PasswordResetService {
 
         passwordResetTokenRepository.save(resetToken);
 
-        String resetLink = "http://localhost:4200/reset-password?token=" + rawToken;
+        String normalizedFrontendUrl = frontendUrl.endsWith("/")
+                ? frontendUrl.substring(0, frontendUrl.length() - 1)
+                : frontendUrl;
+        String resetLink = UriComponentsBuilder.fromUriString(normalizedFrontendUrl)
+                .path("/reset-password")
+                .queryParam("token", rawToken)
+                .build()
+                .toUriString();
+
+        emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
 
         return Map.of(
-                "message", "Password reset link generated successfully.",
-                "token", rawToken,
-                "resetLink", resetLink
+                "message", "If an account exists with this email, a password reset link has been sent."
         );
     }
 
