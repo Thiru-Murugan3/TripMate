@@ -74,7 +74,7 @@ The production stack contains:
 
 Only the web service needs a public HTTPS domain. Nginx proxies `/api/*` to the private backend container.
 
-See `COOLIFY_DEPLOYMENT.md` for the complete setup, required Brevo variables, generated Coolify variables, health checks, persistence, and smoke-test steps.
+See `ORACLE_FREE_VM.md` to create a free Oracle Linux VM and bootstrap Coolify, then use `COOLIFY_DEPLOYMENT.md` for the TripMate application deployment, required Brevo variables, generated Coolify variables, health checks, persistence, and smoke-test steps.
 
 ## Destination Discovery
 
