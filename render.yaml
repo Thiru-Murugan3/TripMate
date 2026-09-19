@@ -30,7 +30,7 @@ services:
       - key: TRIPMATE_BREVO_SENDER_NAME
         value: TripMate
       - key: R2_ENABLED
-        value: "true"
+        sync: false
       - key: R2_ENDPOINT
         sync: false
       - key: R2_ACCESS_KEY_ID
