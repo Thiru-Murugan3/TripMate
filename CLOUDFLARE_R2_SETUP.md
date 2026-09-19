@@ -31,16 +31,17 @@ R2_BUCKET=tripmate-files
 R2_PRESIGNED_URL_EXPIRATION=3600
 ```
 
-For Render, enter the four secret values requested by the Blueprint:
+For Render, enter these five values requested by the Blueprint:
 
 ```text
+R2_ENABLED=true
 R2_ENDPOINT
 R2_ACCESS_KEY_ID
 R2_SECRET_ACCESS_KEY
 R2_BUCKET
 ```
 
-`R2_ENABLED=true` and a one-hour signed-URL expiry are already configured in `render.yaml`.
+`R2_ENABLED` is deliberately secret/opt-in so an existing deployment stays healthy until all credentials are present. The one-hour signed-URL expiry is already configured in `render.yaml`.
 
 ## 4. Optional browser CORS for signed document URLs
 

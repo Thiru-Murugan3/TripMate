@@ -82,6 +82,7 @@ DB_USERNAME
 DB_PASSWORD
 TRIPMATE_BREVO_API_KEY
 TRIPMATE_BREVO_SENDER_EMAIL
+R2_ENABLED
 R2_ENDPOINT
 R2_ACCESS_KEY_ID
 R2_SECRET_ACCESS_KEY
@@ -90,7 +91,7 @@ R2_BUCKET
 
 Do not add real values to `render.yaml`.
 
-`JWT_SECRET` is generated automatically by Render.
+`JWT_SECRET` is generated automatically by Render. Set `R2_ENABLED` to `true` only after the endpoint, access key, secret key and bucket are entered.
 
 ## 4. Deploy
 
