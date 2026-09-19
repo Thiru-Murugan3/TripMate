@@ -465,6 +465,105 @@ public class DestinationDiscoveryService {
                     new BigDecimal("1000.00"),
                     "White Water Rafting & Cliff Jump"
             ));
+        } else if (lower.contains("kodaikanal") || lower.contains("kodai")) {
+            list.add(new DiscoveredPlace(
+                    "curated:kodai:lake-boating",
+                    "Kodaikanal Lake Boating & Cycling",
+                    DiscoveryCategory.ADVENTURE,
+                    new BigDecimal("10.238100"),
+                    new BigDecimal("77.489200"),
+                    0.5,
+                    120,
+                    "Star-shaped Kodaikanal Lake featuring pedal boating (₹250/person), motor boating (₹400/person), and lakeside tandem cycling.",
+                    null,
+                    "09:00 AM - 06:00 PM",
+                    null,
+                    PlaceCategory.ACTIVITY,
+                    new BigDecimal("250.00"),
+                    "Boating & Cycling"
+            ));
+            list.add(new DiscoveredPlace(
+                    "curated:kodai:coakers-walk",
+                    "Coaker's Walk & Telescope Viewpoint",
+                    DiscoveryCategory.VIEWPOINT,
+                    new BigDecimal("10.233000"),
+                    new BigDecimal("77.494000"),
+                    0.8,
+                    90,
+                    "1-kilometer pedestrian walking paved path along mountain slope edge with cloud valley views.",
+                    null,
+                    "07:00 AM - 07:00 PM",
+                    null,
+                    PlaceCategory.ATTRACTION,
+                    new BigDecimal("30.00"),
+                    "Mountain Walk & Viewpoint"
+            ));
+            list.add(new DiscoveredPlace(
+                    "curated:kodai:pine-forest",
+                    "Pine Forest Trek & Horse Riding",
+                    DiscoveryCategory.NATURE,
+                    new BigDecimal("10.218000"),
+                    new BigDecimal("77.464000"),
+                    5.2,
+                    90,
+                    "Dense timber pine forest walking trails, photography zone, and guided horse riding.",
+                    null,
+                    "09:00 AM - 05:30 PM",
+                    null,
+                    PlaceCategory.ACTIVITY,
+                    new BigDecimal("150.00"),
+                    "Forest Trek & Horse Riding"
+            ));
+        } else if (lower.contains("bangalore") || lower.contains("bengaluru")) {
+            list.add(new DiscoveredPlace(
+                    "curated:blr:nandi-hills",
+                    "Nandi Hills Sunrise Trek & Paragliding",
+                    DiscoveryCategory.ADVENTURE,
+                    new BigDecimal("13.370200"),
+                    new BigDecimal("77.683500"),
+                    35.0,
+                    180,
+                    "Early morning fortress hill trek, cloud bed sunrise viewpoints, and paragliding launch spot.",
+                    null,
+                    "06:00 AM - 06:00 PM",
+                    null,
+                    PlaceCategory.ACTIVITY,
+                    new BigDecimal("2000.00"),
+                    "Sunrise Trek & Paragliding"
+            ));
+            list.add(new DiscoveredPlace(
+                    "curated:blr:wonderla",
+                    "Wonderla Amusement & Water Park",
+                    DiscoveryCategory.ADVENTURE,
+                    new BigDecimal("12.834400"),
+                    new BigDecimal("77.401000"),
+                    25.0,
+                    360,
+                    "Massive theme park with Recoil roller coasters, wave pools, high-drop water slides, and sky wheel.",
+                    null,
+                    "11:00 AM - 07:00 PM",
+                    null,
+                    PlaceCategory.ACTIVITY,
+                    new BigDecimal("1350.00"),
+                    "Theme & Water Park"
+            ));
+        } else if (lower.contains("chennai") || lower.contains("madras")) {
+            list.add(new DiscoveredPlace(
+                    "curated:chennai:covelong-surfing",
+                    "Covelong Beach Surfing & Kayaking",
+                    DiscoveryCategory.ADVENTURE,
+                    new BigDecimal("12.793300"),
+                    new BigDecimal("80.252000"),
+                    28.0,
+                    150,
+                    "Sea surfing lessons, ocean kayaking, and stand-up paddleboarding with ISA certified instructors.",
+                    null,
+                    "06:00 AM - 06:00 PM",
+                    null,
+                    PlaceCategory.ACTIVITY,
+                    new BigDecimal("1500.00"),
+                    "Sea Surfing & Kayaking"
+            ));
         }
 
         // Always append full Thrill Factory adventure activities package centered on the searched destination
@@ -474,6 +573,16 @@ public class DestinationDiscoveryService {
             boolean exists = list.stream().anyMatch(p -> normalizeKey(p.name()).equals(key));
             if (!exists) {
                 list.add(act);
+            }
+        }
+
+        // Always append Hotels, Resorts, Stays & Fine Dining package centered on the searched destination
+        List<DiscoveredPlace> hotelAndDining = buildHotelAndDiningCurated(destination, center);
+        for (DiscoveredPlace stay : hotelAndDining) {
+            String key = normalizeKey(stay.name());
+            boolean exists = list.stream().anyMatch(p -> normalizeKey(p.name()).equals(key));
+            if (!exists) {
+                list.add(stay);
             }
         }
 
@@ -761,6 +870,117 @@ public class DestinationDiscoveryService {
         ));
 
         return activities;
+    }
+
+    private List<DiscoveredPlace> buildHotelAndDiningCurated(String destination, GeoPoint center) {
+        List<DiscoveredPlace> stays = new ArrayList<>();
+        BigDecimal lat = center != null && center.latitude() != null ? center.latitude() : new BigDecimal("11.406400");
+        BigDecimal lon = center != null && center.longitude() != null ? center.longitude() : new BigDecimal("76.693200");
+        String destName = destination == null || destination.isBlank() ? "Destination" : destination.trim();
+
+        stays.add(new DiscoveredPlace(
+                "hotel:grandresort:" + destName.toLowerCase(Locale.ROOT),
+                "The Grand Palace Resort & Spa (" + destName + ")",
+                DiscoveryCategory.FOOD,
+                lat.add(new BigDecimal("0.0030")),
+                lon.add(new BigDecimal("0.0040")),
+                0.6,
+                600,
+                "5-star luxury heritage resort offering infinity pool, world-class spa treatments, mountain valley view suites, and fine dining.",
+                "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+                "24 Hours Open",
+                "https://booking.com",
+                PlaceCategory.HOTEL,
+                new BigDecimal("6500.00"),
+                "5-Star Luxury Resort"
+        ));
+
+        stays.add(new DiscoveredPlace(
+                "hotel:boutiquestay:" + destName.toLowerCase(Locale.ROOT),
+                "Cloud Nine Boutique Stays & Suites (" + destName + ")",
+                DiscoveryCategory.FOOD,
+                lat.add(new BigDecimal("0.0050")),
+                lon.add(new BigDecimal("0.0060")),
+                1.0,
+                480,
+                "Premium boutique stay with private balcony, complimentary breakfast buffet, high-speed Wi-Fi, and personalized concierge.",
+                "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80",
+                "24 Hours Open",
+                "https://booking.com",
+                PlaceCategory.HOTEL,
+                new BigDecimal("3800.00"),
+                "Boutique Hotel Suite"
+        ));
+
+        stays.add(new DiscoveredPlace(
+                "hotel:backpackers:" + destName.toLowerCase(Locale.ROOT),
+                "Zostel & Backpackers Hostel (" + destName + ")",
+                DiscoveryCategory.FOOD,
+                lat.add(new BigDecimal("0.0075")),
+                lon.add(new BigDecimal("0.0085")),
+                1.3,
+                480,
+                "Vibrant backpacker social hostel with dorm beds, private rooms, rooftop cafe lounge, bonfire nights, and community games.",
+                "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80",
+                "24 Hours Open",
+                "https://zostel.com",
+                PlaceCategory.HOTEL,
+                new BigDecimal("850.00"),
+                "Backpacker Hostel & Dorms"
+        ));
+
+        stays.add(new DiscoveredPlace(
+                "hotel:ecoresort:" + destName.toLowerCase(Locale.ROOT),
+                "Pine Valley Nature & Eco Resort (" + destName + ")",
+                DiscoveryCategory.FOOD,
+                lat.add(new BigDecimal("0.0120")),
+                lon.add(new BigDecimal("0.0140")),
+                2.4,
+                600,
+                "Eco-friendly wooden cottages nestled in lush pine forests, organic farm-to-table dining, and guided nature walks.",
+                "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
+                "24 Hours Open",
+                "https://booking.com",
+                PlaceCategory.HOTEL,
+                new BigDecimal("4500.00"),
+                "Eco Nature Resort"
+        ));
+
+        stays.add(new DiscoveredPlace(
+                "food:finedining:" + destName.toLowerCase(Locale.ROOT),
+                "Royal Spice Fine Dining Restaurant",
+                DiscoveryCategory.FOOD,
+                lat.add(new BigDecimal("0.0020")),
+                lon.add(new BigDecimal("0.0030")),
+                0.4,
+                90,
+                "Authentic Indian multi-cuisine restaurant serving signature tandoori delights, regional thalis, and gourmet desserts.",
+                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+                "11:00 AM - 11:00 PM",
+                null,
+                PlaceCategory.RESTAURANT,
+                new BigDecimal("600.00"),
+                "Fine Dining Restaurant"
+        ));
+
+        stays.add(new DiscoveredPlace(
+                "food:rooftopcafe:" + destName.toLowerCase(Locale.ROOT),
+                "Highland Sky Rooftop Cafe & Bistro",
+                DiscoveryCategory.FOOD,
+                lat.add(new BigDecimal("0.0040")),
+                lon.add(new BigDecimal("0.0050")),
+                0.7,
+                60,
+                "Scenic rooftop bistro serving specialty coffees, artisan pizzas, wood-fired snacks, and sunset mocktails.",
+                "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80",
+                "08:30 AM - 10:30 PM",
+                null,
+                PlaceCategory.RESTAURANT,
+                new BigDecimal("350.00"),
+                "Rooftop Cafe & Bistro"
+        ));
+
+        return stays;
     }
 
     private GeoPoint geocodeWithFallback(String destination) {

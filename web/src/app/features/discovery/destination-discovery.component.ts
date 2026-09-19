@@ -196,7 +196,7 @@ import { TripService } from '../../core/services/trip.service';
                 </span>
                 <span class="cost-badge" [class.free-badge]="!place.estimatedCostPerPerson || place.estimatedCostPerPerson === 0">
                   <span class="material-symbols-outlined">payments</span>
-                  {{ (place.estimatedCostPerPerson && place.estimatedCostPerPerson > 0) ? ('Entry: ₹' + (place.estimatedCostPerPerson | number:'1.0-0') + ' / person') : 'Entry: Free' }}
+                  {{ formatPlacePrice(place) }}
                 </span>
               </div>
 
@@ -907,6 +907,22 @@ export class DestinationDiscoveryComponent implements OnInit {
     const hours = Math.floor(minutes / 60);
     const remainder = minutes % 60;
     return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
+  }
+
+  formatPlacePrice(place: DiscoveredPlace): string {
+    const cost = place.estimatedCostPerPerson;
+    if (!cost || cost <= 0) {
+      return 'Entry: Free';
+    }
+    const formattedCost = cost.toLocaleString('en-IN');
+    const name = (place.name || '').toLowerCase();
+    const type = (place.activityType || '').toLowerCase();
+    const isHotel = place.saveCategory === 'HOTEL' || name.includes('resort') || name.includes('hotel') || name.includes('stay') || name.includes('hostel') || type.includes('resort') || type.includes('hotel') || type.includes('hostel');
+
+    if (isHotel) {
+      return `Price: ₹${formattedCost} / night`;
+    }
+    return `Price: ₹${formattedCost} / person`;
   }
 
   categoryIcon(category: DiscoveredPlace['category']): string {
