@@ -1,0 +1,66 @@
+services:
+  - type: web
+    name: tripmate-api-thiru-murugan3
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: development
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRATION
+        value: "900000"
+      - key: JWT_REFRESH_EXPIRATION
+        value: "604800000"
+      - key: TRIPMATE_BREVO_API_KEY
+        sync: false
+      - key: TRIPMATE_BREVO_SENDER_EMAIL
+        sync: false
+      - key: TRIPMATE_BREVO_SENDER_NAME
+        value: TripMate
+      - key: APP_FRONTEND_URL
+        value: https://tripmate-web-thiru-murugan3.onrender.com
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://tripmate-web-thiru-murugan3.onrender.com
+      - key: JPA_DDL_AUTO
+        value: validate
+      - key: JPA_SHOW_SQL
+        value: "false"
+      - key: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+        value: "5"
+      - key: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
+        value: "1"
+      - key: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
+        value: "30000"
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=20.0 -XX:+UseSerialGC"
+
+  - type: web
+    name: tripmate-web-thiru-murugan3
+    runtime: static
+    branch: development
+    rootDir: web
+    buildCommand: npm ci && npm run build:render
+    staticPublishPath: ./dist/tripmate-web/browser
+    autoDeployTrigger: checksPass
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: TRIPMATE_API_BASE
+        fromService:
+          type: web
+          name: tripmate-api-thiru-murugan3
+          envVarKey: RENDER_EXTERNAL_URL

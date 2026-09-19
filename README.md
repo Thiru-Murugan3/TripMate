@@ -60,6 +60,17 @@ This starts TripMate with a temporary public HTTPS development URL. Send a new i
 
 
 
+## Free managed cloud deployment
+
+TripMate can also be deployed without managing a VM by using **Render + TiDB Cloud Starter**:
+
+- Angular: Render Static Site
+- Spring Boot: Render Free Web Service
+- Database: TiDB Cloud Starter (MySQL-compatible)
+- Deployment definition: `render.yaml`
+
+See `RENDER_TIDB_DEPLOYMENT.md` for the complete setup and free-tier limitations. The current local `uploads/` storage is not persistent on Render Free, so documents/profile photos need object storage before those uploads are treated as durable production data.
+
 ## Self-hosted production deployment
 
 TripMate is prepared for self-hosted deployment with **Coolify** using the repository-level `docker-compose.coolify.yml`.
