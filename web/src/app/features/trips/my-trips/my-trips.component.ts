@@ -107,6 +107,10 @@ export class MyTripsComponent implements OnInit {
     void this.router.navigate(['/trips', trip.id]);
   }
 
+  canDeleteTrip(trip: Trip): boolean {
+    return !trip.userRole || trip.userRole === 'OWNER';
+  }
+
   deleteTrip(trip: Trip, event?: Event): void {
     if (event) {
       event.stopPropagation();

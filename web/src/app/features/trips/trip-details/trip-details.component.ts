@@ -109,7 +109,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
               </button>
 
               <button
-                *ngIf="canManageMembers"
+                *ngIf="canDeleteTrip"
                 type="button"
                 class="btn btn-danger-outline"
                 (click)="deleteCurrentTrip()"
@@ -768,6 +768,16 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
               </div>
 
               <div class="modal-actions">
+                <button
+                  *ngIf="canDeleteTrip"
+                  type="button"
+                  class="btn btn-danger-outline"
+                  style="margin-right: auto;"
+                  (click)="closeEditTripModal(); deleteCurrentTrip()"
+                >
+                  <span class="material-symbols-outlined">delete</span>
+                  Delete Trip
+                </button>
                 <button type="button" class="btn btn-secondary" (click)="closeEditTripModal()">
                   Cancel
                 </button>
@@ -2551,11 +2561,15 @@ export class TripDetailsComponent implements OnInit {
   }
 
   get canManageMembers(): boolean {
-    return this.trip?.userRole === 'OWNER';
+    return !this.trip?.userRole || this.trip?.userRole === 'OWNER';
+  }
+
+  get canDeleteTrip(): boolean {
+    return !this.trip?.userRole || this.trip?.userRole === 'OWNER';
   }
 
   deleteCurrentTrip(): void {
-    if (!this.trip || !this.canManageMembers) return;
+    if (!this.trip || !this.canDeleteTrip) return;
 
     if (!confirm(`Are you sure you want to delete "${this.trip.name}"? This action cannot be undone and will permanently delete all itinerary items, places, expenses, and bookings.`)) {
       return;

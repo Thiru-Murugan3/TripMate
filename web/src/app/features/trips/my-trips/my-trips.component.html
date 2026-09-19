@@ -124,8 +124,9 @@
                   View Trip
                   <span aria-hidden="true">→</span>
                 </button>
-                @if (trip.userRole === 'OWNER' || !trip.userRole) {
+                @if (canDeleteTrip(trip)) {
                   <button type="button" class="delete-button" title="Delete Trip" (click)="deleteTrip(trip, $event)">
+                    <span class="material-symbols-outlined">delete</span>
                     Delete
                   </button>
                 }

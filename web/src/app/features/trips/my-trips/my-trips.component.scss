@@ -310,20 +310,28 @@ select:focus {
 }
 
 .delete-button {
-  border: 0;
+  border: 1px solid #fecaca;
   padding: 4px 10px;
-  border-radius: 6px;
-  background: #fee2e2;
+  border-radius: 8px;
+  background: #fef2f2;
   color: #dc2626;
   font: inherit;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 150ms ease;
 
   &:hover {
-    background: #fca5a5;
+    background: #fee2e2;
     color: #991b1b;
+    border-color: #fca5a5;
+  }
+
+  .material-symbols-outlined {
+    font-size: 15px;
   }
 }
 
