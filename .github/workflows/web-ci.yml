@@ -29,6 +29,7 @@ jobs:
       - run: npm run test:auth
       - run: npm run test:discovery
       - run: npm run test:explore
+      - run: npm run test:discovery-admin
       - run: npm run build
       - run: npm run build -- --configuration development
       - name: Validate Render production build

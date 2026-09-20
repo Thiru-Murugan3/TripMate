@@ -11,6 +11,7 @@
     "test:auth": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/interceptors/auth.interceptor.spec.ts",
     "test:discovery": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/discovery.service.spec.ts",
     "test:explore": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/discovery/destination-discovery.component.spec.ts",
+    "test:discovery-admin": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/discovery-admin.service.spec.ts",
     "build:render": "node scripts/write-render-config.mjs && ng build"
   },
   "private": true,
