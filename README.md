@@ -39,6 +39,19 @@ BREVO_SENDER_NAME=TripMate
 
 Never commit `backend/.env` or a real Brevo API key.
 
+## Shared local and public database
+
+The local and deployed backends both require `DB_URL`, `DB_USERNAME`, and
+`DB_PASSWORD`. Render stores these as private `sync: false` values. To use the
+same TiDB database locally, copy `backend/.env.example` to `backend/.env`, then
+copy the exact three database values from the Render API service's Environment
+page into that ignored file. Do not put the credentials in `application.yml`,
+`render.yaml`, Git, or chat.
+
+Start the local Spring Boot backend and Angular normally after creating the
+file. Localhost and the public site then read and modify the same production
+data.
+
 
 ## Invitation links on another device
 
