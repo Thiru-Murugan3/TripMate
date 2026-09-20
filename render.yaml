@@ -26,7 +26,7 @@ services:
       - key: TRIPMATE_BREVO_API_KEY
         sync: false
       - key: TRIPMATE_BREVO_SENDER_EMAIL
-        sync: false
+        value: thirumuruganofficial3@gmail.com
       - key: TRIPMATE_BREVO_SENDER_NAME
         value: TripMate
       - key: R2_ENABLED

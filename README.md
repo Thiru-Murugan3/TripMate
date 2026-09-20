@@ -33,7 +33,7 @@ Required local variables:
 ```env
 BREVO_API_URL=https://api.brevo.com/v3/smtp/email
 BREVO_API_KEY=your_brevo_api_key
-BREVO_SENDER_EMAIL=verified_sender@example.com
+BREVO_SENDER_EMAIL=thirumuruganofficial3@gmail.com
 BREVO_SENDER_NAME=TripMate
 ```
 
