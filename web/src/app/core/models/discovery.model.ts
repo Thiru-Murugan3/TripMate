@@ -6,6 +6,7 @@ export type DiscoveryCategory =
   | 'NATURE'
   | 'WATERFALL'
   | 'LAKE'
+  | 'RIVER'
   | 'BEACH'
   | 'VIEWPOINT'
   | 'TEMPLE'
@@ -15,6 +16,11 @@ export type DiscoveryCategory =
   | 'WILDLIFE'
   | 'ADVENTURE'
   | 'ENTERTAINMENT'
+  | 'FAMILY'
+  | 'CULTURAL'
+  | 'NIGHTLIFE'
+  | 'WELLNESS'
+  | 'TRANSPORT'
   | 'SHOPPING'
   | 'FOOD'
   | 'STAY'
@@ -40,6 +46,20 @@ export interface DiscoveryPriceOption {
   currency: string;
   sourceUrl?: string;
   lastVerifiedAt?: string;
+  status?: DiscoveryPriceStatus;
+  expiresAt?: string;
+  mayHaveChanged?: boolean;
+}
+
+export interface DiscoveryImage {
+  url: string;
+  sourcePage?: string;
+  sourceName?: string;
+  author?: string;
+  license?: string;
+  attribution?: string;
+  exact: boolean;
+  primary: boolean;
 }
 
 export interface DiscoveredPlace {
@@ -57,8 +77,18 @@ export interface DiscoveredPlace {
   saveCategory: PlaceCategory;
   estimatedCostPerPerson?: number;
   activityType?: string;
+  slug?: string;
   itemType?: DiscoveryItemType;
+  subcategory?: string;
+  city?: string;
+  district?: string;
+  state?: string;
+  fullAddress?: string;
   address?: string;
+  shortDescription?: string;
+  detailedDescription?: string;
+  primaryImageUrl?: string;
+  imageGallery?: DiscoveryImage[];
   mapUrl?: string;
   priceStatus?: DiscoveryPriceStatus;
   priceType?: DiscoveryPriceType;
@@ -73,7 +103,29 @@ export interface DiscoveredPlace {
   imageLicense?: string;
   imageExact?: boolean;
   bestTimeToVisit?: string;
+  activityDuration?: number;
+  minimumAge?: number;
+  maximumAge?: number;
+  minimumWeight?: number;
+  maximumWeight?: number;
+  difficultyLevel?: string;
   safetyInformation?: string;
+  inclusions?: string[];
+  exclusions?: string[];
+  thingsToCarry?: string[];
+  accessibilityInformation?: string;
+  contactPhone?: string;
+  officialWebsite?: string;
+  bookingUrl?: string;
+  cancellationInformation?: string;
+  verificationExpiresAt?: string;
+  verificationExpired?: boolean;
+  rating?: number;
+  ratingCount?: number;
+  popularityScore?: number;
+  familyFriendly?: boolean;
+  openNow?: boolean;
+  curated?: boolean;
 }
 
 export interface DestinationDiscoveryResponse {
@@ -85,6 +137,7 @@ export interface DestinationDiscoveryResponse {
   category: DiscoveryCategory;
   provider: string;
   attribution: string;
+  appliedFilters?: Record<string, unknown>;
   resultCount: number;
   places: DiscoveredPlace[];
   providersUsed?: string[];
@@ -97,10 +150,27 @@ export interface DestinationDiscoveryResponse {
 
 export interface DiscoverySearchFilters {
   itemType?: DiscoveryItemType | 'ALL';
+  subcategory?: string;
   minPrice?: number;
   maxPrice?: number;
   priceStatus?: DiscoveryPriceStatus | 'ALL';
-  sort?: 'DISTANCE' | 'PRICE_LOW' | 'PRICE_HIGH' | 'VERIFIED' | 'NAME';
+  openNow?: boolean;
+  familyFriendly?: boolean;
+  difficulty?: string;
+  minDuration?: number;
+  maxDuration?: number;
+  minRating?: number;
+  sort?: 'RELEVANCE' | 'DISTANCE' | 'PRICE_LOW' | 'PRICE_HIGH' | 'POPULAR' | 'VERIFIED' | 'RECENTLY_VERIFIED' | 'NAME';
   page?: number;
   size?: number;
+}
+
+export interface DiscoverySuggestion {
+  label: string;
+  city?: string;
+  district?: string;
+  state?: string;
+  latitude: number;
+  longitude: number;
+  provider: string;
 }

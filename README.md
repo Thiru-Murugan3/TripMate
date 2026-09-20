@@ -90,7 +90,7 @@ See `ORACLE_FREE_VM.md` to create a free Oracle Linux VM and bootstrap Coolify, 
 
 ## Destination Discovery
 
-TripMate can discover tourist places for a selected destination and add them to a trip.
+TripMate's **Explore India** catalogue discovers source-backed places, activities, food, stays, events and tour essentials for Indian destinations and can add them to a trip.
 
 Example flow:
 
@@ -100,20 +100,27 @@ Example flow:
 4. When ready to save, choose an existing trip where you have Owner or Editor access.
 5. Save the selected places to **Places**, or use **Save & Add to Itinerary**.
 6. You can also open a trip's **Explore** tab, which starts with that trip's destination but still allows another destination to be searched.
-7. Search within 5, 10, 25, or 50 km.
-8. Filter by attraction, nature, waterfall, lake, viewpoint, temple, church, museum, park, adventure, shopping, food, or historical place.
+7. Search with India-only autocomplete or use the browser's current location, within 5, 10, 25, 50, or 100 km.
+8. Filter the complete catalogue by type, category, subcategory, price, verified/free status, open-now state, family suitability, difficulty, duration and licensed rating.
 9. Optionally assign Day 1 / Day 2 / Day 3 (or any available trip day), or use the 1-day, 2-day, or 3-day suggested-plan buttons before saving.
+10. Administrators can use **Verify Data** to add/update sourced records, verify or expire fees, resolve provider conflicts, attach exact licensed images, and disable incorrect listings.
 
-Development discovery uses OpenStreetMap-compatible public services through the Spring Boot backend. Results depend on the place data available from the configured provider and are not guaranteed to represent every real-world attraction.
+Discovery uses Nominatim with Photon fallback for India-only geocoding, the configured Overpass/OpenStreetMap endpoints for nearby objects, Wikidata/Wikipedia for linked descriptions, and Wikimedia Commons for exact linked images. A Flyway-backed TripMate catalogue takes priority for administrator-verified official tourism/provider data. Geoapify is an optional licensed provider when an API key is configured. Coverage depends on source data and is not guaranteed to represent every real-world place or current commercial package.
 
 Optional backend configuration:
 
 ```env
 DISCOVERY_NOMINATIM_URL=https://nominatim.openstreetmap.org
-DISCOVERY_OVERPASS_URL=https://overpass-api.de/api/interpreter
+DISCOVERY_PHOTON_URL=https://photon.komoot.io
+DISCOVERY_OVERPASS_URLS=https://overpass-api.de/api/interpreter,https://maps.mail.ru/osm/tools/overpass/api/interpreter
 DISCOVERY_USER_AGENT=TripMate/1.0
-DISCOVERY_CACHE_MINUTES=60
+DISCOVERY_GEOCODE_CACHE_HOURS=24
+DISCOVERY_STATIC_CACHE_HOURS=6
+DISCOVERY_PRICE_CACHE_MINUTES=60
+DISCOVERY_PRICE_VERIFICATION_DAYS=30
 DISCOVERY_MAX_RESULTS=200
+DISCOVERY_GEOAPIFY_API_KEY=
 ```
 
 For production, use a provider/service deployment suitable for your expected traffic and keep discovery calls behind the TripMate backend rather than calling map providers directly from Angular.
+Every price and image remains traceable to its source. Missing fees display **Price not verified — check official website**, and prices/timings should always be reconfirmed with the official provider.

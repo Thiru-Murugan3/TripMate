@@ -2,242 +2,130 @@ package com.tripmate.discovery;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tripmate.place.PlaceCategory;
+import com.tripmate.discovery.provider.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 class DestinationDiscoveryServiceTest {
-
-    private final DestinationDiscoveryService service = new DestinationDiscoveryService(
-            "https://nominatim.example.test",
-            "https://photon.example.test",
-            "https://overpass-1.example.test/api/interpreter,https://overpass-2.example.test/api/interpreter",
-            "TripMate-Test/1.0",
-            1000,
-            3000,
-            60,
-            200
-    );
-
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private OverpassDiscoveryProvider provider;
+    private DiscoveryProviderRequest chennai;
 
-    @Test
-    void classifiesExpandedTourCategories() throws Exception {
-        assertEquals(DiscoveryCategory.VIEWPOINT, service.classify(tags("""
-                {"tourism":"viewpoint","name":"Doddabetta View Point"}
-                """), "Doddabetta View Point"));
-        assertEquals(DiscoveryCategory.WATERFALL, service.classify(tags("""
-                {"natural":"waterfall","name":"Pykara Falls"}
-                """), "Pykara Falls"));
-        assertEquals(DiscoveryCategory.BEACH, service.classify(tags("""
-                {"natural":"beach","name":"Marina Beach"}
-                """), "Marina Beach"));
-        assertEquals(DiscoveryCategory.STAY, service.classify(tags("""
-                {"tourism":"hotel","name":"Sample Hotel"}
-                """), "Sample Hotel"));
-        assertEquals(DiscoveryCategory.ADVENTURE, service.classify(tags("""
-                {"sport":"surfing","name":"Surf School"}
-                """), "Surf School"));
-        assertEquals(DiscoveryCategory.EVENT, service.classify(tags("""
-                {"amenity":"events_venue","name":"City Exhibition Ground"}
-                """), "City Exhibition Ground"));
-    }
-
-    @Test
-    void mapsDiscoveryCategoriesToExistingTripPlaceCategories() {
-        assertEquals(PlaceCategory.RESTAURANT, service.toSavedPlaceCategory(DiscoveryCategory.FOOD));
-        assertEquals(PlaceCategory.SHOPPING, service.toSavedPlaceCategory(DiscoveryCategory.SHOPPING));
-        assertEquals(PlaceCategory.ACTIVITY, service.toSavedPlaceCategory(DiscoveryCategory.ADVENTURE));
-        assertEquals(PlaceCategory.HOTEL, service.toSavedPlaceCategory(DiscoveryCategory.STAY));
-        assertEquals(PlaceCategory.ATTRACTION, service.toSavedPlaceCategory(DiscoveryCategory.VIEWPOINT));
-    }
-
-    @Test
-    void buildsRadiusBoundedQueriesForPlacesFoodStaysAndAdventure() {
-        String allQuery = service.buildOverpassQuery(13.0827, 80.2707, 25000, null);
-        assertTrue(allQuery.contains("around:25000,13.0827,80.2707"));
-        assertTrue(allQuery.contains("[\"tourism\"]"));
-        assertTrue(allQuery.contains("restaurant|cafe|food_court|marketplace"));
-        assertTrue(allQuery.contains("surfing"));
-
-        String stayQuery = service.buildOverpassQuery(13.0827, 80.2707, 5000, DiscoveryCategory.STAY);
-        assertTrue(stayQuery.contains("hotel|guest_house|hostel"));
-        assertFalse(stayQuery.contains("[\"historic\"]"));
-    }
-
-    @Test
-    void keepsConfiguredOverpassFallbackOrder() {
-        assertEquals(
-                List.of(
-                        "https://overpass-1.example.test/api/interpreter",
-                        "https://overpass-2.example.test/api/interpreter"
-                ),
-                service.configuredOverpassUrls()
+    @BeforeEach
+    void setUp() {
+        provider = new OverpassDiscoveryProvider(
+                new ProviderHttpClientFactory("TripMate-Test/1.0", 1000, 3000),
+                new PriceVerificationService(30), new ImageResolverService(),
+                mock(WikimediaEnrichmentService.class),
+                "https://overpass.example.test/api/interpreter", 200
         );
+        chennai = new DiscoveryProviderRequest("Chennai",
+                new GeocodedDestination(new BigDecimal("13.0827"), new BigDecimal("80.2707"),
+                        "Chennai, Tamil Nadu, India", "Chennai", "Chennai", "Tamil Nadu", "IN", "Test"), 10, null);
     }
 
     @Test
-    void doesNotInventMissingPricesOrImages() throws Exception {
-        JsonNode response = objectMapper.readTree("""
-                {
-                  "elements": [
-                    {
-                      "type": "node",
-                      "id": 101,
-                      "lat": 13.083,
-                      "lon": 80.271,
-                      "tags": {
-                        "name": "Real Chennai Museum",
-                        "tourism": "museum",
-                        "opening_hours": "Tu-Su 09:00-17:00"
-                      }
-                    }
-                  ]
-                }
-                """);
+    void classifiesCompleteCatalogueCategories() throws Exception {
+        assertEquals(DiscoveryCategory.BEACH, provider.classify(tags("natural", "beach"), "Marina Beach"));
+        assertEquals(DiscoveryCategory.RIVER, provider.classify(tags("waterway", "river"), "Adyar River"));
+        assertEquals(DiscoveryCategory.NIGHTLIFE, provider.classify(tags("amenity", "nightclub"), "City Club"));
+        assertEquals(DiscoveryCategory.WELLNESS, provider.classify(tags("leisure", "spa"), "City Spa"));
+        assertEquals(DiscoveryCategory.TRANSPORT, provider.classify(tags("amenity", "car_rental"), "Car Hire"));
+        assertEquals(DiscoveryCategory.CULTURAL, provider.classify(tags("amenity", "theatre"), "City Theatre"));
+        assertEquals(DiscoveryCategory.EVENT, provider.classify(tags("event", "festival"), "Music Festival"));
+    }
 
-        List<DiscoveredPlace> places = service.mapOverpassPlacesForTest(
-                response,
-                new BigDecimal("13.0827"),
-                new BigDecimal("80.2707"),
-                10,
-                null,
-                "Chennai"
-        );
+    @Test
+    void queryCoversTravelCatalogueWithoutGeneratedListings() {
+        String query = provider.buildQuery(13.0827, 80.2707, 25000, null);
+        assertTrue(query.contains("around:25000,13.0827,80.2707"));
+        assertTrue(query.contains("nightclub"));
+        assertTrue(query.contains("travel_agent"));
+        assertTrue(query.contains("events_venue"));
+        assertFalse(query.contains("Thrill Factory"));
+    }
 
-        assertEquals(1, places.size());
-        DiscoveredPlace place = places.getFirst();
-        assertNull(place.estimatedCostPerPerson());
+    @Test
+    void missingPriceAndImageStayUnknown() throws Exception {
+        DiscoveredPlace place = provider.map(response("""
+                {"type":"node","id":101,"lat":13.083,"lon":80.271,
+                 "tags":{"name":"Real Museum","tourism":"museum"}}
+                """), chennai).getFirst();
         assertEquals(PriceStatus.UNKNOWN, place.priceStatus());
-        assertNull(place.imageUrl());
+        assertNull(place.estimatedCostPerPerson());
+        assertNull(place.primaryImageUrl());
         assertFalse(place.imageExact());
-        assertEquals("OpenStreetMap", place.sourceName());
-        assertTrue(place.sourceUrl().endsWith("/node/101"));
+        assertEquals("osm:node:101", place.externalId());
     }
 
     @Test
-    void mapsExplicitFreeAndSourceListedFeesWithoutCategoryEstimates() throws Exception {
-        JsonNode response = objectMapper.readTree("""
-                {
-                  "elements": [
-                    {
-                      "type": "node",
-                      "id": 201,
-                      "lat": 13.083,
-                      "lon": 80.271,
-                      "tags": {
-                        "name": "Free City Park",
-                        "leisure": "park",
-                        "fee": "no"
-                      }
-                    },
-                    {
-                      "type": "node",
-                      "id": 202,
-                      "lat": 13.084,
-                      "lon": 80.272,
-                      "tags": {
-                        "name": "Paid Museum",
-                        "tourism": "museum",
-                        "fee": "yes",
-                        "charge": "INR 50 per person"
-                      }
-                    }
-                  ]
-                }
-                """);
-
-        List<DiscoveredPlace> places = service.mapOverpassPlacesForTest(
-                response,
-                new BigDecimal("13.0827"),
-                new BigDecimal("80.2707"),
-                10,
-                null,
-                "Chennai"
-        );
-
-        DiscoveredPlace free = places.stream().filter(p -> p.name().startsWith("Free")).findFirst().orElseThrow();
-        assertEquals(PriceStatus.FREE, free.priceStatus());
-        assertEquals(new BigDecimal("0.00"), free.estimatedCostPerPerson());
-
-        DiscoveredPlace paid = places.stream().filter(p -> p.name().startsWith("Paid")).findFirst().orElseThrow();
-        assertEquals(PriceStatus.ESTIMATED, paid.priceStatus());
-        assertEquals(new BigDecimal("50.00"), paid.estimatedCostPerPerson());
-        assertEquals(PriceType.PER_PERSON, paid.priceType());
-        assertEquals(1, paid.priceOptions().size());
+    void freeRequiresExplicitSourceDeclaration() throws Exception {
+        DiscoveredPlace place = provider.map(response("""
+                {"type":"node","id":102,"lat":13.083,"lon":80.271,
+                 "tags":{"name":"Free Park","leisure":"park","fee":"no"}}
+                """), chennai).getFirst();
+        assertEquals(PriceStatus.FREE, place.priceStatus());
+        assertEquals(new BigDecimal("0.00"), place.estimatedCostPerPerson());
+        assertNotNull(place.verificationExpiresAt());
+        assertEquals("https://www.openstreetmap.org/node/102", place.priceOptions().getFirst().sourceUrl());
     }
 
     @Test
-    void preservesExactWikimediaImagesWithAttribution() throws Exception {
+    void sourceListedChargeIsEstimatedAndTraceable() throws Exception {
+        DiscoveredPlace place = provider.map(response("""
+                {"type":"node","id":103,"lat":13.083,"lon":80.271,
+                 "tags":{"name":"Paid Museum","tourism":"museum","fee":"yes","charge":"INR 50 per person"}}
+                """), chennai).getFirst();
+        assertEquals(PriceStatus.ESTIMATED, place.priceStatus());
+        assertEquals(new BigDecimal("50.00"), place.estimatedCostPerPerson());
+        assertEquals(PriceType.PER_PERSON, place.priceType());
+        assertNotNull(place.sourceLastCheckedAt());
+    }
+
+    @Test
+    void rejectsCoordinatesOutsideIndiaAndRadius() throws Exception {
         JsonNode response = objectMapper.readTree("""
-                {
-                  "elements": [
-                    {
-                      "type": "node",
-                      "id": 301,
-                      "lat": 13.083,
-                      "lon": 80.271,
-                      "tags": {
-                        "name": "Verified Monument",
-                        "historic": "monument",
-                        "wikimedia_commons": "File:Verified Monument.jpg"
-                      }
-                    }
-                  ]
-                }
+                {"elements":[
+                  {"type":"node","id":201,"lat":51.5,"lon":-0.1,"tags":{"name":"London Place","tourism":"attraction"}},
+                  {"type":"node","id":202,"lat":12.0,"lon":78.0,"tags":{"name":"Far Place","tourism":"attraction"}}
+                ]}
                 """);
+        assertTrue(provider.map(response, chennai).isEmpty());
+    }
 
-        DiscoveredPlace place = service.mapOverpassPlacesForTest(
-                response,
-                new BigDecimal("13.0827"),
-                new BigDecimal("80.2707"),
-                10,
-                null,
-                "Chennai"
-        ).getFirst();
+    @Test
+    void deduplicatesSameNameAtNearbyCoordinates() throws Exception {
+        JsonNode response = objectMapper.readTree("""
+                {"elements":[
+                  {"type":"node","id":301,"lat":13.08301,"lon":80.27101,"tags":{"name":"City Museum","tourism":"museum"}},
+                  {"type":"way","id":302,"center":{"lat":13.08302,"lon":80.27102},"tags":{"name":"City Museum","tourism":"museum"}}
+                ]}
+                """);
+        assertEquals(1, provider.map(response, chennai).size());
+    }
 
+    @Test
+    void preservesExactWikimediaImageAttribution() throws Exception {
+        DiscoveredPlace place = provider.map(response("""
+                {"type":"node","id":401,"lat":13.083,"lon":80.271,
+                 "tags":{"name":"Exact Monument","historic":"monument","wikimedia_commons":"File:Exact Monument.jpg"}}
+                """), chennai).getFirst();
         assertTrue(place.imageExact());
         assertEquals("Wikimedia Commons", place.imageSource());
-        assertTrue(place.imageUrl().contains("Special:FilePath"));
+        assertTrue(place.primaryImageUrl().contains("Special:FilePath"));
+        assertNotNull(place.imageGallery().getFirst().sourcePage());
     }
 
-    @Test
-    void classifiesMappedTravelAgentsAsTourServices() throws Exception {
-        JsonNode response = objectMapper.readTree("""
-                {
-                  "elements": [
-                    {
-                      "type": "node",
-                      "id": 401,
-                      "lat": 13.083,
-                      "lon": 80.271,
-                      "tags": {
-                        "name": "Local Tour Desk",
-                        "office": "travel_agent"
-                      }
-                    }
-                  ]
-                }
-                """);
-
-        DiscoveredPlace place = service.mapOverpassPlacesForTest(
-                response,
-                new BigDecimal("13.0827"),
-                new BigDecimal("80.2707"),
-                10,
-                null,
-                "Chennai"
-        ).getFirst();
-
-        assertEquals(DiscoveryItemType.TOUR_SERVICE, place.itemType());
-        assertEquals(PriceStatus.UNKNOWN, place.priceStatus());
+    private JsonNode tags(String key, String value) throws Exception {
+        return objectMapper.readTree("{\"" + key + "\":\"" + value + "\"}");
     }
 
-    private JsonNode tags(String json) throws Exception {
-        return objectMapper.readTree(json);
+    private JsonNode response(String element) throws Exception {
+        return objectMapper.readTree("{\"elements\":[" + element + "]}");
     }
 }

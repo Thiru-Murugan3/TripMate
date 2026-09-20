@@ -29,23 +29,22 @@ public class DestinationDiscoveryController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) String priceStatus,
-            @RequestParam(defaultValue = "DISTANCE") String sort,
+            @RequestParam(required = false) String subcategory,
+            @RequestParam(required = false) Boolean openNow,
+            @RequestParam(required = false) Boolean familyFriendly,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) Integer minDuration,
+            @RequestParam(required = false) Integer maxDuration,
+            @RequestParam(required = false) Double minRating,
+            @RequestParam(defaultValue = "RELEVANCE") String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size
     ) {
         return ResponseEntity.ok(
-                destinationDiscoveryService.search(
-                        destination,
-                        radiusKm,
-                        category,
-                        itemType,
-                        minPrice,
-                        maxPrice,
-                        priceStatus,
-                        sort,
-                        page,
-                        size
-                )
+                destinationDiscoveryService.search(destination, radiusKm, new DiscoverySearchFilters(
+                        category, subcategory, itemType, minPrice, maxPrice, priceStatus, openNow,
+                        familyFriendly, difficulty, minDuration, maxDuration, minRating, sort, page, size
+                ))
         );
     }
 
@@ -76,5 +75,21 @@ public class DestinationDiscoveryController {
                 "Rishikesh, Uttarakhand",
                 "Manali, Himachal Pradesh"
         ));
+    }
+
+    @GetMapping("/search-suggestions")
+    public ResponseEntity<List<DiscoverySuggestion>> getSearchSuggestions(
+            @RequestParam("q") String query,
+            @RequestParam(defaultValue = "6") int limit
+    ) {
+        return ResponseEntity.ok(destinationDiscoveryService.suggestions(query, limit));
+    }
+
+    @GetMapping("/reverse-geocode")
+    public ResponseEntity<DiscoverySuggestion> reverseGeocode(
+            @RequestParam BigDecimal latitude,
+            @RequestParam BigDecimal longitude
+    ) {
+        return ResponseEntity.ok(destinationDiscoveryService.reverseGeocode(latitude, longitude));
     }
 }

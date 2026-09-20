@@ -72,8 +72,18 @@ describe('DestinationDiscoveryComponent', () => {
     estimatedCost: 0
   };
 
-  function configure(getMyTripsResult: Observable<Trip[]> = of([plannedTrip])) {
-    const discoveryService = jasmine.createSpyObj<DiscoveryService>('DiscoveryService', ['discoverPlaces']);
+  function configure(
+    getMyTripsResult: Observable<Trip[]> = of([plannedTrip]),
+    queryParams: Record<string, string> = {}
+  ) {
+    const discoveryService = jasmine.createSpyObj<DiscoveryService>('DiscoveryService', [
+      'discoverPlaces',
+      'getSuggestions',
+      'reverseGeocode',
+      'getPlace'
+    ]);
+    discoveryService.getSuggestions.and.returnValue(of([]));
+    discoveryService.getPlace.and.returnValue(of(discoveredPlace));
     const placeService = jasmine.createSpyObj<PlaceService>('PlaceService', ['getPlaces', 'createPlace']);
     const itineraryService = jasmine.createSpyObj<ItineraryService>('ItineraryService', [
       'getItinerary',
@@ -86,6 +96,27 @@ describe('DestinationDiscoveryComponent', () => {
     placeService.getPlaces.and.returnValue(of([]));
     placeService.createPlace.and.returnValue(of(createdPlace));
     discoveryService.discoverPlaces.and.returnValue(of(discoveryResponse));
+    itineraryService.getItinerary.and.returnValue(of({
+      tripId: plannedTrip.id,
+      totalDays: 0,
+      totalActivities: 0,
+      totalEstimatedCost: 0,
+      days: []
+    }));
+    itineraryService.createDay.and.returnValue(of({
+      id: 700,
+      tripId: plannedTrip.id,
+      dayNumber: 1,
+      dayDate: plannedTrip.startDate,
+      items: []
+    }));
+    itineraryService.createItem.and.returnValue(of({
+      id: 701,
+      dayId: 700,
+      tripId: plannedTrip.id,
+      placeId: createdPlace.id,
+      title: discoveredPlace.name
+    }));
 
     TestBed.configureTestingModule({
       imports: [DestinationDiscoveryComponent],
@@ -94,11 +125,11 @@ describe('DestinationDiscoveryComponent', () => {
         { provide: PlaceService, useValue: placeService },
         { provide: ItineraryService, useValue: itineraryService },
         { provide: TripService, useValue: tripService },
-        { provide: ActivatedRoute, useValue: { queryParams: of({}) } }
+        { provide: ActivatedRoute, useValue: { queryParams: of(queryParams) } }
       ]
     });
 
-    return { discoveryService, placeService, tripService };
+    return { discoveryService, placeService, itineraryService, tripService };
   }
 
   afterEach(() => {
@@ -126,6 +157,16 @@ describe('DestinationDiscoveryComponent', () => {
     expect(fixture.componentInstance.editableTrips.map((trip) => trip.id)).toEqual([
       plannedTrip.id
     ]);
+  });
+
+  it('keeps Viewer-only catalogue access read-only', () => {
+    configure(of([viewerTrip]));
+
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.editableTrips).toEqual([]);
+    expect(fixture.componentInstance.canSelectPlaces).toBeFalse();
   });
 
   it('lets the user select tourist places before choosing a trip', () => {
@@ -259,9 +300,55 @@ describe('DestinationDiscoveryComponent', () => {
       jasmine.objectContaining({
         itemType: 'ALL',
         priceStatus: 'ALL',
-        sort: 'DISTANCE'
+        sort: 'RELEVANCE'
       })
     );
+  });
+
+  it('runs a global-navbar query-parameter search', () => {
+    const { discoveryService } = configure(of([plannedTrip]), { search: 'Goa' });
+
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.searchDestination).toBe('Goa');
+    expect(discoveryService.discoverPlaces).toHaveBeenCalledWith(
+      'Goa', 25, 'ALL', jasmine.objectContaining({ page: 0, size: 24 })
+    );
+  });
+
+  it('saves and adds a catalogue result directly to an itinerary day', async () => {
+    const { itineraryService } = configure();
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.result = discoveryResponse;
+    component.selectTrip(plannedTrip.id);
+    await fixture.whenStable();
+
+    await component.addPlaceToItinerary(discoveredPlace);
+
+    expect(itineraryService.createDay).toHaveBeenCalledWith(
+      plannedTrip.id,
+      jasmine.objectContaining({ dayNumber: 1 })
+    );
+    expect(itineraryService.createItem).toHaveBeenCalledWith(
+      plannedTrip.id,
+      700,
+      jasmine.objectContaining({ placeId: createdPlace.id, title: discoveredPlace.name })
+    );
+  });
+
+  it('renders responsive catalogue controls and all item-type tabs', () => {
+    configure();
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.result = discoveryResponse;
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+
+    expect(element.querySelector('.mobile-filter-toggle')).not.toBeNull();
+    expect(element.querySelectorAll('.type-tabs button').length).toBe(7);
   });
 
   it('uses a trip destination only when the user explicitly asks for it', () => {
@@ -282,7 +369,7 @@ describe('DestinationDiscoveryComponent', () => {
       jasmine.objectContaining({
         itemType: 'ALL',
         priceStatus: 'ALL',
-        sort: 'DISTANCE'
+        sort: 'RELEVANCE'
       })
     );
   });
@@ -297,7 +384,7 @@ describe('DestinationDiscoveryComponent', () => {
       ...discoveredPlace,
       estimatedCostPerPerson: undefined,
       priceStatus: 'UNKNOWN'
-    })).toBe('Price not verified');
+    })).toBe('Price not verified — check official website');
   });
 
   it('labels only source-declared free entry as free', () => {
