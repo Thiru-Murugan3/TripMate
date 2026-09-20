@@ -343,6 +343,8 @@ describe('DestinationDiscoveryComponent', () => {
     configure();
     const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
     fixture.detectChanges();
+    fixture.componentInstance.result = discoveryResponse;
+    fixture.detectChanges();
     const element: HTMLElement = fixture.nativeElement;
 
     expect(element.querySelector('.mobile-filter-toggle')).not.toBeNull();
