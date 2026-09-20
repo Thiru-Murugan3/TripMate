@@ -52,6 +52,15 @@ import { NotificationService } from '../../../core/services/notification.service
           >
             Explore
           </a>
+          <a
+            *ngIf="authService.currentUser()?.systemRole === 'ADMIN'"
+            routerLink="/admin/discovery"
+            routerLinkActive="active"
+            class="nav-link"
+            aria-label="Manage Explore India catalogue"
+          >
+            Verify Data
+          </a>
         </div>
 
         <!-- User Menu / Actions -->

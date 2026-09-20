@@ -3,6 +3,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   OnInit,
   Output,
   inject
@@ -16,8 +17,10 @@ import {
   DestinationDiscoveryResponse,
   DiscoveryCategory,
   DiscoveryItemType,
+  DiscoveryPriceOption,
   DiscoveryPriceStatus,
-  DiscoverySearchFilters
+  DiscoverySearchFilters,
+  DiscoverySuggestion
 } from '../../core/models/discovery.model';
 import { Place } from '../../core/models/place.model';
 import { Trip } from '../../core/models/trip.model';
@@ -65,16 +68,29 @@ import { TripService } from '../../core/services/trip.service';
           </button>
         </label>
 
-        <label class="field destination-field">
+        <div class="field destination-field">
           <span>Destination</span>
-          <input
-            [(ngModel)]="searchDestination"
-            [ngModelOptions]="{ standalone: true }"
-            maxlength="180"
-            placeholder="Search any city, town or destination"
-            (keyup.enter)="discover()"
-          />
-        </label>
+          <div class="destination-input-row">
+            <input
+              [(ngModel)]="searchDestination"
+              [ngModelOptions]="{ standalone: true }"
+              maxlength="180"
+              autocomplete="off"
+              placeholder="Search any Indian city or destination"
+              (input)="onDestinationInput()"
+              (keyup.enter)="discover()"
+            />
+            <button type="button" class="location-button" title="Use current location" [disabled]="isLocating" (click)="useCurrentLocation()">
+              <span class="material-symbols-outlined">my_location</span>
+            </button>
+          </div>
+          <div *ngIf="suggestions.length" class="suggestions" role="listbox">
+            <button *ngFor="let suggestion of suggestions" type="button" (click)="selectSuggestion(suggestion)">
+              <span class="material-symbols-outlined">location_on</span>
+              <span><strong>{{ suggestion.city || suggestion.label }}</strong><small>{{ suggestion.label }}</small></span>
+            </button>
+          </div>
+        </div>
 
         <label class="field">
           <span>Category</span>
@@ -95,6 +111,12 @@ import { TripService } from '../../core/services/trip.service';
           {{ isLoading ? 'Searching...' : 'Find Tourist Places' }}
         </button>
       </div>
+
+      <nav class="type-tabs" aria-label="Catalogue type">
+        <button *ngFor="let tab of itemTypeTabs" type="button" [class.active]="itemTypeFilter === tab.value" (click)="selectItemType(tab.value)">
+          <span class="material-symbols-outlined">{{ tab.icon }}</span>{{ tab.label }}
+        </button>
+      </nav>
 
       <div *ngIf="!embeddedMode" class="casual-search-note">
         <span class="material-symbols-outlined">public</span>
@@ -153,40 +175,40 @@ import { TripService } from '../../core/services/trip.service';
           </label>
         </div>
 
-        <div class="catalogue-filters" aria-label="Discovery filters">
-          <label>
-            <span>Listing type</span>
-            <select [(ngModel)]="itemTypeFilter" (ngModelChange)="discover()">
-              <option value="ALL">All listings</option>
-              <option value="PLACE">Places</option>
-              <option value="ACTIVITY">Activities</option>
-              <option value="FOOD">Food</option>
-              <option value="STAY">Stays</option>
-              <option value="EVENT">Events</option>
-              <option value="TOUR_SERVICE">Tour services</option>
-            </select>
-          </label>
-          <label>
-            <span>Price information</span>
-            <select [(ngModel)]="priceStatusFilter" (ngModelChange)="discover()">
-              <option value="ALL">All price statuses</option>
-              <option value="FREE">Free entry</option>
-              <option value="VERIFIED">Source-listed price</option>
-              <option value="ESTIMATED">Estimated price</option>
-              <option value="UNKNOWN">Price not verified</option>
-            </select>
-          </label>
-          <label>
-            <span>Sort by</span>
-            <select [(ngModel)]="sortOrder" (ngModelChange)="discover()">
-              <option value="DISTANCE">Nearest</option>
-              <option value="VERIFIED">Verified information</option>
-              <option value="PRICE_LOW">Price: low to high</option>
-              <option value="PRICE_HIGH">Price: high to low</option>
-              <option value="NAME">Name</option>
-            </select>
-          </label>
-        </div>
+        <button type="button" class="mobile-filter-toggle" (click)="filtersOpen = !filtersOpen">
+          <span class="material-symbols-outlined">tune</span> Filters
+        </button>
+
+        <div class="catalogue-layout">
+          <aside class="catalogue-filters" [class.open]="filtersOpen" aria-label="Discovery filters">
+            <div class="filter-heading"><strong>Filter results</strong><button type="button" (click)="clearFilters()">Clear</button></div>
+            <label><span>Category</span><select [(ngModel)]="category"><option *ngFor="let item of categories" [value]="item">{{ formatCategory(item) }}</option></select></label>
+            <label><span>Subcategory</span><input [(ngModel)]="subcategoryFilter" placeholder="e.g. rafting, museum" /></label>
+            <label><span>Distance: {{ radiusKm }} km</span><input type="range" min="5" max="100" step="5" [(ngModel)]="radiusKm" /></label>
+            <div class="range-row">
+              <label><span>Min price</span><input type="number" min="0" [(ngModel)]="minPriceFilter" placeholder="₹0" /></label>
+              <label><span>Max price</span><input type="number" min="0" [(ngModel)]="maxPriceFilter" placeholder="Any" /></label>
+            </div>
+            <label><span>Price information</span><select [(ngModel)]="priceStatusFilter">
+              <option value="ALL">All price statuses</option><option value="FREE">Free entry</option>
+              <option value="VERIFIED">Verified pricing only</option><option value="STARTING_FROM">Starting price</option>
+              <option value="ESTIMATED">Estimated price</option><option value="UNKNOWN">Price not verified</option>
+            </select></label>
+            <label class="check-filter"><input type="checkbox" [(ngModel)]="openNowFilter" /> Open now</label>
+            <label class="check-filter"><input type="checkbox" [(ngModel)]="familyFriendlyFilter" /> Family-friendly</label>
+            <label><span>Difficulty</span><select [(ngModel)]="difficultyFilter"><option value="">Any difficulty</option><option>Easy</option><option>Moderate</option><option>Hard</option></select></label>
+            <label><span>Maximum duration</span><select [(ngModel)]="maxDurationFilter"><option [ngValue]="undefined">Any duration</option><option [ngValue]="60">Up to 1 hour</option><option [ngValue]="180">Up to 3 hours</option><option [ngValue]="480">Up to 8 hours</option></select></label>
+            <label><span>Minimum rating</span><select [(ngModel)]="minRatingFilter"><option [ngValue]="undefined">Any rating</option><option [ngValue]="3">3+</option><option [ngValue]="4">4+</option><option [ngValue]="4.5">4.5+</option></select></label>
+            <button type="button" class="btn primary apply-filter" (click)="discover()">Apply filters</button>
+          </aside>
+
+          <main class="catalogue-main">
+            <label class="sort-filter"><span>Sort by</span><select [(ngModel)]="sortOrder" (ngModelChange)="discover()">
+              <option value="RELEVANCE">Relevance</option><option value="DISTANCE">Distance</option>
+              <option value="PRICE_LOW">Price: low to high</option><option value="PRICE_HIGH">Price: high to low</option>
+              <option value="POPULAR">Most popular</option><option value="VERIFIED">Best verified</option>
+              <option value="RECENTLY_VERIFIED">Recently verified</option>
+            </select></label>
 
         <div *ngIf="filteredPlaces.length === 0" class="empty-state">
           <span class="material-symbols-outlined">sentiment_dissatisfied</span>
@@ -212,6 +234,9 @@ import { TripService } from '../../core/services/trip.service';
 
               <span class="category-badge">{{ formatCategory(place.category) }}</span>
               <span *ngIf="place.activityType" class="activity-type-badge">{{ place.activityType }}</span>
+              <span class="verification-badge" [class.verified]="place.priceStatus === 'VERIFIED' || place.priceStatus === 'FREE'" [class.expired]="place.verificationExpired">
+                {{ place.verificationExpired ? 'May have changed' : priceStatusLabel(place) }}
+              </span>
               <label *ngIf="canSelectPlaces" class="select-box" title="Select place">
                 <input
                   type="checkbox"
@@ -232,6 +257,10 @@ import { TripService } from '../../core/services/trip.service';
               </div>
 
               <div class="meta-row">
+                <span *ngIf="place.city || place.district">
+                  <span class="material-symbols-outlined">location_on</span>
+                  {{ place.city || place.district }}<ng-container *ngIf="place.state">, {{ place.state }}</ng-container>
+                </span>
                 <span>
                   <span class="material-symbols-outlined">near_me</span>
                   {{ place.distanceKm | number:'1.0-1' }} km
@@ -255,6 +284,9 @@ import { TripService } from '../../core/services/trip.service';
               <p *ngIf="place.openingHours" class="opening-hours">
                 <span class="material-symbols-outlined">schedule</span>
                 {{ place.openingHours }}
+              </p>
+              <p *ngIf="place.openNow != null" class="open-status" [class.open]="place.openNow">
+                {{ place.openNow ? 'Open now' : 'Closed now' }}
               </p>
 
               <div class="source-row">
@@ -284,15 +316,16 @@ import { TripService } from '../../core/services/trip.service';
                   Map Route ↗
                 </button>
                 <a
-                  *ngIf="place.website"
+                  *ngIf="place.officialWebsite || place.website"
                   class="text-action"
-                  [href]="place.website"
+                  [href]="place.officialWebsite || place.website"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   <span class="material-symbols-outlined">language</span>
-                  Website
+                  Official details
                 </a>
+                <a *ngIf="place.bookingUrl" class="booking-action" [href]="place.bookingUrl" target="_blank" rel="noopener noreferrer">Book with provider ↗</a>
 
                 <button
                   *ngIf="canSelectPlaces && (activeTripId === 0 || !isAlreadySaved(place))"
@@ -302,6 +335,15 @@ import { TripService } from '../../core/services/trip.service';
                   (click)="addPlace(place)"
                 >
                   {{ activeTripId > 0 ? '+ Add to Trip' : '+ Add' }}
+                </button>
+                <button
+                  *ngIf="canSelectPlaces"
+                  type="button"
+                  class="mini-add itinerary-add"
+                  [disabled]="isSaving"
+                  (click)="addPlaceToItinerary(place)"
+                >
+                  + Itinerary
                 </button>
               </div>
 
@@ -322,6 +364,14 @@ import { TripService } from '../../core/services/trip.service';
               </label>
             </div>
           </article>
+        </div>
+
+        <div *ngIf="(data.totalPages || 0) > 1" class="pagination">
+          <button type="button" [disabled]="(data.page || 0) === 0 || isLoading" (click)="changePage((data.page || 0) - 1)">← Previous</button>
+          <span>Page {{ (data.page || 0) + 1 }} of {{ data.totalPages }}</span>
+          <button type="button" [disabled]="(data.page || 0) + 1 >= (data.totalPages || 0) || isLoading" (click)="changePage((data.page || 0) + 1)">Next →</button>
+        </div>
+          </main>
         </div>
 
         <div
@@ -380,25 +430,51 @@ import { TripService } from '../../core/services/trip.service';
           <button type="button" class="detail-close" aria-label="Close details" (click)="closeDetails()">
             <span class="material-symbols-outlined">close</span>
           </button>
-          <img [src]="getPlaceImage(place)" [alt]="place.name" (error)="handleImageError($event, place)" />
+          <div class="detail-gallery">
+            <img [src]="getPlaceImage(place)" [alt]="place.name" (error)="handleImageError($event, place)" />
+            <img *ngFor="let image of (place.imageGallery || []).slice(1, 4)" [src]="image.url" [alt]="place.name" loading="lazy" />
+          </div>
           <div class="detail-content">
             <span class="eyebrow">{{ formatCategory(place.category) }} · {{ formatItemType(place.itemType) }}</span>
             <h2>{{ place.name }}</h2>
-            <p>{{ place.description || 'Details are not available from the source.' }}</p>
+            <p>{{ place.detailedDescription || place.description || 'Details are not available from the source.' }}</p>
+            <div *ngIf="place.priceOptions?.length" class="price-table">
+              <h3>Price details</h3>
+              <div *ngFor="let option of place.priceOptions">
+                <strong>{{ option.label }}</strong>
+                <span>{{ formatPriceOption(option) }}</span>
+                <small>{{ option.mayHaveChanged ? 'May have changed' : (option.lastVerifiedAt ? 'Verified ' + (option.lastVerifiedAt | date:'mediumDate') : 'Verification date unavailable') }}</small>
+                <a *ngIf="option.sourceUrl" [href]="option.sourceUrl" target="_blank" rel="noopener noreferrer">Source ↗</a>
+              </div>
+            </div>
             <dl>
               <div><dt>Price</dt><dd>{{ formatPlacePrice(place) }}</dd></div>
               <div><dt>Suggested time</dt><dd>{{ formatDuration(place.suggestedVisitMinutes) }}</dd></div>
               <div *ngIf="place.openingHours"><dt>Hours</dt><dd>{{ place.openingHours }}</dd></div>
-              <div *ngIf="place.address"><dt>Address</dt><dd>{{ place.address }}</dd></div>
+              <div *ngIf="place.fullAddress || place.address"><dt>Address</dt><dd>{{ place.fullAddress || place.address }}</dd></div>
               <div *ngIf="place.bestTimeToVisit"><dt>Best time</dt><dd>{{ place.bestTimeToVisit }}</dd></div>
+              <div *ngIf="place.difficultyLevel"><dt>Difficulty</dt><dd>{{ place.difficultyLevel }}</dd></div>
+              <div *ngIf="place.minimumAge != null || place.maximumAge != null"><dt>Age</dt><dd>{{ formatRange(place.minimumAge, place.maximumAge, 'years') }}</dd></div>
+              <div *ngIf="place.minimumWeight != null || place.maximumWeight != null"><dt>Weight</dt><dd>{{ formatRange(place.minimumWeight, place.maximumWeight, 'kg') }}</dd></div>
               <div *ngIf="place.safetyInformation"><dt>Safety</dt><dd>{{ place.safetyInformation }}</dd></div>
+              <div *ngIf="place.accessibilityInformation"><dt>Accessibility</dt><dd>{{ place.accessibilityInformation }}</dd></div>
+              <div *ngIf="place.contactPhone"><dt>Contact</dt><dd><a [href]="'tel:' + place.contactPhone">{{ place.contactPhone }}</a></dd></div>
+              <div *ngIf="place.cancellationInformation"><dt>Cancellation</dt><dd>{{ place.cancellationInformation }}</dd></div>
               <div><dt>Source</dt><dd>{{ place.sourceName || result?.provider }}</dd></div>
               <div *ngIf="place.sourceLastCheckedAt"><dt>Last checked</dt><dd>{{ place.sourceLastCheckedAt | date:'medium' }}</dd></div>
               <div *ngIf="place.imageAttribution"><dt>Image credit</dt><dd>{{ place.imageAttribution }}{{ place.imageLicense ? ' · ' + place.imageLicense : '' }}</dd></div>
             </dl>
+            <div class="detail-lists" *ngIf="place.inclusions?.length || place.exclusions?.length || place.thingsToCarry?.length">
+              <section *ngIf="place.inclusions?.length"><h3>Inclusions</h3><ul><li *ngFor="let item of place.inclusions">{{ item }}</li></ul></section>
+              <section *ngIf="place.exclusions?.length"><h3>Exclusions</h3><ul><li *ngFor="let item of place.exclusions">{{ item }}</li></ul></section>
+              <section *ngIf="place.thingsToCarry?.length"><h3>Things to carry</h3><ul><li *ngFor="let item of place.thingsToCarry">{{ item }}</li></ul></section>
+            </div>
             <div class="detail-actions">
               <a *ngIf="place.sourceUrl" class="btn secondary" [href]="place.sourceUrl" target="_blank" rel="noopener noreferrer">View source ↗</a>
+              <a *ngIf="place.bookingUrl" class="btn secondary" [href]="place.bookingUrl" target="_blank" rel="noopener noreferrer">Book with provider ↗</a>
               <button type="button" class="btn primary" (click)="openMapRoute(place)">Open map route ↗</button>
+              <button *ngIf="canSelectPlaces && !isAlreadySaved(place)" type="button" class="btn primary" (click)="addPlace(place)">Add to Trip</button>
+              <button *ngIf="canSelectPlaces" type="button" class="btn primary" (click)="addPlaceToItinerary(place)">Add to Itinerary</button>
             </div>
           </div>
         </article>
@@ -423,11 +499,24 @@ import { TripService } from '../../core/services/trip.service';
     .use-trip-link:hover { text-decoration:underline; }
     .field input,.field select { min-width:0; padding:.68rem .72rem; border:1px solid #cbd5e1; border-radius:9px; color:#0f172a; background:#fff; font:inherit; font-weight:600; }
     .field input:focus,.field select:focus { outline:2px solid #bfdbfe; border-color:#2563eb; }
+    .destination-field { position:relative; }
+    .destination-input-row { display:flex; gap:.35rem; }
+    .destination-input-row input { flex:1; }
+    .location-button { display:grid; place-items:center; width:42px; border:1px solid #bfdbfe; border-radius:9px; color:#2563eb; background:#eff6ff; cursor:pointer; }
+    .suggestions { position:absolute; top:100%; left:0; right:0; z-index:60; overflow:hidden; margin-top:.25rem; border:1px solid #cbd5e1; border-radius:9px; background:#fff; box-shadow:0 14px 30px rgba(15,23,42,.16); }
+    .suggestions button { display:flex; width:100%; gap:.45rem; padding:.6rem; border:0; border-bottom:1px solid #f1f5f9; background:#fff; text-align:left; cursor:pointer; }
+    .suggestions button:hover { background:#eff6ff; }
+    .suggestions span:last-child { display:flex; flex-direction:column; }
+    .suggestions small { color:#64748b; font-size:.58rem; }
     .btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; padding:.68rem .85rem; border:0; border-radius:9px; font-weight:850; cursor:pointer; }
     .btn.primary { color:#fff; background:#2563eb; }
     .btn.secondary { color:#334155; background:#e2e8f0; }
     .btn:disabled { opacity:.55; cursor:not-allowed; }
     .search-btn { min-height:41px; white-space:nowrap; }
+    .type-tabs { display:flex; gap:.4rem; overflow-x:auto; padding:.35rem 0 .9rem; scrollbar-width:thin; }
+    .type-tabs button { display:inline-flex; align-items:center; gap:.28rem; flex:0 0 auto; padding:.48rem .7rem; border:1px solid #cbd5e1; border-radius:999px; color:#475569; background:#fff; font-size:.68rem; font-weight:800; cursor:pointer; }
+    .type-tabs button.active { color:#fff; border-color:#2563eb; background:#2563eb; }
+    .type-tabs .material-symbols-outlined { font-size:.9rem; }
 
     .casual-search-note,.browse-only-banner { display:flex; align-items:flex-start; gap:.55rem; padding:.75rem .9rem; margin-bottom:.7rem; border:1px solid #dbeafe; border-radius:10px; color:#1e3a8a; background:#eff6ff; font-size:.73rem; }
     .casual-search-note div,.browse-only-banner div { display:flex; flex-direction:column; gap:.12rem; }
@@ -455,9 +544,21 @@ import { TripService } from '../../core/services/trip.service';
     .local-filter { display:flex; align-items:center; gap:.4rem; min-width:260px; padding:.55rem .65rem; border:1px solid #cbd5e1; border-radius:9px; background:#fff; }
     .local-filter .material-symbols-outlined { color:#94a3b8; font-size:1rem; }
     .local-filter input { width:100%; border:0; outline:0; font:inherit; }
-    .catalogue-filters { display:flex; flex-wrap:wrap; gap:.6rem; margin-bottom:.85rem; padding:.7rem; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; }
-    .catalogue-filters label { display:flex; align-items:center; gap:.4rem; color:#64748b; font-size:.67rem; font-weight:750; }
-    .catalogue-filters select { padding:.4rem .5rem; border:1px solid #cbd5e1; border-radius:7px; color:#334155; background:#fff; font-size:.67rem; }
+    .catalogue-layout { display:grid; grid-template-columns:220px minmax(0,1fr); gap:.85rem; }
+    .catalogue-filters { display:flex; flex-direction:column; gap:.65rem; align-self:start; padding:.8rem; border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; }
+    .filter-heading { display:flex; align-items:center; justify-content:space-between; }
+    .filter-heading button { padding:0; border:0; color:#2563eb; background:transparent; font-size:.65rem; font-weight:800; cursor:pointer; }
+    .catalogue-filters label { display:flex; flex-direction:column; gap:.25rem; color:#64748b; font-size:.65rem; font-weight:750; }
+    .catalogue-filters select,.catalogue-filters input { min-width:0; padding:.45rem .5rem; border:1px solid #cbd5e1; border-radius:7px; color:#334155; background:#fff; font-size:.67rem; }
+    .catalogue-filters input[type=range] { padding:0; }
+    .catalogue-filters .check-filter { flex-direction:row; align-items:center; }
+    .catalogue-filters .check-filter input { width:auto; }
+    .range-row { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; }
+    .apply-filter { width:100%; }
+    .catalogue-main { min-width:0; }
+    .sort-filter { display:flex; justify-content:flex-end; align-items:center; gap:.4rem; margin-bottom:.65rem; color:#64748b; font-size:.67rem; }
+    .sort-filter select { padding:.42rem .5rem; border:1px solid #cbd5e1; border-radius:7px; background:#fff; }
+    .mobile-filter-toggle { display:none; }
 
     .places-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.85rem; padding-bottom:90px; }
     .place-card { overflow:hidden; border:1px solid #e2e8f0; border-radius:14px; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,.04); transition:.18s ease; }
@@ -470,6 +571,9 @@ import { TripService } from '../../core/services/trip.service';
     .image-fallback .material-symbols-outlined { font-size:2.4rem; }
     .category-badge { position:absolute; left:.65rem; bottom:.6rem; padding:.25rem .48rem; border-radius:999px; color:#fff; background:rgba(15,23,42,.78); backdrop-filter:blur(5px); font-size:.6rem; font-weight:850; }
     .activity-type-badge { position:absolute; left:.65rem; top:.6rem; padding:.25rem .48rem; border-radius:999px; color:#fff; background:rgba(37,99,235,.9); backdrop-filter:blur(5px); font-size:.6rem; font-weight:850; }
+    .verification-badge { position:absolute; right:.6rem; bottom:.6rem; padding:.24rem .42rem; border-radius:999px; color:#334155; background:rgba(255,255,255,.92); font-size:.56rem; font-weight:850; }
+    .verification-badge.verified { color:#166534; background:#dcfce7; }
+    .verification-badge.expired { color:#92400e; background:#fef3c7; }
     .select-box { position:absolute; top:.6rem; right:.6rem; display:grid; place-items:center; width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,.92); box-shadow:0 2px 8px rgba(15,23,42,.15); cursor:pointer; }
     .select-box input { width:17px; height:17px; accent-color:#2563eb; }
     .place-body { padding:.9rem; }
@@ -485,10 +589,13 @@ import { TripService } from '../../core/services/trip.service';
     .description { min-height:42px; margin:.45rem 0; color:#475569; font-size:.72rem; line-height:1.45; }
     .opening-hours { display:flex; gap:.3rem; align-items:flex-start; color:#64748b; font-size:.66rem; }
     .opening-hours .material-symbols-outlined { font-size:.8rem; color:#2563eb; }
+    .open-status { margin:.3rem 0; color:#b91c1c; font-size:.64rem; font-weight:850; }
+    .open-status.open { color:#15803d; }
     .source-row { display:flex; flex-direction:column; gap:.12rem; margin-top:.45rem; color:#64748b; font-size:.58rem; }
     .card-actions { display:flex; align-items:center; gap:.55rem; margin-top:.7rem; padding-top:.65rem; border-top:1px solid #f1f5f9; }
     .text-action { display:inline-flex; align-items:center; gap:.2rem; color:#2563eb; text-decoration:none; font-size:.67rem; font-weight:800; }
     .text-action .material-symbols-outlined { font-size:.85rem; }
+    .booking-action { color:#7c3aed; text-decoration:none; font-size:.64rem; font-weight:850; }
     .btn-map-route { display:inline-flex; align-items:center; gap:.25rem; border:1px solid #93c5fd; background:#eff6ff; color:#1d4ed8; padding:.32rem .55rem; border-radius:7px; font-size:.67rem; font-weight:800; cursor:pointer; transition:all 150ms ease; }
     .btn-map-route:hover { background:#dbeafe; border-color:#3b82f6; color:#1e40af; }
     .btn-map-route .material-symbols-outlined { font-size:.85rem; }
@@ -512,10 +619,14 @@ import { TripService } from '../../core/services/trip.service';
     .selection-trip-picker { display:flex; flex-direction:column; gap:.25rem; min-width:165px; color:#475569; font-size:.65rem; font-weight:800; }
     .selection-trip-picker select { padding:.48rem .55rem; border:1px solid #cbd5e1; border-radius:7px; color:#0f172a; background:#fff; font-size:.7rem; font-weight:700; }
     .bulk-actions { display:flex; gap:.45rem; }
+    .pagination { display:flex; justify-content:center; align-items:center; gap:.7rem; margin:1rem 0 6rem; color:#64748b; font-size:.7rem; }
+    .pagination button { padding:.45rem .65rem; border:1px solid #cbd5e1; border-radius:7px; color:#2563eb; background:#fff; cursor:pointer; }
+    .pagination button:disabled { opacity:.45; cursor:not-allowed; }
 
     .detail-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:1rem; background:rgba(15,23,42,.62); }
     .detail-dialog { position:relative; overflow:hidden; width:min(760px,100%); max-height:90vh; overflow-y:auto; border-radius:16px; background:#fff; box-shadow:0 24px 70px rgba(15,23,42,.3); }
-    .detail-dialog > img { width:100%; height:260px; object-fit:cover; background:#f1f5f9; }
+    .detail-gallery { display:grid; grid-template-columns:2fr 1fr 1fr; gap:3px; height:260px; background:#f1f5f9; }
+    .detail-gallery img { width:100%; height:100%; object-fit:cover; min-width:0; }
     .detail-content { padding:1.2rem; }
     .detail-content h2 { margin:.25rem 0 .5rem; }
     .detail-content > p { color:#475569; line-height:1.55; }
@@ -523,11 +634,20 @@ import { TripService } from '../../core/services/trip.service';
     .detail-content dl div { padding:.65rem; border-radius:8px; background:#f8fafc; }
     .detail-content dt { color:#64748b; font-size:.62rem; font-weight:800; text-transform:uppercase; }
     .detail-content dd { margin:.2rem 0 0; color:#0f172a; font-size:.75rem; }
+    .price-table { margin:1rem 0; padding:.8rem; border:1px solid #dbeafe; border-radius:10px; }
+    .price-table h3,.detail-lists h3 { margin:0 0 .5rem; font-size:.8rem; }
+    .price-table > div { display:grid; grid-template-columns:1fr auto; gap:.12rem .6rem; padding:.45rem 0; border-bottom:1px solid #f1f5f9; font-size:.7rem; }
+    .price-table small { color:#64748b; }
+    .price-table a { color:#2563eb; text-decoration:none; text-align:right; }
+    .detail-lists { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; margin:1rem 0; }
+    .detail-lists section { padding:.7rem; border-radius:9px; background:#f8fafc; }
+    .detail-lists ul { margin:0; padding-left:1rem; color:#475569; font-size:.7rem; }
     .detail-close { position:absolute; top:.7rem; right:.7rem; z-index:1; display:grid; place-items:center; width:34px; height:34px; border:0; border-radius:50%; color:#0f172a; background:rgba(255,255,255,.92); cursor:pointer; }
     .detail-actions { display:flex; justify-content:flex-end; gap:.5rem; }
 
     @media(max-width:1080px){
       .places-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .catalogue-layout { grid-template-columns:190px minmax(0,1fr); }
       .search-panel,.search-panel:has(.trip-field) { grid-template-columns:1fr 1fr; }
       .search-btn { grid-column:1/-1; }
       .selection-bar { flex-wrap:wrap; }
@@ -543,12 +663,18 @@ import { TripService } from '../../core/services/trip.service';
       .selection-bar { position:static; margin-top:0; }
       .selection-bar,.plan-buttons,.bulk-actions { align-items:stretch; flex-direction:column; }
       .bulk-actions .btn { width:100%; }
-      .detail-dialog > img { height:190px; }
+      .catalogue-layout { display:block; }
+      .mobile-filter-toggle { display:inline-flex; align-items:center; gap:.3rem; margin-bottom:.6rem; padding:.5rem .7rem; border:1px solid #cbd5e1; border-radius:8px; background:#fff; }
+      .catalogue-filters { display:none; margin-bottom:.7rem; }
+      .catalogue-filters.open { display:flex; }
+      .detail-gallery { height:190px; grid-template-columns:1fr; }
+      .detail-gallery img:not(:first-child) { display:none; }
       .detail-content dl { grid-template-columns:1fr; }
+      .detail-lists { grid-template-columns:1fr; }
     }
   `]
 })
-export class DestinationDiscoveryComponent implements OnInit {
+export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   private readonly discoveryService = inject(DiscoveryService);
   private readonly placeService = inject(PlaceService);
   private readonly itineraryService = inject(ItineraryService);
@@ -575,7 +701,19 @@ export class DestinationDiscoveryComponent implements OnInit {
   filterText = '';
   itemTypeFilter: DiscoveryItemType | 'ALL' = 'ALL';
   priceStatusFilter: DiscoveryPriceStatus | 'ALL' = 'ALL';
-  sortOrder: NonNullable<DiscoverySearchFilters['sort']> = 'DISTANCE';
+  sortOrder: NonNullable<DiscoverySearchFilters['sort']> = 'RELEVANCE';
+  subcategoryFilter = '';
+  minPriceFilter?: number;
+  maxPriceFilter?: number;
+  openNowFilter = false;
+  familyFriendlyFilter = false;
+  difficultyFilter = '';
+  maxDurationFilter?: number;
+  minRatingFilter?: number;
+  filtersOpen = false;
+  suggestions: DiscoverySuggestion[] = [];
+  isLocating = false;
+  private suggestionTimer?: number;
 
   result: DestinationDiscoveryResponse | null = null;
   selectedDetail: DiscoveredPlace | null = null;
@@ -594,6 +732,7 @@ export class DestinationDiscoveryComponent implements OnInit {
     'NATURE',
     'WATERFALL',
     'LAKE',
+    'RIVER',
     'BEACH',
     'VIEWPOINT',
     'TEMPLE',
@@ -603,11 +742,26 @@ export class DestinationDiscoveryComponent implements OnInit {
     'WILDLIFE',
     'ADVENTURE',
     'ENTERTAINMENT',
+    'FAMILY',
+    'CULTURAL',
+    'NIGHTLIFE',
+    'WELLNESS',
+    'TRANSPORT',
     'SHOPPING',
     'FOOD',
     'STAY',
     'EVENT',
     'HISTORICAL'
+  ];
+
+  readonly itemTypeTabs: Array<{ value: DiscoveryItemType | 'ALL'; label: string; icon: string }> = [
+    { value: 'ALL', label: 'All', icon: 'explore' },
+    { value: 'PLACE', label: 'Places', icon: 'attractions' },
+    { value: 'ACTIVITY', label: 'Activities', icon: 'hiking' },
+    { value: 'FOOD', label: 'Food', icon: 'restaurant' },
+    { value: 'STAY', label: 'Stays', icon: 'hotel' },
+    { value: 'EVENT', label: 'Events', icon: 'event' },
+    { value: 'TOUR_SERVICE', label: 'Tour essentials', icon: 'local_taxi' }
   ];
 
   get embeddedMode(): boolean {
@@ -688,6 +842,78 @@ export class DestinationDiscoveryComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.suggestionTimer) window.clearTimeout(this.suggestionTimer);
+  }
+
+  onDestinationInput(): void {
+    if (this.suggestionTimer) window.clearTimeout(this.suggestionTimer);
+    const query = this.searchDestination.trim();
+    if (query.length < 2) {
+      this.suggestions = [];
+      return;
+    }
+    this.suggestionTimer = window.setTimeout(() => {
+      this.discoveryService.getSuggestions(query).subscribe({
+        next: (suggestions) => this.suggestions = suggestions,
+        error: () => this.suggestions = []
+      });
+    }, 300);
+  }
+
+  selectSuggestion(suggestion: DiscoverySuggestion): void {
+    this.searchDestination = suggestion.label;
+    this.suggestions = [];
+    this.discover();
+  }
+
+  useCurrentLocation(): void {
+    if (!navigator.geolocation) {
+      this.errorMessage = 'Current location is not supported by this browser.';
+      return;
+    }
+    this.isLocating = true;
+    navigator.geolocation.getCurrentPosition(
+      (position) => this.discoveryService.reverseGeocode(position.coords.latitude, position.coords.longitude).subscribe({
+        next: (location) => {
+          this.isLocating = false;
+          this.searchDestination = location.label;
+          this.discover();
+        },
+        error: () => {
+          this.isLocating = false;
+          this.errorMessage = 'TripMate could not resolve this location inside India.';
+        }
+      }),
+      () => {
+        this.isLocating = false;
+        this.errorMessage = 'Location permission was not granted.';
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+    );
+  }
+
+  selectItemType(value: DiscoveryItemType | 'ALL'): void {
+    this.itemTypeFilter = value;
+    if (this.searchDestination.trim().length >= 2) this.discover();
+  }
+
+  clearFilters(): void {
+    this.category = 'ALL';
+    this.subcategoryFilter = '';
+    this.radiusKm = 25;
+    this.minPriceFilter = undefined;
+    this.maxPriceFilter = undefined;
+    this.priceStatusFilter = 'ALL';
+    this.openNowFilter = false;
+    this.familyFriendlyFilter = false;
+    this.difficultyFilter = '';
+    this.maxDurationFilter = undefined;
+    this.minRatingFilter = undefined;
+    this.sortOrder = 'RELEVANCE';
+    if (this.searchDestination.trim().length >= 2) this.discover();
+  }
+
   loadTrips(): void {
     this.tripService.getMyTrips().subscribe({
       next: (trips) => {
@@ -734,22 +960,33 @@ export class DestinationDiscoveryComponent implements OnInit {
     this.discover();
   }
 
-  discover(): void {
+  discover(page = 0): void {
     const destination = this.searchDestination.trim();
     if (destination.length < 2) return;
 
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
-    this.selectedIds.clear();
-    this.dayAssignments = {};
+    this.suggestions = [];
+    if (page === 0) {
+      this.selectedIds.clear();
+      this.dayAssignments = {};
+    }
 
     this.discoveryService.discoverPlaces(destination, this.radiusKm, this.category, {
       itemType: this.itemTypeFilter,
+      subcategory: this.subcategoryFilter || undefined,
+      minPrice: this.minPriceFilter,
+      maxPrice: this.maxPriceFilter,
       priceStatus: this.priceStatusFilter,
+      openNow: this.openNowFilter,
+      familyFriendly: this.familyFriendlyFilter,
+      difficulty: this.difficultyFilter || undefined,
+      maxDuration: this.maxDurationFilter,
+      minRating: this.minRatingFilter,
       sort: this.sortOrder,
-      page: 0,
-      size: 60
+      page,
+      size: 24
     }).subscribe({
       next: (response) => {
         this.result = response;
@@ -761,6 +998,11 @@ export class DestinationDiscoveryComponent implements OnInit {
         this.errorMessage = err?.error?.message || err?.error?.detail || 'Please try again.';
       }
     });
+  }
+
+  changePage(page: number): void {
+    this.discover(Math.max(0, page));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async loadSavedPlaces(): Promise<void> {
@@ -862,6 +1104,25 @@ export class DestinationDiscoveryComponent implements OnInit {
 
   async saveSingle(place: DiscoveredPlace): Promise<void> {
     await this.addPlace(place);
+  }
+
+  async addPlaceToItinerary(place: DiscoveredPlace): Promise<void> {
+    this.selectedIds.add(place.externalId);
+    this.dayAssignments[place.externalId] = this.dayAssignments[place.externalId] || 1;
+
+    if (this.activeTripId <= 0) {
+      this.successMessage = 'Place selected. Choose an editable trip, then select Save & Add to Itinerary.';
+      this.errorMessage = '';
+      return;
+    }
+
+    if (!this.effectiveCanEdit) {
+      this.errorMessage = 'Viewer access is read-only. Choose a trip where you are an Owner or Editor.';
+      return;
+    }
+
+    await this.saveSelected(true);
+    this.selectedDetail = null;
   }
 
   async saveSelected(addToItinerary: boolean): Promise<void> {
@@ -1055,7 +1316,7 @@ export class DestinationDiscoveryComponent implements OnInit {
       return 'Entry: Free';
     }
     if (cost == null || place.priceStatus === 'UNKNOWN' || !place.priceStatus) {
-      return 'Price not verified';
+      return 'Price not verified — check official website';
     }
 
     const formattedCost = cost.toLocaleString('en-IN');
@@ -1066,6 +1327,29 @@ export class DestinationDiscoveryComponent implements OnInit {
         : 'Price';
     const unit = this.priceUnit(place.priceType);
     return `${prefix}: ₹${formattedCost}${unit}`;
+  }
+
+  formatPriceOption(option: DiscoveryPriceOption): string {
+    const amount = option.amount.toLocaleString('en-IN');
+    const maximum = option.maximumAmount != null ? `–₹${option.maximumAmount.toLocaleString('en-IN')}` : '';
+    const prefix = option.status === 'STARTING_FROM' ? 'From ' : option.status === 'ESTIMATED' ? 'Estimated ' : '';
+    return `${prefix}₹${amount}${maximum}${this.priceUnit(option.priceType)}`;
+  }
+
+  formatRange(minimum: number | undefined, maximum: number | undefined, unit: string): string {
+    if (minimum != null && maximum != null) return `${minimum}–${maximum} ${unit}`;
+    if (minimum != null) return `Minimum ${minimum} ${unit}`;
+    return `Maximum ${maximum} ${unit}`;
+  }
+
+  priceStatusLabel(place: DiscoveredPlace): string {
+    switch (place.priceStatus) {
+      case 'VERIFIED': return 'Verified';
+      case 'FREE': return 'Free confirmed';
+      case 'STARTING_FROM': return 'Starting from';
+      case 'ESTIMATED': return 'Estimated';
+      default: return 'Price unverified';
+    }
   }
 
   private priceUnit(priceType: DiscoveredPlace['priceType']): string {
@@ -1089,6 +1373,10 @@ export class DestinationDiscoveryComponent implements OnInit {
 
   openDetails(place: DiscoveredPlace): void {
     this.selectedDetail = place;
+    this.discoveryService.getPlace(place.externalId).subscribe({
+      next: (detail) => this.selectedDetail = detail,
+      error: () => { /* Search-card data remains available if the detail cache expired. */ }
+    });
   }
 
   closeDetails(): void {
@@ -1099,6 +1387,7 @@ export class DestinationDiscoveryComponent implements OnInit {
     switch (category) {
       case 'WATERFALL': return 'water';
       case 'LAKE': return 'waves';
+      case 'RIVER': return 'water';
       case 'BEACH': return 'beach_access';
       case 'VIEWPOINT': return 'landscape';
       case 'TEMPLE': return 'temple_hindu';
@@ -1109,6 +1398,11 @@ export class DestinationDiscoveryComponent implements OnInit {
       case 'NATURE': return 'forest';
       case 'ADVENTURE': return 'hiking';
       case 'ENTERTAINMENT': return 'attractions';
+      case 'FAMILY': return 'family_restroom';
+      case 'CULTURAL': return 'theater_comedy';
+      case 'NIGHTLIFE': return 'nightlife';
+      case 'WELLNESS': return 'spa';
+      case 'TRANSPORT': return 'local_taxi';
       case 'SHOPPING': return 'shopping_bag';
       case 'FOOD': return 'restaurant';
       case 'STAY': return 'hotel';
@@ -1119,8 +1413,9 @@ export class DestinationDiscoveryComponent implements OnInit {
   }
 
   getPlaceImage(place: DiscoveredPlace): string {
-    if (place.imageUrl && place.imageExact !== false && place.imageUrl.startsWith('http')) {
-      return place.imageUrl;
+    const image = place.primaryImageUrl || place.imageUrl;
+    if (image && place.imageExact !== false && image.startsWith('http')) {
+      return image;
     }
     return '/place-placeholder.svg';
   }
