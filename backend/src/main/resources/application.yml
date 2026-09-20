@@ -53,7 +53,16 @@ discovery:
   connect-timeout-ms: ${DISCOVERY_CONNECT_TIMEOUT_MS:8000}
   read-timeout-ms: ${DISCOVERY_READ_TIMEOUT_MS:35000}
   cache-minutes: ${DISCOVERY_CACHE_MINUTES:60}
+  static-cache-hours: ${DISCOVERY_STATIC_CACHE_HOURS:6}
+  price-cache-minutes: ${DISCOVERY_PRICE_CACHE_MINUTES:60}
+  geocode-cache-hours: ${DISCOVERY_GEOCODE_CACHE_HOURS:24}
+  price-verification-days: ${DISCOVERY_PRICE_VERIFICATION_DAYS:30}
   max-results: ${DISCOVERY_MAX_RESULTS:200}
+  wikipedia-url: ${DISCOVERY_WIKIPEDIA_URL:https://en.wikipedia.org}
+  wikidata-url: ${DISCOVERY_WIKIDATA_URL:https://www.wikidata.org}
+  geoapify:
+    url: ${DISCOVERY_GEOAPIFY_URL:https://api.geoapify.com}
+    api-key: ${DISCOVERY_GEOAPIFY_API_KEY:}
 
 server:
   port: ${PORT:${SERVER_PORT:8080}}

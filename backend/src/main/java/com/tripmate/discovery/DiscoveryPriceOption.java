@@ -10,6 +10,21 @@ public record DiscoveryPriceOption(
         PriceType priceType,
         String currency,
         String sourceUrl,
-        Instant lastVerifiedAt
+        Instant lastVerifiedAt,
+        PriceStatus status,
+        Instant expiresAt,
+        boolean mayHaveChanged
 ) {
+    public DiscoveryPriceOption(
+            String label,
+            BigDecimal amount,
+            BigDecimal maximumAmount,
+            PriceType priceType,
+            String currency,
+            String sourceUrl,
+            Instant lastVerifiedAt
+    ) {
+        this(label, amount, maximumAmount, priceType, currency, sourceUrl, lastVerifiedAt,
+                PriceStatus.ESTIMATED, null, false);
+    }
 }
