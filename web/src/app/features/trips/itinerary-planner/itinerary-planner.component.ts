@@ -212,11 +212,11 @@ interface DayRoutePlan {
                 Add mapped places to Day {{ plan.day.dayNumber }} to generate its route.
               </div>
 
-              <a *ngIf="plan.legs.length" class="google-route-link" [href]="plan.googleMapsUrl" target="_blank" rel="noopener noreferrer">
+              <button *ngIf="plan.legs.length" type="button" class="google-route-link" (click)="openGoogleMapsRoute(plan)">
                 <span class="material-symbols-outlined">map</span>
                 Open complete Day {{ plan.day.dayNumber }} route in Google Maps
                 <span class="material-symbols-outlined">open_in_new</span>
-              </a>
+              </button>
             </article>
           </div>
         </section>
@@ -560,7 +560,7 @@ interface DayRoutePlan {
     .map-note { position:relative; z-index:1; display:flex; align-items:center; justify-content:flex-end; gap:.25rem; padding:.35rem .15rem 0; color:#475569; font-size:.58rem; text-align:right; }
     .map-note .material-symbols-outlined { font-size:.78rem; }
     .day-route-empty { margin:.75rem; padding:1rem; border:1px dashed #cbd5e1; border-radius:10px; color:#64748b; background:#f8fafc; font-size:.72rem; text-align:center; }
-    .google-route-link { display:flex; align-items:center; justify-content:center; gap:.35rem; margin:.1rem .75rem .75rem; padding:.58rem .7rem; border:1px solid #bbf7d0; border-radius:9px; color:#166534; background:#f0fdf4; font-size:.68rem; font-weight:850; text-decoration:none; }
+    .google-route-link { display:flex; width:calc(100% - 1.5rem); align-items:center; justify-content:center; gap:.35rem; margin:.1rem .75rem .75rem; padding:.58rem .7rem; border:1px solid #bbf7d0; border-radius:9px; color:#166534; background:#f0fdf4; font:inherit; font-size:.68rem; font-weight:850; text-decoration:none; cursor:pointer; }
     .google-route-link:hover { border-color:#4ade80; background:#dcfce7; }
     .google-route-link .material-symbols-outlined { font-size:.95rem; }
     .state-card,.empty-card { display:flex; align-items:center; justify-content:center; gap:.75rem; min-height:180px; padding:1.2rem; border:1px solid #e2e8f0; border-radius:14px; background:#fff; text-align:center; }
@@ -1142,6 +1142,24 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
         this.routeMessage = err?.error?.message || 'Unable to optimize the routes.';
       }
     });
+  }
+
+  openGoogleMapsRoute(plan: DayRoutePlan): void {
+    if (!plan.googleMapsUrl) {
+      this.routeMessageIsError = true;
+      this.routeMessage = `Unable to create the Day ${plan.day.dayNumber} map link. Check that the stay and places have valid locations.`;
+      return;
+    }
+
+    const mapWindow = window.open(plan.googleMapsUrl, '_blank');
+    if (mapWindow) {
+      mapWindow.opener = null;
+      mapWindow.focus();
+      return;
+    }
+
+    // Browsers can block a new tab; keep the button working by opening in this tab.
+    window.location.assign(plan.googleMapsUrl);
   }
 
   formatTravelTime(totalMinutes: number): string {
