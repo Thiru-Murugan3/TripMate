@@ -16,6 +16,8 @@ interface DisplayTrip {
   status: string;
   statusClass: string;
   dates: string;
+  countdown: string;
+  countdownClass: string;
   spent: string;
   limit: string;
   progress: number;
@@ -106,6 +108,10 @@ interface PopularDestination {
               <div class="trip-card-content">
                 <h3 class="trip-name">{{ trip.name }}</h3>
                 <p class="trip-date">{{ trip.dates }}</p>
+                <div class="trip-countdown" [ngClass]="trip.countdownClass">
+                  <span class="material-symbols-outlined">event_upcoming</span>
+                  <span>{{ trip.countdown }}</span>
+                </div>
 
                 <div class="budget-progress-block">
                   <div class="progress-header">
@@ -602,7 +608,43 @@ interface PopularDestination {
     .trip-date {
       font-size: 0.775rem;
       color: #64748b;
+      margin-bottom: 0.65rem;
+    }
+
+    .trip-countdown {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       margin-bottom: 1rem;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid #bfdbfe;
+      border-radius: 9px;
+      color: #1d4ed8;
+      background: #eff6ff;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .trip-countdown .material-symbols-outlined {
+      font-size: 1rem;
+    }
+
+    .trip-countdown.starts-soon {
+      border-color: #fde68a;
+      color: #b45309;
+      background: #fffbeb;
+    }
+
+    .trip-countdown.starts-today {
+      border-color: #86efac;
+      color: #15803d;
+      background: #f0fdf4;
+    }
+
+    .trip-countdown.in-progress {
+      border-color: #c4b5fd;
+      color: #6d28d9;
+      background: #f5f3ff;
     }
 
     .budget-progress-block {
@@ -959,10 +1001,31 @@ export class DashboardComponent implements OnInit {
             ? 'status-planning'
             : 'status-confirmed',
       dates: `${trip.startDate} - ${trip.endDate}`,
+      ...this.tripCountdown(trip.startDate),
       spent: '₹0',
       limit: `₹${trip.budget.toLocaleString()}`,
       progress: 0,
       image: this.getTripImage(trip)
+    };
+  }
+
+  private tripCountdown(startDate: string): Pick<DisplayTrip, 'countdown' | 'countdownClass'> {
+    const parts = startDate.split('-').map(Number);
+    if (parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) {
+      return { countdown: 'Start date unavailable', countdownClass: '' };
+    }
+
+    const now = new Date();
+    const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const startUtc = Date.UTC(parts[0], parts[1] - 1, parts[2]);
+    const days = Math.round((startUtc - todayUtc) / 86_400_000);
+
+    if (days < 0) return { countdown: 'Trip is in progress', countdownClass: 'in-progress' };
+    if (days === 0) return { countdown: 'Trip starts today', countdownClass: 'starts-today' };
+    if (days === 1) return { countdown: 'Trip starts tomorrow', countdownClass: 'starts-soon' };
+    return {
+      countdown: `Trip starts in ${days} days`,
+      countdownClass: days <= 7 ? 'starts-soon' : ''
     };
   }
 
