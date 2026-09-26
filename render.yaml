@@ -9,7 +9,7 @@ services:
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/v1/health
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     envVars:
       - key: DB_URL
         sync: false
@@ -65,7 +65,7 @@ services:
     rootDir: web
     buildCommand: npm ci && npm run build:render
     staticPublishPath: ./dist/tripmate-web/browser
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     routes:
       - type: rewrite
         source: /*
