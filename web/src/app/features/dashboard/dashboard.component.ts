@@ -5,6 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TripService } from '../../core/services/trip.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Trip, TripType, CreateTripRequest } from '../../core/models/trip.model';
+import { findMissedTrip } from '../../core/utils/missed-trip.util';
+import { MissedTripDialogComponent } from '../../shared/components/missed-trip-dialog/missed-trip-dialog.component';
 
 interface DisplayTrip {
   id?: number;
@@ -31,9 +33,18 @@ interface PopularDestination {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, MissedTripDialogComponent],
   template: `
     <div class="home-page">
+      <app-missed-trip-dialog
+        *ngIf="missedTrip"
+        [trip]="missedTrip"
+        [busy]="cancellingMissedTrip"
+        [errorMessage]="missedTripError"
+        (cancelTrip)="cancelMissedTrip()"
+        (reschedule)="rescheduleMissedTrip()"
+        (dismiss)="dismissMissedTrip()"
+      ></app-missed-trip-dialog>
       <!-- Hero Section -->
       <section class="hero-section">
         <div class="hero-bg" style="background-image: url('assets/images/hero.jpg');"></div>
@@ -817,6 +828,9 @@ export class DashboardComponent implements OnInit {
   modalError = '';
 
   upcomingTrips: DisplayTrip[] = [];
+  missedTrip: Trip | null = null;
+  missedTripError = '';
+  cancellingMissedTrip = false;
 
   popularDestinations: PopularDestination[] = [
     {
@@ -871,6 +885,7 @@ export class DashboardComponent implements OnInit {
   loadUserTrips(): void {
     this.tripService.getMyTrips().subscribe({
       next: (apiTrips) => {
+        this.missedTrip = findMissedTrip(apiTrips ?? []);
         const activeTrips = (apiTrips ?? [])
           .filter((trip) => this.isActiveUpcomingTrip(trip))
           .sort(
@@ -882,6 +897,35 @@ export class DashboardComponent implements OnInit {
       },
       error: () => {
         this.upcomingTrips = [];
+      }
+    });
+  }
+
+  dismissMissedTrip(): void {
+    this.missedTrip = null;
+    this.missedTripError = '';
+  }
+
+  rescheduleMissedTrip(): void {
+    if (!this.missedTrip) return;
+    void this.router.navigate(['/trips', this.missedTrip.id], { queryParams: { reschedule: 1 } });
+  }
+
+  cancelMissedTrip(): void {
+    const trip = this.missedTrip;
+    if (!trip) return;
+
+    this.cancellingMissedTrip = true;
+    this.missedTripError = '';
+    this.tripService.updateTrip(trip.id, { ...trip, status: 'CANCELLED' }).subscribe({
+      next: () => {
+        this.cancellingMissedTrip = false;
+        this.missedTrip = null;
+        this.loadUserTrips();
+      },
+      error: (err) => {
+        this.cancellingMissedTrip = false;
+        this.missedTripError = err?.error?.message || 'Unable to cancel the trip. Please try again.';
       }
     });
   }

@@ -1,4 +1,14 @@
 <main class="my-trips-page">
+  @if (missedTrip(); as trip) {
+    <app-missed-trip-dialog
+      [trip]="trip"
+      [busy]="cancellingMissedTrip()"
+      [errorMessage]="missedTripError()"
+      (cancelTrip)="cancelMissedTrip()"
+      (reschedule)="rescheduleMissedTrip()"
+      (dismiss)="dismissMissedTrip()"
+    />
+  }
   <section class="page-hero">
     <div>
       <span class="eyebrow">YOUR JOURNEYS</span>

@@ -2623,6 +2623,15 @@ export class TripDetailsComponent implements OnInit {
       next: (data) => {
         this.trip = data;
         this.isLoadingTrip = false;
+        if (this.route.snapshot.queryParamMap.get('reschedule') === '1' && this.canEditTrip) {
+          this.openEditTripModal();
+          void this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { reschedule: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+          });
+        }
       },
       error: (err) => {
         this.trip = null;

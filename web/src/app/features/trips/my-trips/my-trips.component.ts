@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 
 import { Trip, TripStatus, TripType } from '../../../core/models/trip.model';
 import { TripService } from '../../../core/services/trip.service';
+import { findMissedTrip } from '../../../core/utils/missed-trip.util';
+import { MissedTripDialogComponent } from '../../../shared/components/missed-trip-dialog/missed-trip-dialog.component';
 
 type StatusFilter = 'ALL' | TripStatus;
 type TypeFilter = 'ALL' | TripType;
@@ -12,7 +14,7 @@ type TypeFilter = 'ALL' | TripType;
 @Component({
   selector: 'app-my-trips',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MissedTripDialogComponent],
   templateUrl: './my-trips.component.html',
   styleUrl: './my-trips.component.scss'
 })
@@ -23,6 +25,9 @@ export class MyTripsComponent implements OnInit {
   readonly trips = signal<Trip[]>([]);
   readonly loading = signal(true);
   readonly errorMessage = signal('');
+  readonly missedTrip = signal<Trip | null>(null);
+  readonly missedTripError = signal('');
+  readonly cancellingMissedTrip = signal(false);
 
   searchTerm = signal('');
   statusFilter = signal<StatusFilter>('ALL');
@@ -75,12 +80,44 @@ export class MyTripsComponent implements OnInit {
 
     this.tripService.getMyTrips().subscribe({
       next: (trips) => {
-        this.trips.set(trips ?? []);
+        const loadedTrips = trips ?? [];
+        this.trips.set(loadedTrips);
+        this.missedTrip.set(findMissedTrip(loadedTrips));
         this.loading.set(false);
       },
       error: () => {
         this.errorMessage.set('Unable to load your trips. Please try again.');
         this.loading.set(false);
+      }
+    });
+  }
+
+  dismissMissedTrip(): void {
+    this.missedTrip.set(null);
+    this.missedTripError.set('');
+  }
+
+  rescheduleMissedTrip(): void {
+    const trip = this.missedTrip();
+    if (!trip) return;
+    void this.router.navigate(['/trips', trip.id], { queryParams: { reschedule: 1 } });
+  }
+
+  cancelMissedTrip(): void {
+    const trip = this.missedTrip();
+    if (!trip) return;
+
+    this.cancellingMissedTrip.set(true);
+    this.missedTripError.set('');
+    this.tripService.updateTrip(trip.id, { ...trip, status: 'CANCELLED' }).subscribe({
+      next: (updatedTrip) => {
+        this.trips.update((items) => items.map((item) => item.id === updatedTrip.id ? updatedTrip : item));
+        this.cancellingMissedTrip.set(false);
+        this.missedTrip.set(findMissedTrip(this.trips()));
+      },
+      error: (err) => {
+        this.cancellingMissedTrip.set(false);
+        this.missedTripError.set(err?.error?.message || 'Unable to cancel the trip. Please try again.');
       }
     });
   }
