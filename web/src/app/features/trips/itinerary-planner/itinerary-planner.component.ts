@@ -7,9 +7,12 @@ import {
   OnInit,
   Output,
   SimpleChanges,
+  ElementRef,
+  ViewChild,
   inject
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import * as L from 'leaflet';
 
 import { Trip } from '../../../core/models/trip.model';
 import {
@@ -135,11 +138,16 @@ interface DayRoutePlan {
                   {{ place.name }} · {{ formatCategory(place.category) }}
                 </option>
                 <option *ngIf="currentLocation" value="CURRENT_LOCATION">My current location</option>
+                <option *ngIf="mapSelectedLocation" value="MAP_LOCATION">Selected map location</option>
               </select>
             </label>
             <button type="button" class="location-btn" (click)="useCurrentLocation()" [disabled]="isLocating">
               <span class="material-symbols-outlined">my_location</span>
               {{ isLocating ? 'Finding location...' : 'Use my current location' }}
+            </button>
+            <button type="button" class="location-btn map-select-btn" (click)="openMapPicker()">
+              <span class="material-symbols-outlined">map</span>
+              Select in map
             </button>
           </div>
 
@@ -337,6 +345,29 @@ interface DayRoutePlan {
         </div>
       </ng-container>
 
+      <div *ngIf="showMapPicker" class="modal-backdrop" (click)="closeMapPicker()">
+        <div class="modal map-picker-modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <div>
+              <h3>Select your stay on the map</h3>
+              <p>Click the hotel, homestay, or starting point for the daily route.</p>
+            </div>
+            <button type="button" class="close-btn" (click)="closeMapPicker()">&times;</button>
+          </div>
+          <div #routeMapPicker class="route-map-picker" aria-label="Select starting location on map"></div>
+          <div class="selected-coordinate" *ngIf="pendingMapLocation">
+            <span class="material-symbols-outlined">location_on</span>
+            Selected: {{ pendingMapLocation.latitude | number:'1.5-5' }}, {{ pendingMapLocation.longitude | number:'1.5-5' }}
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn secondary" (click)="closeMapPicker()">Cancel</button>
+            <button type="button" class="btn primary" [disabled]="!pendingMapLocation" (click)="confirmMapLocation()">
+              Use this location
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div *ngIf="showDayModal" class="modal-backdrop">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
@@ -526,6 +557,7 @@ interface DayRoutePlan {
     .location-btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:40px; padding:.55rem .7rem; border:1px solid #93c5fd; border-radius:8px; color:#1d4ed8; background:#fff; font-size:.68rem; font-weight:800; cursor:pointer; }
     .location-btn:disabled { opacity:.55; cursor:not-allowed; }
     .location-btn .material-symbols-outlined { font-size:1rem; }
+    .map-select-btn { color:#6d28d9; border-color:#c4b5fd; }
     .route-message,.route-start-prompt { margin-top:.7rem; padding:.65rem .75rem; border-radius:9px; color:#166534; background:#f0fdf4; font-size:.72rem; }
     .route-message.error { color:#991b1b; background:#fef2f2; }
     .route-start-prompt { display:flex; align-items:center; gap:.4rem; color:#854d0e; background:#fffbeb; }
@@ -605,6 +637,12 @@ interface DayRoutePlan {
     .activity-meta span { display:inline-flex; align-items:center; gap:.15rem; color:#64748b; font-size:.66rem; }
     .activity-meta .material-symbols-outlined { font-size:.8rem; color:#2563eb; }
     .modal-backdrop { position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; padding:1rem; background:rgba(15,23,42,.62); backdrop-filter:blur(5px); }
+    .map-picker-modal { width:min(760px,96vw); }
+    .route-map-picker { width:100%; height:min(55vh,430px); margin-top:.8rem; overflow:hidden; border:1px solid #bfdbfe; border-radius:12px; background:#e2e8f0; }
+    .selected-coordinate { display:flex; align-items:center; gap:.35rem; margin-top:.65rem; padding:.55rem .65rem; border-radius:8px; color:#166534; background:#f0fdf4; font-size:.72rem; font-weight:750; }
+    .selected-coordinate .material-symbols-outlined { font-size:1rem; }
+    :host ::ng-deep .route-picker-pin { display:grid; width:34px !important; height:34px !important; margin:-30px 0 0 -17px !important; place-items:center; border:3px solid #fff; border-radius:50% 50% 50% 0; color:#fff; background:#dc2626; box-shadow:0 4px 12px rgba(15,23,42,.35); font-size:18px; transform:rotate(-45deg); }
+    :host ::ng-deep .route-picker-pin span { transform:rotate(45deg); }
     .modal { width:min(100%,560px); max-height:92vh; overflow:auto; padding:1.35rem; border-radius:16px; background:#fff; box-shadow:0 22px 50px rgba(15,23,42,.22); }
     .activity-modal { width:min(100%,680px); }
     .modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
@@ -645,6 +683,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
   @Input({ required: true }) trip!: Trip;
   @Input() canEdit = false;
   @Output() itineraryChanged = new EventEmitter<void>();
+  @ViewChild('routeMapPicker') routeMapPickerElement?: ElementRef<HTMLDivElement>;
 
   itinerary: TripItinerary | null = null;
   places: Place[] = [];
@@ -659,6 +698,11 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
 
   routeStartPlaceId = '';
   currentLocation: (RouteCoordinate & { name: string }) | null = null;
+  mapSelectedLocation: (RouteCoordinate & { name: string }) | null = null;
+  pendingMapLocation: RouteCoordinate | null = null;
+  showMapPicker = false;
+  private routePickerMap?: L.Map;
+  private routePickerMarker?: L.Marker;
   routeMessage = '';
   routeMessageIsError = false;
 
@@ -725,6 +769,13 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
   }
 
   get routeStart(): RouteStop | null {
+    if (this.routeStartPlaceId === 'MAP_LOCATION' && this.mapSelectedLocation) {
+      return {
+        id: 'map-location',
+        ...this.mapSelectedLocation,
+        isStay: true
+      };
+    }
     if (this.routeStartPlaceId === 'CURRENT_LOCATION' && this.currentLocation) {
       return {
         id: 'current-location',
@@ -1108,6 +1159,84 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     );
   }
 
+  openMapPicker(): void {
+    this.showMapPicker = true;
+    this.pendingMapLocation = this.mapSelectedLocation
+      ? { latitude: this.mapSelectedLocation.latitude, longitude: this.mapSelectedLocation.longitude }
+      : null;
+    window.setTimeout(() => this.initializeRoutePickerMap());
+  }
+
+  closeMapPicker(): void {
+    this.showMapPicker = false;
+    this.routePickerMap?.remove();
+    this.routePickerMap = undefined;
+    this.routePickerMarker = undefined;
+  }
+
+  confirmMapLocation(): void {
+    if (!this.pendingMapLocation) return;
+    this.mapSelectedLocation = {
+      name: 'Selected stay location',
+      ...this.pendingMapLocation
+    };
+    this.routeStartPlaceId = 'MAP_LOCATION';
+    try {
+      localStorage.setItem(this.routeStartStorageKey, this.routeStartPlaceId);
+      localStorage.setItem(`${this.routeStartStorageKey}:map`, JSON.stringify(this.mapSelectedLocation));
+    } catch {
+      // The selected point still works for the current session.
+    }
+    this.closeMapPicker();
+    this.routeMessage = 'Map location selected as the stay. Every day will start and return here.';
+    this.routeMessageIsError = false;
+    if (this.canEdit) this.optimizeAllDayRoutes();
+  }
+
+  private initializeRoutePickerMap(): void {
+    const element = this.routeMapPickerElement?.nativeElement;
+    if (!element || !this.showMapPicker) return;
+
+    this.routePickerMap?.remove();
+    const initial = this.pendingMapLocation ?? this.routeStart ?? this.mappedPlaces[0] ?? {
+      latitude: 20.5937,
+      longitude: 78.9629
+    };
+    const initialLatitude = Number(initial.latitude);
+    const initialLongitude = Number(initial.longitude);
+    const zoom = this.pendingMapLocation || this.routeStart || this.mappedPlaces.length ? 13 : 5;
+    this.routePickerMap = L.map(element).setView([initialLatitude, initialLongitude], zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(this.routePickerMap);
+
+    if (this.pendingMapLocation) this.placeRoutePickerMarker(this.pendingMapLocation);
+    this.routePickerMap.on('click', (event: L.LeafletMouseEvent) => {
+      this.pendingMapLocation = {
+        latitude: event.latlng.lat,
+        longitude: event.latlng.lng
+      };
+      this.placeRoutePickerMarker(this.pendingMapLocation);
+    });
+    window.setTimeout(() => this.routePickerMap?.invalidateSize(), 50);
+  }
+
+  private placeRoutePickerMarker(point: RouteCoordinate): void {
+    if (!this.routePickerMap) return;
+    const icon = L.divIcon({
+      className: 'route-picker-pin',
+      html: '<span>●</span>',
+      iconSize: [34, 34],
+      iconAnchor: [17, 32]
+    });
+    if (this.routePickerMarker) {
+      this.routePickerMarker.setLatLng([point.latitude, point.longitude]);
+    } else {
+      this.routePickerMarker = L.marker([point.latitude, point.longitude], { icon }).addTo(this.routePickerMap);
+    }
+  }
+
   optimizeAllDayRoutes(): void {
     if (!this.canEdit || this.isOptimizing) return;
     const start = this.routeStart;
@@ -1293,8 +1422,25 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     let stored = '';
     try {
       stored = localStorage.getItem(this.routeStartStorageKey) || '';
+      const savedMap = localStorage.getItem(`${this.routeStartStorageKey}:map`);
+      if (savedMap) {
+        const point = JSON.parse(savedMap) as RouteCoordinate & { name?: string };
+        if (Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
+          this.mapSelectedLocation = {
+            name: point.name || 'Selected stay location',
+            latitude: point.latitude,
+            longitude: point.longitude
+          };
+        }
+      }
     } catch {
       stored = '';
+      this.mapSelectedLocation = null;
+    }
+
+    if (stored === 'MAP_LOCATION' && this.mapSelectedLocation) {
+      this.routeStartPlaceId = stored;
+      return;
     }
 
     if (stored && stored !== 'CURRENT_LOCATION' && this.mappedPlaces.some((place) => String(place.id) === stored)) {
