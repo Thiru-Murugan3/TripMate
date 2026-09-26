@@ -7,9 +7,12 @@ import {
   OnInit,
   Output,
   SimpleChanges,
+  ElementRef,
+  ViewChild,
   inject
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import * as L from 'leaflet';
 
 import { Trip } from '../../../core/models/trip.model';
 import {
@@ -31,6 +34,7 @@ interface RouteCoordinate {
 interface RouteStop extends RouteCoordinate {
   id: string;
   name: string;
+  imageUrl?: string;
   item?: ItineraryItem;
   isStay?: boolean;
 }
@@ -42,18 +46,11 @@ interface RouteLeg {
   estimatedMinutes: number;
 }
 
-interface RoutePlotPoint extends RouteStop {
-  x: number;
-  y: number;
-  stopNumber: number;
-}
-
 interface DayRoutePlan {
   day: ItineraryDay;
   stops: RouteStop[];
+  visitStops: RouteStop[];
   legs: RouteLeg[];
-  plotPoints: RoutePlotPoint[];
-  polylinePoints: string;
   totalDistanceKm: number;
   totalTravelMinutes: number;
   googleMapsUrl: string;
@@ -141,11 +138,16 @@ interface DayRoutePlan {
                   {{ place.name }} · {{ formatCategory(place.category) }}
                 </option>
                 <option *ngIf="currentLocation" value="CURRENT_LOCATION">My current location</option>
+                <option *ngIf="mapSelectedLocation" value="MAP_LOCATION">Selected map location</option>
               </select>
             </label>
             <button type="button" class="location-btn" (click)="useCurrentLocation()" [disabled]="isLocating">
               <span class="material-symbols-outlined">my_location</span>
               {{ isLocating ? 'Finding location...' : 'Use my current location' }}
+            </button>
+            <button type="button" class="location-btn map-select-btn" (click)="openMapPicker()">
+              <span class="material-symbols-outlined">map</span>
+              Select in map
             </button>
           </div>
 
@@ -159,7 +161,7 @@ interface DayRoutePlan {
           </div>
 
           <div *ngIf="routeStart" class="day-routes">
-            <article *ngFor="let plan of dayRoutePlans" class="day-route-card">
+            <article *ngFor="let plan of dayRoutePlans" class="day-route-card" [class.day-even]="plan.day.dayNumber % 2 === 0">
               <header>
                 <div>
                   <span>DAY {{ plan.day.dayNumber }}</span>
@@ -171,60 +173,58 @@ interface DayRoutePlan {
                 </div>
               </header>
 
-              <div *ngIf="plan.stops.length > 1" class="route-map" role="img" [attr.aria-label]="'Route map for Day ' + plan.day.dayNumber">
-                <svg viewBox="0 0 800 280" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-                  <defs>
-                    <linearGradient [attr.id]="'route-bg-' + plan.day.id" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stop-color="#eff6ff"></stop>
-                      <stop offset="52%" stop-color="#ecfdf5"></stop>
-                      <stop offset="100%" stop-color="#fefce8"></stop>
-                    </linearGradient>
-                    <filter [attr.id]="'route-shadow-' + plan.day.id" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#0f172a" flood-opacity=".18"></feDropShadow>
-                    </filter>
-                  </defs>
-                  <rect width="800" height="280" rx="18" [attr.fill]="'url(#route-bg-' + plan.day.id + ')'" />
-                  <path d="M0 210 C130 150 210 250 345 195 S590 120 800 185" fill="none" stroke="#bbf7d0" stroke-width="46" opacity=".6" />
-                  <path d="M40 50 C180 95 250 15 390 65 S650 110 780 45" fill="none" stroke="#bfdbfe" stroke-width="16" opacity=".48" />
-                  <polyline [attr.points]="plan.polylinePoints" fill="none" stroke="#2563eb" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="12 8" />
-                  <g *ngFor="let point of plan.plotPoints" [attr.transform]="'translate(' + point.x + ' ' + point.y + ')'">
-                    <circle r="19" [attr.fill]="point.isStay ? '#dc2626' : '#2563eb'" stroke="#fff" stroke-width="5" [attr.filter]="'url(#route-shadow-' + plan.day.id + ')'" />
-                    <text x="0" y="6" text-anchor="middle" fill="#fff" font-size="16" font-weight="800">{{ point.isStay ? 'H' : point.stopNumber }}</text>
-                  </g>
-                </svg>
-                <span class="map-note">Visual route overview · open Google Maps for live roads and traffic</span>
+              <div *ngIf="plan.visitStops.length" class="route-infographic" role="img" [attr.aria-label]="'Photo route for Day ' + plan.day.dayNumber">
+                <div class="route-summary">
+                  <strong>ROUTE</strong>
+                  <span>{{ plan.stops[0].name }}</span>
+                  <ng-container *ngFor="let stop of plan.visitStops"><b>→</b><span>{{ stop.name }}</span></ng-container>
+                  <b>→</b><span>{{ plan.stops[0].name }}</span>
+                </div>
+
+                <div class="photo-route">
+                  <div class="photo-stop stay-photo-stop">
+                    <div class="photo-ring"><span class="material-symbols-outlined">hotel</span></div>
+                    <small>START</small><strong>{{ plan.stops[0].name }}</strong>
+                  </div>
+
+                  <ng-container *ngFor="let stop of plan.visitStops; let stopIndex = index">
+                    <div class="photo-leg">
+                      <strong>{{ plan.legs[stopIndex].distanceKm | number:'1.0-1' }} km</strong>
+                      <span class="material-symbols-outlined">arrow_forward</span>
+                      <small>~{{ plan.legs[stopIndex].estimatedMinutes }} min</small>
+                    </div>
+                    <div class="photo-stop">
+                      <div class="photo-ring">
+                        <span class="material-symbols-outlined photo-fallback">landscape</span>
+                        <img *ngIf="stop.imageUrl" [src]="stop.imageUrl" [alt]="stop.name" loading="lazy" (error)="hideBrokenRouteImage($event)" />
+                        <b class="photo-number">{{ stopIndex + 1 }}</b>
+                      </div>
+                      <small>STOP {{ stopIndex + 1 }}</small><strong>{{ stop.name }}</strong>
+                    </div>
+                  </ng-container>
+
+                  <div class="photo-leg return-leg">
+                    <strong>{{ plan.legs[plan.legs.length - 1].distanceKm | number:'1.0-1' }} km</strong>
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                    <small>~{{ plan.legs[plan.legs.length - 1].estimatedMinutes }} min</small>
+                  </div>
+                  <div class="photo-stop stay-photo-stop">
+                    <div class="photo-ring"><span class="material-symbols-outlined">night_shelter</span></div>
+                    <small>RETURN</small><strong>{{ plan.stops[0].name }}</strong>
+                  </div>
+                </div>
+                <div class="map-note"><span class="material-symbols-outlined">info</span>Route is arranged nearest-next-place. Open Google Maps below for live roads and traffic.</div>
               </div>
 
               <div *ngIf="plan.stops.length <= 1" class="day-route-empty">
                 Add mapped places to Day {{ plan.day.dayNumber }} to generate its route.
               </div>
 
-              <div *ngIf="plan.legs.length" class="route-sequence">
-                <div class="route-stop start-stop">
-                  <span class="stop-number"><span class="material-symbols-outlined">hotel</span></span>
-                  <div><small>START</small><strong>{{ plan.stops[0].name }}</strong></div>
-                </div>
-                <ng-container *ngFor="let leg of plan.legs; let legIndex = index">
-                  <div class="route-leg">
-                    <span>{{ leg.distanceKm | number:'1.0-1' }} km</span>
-                    <span>~{{ leg.estimatedMinutes }} min</span>
-                    <span class="material-symbols-outlined">arrow_forward</span>
-                  </div>
-                  <div class="route-stop">
-                    <span class="stop-number" [class.return-stay]="leg.to.isStay">
-                      <span *ngIf="leg.to.isStay" class="material-symbols-outlined">hotel</span>
-                      <ng-container *ngIf="!leg.to.isStay">{{ legIndex + 1 }}</ng-container>
-                    </span>
-                    <div><small>{{ leg.to.isStay ? 'RETURN' : ('STOP ' + (legIndex + 1)) }}</small><strong>{{ leg.to.name }}</strong></div>
-                  </div>
-                </ng-container>
-              </div>
-
-              <a *ngIf="plan.legs.length" class="google-route-link" [href]="plan.googleMapsUrl" target="_blank" rel="noopener noreferrer">
+              <button *ngIf="plan.legs.length && plan.googleMapsUrl" type="button" class="google-route-link" (click)="navigateToGoogleMaps(plan.googleMapsUrl, $event)">
                 <span class="material-symbols-outlined">map</span>
                 Open complete Day {{ plan.day.dayNumber }} route in Google Maps
                 <span class="material-symbols-outlined">open_in_new</span>
-              </a>
+              </button>
             </article>
           </div>
         </section>
@@ -344,6 +344,29 @@ interface DayRoutePlan {
           </article>
         </div>
       </ng-container>
+
+      <div *ngIf="showMapPicker" class="modal-backdrop" (click)="closeMapPicker()">
+        <div class="modal map-picker-modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <div>
+              <h3>Select your stay on the map</h3>
+              <p>Click the hotel, homestay, or starting point for the daily route.</p>
+            </div>
+            <button type="button" class="close-btn" (click)="closeMapPicker()">&times;</button>
+          </div>
+          <div #routeMapPicker class="route-map-picker" aria-label="Select starting location on map"></div>
+          <div class="selected-coordinate" *ngIf="pendingMapLocation">
+            <span class="material-symbols-outlined">location_on</span>
+            Selected: {{ pendingMapLocation.latitude | number:'1.5-5' }}, {{ pendingMapLocation.longitude | number:'1.5-5' }}
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn secondary" (click)="closeMapPicker()">Cancel</button>
+            <button type="button" class="btn primary" [disabled]="!pendingMapLocation" (click)="confirmMapLocation()">
+              Use this location
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div *ngIf="showDayModal" class="modal-backdrop">
         <div class="modal" (click)="$event.stopPropagation()">
@@ -534,35 +557,42 @@ interface DayRoutePlan {
     .location-btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:40px; padding:.55rem .7rem; border:1px solid #93c5fd; border-radius:8px; color:#1d4ed8; background:#fff; font-size:.68rem; font-weight:800; cursor:pointer; }
     .location-btn:disabled { opacity:.55; cursor:not-allowed; }
     .location-btn .material-symbols-outlined { font-size:1rem; }
+    .map-select-btn { color:#6d28d9; border-color:#c4b5fd; }
     .route-message,.route-start-prompt { margin-top:.7rem; padding:.65rem .75rem; border-radius:9px; color:#166534; background:#f0fdf4; font-size:.72rem; }
     .route-message.error { color:#991b1b; background:#fef2f2; }
     .route-start-prompt { display:flex; align-items:center; gap:.4rem; color:#854d0e; background:#fffbeb; }
     .route-start-prompt .material-symbols-outlined { font-size:1rem; }
     .day-routes { display:flex; flex-direction:column; gap:.8rem; margin-top:.8rem; }
-    .day-route-card { overflow:hidden; border:1px solid #dbeafe; border-radius:14px; background:#fff; }
-    .day-route-card > header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.75rem .85rem; color:#fff; background:linear-gradient(115deg,#0f3d91,#2563eb); }
+    .day-route-card { --route-color:#dc2626; --route-dark:#991b1b; --route-soft:#fee2e2; overflow:hidden; border:1px solid color-mix(in srgb,var(--route-color) 28%,white); border-radius:16px; background:#fff; }
+    .day-route-card.day-even { --route-color:#15803d; --route-dark:#166534; --route-soft:#dcfce7; }
+    .day-route-card > header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.78rem 1rem; color:#fff; background:linear-gradient(115deg,var(--route-dark),var(--route-color)); }
     .day-route-card > header span { font-size:.6rem; font-weight:900; letter-spacing:.09em; }
     .day-route-card > header h4 { margin:.15rem 0 0; font-size:.86rem; }
     .route-totals { display:flex; flex-direction:column; align-items:flex-end; white-space:nowrap; }
     .route-totals strong { font-size:.82rem; }
     .route-totals span { opacity:.85; font-size:.62rem !important; letter-spacing:0 !important; }
-    .route-map { position:relative; padding:.65rem .65rem 0; }
-    .route-map svg { display:block; width:100%; max-height:260px; border-radius:12px; }
-    .map-note { display:block; padding:.35rem .15rem .15rem; color:#64748b; font-size:.58rem; text-align:right; }
+    .route-infographic { position:relative; overflow:hidden; padding:.8rem; background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(240,253,244,.78)),radial-gradient(circle at 15% 78%,#86efac 0 8%,transparent 9%),radial-gradient(circle at 88% 12%,#bae6fd 0 12%,transparent 13%),repeating-linear-gradient(32deg,transparent 0 55px,rgba(148,163,184,.13) 56px 59px,transparent 60px 105px); }
+    .route-infographic::after { position:absolute; right:-8%; bottom:-72px; left:-8%; height:125px; pointer-events:none; content:''; background:linear-gradient(155deg,#bbf7d0 40%,#86efac 41% 58%,#4ade80 59%); clip-path:polygon(0 60%,12% 30%,24% 58%,39% 18%,50% 55%,63% 27%,78% 62%,91% 25%,100% 52%,100% 100%,0 100%); opacity:.48; }
+    .route-summary { position:relative; z-index:1; display:flex; align-items:center; gap:.35rem; overflow-x:auto; padding:.45rem .55rem; border-left:4px solid var(--route-color); color:#334155; background:rgba(255,255,255,.82); font-size:.62rem; white-space:nowrap; scrollbar-width:thin; }
+    .route-summary strong { padding:.18rem .35rem; border-radius:4px; color:#fff; background:var(--route-color); letter-spacing:.05em; }
+    .route-summary b { color:var(--route-color); }
+    .photo-route { position:relative; z-index:1; display:flex; align-items:center; gap:.35rem; overflow-x:auto; min-height:205px; padding:1rem .55rem .75rem; scrollbar-color:var(--route-color) transparent; }
+    .photo-stop { display:flex; flex:0 0 116px; min-width:0; flex-direction:column; align-items:center; text-align:center; }
+    .photo-ring { position:relative; display:grid; width:96px; height:96px; place-items:center; overflow:visible; border:5px solid var(--route-color); border-radius:50%; color:var(--route-color); background:linear-gradient(145deg,#dbeafe,#fef3c7); box-shadow:0 7px 18px rgba(15,23,42,.2),0 0 0 3px #fff; }
+    .photo-ring > img { position:absolute; inset:0; width:100%; height:100%; border-radius:50%; object-fit:cover; }
+    .photo-ring > .material-symbols-outlined { font-size:2.25rem; }
+    .photo-fallback { color:#15803d; }
+    .photo-number { position:absolute; top:-9px; left:-9px; z-index:2; display:grid; width:27px; height:27px; place-items:center; border:3px solid #fff; border-radius:50%; color:#fff; background:var(--route-color); font-size:.69rem; box-shadow:0 3px 8px rgba(15,23,42,.25); }
+    .photo-stop small { margin-top:.52rem; color:var(--route-color); font-size:.55rem; font-weight:950; letter-spacing:.08em; }
+    .photo-stop strong { display:-webkit-box; overflow:hidden; margin-top:.12rem; color:#172554; font-size:.66rem; line-height:1.25; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+    .stay-photo-stop .photo-ring { border-style:dashed; color:#fff; background:linear-gradient(145deg,var(--route-dark),var(--route-color)); }
+    .photo-leg { display:grid; flex:0 0 62px; grid-template-columns:1fr 1fr; align-items:center; color:var(--route-dark); text-align:center; }
+    .photo-leg strong,.photo-leg small { grid-column:1/-1; font-size:.55rem; white-space:nowrap; }
+    .photo-leg .material-symbols-outlined { grid-column:1/-1; width:100%; color:var(--route-color); font-size:1.65rem; }
+    .map-note { position:relative; z-index:1; display:flex; align-items:center; justify-content:flex-end; gap:.25rem; padding:.35rem .15rem 0; pointer-events:none; color:#475569; font-size:.58rem; text-align:right; }
+    .map-note .material-symbols-outlined { font-size:.78rem; }
     .day-route-empty { margin:.75rem; padding:1rem; border:1px dashed #cbd5e1; border-radius:10px; color:#64748b; background:#f8fafc; font-size:.72rem; text-align:center; }
-    .route-sequence { display:flex; align-items:center; gap:.5rem; overflow-x:auto; padding:.75rem; scrollbar-width:thin; }
-    .route-stop { display:flex; flex:0 0 auto; align-items:center; gap:.4rem; max-width:180px; }
-    .stop-number { display:grid; flex:0 0 auto; place-items:center; width:30px; height:30px; border-radius:50%; color:#fff; background:#2563eb; font-size:.68rem; font-weight:900; }
-    .start-stop .stop-number { background:#dc2626; }
-    .stop-number.return-stay { background:#16a34a; }
-    .stop-number .material-symbols-outlined { font-size:.95rem; }
-    .route-stop div { display:flex; min-width:0; flex-direction:column; }
-    .route-stop small { color:#64748b; font-size:.52rem; font-weight:900; letter-spacing:.06em; }
-    .route-stop strong { overflow:hidden; max-width:135px; font-size:.67rem; text-overflow:ellipsis; white-space:nowrap; }
-    .route-leg { position:relative; display:grid; flex:0 0 68px; grid-template-columns:1fr 1fr; color:#64748b; font-size:.52rem; text-align:center; }
-    .route-leg::before { position:absolute; top:22px; right:5px; left:5px; height:2px; content:''; background:#93c5fd; }
-    .route-leg .material-symbols-outlined { z-index:1; grid-column:1/-1; justify-self:end; margin-top:.15rem; color:#2563eb; background:#fff; font-size:.85rem; }
-    .google-route-link { display:flex; align-items:center; justify-content:center; gap:.35rem; margin:.1rem .75rem .75rem; padding:.58rem .7rem; border:1px solid #bbf7d0; border-radius:9px; color:#166534; background:#f0fdf4; font-size:.68rem; font-weight:850; text-decoration:none; }
+    .google-route-link { position:relative; z-index:5; display:flex; width:calc(100% - 1.5rem); box-sizing:border-box; align-items:center; justify-content:center; gap:.35rem; margin:.1rem .75rem .75rem; padding:.58rem .7rem; border:1px solid #bbf7d0; border-radius:9px; color:#166534; background:#f0fdf4; font:inherit; font-size:.68rem; font-weight:850; text-decoration:none; cursor:pointer; }
     .google-route-link:hover { border-color:#4ade80; background:#dcfce7; }
     .google-route-link .material-symbols-outlined { font-size:.95rem; }
     .state-card,.empty-card { display:flex; align-items:center; justify-content:center; gap:.75rem; min-height:180px; padding:1.2rem; border:1px solid #e2e8f0; border-radius:14px; background:#fff; text-align:center; }
@@ -607,6 +637,12 @@ interface DayRoutePlan {
     .activity-meta span { display:inline-flex; align-items:center; gap:.15rem; color:#64748b; font-size:.66rem; }
     .activity-meta .material-symbols-outlined { font-size:.8rem; color:#2563eb; }
     .modal-backdrop { position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; padding:1rem; background:rgba(15,23,42,.62); backdrop-filter:blur(5px); }
+    .map-picker-modal { width:min(760px,96vw); }
+    .route-map-picker { width:100%; height:min(55vh,430px); margin-top:.8rem; overflow:hidden; border:1px solid #bfdbfe; border-radius:12px; background:#e2e8f0; }
+    .selected-coordinate { display:flex; align-items:center; gap:.35rem; margin-top:.65rem; padding:.55rem .65rem; border-radius:8px; color:#166534; background:#f0fdf4; font-size:.72rem; font-weight:750; }
+    .selected-coordinate .material-symbols-outlined { font-size:1rem; }
+    :host ::ng-deep .route-picker-pin { display:grid; width:34px !important; height:34px !important; margin:-30px 0 0 -17px !important; place-items:center; border:3px solid #fff; border-radius:50% 50% 50% 0; color:#fff; background:#dc2626; box-shadow:0 4px 12px rgba(15,23,42,.35); font-size:18px; transform:rotate(-45deg); }
+    :host ::ng-deep .route-picker-pin span { transform:rotate(45deg); }
     .modal { width:min(100%,560px); max-height:92vh; overflow:auto; padding:1.35rem; border-radius:16px; background:#fff; box-shadow:0 22px 50px rgba(15,23,42,.22); }
     .activity-modal { width:min(100%,680px); }
     .modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
@@ -628,7 +664,9 @@ interface DayRoutePlan {
       .route-planner-heading,.route-controls { align-items:stretch; flex-direction:column; }
       .optimize-btn,.location-btn { width:100%; }
       .day-route-card > header { align-items:flex-start; }
-      .route-map svg { min-height:180px; }
+      .photo-route { min-height:185px; padding-inline:.1rem; }
+      .photo-stop { flex-basis:104px; }
+      .photo-ring { width:82px; height:82px; }
       .day-actions { flex-wrap:wrap; }
       .activity-row { grid-template-columns:62px 18px minmax(0,1fr); }
       .form-grid.two { grid-template-columns:1fr; gap:0; }
@@ -645,6 +683,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
   @Input({ required: true }) trip!: Trip;
   @Input() canEdit = false;
   @Output() itineraryChanged = new EventEmitter<void>();
+  @ViewChild('routeMapPicker') routeMapPickerElement?: ElementRef<HTMLDivElement>;
 
   itinerary: TripItinerary | null = null;
   places: Place[] = [];
@@ -659,6 +698,11 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
 
   routeStartPlaceId = '';
   currentLocation: (RouteCoordinate & { name: string }) | null = null;
+  mapSelectedLocation: (RouteCoordinate & { name: string }) | null = null;
+  pendingMapLocation: RouteCoordinate | null = null;
+  showMapPicker = false;
+  private routePickerMap?: L.Map;
+  private routePickerMarker?: L.Marker;
   routeMessage = '';
   routeMessageIsError = false;
 
@@ -725,6 +769,13 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
   }
 
   get routeStart(): RouteStop | null {
+    if (this.routeStartPlaceId === 'MAP_LOCATION' && this.mapSelectedLocation) {
+      return {
+        id: 'map-location',
+        ...this.mapSelectedLocation,
+        isStay: true
+      };
+    }
     if (this.routeStartPlaceId === 'CURRENT_LOCATION' && this.currentLocation) {
       return {
         id: 'current-location',
@@ -742,6 +793,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     return {
       id: `place-${place.id}`,
       name: place.name,
+      imageUrl: this.placeImage(place),
       latitude: Number(place.latitude),
       longitude: Number(place.longitude),
       isStay: true
@@ -1107,6 +1159,84 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     );
   }
 
+  openMapPicker(): void {
+    this.showMapPicker = true;
+    this.pendingMapLocation = this.mapSelectedLocation
+      ? { latitude: this.mapSelectedLocation.latitude, longitude: this.mapSelectedLocation.longitude }
+      : null;
+    window.setTimeout(() => this.initializeRoutePickerMap());
+  }
+
+  closeMapPicker(): void {
+    this.showMapPicker = false;
+    this.routePickerMap?.remove();
+    this.routePickerMap = undefined;
+    this.routePickerMarker = undefined;
+  }
+
+  confirmMapLocation(): void {
+    if (!this.pendingMapLocation) return;
+    this.mapSelectedLocation = {
+      name: 'Selected stay location',
+      ...this.pendingMapLocation
+    };
+    this.routeStartPlaceId = 'MAP_LOCATION';
+    try {
+      localStorage.setItem(this.routeStartStorageKey, this.routeStartPlaceId);
+      localStorage.setItem(`${this.routeStartStorageKey}:map`, JSON.stringify(this.mapSelectedLocation));
+    } catch {
+      // The selected point still works for the current session.
+    }
+    this.closeMapPicker();
+    this.routeMessage = 'Map location selected as the stay. Every day will start and return here.';
+    this.routeMessageIsError = false;
+    if (this.canEdit) this.optimizeAllDayRoutes();
+  }
+
+  private initializeRoutePickerMap(): void {
+    const element = this.routeMapPickerElement?.nativeElement;
+    if (!element || !this.showMapPicker) return;
+
+    this.routePickerMap?.remove();
+    const initial = this.pendingMapLocation ?? this.routeStart ?? this.mappedPlaces[0] ?? {
+      latitude: 20.5937,
+      longitude: 78.9629
+    };
+    const initialLatitude = Number(initial.latitude);
+    const initialLongitude = Number(initial.longitude);
+    const zoom = this.pendingMapLocation || this.routeStart || this.mappedPlaces.length ? 13 : 5;
+    this.routePickerMap = L.map(element).setView([initialLatitude, initialLongitude], zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(this.routePickerMap);
+
+    if (this.pendingMapLocation) this.placeRoutePickerMarker(this.pendingMapLocation);
+    this.routePickerMap.on('click', (event: L.LeafletMouseEvent) => {
+      this.pendingMapLocation = {
+        latitude: event.latlng.lat,
+        longitude: event.latlng.lng
+      };
+      this.placeRoutePickerMarker(this.pendingMapLocation);
+    });
+    window.setTimeout(() => this.routePickerMap?.invalidateSize(), 50);
+  }
+
+  private placeRoutePickerMarker(point: RouteCoordinate): void {
+    if (!this.routePickerMap) return;
+    const icon = L.divIcon({
+      className: 'route-picker-pin',
+      html: '<span>●</span>',
+      iconSize: [34, 34],
+      iconAnchor: [17, 32]
+    });
+    if (this.routePickerMarker) {
+      this.routePickerMarker.setLatLng([point.latitude, point.longitude]);
+    } else {
+      this.routePickerMarker = L.marker([point.latitude, point.longitude], { icon }).addTo(this.routePickerMap);
+    }
+  }
+
   optimizeAllDayRoutes(): void {
     if (!this.canEdit || this.isOptimizing) return;
     const start = this.routeStart;
@@ -1141,6 +1271,17 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
         this.routeMessage = err?.error?.message || 'Unable to optimize the routes.';
       }
     });
+  }
+
+  navigateToGoogleMaps(url: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!url.startsWith('https://www.google.com/maps/')) {
+      this.routeMessageIsError = true;
+      this.routeMessage = 'Unable to open Google Maps because the generated route link is invalid.';
+      return;
+    }
+    window.location.href = url;
   }
 
   formatTravelTime(totalMinutes: number): string {
@@ -1274,8 +1415,25 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     let stored = '';
     try {
       stored = localStorage.getItem(this.routeStartStorageKey) || '';
+      const savedMap = localStorage.getItem(`${this.routeStartStorageKey}:map`);
+      if (savedMap) {
+        const point = JSON.parse(savedMap) as RouteCoordinate & { name?: string };
+        if (Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
+          this.mapSelectedLocation = {
+            name: point.name || 'Selected stay location',
+            latitude: point.latitude,
+            longitude: point.longitude
+          };
+        }
+      }
     } catch {
       stored = '';
+      this.mapSelectedLocation = null;
+    }
+
+    if (stored === 'MAP_LOCATION' && this.mapSelectedLocation) {
+      this.routeStartPlaceId = stored;
+      return;
     }
 
     if (stored && stored !== 'CURRENT_LOCATION' && this.mappedPlaces.some((place) => String(place.id) === stored)) {
@@ -1306,6 +1464,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     return {
       id: `item-${item.id}`,
       name: place.name || item.title,
+      imageUrl: this.placeImage(place),
       latitude: Number(place.latitude),
       longitude: Number(place.longitude),
       item
@@ -1356,36 +1515,15 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
       });
     }
 
-    const plotPoints = this.routePlotPoints(stops);
     return {
       day,
       stops,
+      visitStops: orderedStops,
       legs,
-      plotPoints,
-      polylinePoints: plotPoints.map((point) => `${point.x},${point.y}`).join(' '),
       totalDistanceKm: legs.reduce((total, leg) => total + leg.distanceKm, 0),
       totalTravelMinutes: legs.reduce((total, leg) => total + leg.estimatedMinutes, 0),
       googleMapsUrl: this.googleMapsDayUrl(start, orderedStops)
     };
-  }
-
-  private routePlotPoints(stops: RouteStop[]): RoutePlotPoint[] {
-    if (!stops.length) return [];
-    const latitudes = stops.map((stop) => stop.latitude);
-    const longitudes = stops.map((stop) => stop.longitude);
-    const minLat = Math.min(...latitudes);
-    const maxLat = Math.max(...latitudes);
-    const minLng = Math.min(...longitudes);
-    const maxLng = Math.max(...longitudes);
-    const latRange = maxLat - minLat;
-    const lngRange = maxLng - minLng;
-
-    return stops.map((stop, index) => ({
-      ...stop,
-      x: lngRange < 0.00001 ? 70 + (index * 660) / Math.max(1, stops.length - 1) : 65 + ((stop.longitude - minLng) / lngRange) * 670,
-      y: latRange < 0.00001 ? 140 : 225 - ((stop.latitude - minLat) / latRange) * 170,
-      stopNumber: stop.isStay ? 0 : index
-    }));
   }
 
   private googleMapsDayUrl(start: RouteStop, visitStops: RouteStop[]): string {
@@ -1399,6 +1537,19 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     });
     params.set('waypoints', visitStops.map(coordinate).join('|'));
     return `https://www.google.com/maps/dir/?${params.toString()}`;
+  }
+
+  private placeImage(place: Place): string | undefined {
+    const marker = 'TripMateImage=';
+    const notes = place.notes || '';
+    const start = notes.indexOf(marker);
+    if (start < 0) return undefined;
+    const value = notes.slice(start + marker.length).split(' · ')[0].trim();
+    return /^https:\/\//i.test(value) ? value : undefined;
+  }
+
+  hideBrokenRouteImage(event: Event): void {
+    (event.target as HTMLImageElement).style.display = 'none';
   }
 
   private haversineKm(from: RouteCoordinate, to: RouteCoordinate): number {

@@ -1408,6 +1408,8 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     if (place.openingHours) parts.push(`Hours: ${place.openingHours}`);
     if (place.sourceUrl) parts.push(`Source: ${place.sourceUrl}`);
     if (place.sourceLastCheckedAt) parts.push(`Checked: ${place.sourceLastCheckedAt}`);
+    const routeImage = place.primaryImageUrl || place.imageUrl;
+    if (routeImage) parts.push(`TripMateImage=${routeImage}`);
     return parts.join(' · ');
   }
 
