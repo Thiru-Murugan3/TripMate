@@ -220,11 +220,11 @@ interface DayRoutePlan {
                 Add mapped places to Day {{ plan.day.dayNumber }} to generate its route.
               </div>
 
-              <a *ngIf="plan.legs.length && plan.googleMapsUrl" class="google-route-link" [href]="plan.googleMapsUrl">
+              <button *ngIf="plan.legs.length && plan.googleMapsUrl" type="button" class="google-route-link" (click)="navigateToGoogleMaps(plan.googleMapsUrl, $event)">
                 <span class="material-symbols-outlined">map</span>
                 Open complete Day {{ plan.day.dayNumber }} route in Google Maps
                 <span class="material-symbols-outlined">open_in_new</span>
-              </a>
+              </button>
             </article>
           </div>
         </section>
@@ -572,7 +572,7 @@ interface DayRoutePlan {
     .route-totals strong { font-size:.82rem; }
     .route-totals span { opacity:.85; font-size:.62rem !important; letter-spacing:0 !important; }
     .route-infographic { position:relative; overflow:hidden; padding:.8rem; background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(240,253,244,.78)),radial-gradient(circle at 15% 78%,#86efac 0 8%,transparent 9%),radial-gradient(circle at 88% 12%,#bae6fd 0 12%,transparent 13%),repeating-linear-gradient(32deg,transparent 0 55px,rgba(148,163,184,.13) 56px 59px,transparent 60px 105px); }
-    .route-infographic::after { position:absolute; right:-8%; bottom:-72px; left:-8%; height:125px; content:''; background:linear-gradient(155deg,#bbf7d0 40%,#86efac 41% 58%,#4ade80 59%); clip-path:polygon(0 60%,12% 30%,24% 58%,39% 18%,50% 55%,63% 27%,78% 62%,91% 25%,100% 52%,100% 100%,0 100%); opacity:.48; }
+    .route-infographic::after { position:absolute; right:-8%; bottom:-72px; left:-8%; height:125px; pointer-events:none; content:''; background:linear-gradient(155deg,#bbf7d0 40%,#86efac 41% 58%,#4ade80 59%); clip-path:polygon(0 60%,12% 30%,24% 58%,39% 18%,50% 55%,63% 27%,78% 62%,91% 25%,100% 52%,100% 100%,0 100%); opacity:.48; }
     .route-summary { position:relative; z-index:1; display:flex; align-items:center; gap:.35rem; overflow-x:auto; padding:.45rem .55rem; border-left:4px solid var(--route-color); color:#334155; background:rgba(255,255,255,.82); font-size:.62rem; white-space:nowrap; scrollbar-width:thin; }
     .route-summary strong { padding:.18rem .35rem; border-radius:4px; color:#fff; background:var(--route-color); letter-spacing:.05em; }
     .route-summary b { color:var(--route-color); }
@@ -589,7 +589,7 @@ interface DayRoutePlan {
     .photo-leg { display:grid; flex:0 0 62px; grid-template-columns:1fr 1fr; align-items:center; color:var(--route-dark); text-align:center; }
     .photo-leg strong,.photo-leg small { grid-column:1/-1; font-size:.55rem; white-space:nowrap; }
     .photo-leg .material-symbols-outlined { grid-column:1/-1; width:100%; color:var(--route-color); font-size:1.65rem; }
-    .map-note { position:relative; z-index:1; display:flex; align-items:center; justify-content:flex-end; gap:.25rem; padding:.35rem .15rem 0; color:#475569; font-size:.58rem; text-align:right; }
+    .map-note { position:relative; z-index:1; display:flex; align-items:center; justify-content:flex-end; gap:.25rem; padding:.35rem .15rem 0; pointer-events:none; color:#475569; font-size:.58rem; text-align:right; }
     .map-note .material-symbols-outlined { font-size:.78rem; }
     .day-route-empty { margin:.75rem; padding:1rem; border:1px dashed #cbd5e1; border-radius:10px; color:#64748b; background:#f8fafc; font-size:.72rem; text-align:center; }
     .google-route-link { position:relative; z-index:5; display:flex; width:calc(100% - 1.5rem); box-sizing:border-box; align-items:center; justify-content:center; gap:.35rem; margin:.1rem .75rem .75rem; padding:.58rem .7rem; border:1px solid #bbf7d0; border-radius:9px; color:#166534; background:#f0fdf4; font:inherit; font-size:.68rem; font-weight:850; text-decoration:none; cursor:pointer; }
@@ -1271,6 +1271,17 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
         this.routeMessage = err?.error?.message || 'Unable to optimize the routes.';
       }
     });
+  }
+
+  navigateToGoogleMaps(url: string, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!url.startsWith('https://www.google.com/maps/')) {
+      this.routeMessageIsError = true;
+      this.routeMessage = 'Unable to open Google Maps because the generated route link is invalid.';
+      return;
+    }
+    window.location.href = url;
   }
 
   formatTravelTime(totalMinutes: number): string {
