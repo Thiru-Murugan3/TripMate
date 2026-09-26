@@ -302,49 +302,63 @@ import { TripService } from '../../core/services/trip.service';
               </div>
 
               <div class="card-actions">
-                <button type="button" class="text-button" (click)="openDetails(place)">
-                  <span class="material-symbols-outlined">info</span>
-                  Details
-                </button>
-                <button
-                  type="button"
-                  class="btn-map-route"
-                  (click)="openMapRoute(place, $event)"
-                  title="View turn-by-turn route on Google Maps"
-                >
-                  <span class="material-symbols-outlined">directions</span>
-                  Map Route ↗
-                </button>
-                <a
-                  *ngIf="place.officialWebsite || place.website"
-                  class="text-action"
-                  [href]="place.officialWebsite || place.website"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span class="material-symbols-outlined">language</span>
-                  Official details
-                </a>
-                <a *ngIf="place.bookingUrl" class="booking-action" [href]="place.bookingUrl" target="_blank" rel="noopener noreferrer">Book with provider ↗</a>
+                <div class="quick-actions">
+                  <button type="button" class="card-action secondary-action" (click)="openDetails(place)">
+                    <span class="material-symbols-outlined">info</span>
+                    <span>Details</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="card-action secondary-action"
+                    (click)="openMapRoute(place, $event)"
+                    title="View turn-by-turn route on Google Maps"
+                  >
+                    <span class="material-symbols-outlined">directions</span>
+                    <span>Map route</span>
+                    <span class="material-symbols-outlined external-icon">open_in_new</span>
+                  </button>
+                </div>
 
-                <button
-                  *ngIf="canSelectPlaces && (activeTripId === 0 || !isAlreadySaved(place))"
-                  type="button"
-                  class="mini-add"
-                  [disabled]="isSaving"
-                  (click)="addPlace(place)"
-                >
-                  {{ activeTripId > 0 ? '+ Add to Trip' : '+ Add' }}
-                </button>
-                <button
-                  *ngIf="canSelectPlaces"
-                  type="button"
-                  class="mini-add itinerary-add"
-                  [disabled]="isSaving"
-                  (click)="addPlaceToItinerary(place)"
-                >
-                  + Itinerary
-                </button>
+                <div *ngIf="place.officialWebsite || place.website || place.bookingUrl" class="provider-actions">
+                  <a
+                    *ngIf="place.officialWebsite || place.website"
+                    class="provider-action"
+                    [href]="place.officialWebsite || place.website"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span class="material-symbols-outlined">language</span>
+                    <span>Official details</span>
+                    <span class="material-symbols-outlined external-icon">open_in_new</span>
+                  </a>
+                  <a *ngIf="place.bookingUrl" class="provider-action booking-action" [href]="place.bookingUrl" target="_blank" rel="noopener noreferrer">
+                    <span class="material-symbols-outlined">confirmation_number</span>
+                    <span>Book with provider</span>
+                    <span class="material-symbols-outlined external-icon">open_in_new</span>
+                  </a>
+                </div>
+
+                <div *ngIf="canSelectPlaces" class="trip-actions">
+                  <button
+                    *ngIf="activeTripId === 0 || !isAlreadySaved(place)"
+                    type="button"
+                    class="card-action primary-action"
+                    [disabled]="isSaving"
+                    (click)="addPlace(place)"
+                  >
+                    <span class="material-symbols-outlined">add_circle</span>
+                    <span>{{ activeTripId > 0 ? 'Add to trip' : 'Add place' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="card-action primary-action"
+                    [disabled]="isSaving"
+                    (click)="addPlaceToItinerary(place)"
+                  >
+                    <span class="material-symbols-outlined">event_note</span>
+                    <span>Add itinerary</span>
+                  </button>
+                </div>
               </div>
 
               <label
@@ -592,20 +606,27 @@ import { TripService } from '../../core/services/trip.service';
     .open-status { margin:.3rem 0; color:#b91c1c; font-size:.64rem; font-weight:850; }
     .open-status.open { color:#15803d; }
     .source-row { display:flex; flex-direction:column; gap:.12rem; margin-top:.45rem; color:#64748b; font-size:.58rem; }
-    .card-actions { display:flex; align-items:center; gap:.55rem; margin-top:.7rem; padding-top:.65rem; border-top:1px solid #f1f5f9; }
-    .text-action { display:inline-flex; align-items:center; gap:.2rem; color:#2563eb; text-decoration:none; font-size:.67rem; font-weight:800; }
-    .text-action .material-symbols-outlined { font-size:.85rem; }
-    .booking-action { color:#7c3aed; text-decoration:none; font-size:.64rem; font-weight:850; }
-    .btn-map-route { display:inline-flex; align-items:center; gap:.25rem; border:1px solid #93c5fd; background:#eff6ff; color:#1d4ed8; padding:.32rem .55rem; border-radius:7px; font-size:.67rem; font-weight:800; cursor:pointer; transition:all 150ms ease; }
-    .btn-map-route:hover { background:#dbeafe; border-color:#3b82f6; color:#1e40af; }
-    .btn-map-route .material-symbols-outlined { font-size:.85rem; }
+    .card-actions { display:flex; flex-direction:column; gap:.5rem; margin-top:.75rem; padding-top:.7rem; border-top:1px solid #f1f5f9; }
+    .quick-actions,.trip-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.5rem; }
+    .provider-actions { display:flex; flex-wrap:wrap; gap:.35rem .75rem; padding:.1rem .15rem; }
+    .card-action,.provider-action { min-width:0; font:inherit; }
+    .card-action { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:38px; padding:.5rem .6rem; border-radius:9px; font-size:.67rem; font-weight:850; line-height:1.15; white-space:nowrap; cursor:pointer; transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease,transform 150ms ease; }
+    .card-action:hover:not(:disabled) { transform:translateY(-1px); }
+    .card-action .material-symbols-outlined,.provider-action .material-symbols-outlined { flex:0 0 auto; font-size:.92rem; }
+    .card-action .external-icon,.provider-action .external-icon { font-size:.7rem; }
+    .secondary-action { border:1px solid #bfdbfe; color:#1d4ed8; background:#eff6ff; }
+    .secondary-action:hover { border-color:#60a5fa; background:#dbeafe; }
+    .primary-action { border:1px solid #2563eb; color:#fff; background:#2563eb; box-shadow:0 3px 8px rgba(37,99,235,.18); }
+    .primary-action:hover:not(:disabled) { border-color:#1d4ed8; background:#1d4ed8; }
+    .card-action:focus-visible,.provider-action:focus-visible { outline:3px solid rgba(59,130,246,.25); outline-offset:2px; }
+    .card-action:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; }
+    .provider-action { display:inline-flex; align-items:center; gap:.25rem; color:#2563eb; text-decoration:none; font-size:.63rem; font-weight:800; }
+    .provider-action:hover { color:#1e40af; text-decoration:underline; }
+    .booking-action { color:#7c3aed; }
+    .booking-action:hover { color:#6d28d9; }
     .free-badge { color:#0369a1 !important; background:#e0f2fe !important; }
     .unknown-badge { color:#475569 !important; background:#f1f5f9 !important; }
     .unknown-badge .material-symbols-outlined { color:#64748b !important; }
-    .text-button { display:inline-flex; align-items:center; gap:.2rem; padding:0; border:0; color:#2563eb; background:transparent; font-size:.67rem; font-weight:800; cursor:pointer; }
-    .text-button .material-symbols-outlined { font-size:.85rem; }
-    .mini-add { margin-left:auto; border:0; color:#fff; background:#2563eb; padding:.4rem .55rem; border-radius:7px; font-size:.65rem; font-weight:850; cursor:pointer; }
-    .mini-add:disabled { opacity:.5; }
     .day-picker { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.65rem; padding:.5rem .6rem; border-radius:8px; color:#475569; background:#f8fafc; font-size:.67rem; font-weight:800; }
     .day-picker select { padding:.32rem .42rem; border:1px solid #cbd5e1; border-radius:6px; background:#fff; }
 
@@ -671,6 +692,10 @@ import { TripService } from '../../core/services/trip.service';
       .detail-gallery img:not(:first-child) { display:none; }
       .detail-content dl { grid-template-columns:1fr; }
       .detail-lists { grid-template-columns:1fr; }
+      .card-action { min-height:42px; font-size:.72rem; }
+    }
+    @media(max-width:380px){
+      .quick-actions,.trip-actions { grid-template-columns:1fr; }
     }
   `]
 })
