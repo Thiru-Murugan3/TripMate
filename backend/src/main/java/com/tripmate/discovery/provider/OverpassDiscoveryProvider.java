@@ -24,6 +24,11 @@ import java.util.*;
 public class OverpassDiscoveryProvider implements DiscoveryProvider {
     private static final Logger log = LoggerFactory.getLogger(OverpassDiscoveryProvider.class);
     private static final String ATTRIBUTION = "© OpenStreetMap contributors · Wikimedia Commons where credited";
+    private static final List<String> GLOBAL_FALLBACK_ENDPOINTS = List.of(
+            "https://overpass-api.de/api/interpreter",
+            "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+            "https://overpass.private.coffee/api/interpreter"
+    );
     private final RestClient client;
     private final List<String> endpoints;
     private final PriceVerificationService priceVerification;
@@ -60,8 +65,12 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
                 JsonNode response = client.post().uri(endpoints.get(index))
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED).body(body)
                         .retrieve().body(JsonNode.class);
-                if (index > 0) warnings.add("The primary OpenStreetMap endpoint was unavailable; a configured fallback was used.");
-                return new DiscoveryProviderResult(name(), ATTRIBUTION, map(response, request), warnings);
+                List<DiscoveredPlace> places = map(response, request);
+                if (!places.isEmpty()) {
+                    if (index > 0) warnings.add("The primary OpenStreetMap endpoint was unavailable; a global fallback was used.");
+                    return new DiscoveryProviderResult(name(), ATTRIBUTION, places, warnings);
+                }
+                log.warn("Overpass endpoint returned no matching elements: index={}", index + 1);
             } catch (RestClientException ex) {
                 log.warn("Overpass endpoint failed: index={} error={}", index + 1, ex.getClass().getSimpleName());
             }
@@ -315,9 +324,12 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
         return 6371.0088 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
     private List<String> parseUrls(String csv) {
-        List<String> urls = Arrays.stream(csv.split(",")).map(String::trim)
-                .filter(url -> url.startsWith("https://")).toList();
-        return urls.isEmpty() ? List.of("https://overpass-api.de/api/interpreter") : urls;
+        LinkedHashSet<String> urls = new LinkedHashSet<>();
+        Arrays.stream(csv.split(",")).map(String::trim)
+                .filter(url -> url.startsWith("https://"))
+                .forEach(urls::add);
+        urls.addAll(GLOBAL_FALLBACK_ENDPOINTS);
+        return List.copyOf(urls);
     }
     private String value(JsonNode tags, String key) { return tags.path(key).asText(""); }
     private String clean(String value) { return value == null || value.isBlank() ? null : value.trim(); }

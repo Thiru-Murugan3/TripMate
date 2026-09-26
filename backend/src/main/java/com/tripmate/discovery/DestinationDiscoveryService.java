@@ -67,7 +67,11 @@ public class DestinationDiscoveryService {
         CachedSearch cached = searchCache.get(cacheKey);
         if (cached == null || cacheExpired(cached)) {
             cached = fetch(query, radiusKm, category);
-            searchCache.put(cacheKey, cached);
+            if (cached.places().isEmpty()) {
+                searchCache.remove(cacheKey);
+            } else {
+                searchCache.put(cacheKey, cached);
+            }
         }
 
         List<DiscoveredPlace> filtered = cached.places().stream()

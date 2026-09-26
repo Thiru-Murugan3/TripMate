@@ -241,7 +241,7 @@ import { TripService } from '../../core/services/trip.service';
                 <input
                   type="checkbox"
                   [checked]="isSelected(place)"
-                  [disabled]="isSaving || isAlreadySaved(place)"
+                  [disabled]="isSaving"
                   (change)="toggleSelection(place)"
                 />
               </label>
@@ -340,32 +340,22 @@ import { TripService } from '../../core/services/trip.service';
 
                 <div *ngIf="canSelectPlaces" class="trip-actions">
                   <button
-                    *ngIf="activeTripId === 0 || !isAlreadySaved(place)"
                     type="button"
-                    class="card-action primary-action"
-                    [disabled]="isSaving"
-                    (click)="addPlace(place)"
-                  >
-                    <span class="material-symbols-outlined">add_circle</span>
-                    <span>{{ activeTripId > 0 ? 'Add to trip' : 'Add place' }}</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="card-action primary-action"
+                    class="card-action primary-action full-action"
                     [disabled]="isSaving"
                     (click)="addPlaceToItinerary(place)"
                   >
                     <span class="material-symbols-outlined">event_note</span>
-                    <span>Add itinerary</span>
+                    <span>{{ isAlreadySaved(place) ? 'Add saved place to itinerary' : 'Add to itinerary' }}</span>
                   </button>
                 </div>
               </div>
 
               <label
-                *ngIf="effectiveCanEdit && activeTripId > 0 && isSelected(place)"
+                *ngIf="effectiveCanEdit && activeTripId > 0"
                 class="day-picker"
               >
-                <span>Add to itinerary</span>
+                <span>Visit on</span>
                 <select
                   [ngModel]="dayAssignments[place.externalId] || 1"
                   (ngModelChange)="setDayAssignment(place, $event)"
@@ -487,8 +477,9 @@ import { TripService } from '../../core/services/trip.service';
               <a *ngIf="place.sourceUrl" class="btn secondary" [href]="place.sourceUrl" target="_blank" rel="noopener noreferrer">View source ↗</a>
               <a *ngIf="place.bookingUrl" class="btn secondary" [href]="place.bookingUrl" target="_blank" rel="noopener noreferrer">Book with provider ↗</a>
               <button type="button" class="btn primary" (click)="openMapRoute(place)">Open map route ↗</button>
-              <button *ngIf="canSelectPlaces && !isAlreadySaved(place)" type="button" class="btn primary" (click)="addPlace(place)">Add to Trip</button>
-              <button *ngIf="canSelectPlaces" type="button" class="btn primary" (click)="addPlaceToItinerary(place)">Add to Itinerary</button>
+              <button *ngIf="canSelectPlaces" type="button" class="btn primary" (click)="addPlaceToItinerary(place)">
+                {{ isAlreadySaved(place) ? 'Add Saved Place to Itinerary' : 'Save & Add to Itinerary' }}
+              </button>
             </div>
           </div>
         </article>
@@ -618,6 +609,7 @@ import { TripService } from '../../core/services/trip.service';
     .secondary-action:hover { border-color:#60a5fa; background:#dbeafe; }
     .primary-action { border:1px solid #2563eb; color:#fff; background:#2563eb; box-shadow:0 3px 8px rgba(37,99,235,.18); }
     .primary-action:hover:not(:disabled) { border-color:#1d4ed8; background:#1d4ed8; }
+    .trip-actions .full-action { grid-column:1/-1; }
     .card-action:focus-visible,.provider-action:focus-visible { outline:3px solid rgba(59,130,246,.25); outline-offset:2px; }
     .card-action:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; }
     .provider-action { display:inline-flex; align-items:center; gap:.25rem; color:#2563eb; text-decoration:none; font-size:.63rem; font-weight:800; }
@@ -958,7 +950,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     });
   }
 
-  selectTrip(value: number | string): void {
+  async selectTrip(value: number | string): Promise<void> {
     const tripId = Number(value);
     this.activeTripId = Number.isFinite(tripId) ? tripId : 0;
     const trip = this.selectedTrip;
@@ -968,16 +960,24 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     if (trip) {
       this.activeStartDate = trip.startDate;
       this.activeEndDate = trip.endDate;
-      void this.loadSavedPlaces();
+      await this.loadSavedPlaces();
     } else {
       this.savedPlaces = [];
       this.activeStartDate = '';
       this.activeEndDate = '';
     }
 
-    // Keep selected tourist places when the user chooses/switches the save target.
-    // Day assignments are reset because trip duration may differ.
-    this.dayAssignments = {};
+    // Keep selected places and automatically add them after an editable trip is chosen.
+    const maximumDay = Math.max(1, this.availableDayNumbers.length);
+    for (const externalId of this.selectedIds) {
+      this.dayAssignments[externalId] = Math.min(
+        maximumDay,
+        Math.max(1, this.dayAssignments[externalId] || 1)
+      );
+    }
+    if (this.selectedIds.size > 0 && this.activeTripId > 0 && this.effectiveCanEdit) {
+      await this.saveSelected(true);
+    }
   }
 
   useTripDestination(trip: Trip): void {
@@ -1043,9 +1043,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleSelection(place: DiscoveredPlace): void {
-    if (this.isAlreadySaved(place)) return;
-
+  async toggleSelection(place: DiscoveredPlace): Promise<void> {
     if (this.selectedIds.has(place.externalId)) {
       this.selectedIds.delete(place.externalId);
       delete this.dayAssignments[place.externalId];
@@ -1054,6 +1052,14 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
     this.selectedIds.add(place.externalId);
     this.dayAssignments[place.externalId] = this.dayAssignments[place.externalId] || 1;
+
+    if (this.activeTripId > 0 && this.effectiveCanEdit) {
+      await this.saveSelected(true);
+      return;
+    }
+
+    this.successMessage = 'Place selected. Choose an editable trip to add it automatically to the itinerary.';
+    this.errorMessage = '';
   }
 
   isSelected(place: DiscoveredPlace): boolean {
@@ -1077,9 +1083,36 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       }
     }
 
-    const selected = this.selectedPlaces().sort((a, b) => a.distanceKm - b.distanceKm);
-    selected.forEach((place, index) => {
-      this.dayAssignments[place.externalId] = (index % days) + 1;
+    const remaining = [...this.selectedPlaces()];
+    const routeOrdered: DiscoveredPlace[] = [];
+    let current = {
+      latitude: Number(this.result?.latitude ?? remaining[0]?.latitude ?? 0),
+      longitude: Number(this.result?.longitude ?? remaining[0]?.longitude ?? 0)
+    };
+
+    while (remaining.length) {
+      let nearestIndex = 0;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+      remaining.forEach((place, index) => {
+        const distance = this.coordinateDistanceKm(
+          current.latitude,
+          current.longitude,
+          place.latitude,
+          place.longitude
+        );
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestIndex = index;
+        }
+      });
+      const [nearest] = remaining.splice(nearestIndex, 1);
+      routeOrdered.push(nearest);
+      current = { latitude: nearest.latitude, longitude: nearest.longitude };
+    }
+
+    const placesPerDay = Math.max(1, Math.ceil(routeOrdered.length / days));
+    routeOrdered.forEach((place, index) => {
+      this.dayAssignments[place.externalId] = Math.min(days, Math.floor(index / placesPerDay) + 1);
     });
 
     this.successMessage = `Suggested ${days}-day plan prepared. Review the day assignments, then save it.`;
@@ -1257,6 +1290,83 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
       day.items.push({ placeId: saved.id });
     }
+
+    await this.optimizeItineraryByDistance();
+  }
+
+  private async optimizeItineraryByDistance(): Promise<void> {
+    const itinerary = await firstValueFrom(this.itineraryService.getItinerary(this.activeTripId));
+    const stay = this.savedPlaces.find((place) =>
+      place.category === 'HOTEL' && place.latitude != null && place.longitude != null
+    );
+    const fallback = this.result
+      ? { latitude: Number(this.result.latitude), longitude: Number(this.result.longitude) }
+      : null;
+    const start = stay
+      ? { latitude: Number(stay.latitude), longitude: Number(stay.longitude) }
+      : fallback;
+    if (!start) return;
+
+    const placeById = new Map(this.savedPlaces.map((place) => [place.id, place]));
+    const orders: Array<{ itemId: number; displayOrder: number }> = [];
+
+    for (const day of itinerary.days ?? []) {
+      const remaining = [...(day.items ?? [])].filter((item) => {
+        const place = item.placeId ? placeById.get(item.placeId) : undefined;
+        return place?.latitude != null && place?.longitude != null;
+      });
+      const unmapped = [...(day.items ?? [])].filter((item) => !remaining.includes(item));
+      const ordered = [];
+      let current = start;
+
+      while (remaining.length) {
+        let nearestIndex = 0;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+        remaining.forEach((item, index) => {
+          const place = placeById.get(item.placeId!);
+          if (!place) return;
+          const distance = this.coordinateDistanceKm(
+            current.latitude,
+            current.longitude,
+            Number(place.latitude),
+            Number(place.longitude)
+          );
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestIndex = index;
+          }
+        });
+        const [nearest] = remaining.splice(nearestIndex, 1);
+        ordered.push(nearest);
+        const place = placeById.get(nearest.placeId!);
+        if (place) {
+          current = { latitude: Number(place.latitude), longitude: Number(place.longitude) };
+        }
+      }
+
+      [...ordered, ...unmapped].forEach((item, index) => {
+        orders.push({ itemId: item.id, displayOrder: index + 1 });
+      });
+    }
+
+    if (orders.length) {
+      await firstValueFrom(this.itineraryService.reorder(this.activeTripId, { items: orders }));
+    }
+  }
+
+  private coordinateDistanceKm(
+    fromLatitude: number,
+    fromLongitude: number,
+    toLatitude: number,
+    toLongitude: number
+  ): number {
+    const toRadians = (value: number) => value * Math.PI / 180;
+    const latitudeDelta = toRadians(toLatitude - fromLatitude);
+    const longitudeDelta = toRadians(toLongitude - fromLongitude);
+    const calculation = Math.sin(latitudeDelta / 2) ** 2
+      + Math.cos(toRadians(fromLatitude)) * Math.cos(toRadians(toLatitude))
+      * Math.sin(longitudeDelta / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(calculation), Math.sqrt(1 - calculation));
   }
 
   private dateForDay(dayNumber: number): string {

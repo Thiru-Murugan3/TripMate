@@ -22,7 +22,7 @@ public class ItineraryItem {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "day_id", nullable = false)
+    @JoinColumn(name = "itinerary_day_id", nullable = false)
     private ItineraryDay itineraryDay;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
