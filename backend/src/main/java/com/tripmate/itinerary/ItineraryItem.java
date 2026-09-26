@@ -36,6 +36,13 @@ public class ItineraryItem {
     @Column(nullable = false, length = 180)
     private String title;
 
+    /**
+     * Compatibility column used by the original TripMate TiDB schema.
+     * Keep it synchronized with title until every installation has migrated.
+     */
+    @Column(name = "activity", nullable = false, length = 180)
+    private String legacyActivity;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -55,4 +62,10 @@ public class ItineraryItem {
     @Column(name = "display_order", nullable = false)
     @Builder.Default
     private Integer displayOrder = 0;
+
+    @PrePersist
+    @PreUpdate
+    private void synchronizeLegacyActivity() {
+        legacyActivity = title;
+    }
 }
