@@ -25,6 +25,9 @@ export interface Booking {
   bookingReference?: string;
   departure?: string;
   arrival?: string;
+  passengerDetails?: string;
+  pickupPoint?: string;
+  dropPoint?: string;
   startDatetime?: string;
   endDatetime?: string;
   amount: number;
@@ -49,6 +52,9 @@ export interface CreateBookingRequest {
   bookingReference?: string;
   departure?: string;
   arrival?: string;
+  passengerDetails?: string;
+  pickupPoint?: string;
+  dropPoint?: string;
   startDatetime?: string;
   endDatetime?: string;
   amount: number;
@@ -63,6 +69,9 @@ export interface UpdateBookingRequest {
   bookingReference?: string;
   departure?: string;
   arrival?: string;
+  passengerDetails?: string;
+  pickupPoint?: string;
+  dropPoint?: string;
   startDatetime?: string;
   endDatetime?: string;
   amount: number;
@@ -135,6 +144,9 @@ export interface BookingImportDraft {
   bookingReference?: string;
   departure?: string;
   arrival?: string;
+  passengerDetails?: string;
+  pickupPoint?: string;
+  dropPoint?: string;
   startDatetime?: string;
   endDatetime?: string;
   amount: number;

@@ -64,6 +64,9 @@ public class BookingService {
                 .bookingReference(request.bookingReference() != null ? request.bookingReference().trim() : null)
                 .departure(request.departure() != null ? request.departure().trim() : null)
                 .arrival(request.arrival() != null ? request.arrival().trim() : null)
+                .passengerDetails(trimToNull(request.passengerDetails()))
+                .pickupPoint(trimToNull(request.pickupPoint()))
+                .dropPoint(trimToNull(request.dropPoint()))
                 .startDatetime(request.startDatetime())
                 .endDatetime(request.endDatetime())
                 .amount(request.amount() != null ? request.amount() : BigDecimal.ZERO)
@@ -98,6 +101,9 @@ public class BookingService {
         booking.setBookingReference(request.bookingReference() != null ? request.bookingReference().trim() : null);
         booking.setDeparture(request.departure() != null ? request.departure().trim() : null);
         booking.setArrival(request.arrival() != null ? request.arrival().trim() : null);
+        booking.setPassengerDetails(trimToNull(request.passengerDetails()));
+        booking.setPickupPoint(trimToNull(request.pickupPoint()));
+        booking.setDropPoint(trimToNull(request.dropPoint()));
         booking.setStartDatetime(request.startDatetime());
         booking.setEndDatetime(request.endDatetime());
         booking.setAmount(request.amount() != null ? request.amount() : BigDecimal.ZERO);
@@ -108,6 +114,11 @@ public class BookingService {
 
         Booking updated = bookingRepository.save(booking);
         return BookingResponse.from(updated);
+    }
+
+    private String trimToNull(String value) {
+        if (value == null || value.isBlank()) return null;
+        return value.trim();
     }
 
     @Transactional

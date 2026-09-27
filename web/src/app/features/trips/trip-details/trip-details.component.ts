@@ -494,6 +494,18 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
                   <strong>Reference:</strong> {{ booking.bookingReference }}
                 </div>
 
+                <div *ngIf="booking.passengerDetails">
+                  <strong>Passengers:</strong> {{ booking.passengerDetails }}
+                </div>
+
+                <div *ngIf="booking.pickupPoint">
+                  <strong>Pickup:</strong> {{ booking.pickupPoint }}
+                </div>
+
+                <div *ngIf="booking.dropPoint">
+                  <strong>Drop:</strong> {{ booking.dropPoint }}
+                </div>
+
                 <div class="times" *ngIf="booking.startDatetime || booking.endDatetime">
                   <span class="material-symbols-outlined">schedule</span>
                   {{ formatDatetime(booking.startDatetime) }}
@@ -957,13 +969,30 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
               </div>
 
               <div class="form-row">
-                <div class="form-group half">
+                <div class="form-group">
                   <label class="form-label">Start Date/Time</label>
                   <input type="datetime-local" class="form-control" formControlName="startDatetime" />
                 </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Passenger Details</label>
+                <textarea
+                  class="form-control"
+                  rows="2"
+                  formControlName="passengerDetails"
+                  placeholder="Passenger names, seat numbers and traveller details"
+                ></textarea>
+              </div>
+
+              <div class="form-row" *ngIf="bookingForm.get('bookingType')?.value === 'TRANSPORT'">
                 <div class="form-group half">
-                  <label class="form-label">End Date/Time</label>
-                  <input type="datetime-local" class="form-control" formControlName="endDatetime" />
+                  <label class="form-label">Pickup Point</label>
+                  <input type="text" class="form-control" formControlName="pickupPoint" placeholder="Boarding or pickup location" />
+                </div>
+                <div class="form-group half">
+                  <label class="form-label">Drop Point</label>
+                  <input type="text" class="form-control" formControlName="dropPoint" placeholder="Drop-off location" />
                 </div>
               </div>
 
@@ -2693,8 +2722,10 @@ export class TripDetailsComponent implements OnInit {
     bookingReference: [''],
     departure: [''],
     arrival: [''],
+    passengerDetails: [''],
+    pickupPoint: [''],
+    dropPoint: [''],
     startDatetime: [''],
-    endDatetime: [''],
     amount: [0, [Validators.required, Validators.min(0)]],
     notes: ['']
   });
@@ -3388,8 +3419,10 @@ export class TripDetailsComponent implements OnInit {
           bookingReference: draft.bookingReference || '',
           departure: draft.departure || '',
           arrival: draft.arrival || '',
+          passengerDetails: draft.passengerDetails || '',
+          pickupPoint: draft.pickupPoint || '',
+          dropPoint: draft.dropPoint || '',
           startDatetime: this.toDatetimeLocal(draft.startDatetime),
-          endDatetime: this.toDatetimeLocal(draft.endDatetime),
           amount: draft.amount || 0,
           notes: draft.warnings.length
             ? `OCR review: ${draft.warnings.join(' ')}`
@@ -3438,8 +3471,12 @@ export class TripDetailsComponent implements OnInit {
         value.bookingType === 'TRANSPORT' ? value.departure || undefined : undefined,
       arrival:
         value.bookingType === 'TRANSPORT' ? value.arrival || undefined : undefined,
+      passengerDetails: value.passengerDetails || undefined,
+      pickupPoint:
+        value.bookingType === 'TRANSPORT' ? value.pickupPoint || undefined : undefined,
+      dropPoint:
+        value.bookingType === 'TRANSPORT' ? value.dropPoint || undefined : undefined,
       startDatetime: value.startDatetime || undefined,
-      endDatetime: value.endDatetime || undefined,
       amount: value.amount!,
       status: 'CONFIRMED',
       notes: value.notes || undefined
