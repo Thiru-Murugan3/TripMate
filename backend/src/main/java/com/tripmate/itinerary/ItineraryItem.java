@@ -25,6 +25,14 @@ public class ItineraryItem {
     @JoinColumn(name = "itinerary_day_id", nullable = false)
     private ItineraryDay itineraryDay;
 
+    /**
+     * Compatibility column used by databases created from the original V1
+     * schema. Write both day columns until all deployed databases have run the
+     * compatibility migration.
+     */
+    @Column(name = "day_id")
+    private Long legacyDayId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "trip_id", nullable = false)
     private Trip trip;
@@ -65,7 +73,8 @@ public class ItineraryItem {
 
     @PrePersist
     @PreUpdate
-    private void synchronizeLegacyActivity() {
+    private void synchronizeLegacyColumns() {
         legacyActivity = title;
+        legacyDayId = itineraryDay != null ? itineraryDay.getId() : null;
     }
 }
