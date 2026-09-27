@@ -42,7 +42,8 @@ public class BookingImportService {
     private static final Pattern FROM = Pattern.compile("(?im)^\\s*From\\s*:\\s*([A-Za-z][A-Za-z .'-]{1,60}?)(?=\\s{2,}|$)");
     private static final Pattern TO = Pattern.compile("(?im)^\\s*To\\s*:\\s*([A-Za-z][A-Za-z .'-]{1,60}?)(?=\\s{2,}|$)");
     private static final Pattern BUS_OPERATOR = Pattern.compile("(?im)Bus\\s+Operator\\s*:\\s*([A-Za-z0-9][A-Za-z0-9 &.'-]{1,80}?)(?=\\s{2,}|$)");
-    private static final Pattern BOARDING_DATE_TIME = Pattern.compile("(?is)Boarding\\s+Date(?:\\s+and\\s+Time)?\\s*:\\s*.{0,100}?(\\d{1,2}[./-](?:[A-Za-z]{3,9}|\\d{1,2})[./-]\\d{2,4}).{0,80}?(\\d{1,2}[:.]\\d{2})(?:\\s*(AM|PM))?");
+    private static final Pattern BOARDING_DATE = Pattern.compile("(?is)Boarding\\s+Date(?:\\s+and\\s+Time)?\\s*:\\s*.{0,100}?(\\d{1,2}[./-](?:[A-Za-z]{3,9}|\\d{1,2})[./-]\\d{2,4})");
+    private static final Pattern CLOCK_TIME = Pattern.compile("(?i)\\b(\\d{1,2}[:.]\\d{2})(?:\\s*(AM|PM))?\\b");
     private static final String MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
     private static final Pattern DATE = Pattern.compile(
             "(?i)\\b(" +
@@ -173,10 +174,12 @@ public class BookingImportService {
     }
 
     private LocalDateTime labelledStart(String text, int defaultYear) {
-        Matcher matcher = BOARDING_DATE_TIME.matcher(text);
-        if (!matcher.find()) return null;
-        LocalDate date = parseDate(matcher.group(1), defaultYear);
-        LocalTime time = parseTime(matcher.group(2), matcher.group(3));
+        Matcher dateMatcher = BOARDING_DATE.matcher(text);
+        if (!dateMatcher.find()) return null;
+        LocalDate date = parseDate(dateMatcher.group(1), defaultYear);
+        int windowEnd = Math.min(text.length(), dateMatcher.end() + 160);
+        Matcher timeMatcher = CLOCK_TIME.matcher(text.substring(dateMatcher.end(), windowEnd));
+        LocalTime time = timeMatcher.find() ? parseTime(timeMatcher.group(1), timeMatcher.group(2)) : null;
         return date == null ? null : LocalDateTime.of(date, time == null ? LocalTime.NOON : time);
     }
 
