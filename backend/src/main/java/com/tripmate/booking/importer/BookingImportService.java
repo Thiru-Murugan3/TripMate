@@ -74,12 +74,18 @@ public class BookingImportService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to import bookings");
         }
         validate(file);
-        if (apiKey == null || apiKey.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "Booking OCR is not configured. Set OCR_SPACE_API_KEY on the backend service.");
-        }
 
         try {
+            String embeddedPdfText = embeddedPdfText(file);
+            if (embeddedPdfText != null && !embeddedPdfText.isBlank()) {
+                return extract(embeddedPdfText, trip.startDate().getYear());
+            }
+
+            if (apiKey == null || apiKey.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                        "Booking OCR is not configured. Set OCR_SPACE_API_KEY on the backend service.");
+            }
+
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("apikey", apiKey);
             body.add("language", "eng");
@@ -102,10 +108,6 @@ public class BookingImportService {
                 text.append(page.path("ParsedText").asText(""));
             }
             String extractedText = text.toString();
-            String embeddedPdfText = embeddedPdfText(file);
-            if (embeddedPdfText != null && !embeddedPdfText.isBlank()) {
-                extractedText = extractedText + "\n" + embeddedPdfText;
-            }
             if (extractedText.isBlank()) {
                 throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                         "No readable booking text was found in this file.");
