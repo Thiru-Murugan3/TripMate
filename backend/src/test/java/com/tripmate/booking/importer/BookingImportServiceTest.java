@@ -25,12 +25,18 @@ class BookingImportServiceTest {
         String text = """
                 Board the bus with mobile e-ticket
                 Booking Details
-                From: Chennai                        Bus Operator: Viyan Transport
+                From:
+
+                Chennai
+                Bus Operator: Viyan Transport
                 Ticket Number: VYTA-AP-7699997482 (Operator PNR: ABPDS8RG)
-                To: Erode                            Bus Type: A/c-sleeper
+                To:
+
+                Erode
+                Bus Type: A/c-sleeper
                 MakeMyTrip Bus ID: NU710891192291196
-                Boarding Date and Time: 24-Sep-2026
-                21:30
+                Boarding Date and        24-Sep-2026
+                Time:                    21:30
                 Passengers: 1                       Total Fare:
                 735.0
                 Passenger Details
