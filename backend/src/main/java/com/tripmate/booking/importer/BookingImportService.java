@@ -43,8 +43,8 @@ public class BookingImportService {
     private static final Pattern TO = Pattern.compile("(?im)^\\s*To\\s*:\\s*([A-Za-z][A-Za-z .'-]{1,60}?)(?=\\s{2,}|$)");
     private static final Pattern BUS_OPERATOR = Pattern.compile("(?im)Bus\\s+Operator\\s*:\\s*([A-Za-z0-9][A-Za-z0-9 &.'-]{1,80}?)(?=\\s{2,}|$)");
     private static final Pattern PASSENGER_DETAILS = Pattern.compile("(?im)^\\s*Passenger\\s+Details\\s*:?\\s*(?:\\d+\\s+)?((?:Mr|Ms|Mrs)\\.?\\s+[^\\r\\n]{2,160})$");
-    private static final Pattern PICKUP_POINT = Pattern.compile("(?im)^\\s*(?:Boarding|Pickup|Pick-up)\\s+Point\\s*:\\s*([^\\r\\n]{2,255})$");
-    private static final Pattern DROP_POINT = Pattern.compile("(?im)^\\s*(?:Drop|Dropping|Drop-off)\\s+Point\\s*:\\s*([^\\r\\n]{2,255})$");
+    private static final Pattern PASSENGER_TABLE_ROW = Pattern.compile(
+            "(?is)Passenger\\s+Details.{0,600}?\\b(?:\\d+\\s+)?((?:Mr|Ms|Mrs)\\.?\\s+[A-Za-z][A-Za-z .'-]{1,80}?)\\s+([A-Z]\\d{1,3})\\s+(Sleeper|Seater|Semi[- ]?Sleeper|Window|Aisle)\\b");
     private static final Pattern BOARDING_DATE = Pattern.compile("(?is)Boarding\\s+Date(?:\\s+and\\s+Time)?\\s*:\\s*.{0,100}?(\\d{1,2}[./-](?:[A-Za-z]{3,9}|\\d{1,2})[./-]\\d{2,4})");
     private static final Pattern CLOCK_TIME = Pattern.compile("(?i)\\b(\\d{1,2}[:.]\\d{2})(?:\\s*(AM|PM))?\\b");
     private static final String MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
@@ -123,9 +123,9 @@ public class BookingImportService {
         if (reference == null) reference = group(REFERENCE, text, 1);
         String departure = group(FROM, text, 1);
         String arrival = group(TO, text, 1);
-        String passengerDetails = group(PASSENGER_DETAILS, text, 1);
-        String pickupPoint = group(PICKUP_POINT, text, 1);
-        String dropPoint = group(DROP_POINT, text, 1);
+        String passengerDetails = passengerDetails(text);
+        String pickupPoint = labelledPoint(text, "(?:Boarding|Pickup|Pick-up)\\s+Point");
+        String dropPoint = labelledPoint(text, "(?:Drop|Dropping|Drop-off)\\s+Point");
         Matcher amountMatcher = AMOUNT.matcher(text);
         BigDecimal amount = amountMatcher.find()
                 ? new BigDecimal(amountMatcher.group(1).replace(",", "")) : BigDecimal.ZERO;
@@ -222,6 +222,34 @@ public class BookingImportService {
     private String group(Pattern pattern, String text, int index) {
         Matcher matcher = pattern.matcher(text);
         return matcher.find() ? clean(matcher.group(index)) : null;
+    }
+
+    private String passengerDetails(String text) {
+        String inline = group(PASSENGER_DETAILS, text, 1);
+        if (inline != null) return inline;
+
+        Matcher row = PASSENGER_TABLE_ROW.matcher(text);
+        if (!row.find()) return null;
+        return clean(row.group(1)) + " | Seat " + clean(row.group(2)) + " | " + clean(row.group(3));
+    }
+
+    private String labelledPoint(String text, String labelExpression) {
+        Pattern sameLine = Pattern.compile("(?im)^\\s*" + labelExpression
+                + "[ \\t]*:?[ \\t]+([^\\r\\n]{2,255})$");
+        String value = group(sameLine, text, 1);
+        if (isPointValue(value)) return value;
+
+        Pattern followingLine = Pattern.compile("(?im)^\\s*" + labelExpression
+                + "[ \\t]*:?[ \\t]*$\\R(?:[ \\t]*\\R)*[ \\t]*([^\\r\\n]{2,255})$");
+        value = group(followingLine, text, 1);
+        return isPointValue(value) ? value : null;
+    }
+
+    private boolean isPointValue(String value) {
+        if (value == null) return false;
+        String lower = value.toLowerCase(Locale.ROOT);
+        return !(lower.startsWith("address") || lower.startsWith("landmark")
+                || lower.startsWith("drop point") || lower.startsWith("boarding point"));
     }
 
     private String clean(String value) {
