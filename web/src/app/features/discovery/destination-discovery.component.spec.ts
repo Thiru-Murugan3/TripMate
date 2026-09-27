@@ -217,7 +217,7 @@ describe('DestinationDiscoveryComponent', () => {
     expect(component.isSelected(discoveredPlace)).toBeTrue();
   });
 
-  it('saves selected casual-search places after an editable trip is chosen', async () => {
+  it('automatically saves selected casual-search places after an editable trip is chosen', async () => {
     const { placeService } = configure();
 
     const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
@@ -229,8 +229,6 @@ describe('DestinationDiscoveryComponent', () => {
     component.selectTrip(plannedTrip.id);
     await fixture.whenStable();
 
-    await component.saveSelected(false);
-
     expect(placeService.createPlace).toHaveBeenCalledWith(
       plannedTrip.id,
       jasmine.objectContaining({
@@ -241,7 +239,7 @@ describe('DestinationDiscoveryComponent', () => {
       })
     );
     expect(component.selectedCount).toBe(0);
-    expect(component.successMessage).toContain('saved to this trip');
+    expect(component.successMessage).toContain('saved and added to the itinerary');
   });
 
   it('adds a single card directly when an editable trip is already selected', async () => {

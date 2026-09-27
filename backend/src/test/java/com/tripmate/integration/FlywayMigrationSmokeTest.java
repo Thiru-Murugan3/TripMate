@@ -15,19 +15,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class FlywayMigrationSmokeTest {
 
     @Test
-    void allMigrationsApplyToMysqlAndLeaveCompatibilityColumnsWritable() throws Exception {
+    void allMigrationsApplyToTidbAndLeaveCompatibilityColumnsWritable() throws Exception {
         String url = System.getenv("MIGRATION_TEST_DB_URL");
         String username = System.getenv("MIGRATION_TEST_DB_USERNAME");
         String password = System.getenv("MIGRATION_TEST_DB_PASSWORD");
-        Assumptions.assumeTrue(url != null && !url.isBlank(), "MySQL migration smoke test runs in CI");
+        Assumptions.assumeTrue(url != null && !url.isBlank(), "TiDB migration smoke test runs in CI");
 
         Flyway flyway = Flyway.configure()
                 .dataSource(url, username, password)
                 .locations("classpath:db/migration")
-                .cleanDisabled(false)
                 .load();
 
-        flyway.clean();
         assertTrue(flyway.migrate().migrationsExecuted >= 12);
         flyway.validate();
 
