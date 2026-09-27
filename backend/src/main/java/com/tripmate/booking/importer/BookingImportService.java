@@ -36,9 +36,13 @@ import java.util.regex.Pattern;
 public class BookingImportService {
 
     private static final long MAX_BYTES = 10 * 1024 * 1024;
-    private static final Pattern REFERENCE = Pattern.compile("(?im)(?:PNR|booking(?:\\s+(?:reference|ref|id))?|confirmation(?:\\s+(?:number|no))?|reservation(?:\\s+(?:id|no))?)\\s*[:#-]?\\s*([A-Z0-9-]{5,18})");
-    private static final Pattern AMOUNT = Pattern.compile("(?i)(?:total|amount(?: paid)?|fare)\\s*[:₹$ ]*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)");
-    private static final Pattern ROUTE = Pattern.compile("(?im)(?:from|departure)\\s*[: -]\\s*([^\\n\\r]{2,80}).*?(?:to|arrival|destination)\\s*[: -]\\s*([^\\n\\r]{2,80})");
+    private static final Pattern REFERENCE = Pattern.compile("(?im)(?:operator\\s+PNR|PNR|booking\\s+(?:reference|ref|id)|confirmation\\s+(?:number|no)|reservation\\s+(?:id|no)|ticket\\s+number)\\s*[:#-]?\\s*([A-Z0-9][A-Z0-9-]{4,24})");
+    private static final Pattern OPERATOR_PNR = Pattern.compile("(?im)Operator\\s+PNR\\s*[:#-]?\\s*([A-Z0-9][A-Z0-9-]{4,24})");
+    private static final Pattern AMOUNT = Pattern.compile("(?i)(?:total\\s+fare|total\\s+amount|amount(?:\\s+paid)?|fare)\\s*[:₹$Rs. ]*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)");
+    private static final Pattern FROM = Pattern.compile("(?im)^\\s*From\\s*:\\s*([A-Za-z][A-Za-z .'-]{1,60}?)(?=\\s{2,}|$)");
+    private static final Pattern TO = Pattern.compile("(?im)^\\s*To\\s*:\\s*([A-Za-z][A-Za-z .'-]{1,60}?)(?=\\s{2,}|$)");
+    private static final Pattern BUS_OPERATOR = Pattern.compile("(?im)Bus\\s+Operator\\s*:\\s*([A-Za-z0-9][A-Za-z0-9 &.'-]{1,80}?)(?=\\s{2,}|$)");
+    private static final Pattern BOARDING_DATE_TIME = Pattern.compile("(?is)Boarding\\s+Date(?:\\s+and\\s+Time)?\\s*:\\s*.{0,100}?(\\d{1,2}[./-](?:[A-Za-z]{3,9}|\\d{1,2})[./-]\\d{2,4}).{0,80}?(\\d{1,2}[:.]\\d{2})(?:\\s*(AM|PM))?");
     private static final String MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
     private static final Pattern DATE = Pattern.compile(
             "(?i)\\b(" +
@@ -111,16 +115,18 @@ public class BookingImportService {
                 ? BookingType.TRANSPORT
                 : lower.matches("(?s).*(hotel|check-in|check in|room|accommodation).*" ) ? BookingType.HOTEL : BookingType.ACTIVITY;
         TransportType transport = type == BookingType.TRANSPORT ? transportType(lower) : null;
-        String reference = group(REFERENCE, text, 1);
-        Matcher route = ROUTE.matcher(text);
-        boolean routeFound = route.find();
-        String departure = routeFound ? clean(route.group(1)) : null;
-        String arrival = routeFound ? clean(route.group(2)) : null;
+        String reference = group(OPERATOR_PNR, text, 1);
+        if (reference == null) reference = group(REFERENCE, text, 1);
+        String departure = group(FROM, text, 1);
+        String arrival = group(TO, text, 1);
         Matcher amountMatcher = AMOUNT.matcher(text);
         BigDecimal amount = amountMatcher.find()
                 ? new BigDecimal(amountMatcher.group(1).replace(",", "")) : BigDecimal.ZERO;
         List<LocalDateTime> dates = dates(text, defaultYear);
-        String provider = provider(text, type);
+        LocalDateTime labelledStart = labelledStart(text, defaultYear);
+        if (labelledStart != null) dates = List.of(labelledStart);
+        String provider = group(BUS_OPERATOR, text, 1);
+        if (provider == null) provider = provider(text, type);
         List<String> warnings = new ArrayList<>();
         if (provider == null) warnings.add("Provider name was not confidently detected.");
         if (reference == null) warnings.add("Booking reference or PNR was not detected.");
@@ -164,6 +170,14 @@ public class BookingImportService {
             values.add(LocalDateTime.of(date, time == null ? LocalTime.NOON : time));
         }
         return values;
+    }
+
+    private LocalDateTime labelledStart(String text, int defaultYear) {
+        Matcher matcher = BOARDING_DATE_TIME.matcher(text);
+        if (!matcher.find()) return null;
+        LocalDate date = parseDate(matcher.group(1), defaultYear);
+        LocalTime time = parseTime(matcher.group(2), matcher.group(3));
+        return date == null ? null : LocalDateTime.of(date, time == null ? LocalTime.NOON : time);
     }
 
     private LocalDate parseDate(String value, int defaultYear) {
