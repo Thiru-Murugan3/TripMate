@@ -38,7 +38,7 @@ public class BookingImportService {
     private static final long MAX_BYTES = 10 * 1024 * 1024;
     private static final Pattern REFERENCE = Pattern.compile("(?im)(?:operator\\s+PNR|PNR|booking\\s+(?:reference|ref|id)|confirmation\\s+(?:number|no)|reservation\\s+(?:id|no)|ticket\\s+number)\\s*[:#-]?\\s*([A-Z0-9][A-Z0-9-]{4,24})");
     private static final Pattern OPERATOR_PNR = Pattern.compile("(?im)Operator\\s+PNR\\s*[:#-]?\\s*([A-Z0-9][A-Z0-9-]{4,24})");
-    private static final Pattern AMOUNT = Pattern.compile("(?i)(?:total\\s+fare|total\\s+amount|amount(?:\\s+paid)?|fare)\\s*[:₹$Rs. ]*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)");
+    private static final Pattern AMOUNT = Pattern.compile("(?i)(?:total\\s+fare|total\\s+amount|amount(?:\\s+paid)?|fare)\\s*[:=-]?\\s*(?:₹|Rs\\.?|INR|\\$)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)");
     private static final Pattern FROM = Pattern.compile("(?im)^\\s*From\\s*:\\s*([A-Za-z][A-Za-z .'-]{1,60}?)(?=\\s{2,}|$)");
     private static final Pattern TO = Pattern.compile("(?im)^\\s*To\\s*:\\s*([A-Za-z][A-Za-z .'-]{1,60}?)(?=\\s{2,}|$)");
     private static final Pattern BUS_OPERATOR = Pattern.compile("(?im)Bus\\s+Operator\\s*:\\s*([A-Za-z0-9][A-Za-z0-9 &.'-]{1,80}?)(?=\\s{2,}|$)");
@@ -132,6 +132,7 @@ public class BookingImportService {
         if (provider == null) warnings.add("Provider name was not confidently detected.");
         if (reference == null) warnings.add("Booking reference or PNR was not detected.");
         if (dates.isEmpty()) warnings.add("Travel/check-in date was not detected.");
+        if (amount.compareTo(BigDecimal.ZERO) == 0) warnings.add("Fare or booking amount was not detected.");
         if (type == BookingType.TRANSPORT && (departure == null || arrival == null))
             warnings.add("Review the departure and arrival locations.");
         int detected = 5 - warnings.size();

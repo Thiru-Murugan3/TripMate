@@ -31,7 +31,8 @@ class BookingImportServiceTest {
                 MakeMyTrip Bus ID: NU710891192291196
                 Boarding Date and Time: 24-Sep-2026
                 21:30
-                Passengers: 1                       Total Fare: 735.0
+                Passengers: 1                       Total Fare:
+                735.0
                 Passenger Details Ms. Amaravathi Seat L2
                 The departure and arrival timings mentioned on the e-ticket are only tentative timings.
                 Till 09:00 AM on 24 Sep Rs. 70.0
