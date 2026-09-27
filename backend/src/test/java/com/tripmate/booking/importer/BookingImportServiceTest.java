@@ -35,8 +35,12 @@ class BookingImportServiceTest {
                 735.0
                 Passenger Details
                 S.No Name Seat Seat Type
-                1 Ms. Amaravathi L2 Sleeper
+                1
+                Ms. Amaravathi
+                L2
+                Sleeper
                 Boarding Point:
+
                 Sholinganallur
                 Drop Point: Erode Bus Stand
                 The departure and arrival timings mentioned on the e-ticket are only tentative timings.
