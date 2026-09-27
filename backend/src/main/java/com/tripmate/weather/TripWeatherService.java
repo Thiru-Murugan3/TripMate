@@ -25,10 +25,10 @@ public class TripWeatherService {
     private final RestClient restClient = RestClient.create();
     private final Clock clock = Clock.systemUTC();
 
-    @Value("${weather.geocoding-url}")
+    @Value("${weather.geocoding-url:https://geocoding-api.open-meteo.com/v1/search}")
     private String geocodingUrl;
 
-    @Value("${weather.forecast-url}")
+    @Value("${weather.forecast-url:https://api.open-meteo.com/v1/forecast}")
     private String forecastUrl;
 
     public TripWeatherResponse getForecast(Long tripId, Long userId) {
