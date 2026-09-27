@@ -48,7 +48,7 @@ public class BookingImportService {
     private static final Pattern PASSENGER_DETAILS = Pattern.compile("(?im)^\\s*Passenger\\s+Details\\s*:?\\s*(?:\\d+\\s+)?((?:Mr|Ms|Mrs)\\.?\\s+[^\\r\\n]{2,160})$");
     private static final Pattern PASSENGER_TABLE_ROW = Pattern.compile(
             "(?is)Passenger\\s+Details.{0,600}?\\b(?:\\d+\\s+)?((?:Mr|Ms|Mrs)\\.?\\s+[A-Za-z][A-Za-z .'-]{1,80}?)\\s+([A-Z]\\d{1,3})\\s+(Sleeper|Seater|Semi[- ]?Sleeper|Window|Aisle)\\b");
-    private static final Pattern BOARDING_DATE = Pattern.compile("(?is)Boarding\\s+Date(?:\\s+and\\s+Time)?\\s*:\\s*.{0,100}?(\\d{1,2}[./-](?:[A-Za-z]{3,9}|\\d{1,2})[./-]\\d{2,4})");
+    private static final Pattern BOARDING_DATE = Pattern.compile("(?is)Boarding\\s+Date(?:\\s+and(?:\\s+Time)?)?[ \\t]*:?\\s*.{0,180}?(\\d{1,2}[./-](?:[A-Za-z]{3,9}|\\d{1,2})[./-]\\d{2,4})");
     private static final Pattern CLOCK_TIME = Pattern.compile("(?i)\\b(\\d{1,2}[:.]\\d{2})(?:\\s*(AM|PM))?\\b");
     private static final String MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
     private static final Pattern DATE = Pattern.compile(
@@ -131,8 +131,8 @@ public class BookingImportService {
         TransportType transport = type == BookingType.TRANSPORT ? transportType(lower) : null;
         String reference = group(OPERATOR_PNR, text, 1);
         if (reference == null) reference = group(REFERENCE, text, 1);
-        String departure = group(FROM, text, 1);
-        String arrival = group(TO, text, 1);
+        String departure = labelledLocation(text, FROM, "From");
+        String arrival = labelledLocation(text, TO, "To");
         String passengerDetails = passengerDetails(text);
         String pickupPoint = labelledPoint(text, "(?:Boarding|Pickup|Pick-up)\\s+Point");
         String dropPoint = labelledPoint(text, "(?:Drop|Dropping|Drop-off)\\s+Point");
@@ -241,6 +241,15 @@ public class BookingImportService {
         Matcher row = PASSENGER_TABLE_ROW.matcher(text);
         if (!row.find()) return null;
         return clean(row.group(1)) + " | Seat " + clean(row.group(2)) + " | " + clean(row.group(3));
+    }
+
+    private String labelledLocation(String text, Pattern sameLinePattern, String label) {
+        String sameLine = group(sameLinePattern, text, 1);
+        if (sameLine != null) return sameLine;
+
+        Pattern followingLine = Pattern.compile("(?im)^\\s*" + Pattern.quote(label)
+                + "[ \\t]*:[ \\t]*$\\R(?:[ \\t]*\\R)*[ \\t]*([A-Za-z][A-Za-z .'-]{1,60})[ \\t]*$");
+        return group(followingLine, text, 1);
     }
 
     private String labelledPoint(String text, String labelExpression) {
