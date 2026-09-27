@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Trip, CreateTripRequest, UpdateTripRequest, TripDashboard } from '../models/trip.model';
+import { Trip, CreateTripRequest, UpdateTripRequest, TripDashboard, TripWeather } from '../models/trip.model';
 
 @Injectable({
   providedIn: 'root'
@@ -22,6 +22,18 @@ export class TripService {
 
   getTripDashboard(id: number): Observable<TripDashboard> {
     return this.http.get<TripDashboard>(`${this.apiUrl}/${id}/dashboard`);
+  }
+
+  getTripWeather(id: number): Observable<TripWeather> {
+    return this.http.get<TripWeather>(`${this.apiUrl}/${id}/weather`);
+  }
+
+  exportCalendar(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/calendar/export`, { responseType: 'blob' });
+  }
+
+  duplicateTrip(id: number, name: string, startDate: string): Observable<Trip> {
+    return this.http.post<Trip>(`${this.apiUrl}/${id}/duplicate`, { name, startDate });
   }
 
   createTrip(request: CreateTripRequest): Observable<Trip> {

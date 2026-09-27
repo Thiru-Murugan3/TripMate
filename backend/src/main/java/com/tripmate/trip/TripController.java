@@ -63,4 +63,14 @@ public class TripController {
 
         return ResponseEntity.ok(Map.of("message", "Trip deleted successfully"));
     }
+
+    @PostMapping("/{id}/duplicate")
+    public ResponseEntity<TripResponse> duplicateTrip(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody DuplicateTripRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(tripService.duplicateTrip(id, userPrincipal.getId(), request));
+    }
 }
