@@ -10,6 +10,7 @@ import {
   TripMember,
   TripRole,
   TripType,
+  TripWeather,
   UpdateTripRequest
 } from '../../../core/models/trip.model';
 import {
@@ -93,6 +94,14 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
             </div>
 
             <div class="trip-header-actions">
+              <button type="button" class="btn btn-outline" [disabled]="isDuplicatingTrip" (click)="duplicateCurrentTrip()">
+                <span class="material-symbols-outlined">content_copy</span>
+                {{ isDuplicatingTrip ? 'Copying...' : 'Duplicate' }}
+              </button>
+              <button type="button" class="btn btn-outline" [disabled]="isExportingCalendar" (click)="exportCalendar()">
+                <span class="material-symbols-outlined">calendar_add_on</span>
+                {{ isExportingCalendar ? 'Preparing...' : 'Add to Calendar' }}
+              </button>
               <button type="button" class="btn btn-outline" (click)="openShareTrip()">
                 <span class="material-symbols-outlined">group_add</span>
                 Share Trip
@@ -196,6 +205,42 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
                     </strong>
                   </article>
                 </div>
+
+                <article class="weather-card card">
+                  <div class="section-heading-row">
+                    <div>
+                      <h2>Trip Weather</h2>
+                      <p>{{ weather?.resolvedLocation || currentTrip.destination }}</p>
+                    </div>
+                    <button *ngIf="weatherError" type="button" class="mini-action" (click)="loadWeather()">Retry</button>
+                  </div>
+
+                  <div *ngIf="isLoadingWeather" class="weather-state">
+                    <div class="spinner small"></div>
+                    <span>Checking the forecast...</span>
+                  </div>
+                  <div *ngIf="!isLoadingWeather && weatherError" class="weather-state weather-unavailable">
+                    <span class="material-symbols-outlined">cloud_off</span>
+                    <span>{{ weatherError }}</span>
+                  </div>
+                  <ng-container *ngIf="!isLoadingWeather && !weatherError && weather as tripWeather">
+                    <div *ngIf="tripWeather.available" class="weather-days">
+                      <div *ngFor="let day of tripWeather.days" class="weather-day">
+                        <span class="weather-date">{{ formatWeatherDate(day.date) }}</span>
+                        <span class="material-symbols-outlined weather-icon">{{ day.icon }}</span>
+                        <strong>{{ day.maximumTemperatureCelsius | number:'1.0-0' }}°</strong>
+                        <span>{{ day.minimumTemperatureCelsius | number:'1.0-0' }}° low</span>
+                        <span class="weather-condition">{{ day.condition }}</span>
+                        <span class="weather-rain"><span class="material-symbols-outlined">water_drop</span>{{ day.precipitationProbability }}%</span>
+                      </div>
+                    </div>
+                    <div *ngIf="!tripWeather.available" class="weather-state weather-unavailable">
+                      <span class="material-symbols-outlined">calendar_clock</span>
+                      <span>{{ tripWeather.message }}</span>
+                    </div>
+                    <p *ngIf="tripWeather.available" class="weather-note">{{ tripWeather.message }}</p>
+                  </ng-container>
+                </article>
 
                 <article class="itinerary-board card">
                   <div class="section-heading-row">
@@ -2095,6 +2140,46 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
       border-radius: 12px;
     }
 
+    .weather-card {
+      padding: 1rem;
+      border-radius: 12px;
+    }
+
+    .weather-days {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(112px, 1fr);
+      gap: 0.65rem;
+      overflow-x: auto;
+      padding: 0.15rem 0 0.45rem;
+      scrollbar-width: thin;
+    }
+
+    .weather-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      min-width: 0;
+      padding: 0.8rem 0.6rem;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #eff6ff, #ffffff);
+      color: #64748b;
+      font-size: 0.68rem;
+      text-align: center;
+    }
+
+    .weather-day strong { color: #0f172a; font-size: 1rem; }
+    .weather-date { color: #334155; font-weight: 800; }
+    .weather-icon { color: #2563eb; font-size: 1.7rem; }
+    .weather-condition { min-height: 2em; color: #475569; }
+    .weather-rain { display: inline-flex; align-items: center; gap: 0.1rem; color: #0284c7; }
+    .weather-rain .material-symbols-outlined { font-size: 0.85rem; }
+    .weather-note { margin: 0.45rem 0 0; color: #94a3b8; font-size: 0.66rem; }
+    .weather-state { display: flex; align-items: center; gap: 0.6rem; min-height: 72px; color: #64748b; font-size: 0.75rem; }
+    .weather-unavailable { padding: 0.7rem; border-radius: 10px; background: #f8fafc; }
+
     .section-heading-row {
       display: flex;
       align-items: flex-start;
@@ -2487,6 +2572,7 @@ export class TripDetailsComponent implements OnInit {
   tripId = 0;
   trip: Trip | null = null;
   dashboard: TripDashboard | null = null;
+  weather: TripWeather | null = null;
   bookings: Booking[] = [];
   members: TripMember[] = [];
 
@@ -2498,6 +2584,10 @@ export class TripDetailsComponent implements OnInit {
   tripLoadError = '';
   isLoadingDashboard = true;
   dashboardError = '';
+  isLoadingWeather = true;
+  weatherError = '';
+  isExportingCalendar = false;
+  isDuplicatingTrip = false;
   isLoadingBookings = true;
   bookingsError = '';
   isLoadingMembers = false;
@@ -2605,6 +2695,7 @@ export class TripDetailsComponent implements OnInit {
 
     this.loadTripDetails();
     this.loadDashboard();
+    this.loadWeather();
     this.loadBookings();
     this.loadMembers();
   }
@@ -2612,6 +2703,7 @@ export class TripDetailsComponent implements OnInit {
   retryTrip(): void {
     this.loadTripDetails();
     this.loadDashboard();
+    this.loadWeather();
     this.loadBookings();
   }
 
@@ -2656,6 +2748,65 @@ export class TripDetailsComponent implements OnInit {
         this.isLoadingDashboard = false;
       }
     });
+  }
+
+  loadWeather(): void {
+    this.isLoadingWeather = true;
+    this.weatherError = '';
+    this.tripService.getTripWeather(this.tripId).subscribe({
+      next: (data) => {
+        this.weather = data;
+        this.isLoadingWeather = false;
+      },
+      error: (err) => {
+        this.weather = null;
+        this.weatherError = err?.error?.message || 'Weather is temporarily unavailable.';
+        this.isLoadingWeather = false;
+      }
+    });
+  }
+
+  exportCalendar(): void {
+    if (!this.trip || this.isExportingCalendar) return;
+    this.isExportingCalendar = true;
+    this.tripService.exportCalendar(this.tripId).subscribe({
+      next: (content) => {
+        const url = URL.createObjectURL(content);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `${this.trip?.name || 'tripmate-trip'}.ics`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        this.isExportingCalendar = false;
+      },
+      error: () => {
+        this.tripUpdateMessage = 'Unable to export the calendar. Please try again.';
+        this.isExportingCalendar = false;
+      }
+    });
+  }
+
+  duplicateCurrentTrip(): void {
+    if (!this.trip || this.isDuplicatingTrip) return;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const startDate = tomorrow.toISOString().slice(0, 10);
+    this.isDuplicatingTrip = true;
+    this.tripService.duplicateTrip(this.tripId, `${this.trip.name} (Copy)`, startDate).subscribe({
+      next: (copy) => {
+        this.isDuplicatingTrip = false;
+        void this.router.navigate(['/trips', copy.id], { queryParams: { reschedule: 1 } });
+      },
+      error: (err) => {
+        this.tripUpdateMessage = err?.error?.message || 'Unable to duplicate this trip.';
+        this.isDuplicatingTrip = false;
+      }
+    });
+  }
+
+  formatWeatherDate(date: string): string {
+    return new Intl.DateTimeFormat('en-IN', { weekday: 'short', day: 'numeric' })
+      .format(new Date(`${date}T00:00:00`));
   }
 
   loadBookings(): void {

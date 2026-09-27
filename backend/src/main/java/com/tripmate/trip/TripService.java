@@ -6,6 +6,12 @@ import com.tripmate.member.MemberStatus;
 import com.tripmate.member.TripMember;
 import com.tripmate.member.TripMemberRepository;
 import com.tripmate.member.TripRole;
+import com.tripmate.itinerary.ItineraryDay;
+import com.tripmate.itinerary.ItineraryDayRepository;
+import com.tripmate.itinerary.ItineraryItem;
+import com.tripmate.itinerary.ItineraryItemRepository;
+import com.tripmate.place.Place;
+import com.tripmate.place.PlaceRepository;
 import com.tripmate.user.User;
 import com.tripmate.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +27,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +38,9 @@ public class TripService {
     private final TripMemberRepository tripMemberRepository;
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
+    private final PlaceRepository placeRepository;
+    private final ItineraryDayRepository itineraryDayRepository;
+    private final ItineraryItemRepository itineraryItemRepository;
 
     @Transactional
     public TripResponse createTrip(Long userId, CreateTripRequest request) {
@@ -171,6 +182,59 @@ public class TripService {
 
         // Audit Log
         auditLogService.log(userId, tripId, AuditAction.TRIP_DELETED, "TRIP", tripId, "Deleted trip: " + trip.getName());
+    }
+
+    @Transactional
+    public TripResponse duplicateTrip(Long tripId, Long userId, DuplicateTripRequest request) {
+        Trip source = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
+        resolveUserRole(source, userId);
+        User owner = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        long duration = ChronoUnit.DAYS.between(source.getStartDate(), source.getEndDate());
+        String requestedName = request.name() == null ? "" : request.name().trim();
+
+        Trip copy = tripRepository.save(Trip.builder()
+                .owner(owner)
+                .name(requestedName.isBlank() ? source.getName() + " (Copy)" : requestedName)
+                .destination(source.getDestination())
+                .tripType(source.getTripType())
+                .startDate(request.startDate())
+                .endDate(request.startDate().plusDays(duration))
+                .travelerCount(source.getTravelerCount())
+                .budget(source.getBudget())
+                .description(source.getDescription())
+                .coverImageUrl(source.getCoverImageUrl())
+                .status(calculateStatus(request.startDate(), request.startDate().plusDays(duration)))
+                .build());
+
+        tripMemberRepository.save(TripMember.builder().trip(copy).user(owner).role(TripRole.OWNER)
+                .memberStatus(MemberStatus.ACTIVE).joinedAt(LocalDateTime.now()).build());
+
+        Map<Long, Place> copiedPlaces = new HashMap<>();
+        for (Place place : placeRepository.findByTripIdOrderByIdAsc(tripId)) {
+            Place saved = placeRepository.save(Place.builder().trip(copy).name(place.getName())
+                    .category(place.getCategory()).latitude(place.getLatitude()).longitude(place.getLongitude())
+                    .estimatedCost(place.getEstimatedCost()).notes(place.getNotes()).build());
+            copiedPlaces.put(place.getId(), saved);
+        }
+
+        for (ItineraryDay day : itineraryDayRepository.findByTripIdOrderByDayNumberAsc(tripId)) {
+            ItineraryDay copiedDay = itineraryDayRepository.save(ItineraryDay.builder().trip(copy)
+                    .dayNumber(day.getDayNumber()).dayDate(request.startDate().plusDays(day.getDayNumber() - 1L))
+                    .title(day.getTitle()).notes(day.getNotes()).build());
+            for (ItineraryItem item : day.getItems()) {
+                itineraryItemRepository.save(ItineraryItem.builder().itineraryDay(copiedDay).trip(copy)
+                        .place(item.getPlace() == null ? null : copiedPlaces.get(item.getPlace().getId()))
+                        .title(item.getTitle()).legacyActivity(item.getTitle()).description(item.getDescription())
+                        .startTime(item.getStartTime()).endTime(item.getEndTime()).location(item.getLocation())
+                        .estimatedCost(item.getEstimatedCost()).displayOrder(item.getDisplayOrder()).build());
+            }
+        }
+
+        auditLogService.log(userId, copy.getId(), AuditAction.TRIP_CREATED, "TRIP", copy.getId(),
+                "Duplicated trip from: " + source.getName());
+        return TripResponse.from(copy, TripRole.OWNER);
     }
 
     private void validateDates(LocalDate startDate, LocalDate endDate) {

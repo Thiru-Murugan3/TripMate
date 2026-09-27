@@ -200,24 +200,7 @@ describe('DestinationDiscoveryComponent', () => {
     expect(placeService.createPlace).not.toHaveBeenCalled();
   });
 
-  it('preserves selected places when the user chooses the save target', async () => {
-    configure();
-
-    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
-    fixture.detectChanges();
-
-    const component = fixture.componentInstance;
-    component.result = discoveryResponse;
-    component.toggleSelection(discoveredPlace);
-
-    component.selectTrip(plannedTrip.id);
-    await fixture.whenStable();
-
-    expect(component.activeTripId).toBe(plannedTrip.id);
-    expect(component.isSelected(discoveredPlace)).toBeTrue();
-  });
-
-  it('saves selected casual-search places after an editable trip is chosen', async () => {
+  it('automatically saves selected casual-search places after an editable trip is chosen', async () => {
     const { placeService } = configure();
 
     const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
@@ -226,10 +209,7 @@ describe('DestinationDiscoveryComponent', () => {
     const component = fixture.componentInstance;
     component.result = discoveryResponse;
     component.toggleSelection(discoveredPlace);
-    component.selectTrip(plannedTrip.id);
-    await fixture.whenStable();
-
-    await component.saveSelected(false);
+    await component.selectTrip(plannedTrip.id);
 
     expect(placeService.createPlace).toHaveBeenCalledWith(
       plannedTrip.id,
@@ -241,7 +221,7 @@ describe('DestinationDiscoveryComponent', () => {
       })
     );
     expect(component.selectedCount).toBe(0);
-    expect(component.successMessage).toContain('saved to this trip');
+    expect(component.successMessage).toContain('saved and added to the itinerary');
   });
 
   it('adds a single card directly when an editable trip is already selected', async () => {

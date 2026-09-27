@@ -89,3 +89,24 @@ export interface TripDashboard {
   documentCount: number;
   memberCount: number;
 }
+
+export interface TripWeatherDay {
+  date: string;
+  weatherCode: number;
+  condition: string;
+  icon: string;
+  minimumTemperatureCelsius: number;
+  maximumTemperatureCelsius: number;
+  precipitationProbability: number;
+}
+
+export interface TripWeather {
+  destination: string;
+  resolvedLocation: string;
+  latitude?: number;
+  longitude?: number;
+  generatedAt: string;
+  available: boolean;
+  message: string;
+  days: TripWeatherDay[];
+}

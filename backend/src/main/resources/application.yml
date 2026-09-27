@@ -70,6 +70,10 @@ discovery:
     url: ${DISCOVERY_GEOAPIFY_URL:https://api.geoapify.com}
     api-key: ${DISCOVERY_GEOAPIFY_API_KEY:}
 
+weather:
+  geocoding-url: ${WEATHER_GEOCODING_URL:https://geocoding-api.open-meteo.com/v1/search}
+  forecast-url: ${WEATHER_FORECAST_URL:https://api.open-meteo.com/v1/forecast}
+
 server:
   port: ${PORT:${SERVER_PORT:8080}}
 
