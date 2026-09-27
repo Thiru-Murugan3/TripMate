@@ -7,6 +7,9 @@ import com.tripmate.member.TripRole;
 import com.tripmate.trip.TripResponse;
 import com.tripmate.trip.TripService;
 import lombok.RequiredArgsConstructor;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
@@ -98,11 +101,16 @@ public class BookingImportService {
                 if (!text.isEmpty()) text.append('\n');
                 text.append(page.path("ParsedText").asText(""));
             }
-            if (text.toString().isBlank()) {
+            String extractedText = text.toString();
+            String embeddedPdfText = embeddedPdfText(file);
+            if (embeddedPdfText != null && !embeddedPdfText.isBlank()) {
+                extractedText = extractedText + "\n" + embeddedPdfText;
+            }
+            if (extractedText.isBlank()) {
                 throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                         "No readable booking text was found in this file.");
             }
-            return extract(text.toString(), trip.startDate().getYear());
+            return extract(extractedText, trip.startDate().getYear());
         } catch (ResponseStatusException exception) {
             throw exception;
         } catch (IOException exception) {
@@ -250,6 +258,17 @@ public class BookingImportService {
         String lower = value.toLowerCase(Locale.ROOT);
         return !(lower.startsWith("address") || lower.startsWith("landmark")
                 || lower.startsWith("drop point") || lower.startsWith("boarding point"));
+    }
+
+    private String embeddedPdfText(MultipartFile file) {
+        if (!"application/pdf".equalsIgnoreCase(file.getContentType())) return null;
+        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setSortByPosition(true);
+            return stripper.getText(document);
+        } catch (IOException ignored) {
+            return null;
+        }
     }
 
     private String clean(String value) {
