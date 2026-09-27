@@ -15,6 +15,7 @@ import {
 } from '../../../core/models/trip.model';
 import {
   Booking,
+  BookingImportDraft,
   BookingType,
   CreateBookingRequest,
   TransportType
@@ -430,6 +431,10 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
                 <span class="material-symbols-outlined">add</span>
                 Add Existing Booking
               </button>
+              <button type="button" (click)="openBookingImport()" class="btn btn-secondary">
+                <span class="material-symbols-outlined">document_scanner</span>
+                Import PDF / Image
+              </button>
             </div>
           </div>
 
@@ -452,6 +457,10 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
               <button type="button" (click)="openBookingModal()" class="btn btn-secondary">
                 <span class="material-symbols-outlined">add</span>
                 Add Existing
+              </button>
+              <button type="button" (click)="openBookingImport()" class="btn btn-secondary">
+                <span class="material-symbols-outlined">document_scanner</span>
+                Import PDF / Image
               </button>
             </div>
           </div>
@@ -831,6 +840,36 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+
+        <div *ngIf="showBookingImportModal" class="modal-backdrop">
+          <div class="modal-content card booking-import-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <div>
+                <h3>Import Booking with OCR</h3>
+                <p>Upload a PDF, PNG or JPG. You can review every detected field before saving.</p>
+              </div>
+              <button type="button" (click)="closeBookingImport()" class="close-btn" aria-label="Close">&times;</button>
+            </div>
+            <div class="ocr-privacy-note">
+              <span class="material-symbols-outlined">verified_user</span>
+              The file is sent to OCR.Space for text recognition. TripMate does not create a booking until you confirm it.
+            </div>
+            <div *ngIf="bookingImportError" class="alert-danger">{{ bookingImportError }}</div>
+            <label class="ocr-file-picker">
+              <input type="file" accept="application/pdf,image/png,image/jpeg" (change)="onBookingImportFile($event)" />
+              <span class="material-symbols-outlined">upload_file</span>
+              <strong>{{ bookingImportFile?.name || 'Choose booking PDF or image' }}</strong>
+              <small>PDF, PNG or JPG · maximum 10 MB</small>
+            </label>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" (click)="closeBookingImport()">Cancel</button>
+              <button type="button" class="btn btn-primary" [disabled]="!bookingImportFile || isImportingBooking" (click)="importBookingFile()">
+                <span class="material-symbols-outlined">document_scanner</span>
+                {{ isImportingBooking ? 'Reading booking...' : 'Extract Booking' }}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2180,6 +2219,15 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
     .weather-state { display: flex; align-items: center; gap: 0.6rem; min-height: 72px; color: #64748b; font-size: 0.75rem; }
     .weather-unavailable { padding: 0.7rem; border-radius: 10px; background: #f8fafc; }
 
+    .booking-import-modal { max-width: 560px; }
+    .ocr-privacy-note { display:flex; gap:.55rem; padding:.75rem; margin-bottom:1rem; border-radius:10px; color:#1e40af; background:#eff6ff; font-size:.74rem; line-height:1.45; }
+    .ocr-privacy-note .material-symbols-outlined { font-size:1.05rem; }
+    .ocr-file-picker { display:flex; flex-direction:column; align-items:center; gap:.35rem; padding:1.5rem; border:2px dashed #bfdbfe; border-radius:12px; background:#f8fbff; text-align:center; cursor:pointer; }
+    .ocr-file-picker input { position:absolute; width:1px; height:1px; opacity:0; }
+    .ocr-file-picker > .material-symbols-outlined { color:#2563eb; font-size:2rem; }
+    .ocr-file-picker strong { color:#1e293b; font-size:.82rem; }
+    .ocr-file-picker small { color:#64748b; font-size:.68rem; }
+
     .section-heading-row {
       display: flex;
       align-items: flex-start;
@@ -2596,6 +2644,11 @@ export class TripDetailsComponent implements OnInit {
   showBookingModal = false;
   isSubmittingBooking = false;
   bookingModalError = '';
+  showBookingImportModal = false;
+  bookingImportFile: File | null = null;
+  bookingImportError = '';
+  isImportingBooking = false;
+  bookingImportDraft: BookingImportDraft | null = null;
 
   showEditTripModal = false;
   isUpdatingTrip = false;
@@ -3290,6 +3343,71 @@ export class TripDetailsComponent implements OnInit {
   openBookingModal(): void {
     this.showBookingModal = true;
     this.bookingModalError = '';
+  }
+
+  openBookingImport(): void {
+    this.bookingImportFile = null;
+    this.bookingImportError = '';
+    this.bookingImportDraft = null;
+    this.showBookingImportModal = true;
+  }
+
+  closeBookingImport(): void {
+    if (this.isImportingBooking) return;
+    this.showBookingImportModal = false;
+    this.bookingImportFile = null;
+    this.bookingImportError = '';
+  }
+
+  onBookingImportFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    this.bookingImportError = '';
+    if (file && file.size > 10 * 1024 * 1024) {
+      this.bookingImportFile = null;
+      this.bookingImportError = 'File must be 10 MB or smaller.';
+      input.value = '';
+      return;
+    }
+    this.bookingImportFile = file;
+  }
+
+  importBookingFile(): void {
+    if (!this.bookingImportFile || this.isImportingBooking) return;
+    this.isImportingBooking = true;
+    this.bookingImportError = '';
+    this.bookingService.importBookingFile(this.tripId, this.bookingImportFile).subscribe({
+      next: (draft) => {
+        this.bookingImportDraft = draft;
+        this.isImportingBooking = false;
+        this.showBookingImportModal = false;
+        this.bookingForm.reset({
+          bookingType: draft.bookingType,
+          transportType: draft.transportType || 'OTHER',
+          providerName: draft.providerName || '',
+          bookingReference: draft.bookingReference || '',
+          departure: draft.departure || '',
+          arrival: draft.arrival || '',
+          startDatetime: this.toDatetimeLocal(draft.startDatetime),
+          endDatetime: this.toDatetimeLocal(draft.endDatetime),
+          amount: draft.amount || 0,
+          notes: draft.warnings.length
+            ? `OCR review: ${draft.warnings.join(' ')}`
+            : `Imported with ${Math.round(draft.confidence * 100)}% OCR confidence.`
+        });
+        this.bookingModalError = draft.warnings.length
+          ? `OCR completed. Please review: ${draft.warnings.join(' ')}` : '';
+        this.showBookingModal = true;
+      },
+      error: (err) => {
+        this.isImportingBooking = false;
+        this.bookingImportError = err?.error?.message || err?.error?.detail || 'Unable to read this booking file.';
+      }
+    });
+  }
+
+  private toDatetimeLocal(value?: string): string {
+    return value ? value.slice(0, 16) : '';
   }
 
   closeBookingModal(): void {

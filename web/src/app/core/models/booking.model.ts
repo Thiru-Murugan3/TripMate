@@ -127,3 +127,19 @@ export interface CancelBookingResponse {
   booking: Booking;
   message: string;
 }
+
+export interface BookingImportDraft {
+  bookingType: BookingType;
+  transportType?: TransportType;
+  providerName?: string;
+  bookingReference?: string;
+  departure?: string;
+  arrival?: string;
+  startDatetime?: string;
+  endDatetime?: string;
+  amount: number;
+  currency: string;
+  confidence: number;
+  warnings: string[];
+  extractedText: string;
+}

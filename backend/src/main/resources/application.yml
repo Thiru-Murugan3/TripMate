@@ -74,6 +74,11 @@ weather:
   geocoding-url: ${WEATHER_GEOCODING_URL:https://geocoding-api.open-meteo.com/v1/search}
   forecast-url: ${WEATHER_FORECAST_URL:https://api.open-meteo.com/v1/forecast}
 
+booking-import:
+  ocr-space:
+    api-url: ${OCR_SPACE_API_URL:https://api.ocr.space/parse/image}
+    api-key: ${OCR_SPACE_API_KEY:}
+
 server:
   port: ${PORT:${SERVER_PORT:8080}}
 

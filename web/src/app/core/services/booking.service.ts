@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Booking,
+  BookingImportDraft,
   BookingSearchRequest,
   BookingSearchResponse,
   BookNowRequest,
@@ -31,6 +32,12 @@ export class BookingService {
 
   createBooking(tripId: number, request: CreateBookingRequest): Observable<Booking> {
     return this.http.post<Booking>(`${this.baseUrl}/trips/${tripId}/bookings`, request);
+  }
+
+  importBookingFile(tripId: number, file: File): Observable<BookingImportDraft> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<BookingImportDraft>(`${this.baseUrl}/trips/${tripId}/bookings/import/ocr`, form);
   }
 
   searchBookingOffers(
