@@ -42,7 +42,10 @@ class BookingImportServiceTest {
                 Boarding Point:
 
                 Sholinganallur
-                Drop Point: Erode Bus Stand
+                Drop Point Address: Near PSR Silks
+                Drop Point:
+
+                Erode Bus Stand
                 The departure and arrival timings mentioned on the e-ticket are only tentative timings.
                 Till 09:00 AM on 24 Sep Rs. 70.0
                 """;

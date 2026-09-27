@@ -243,21 +243,30 @@ public class BookingImportService {
 
     private String labelledPoint(String text, String labelExpression) {
         Pattern sameLine = Pattern.compile("(?im)^\\s*" + labelExpression
-                + "[ \\t]*:?[ \\t]+([^\\r\\n]{2,255})$");
-        String value = group(sameLine, text, 1);
-        if (isPointValue(value)) return value;
+                + "[ \\t]*:[ \\t]*([^\\r\\n]{2,255})$");
+        String value = firstValidPoint(sameLine, text);
+        if (value != null) return value;
 
         Pattern followingLine = Pattern.compile("(?im)^\\s*" + labelExpression
                 + "[ \\t]*:?[ \\t]*$\\R(?:[ \\t]*\\R)*[ \\t]*([^\\r\\n]{2,255})$");
-        value = group(followingLine, text, 1);
-        return isPointValue(value) ? value : null;
+        return firstValidPoint(followingLine, text);
+    }
+
+    private String firstValidPoint(Pattern pattern, String text) {
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            String value = clean(matcher.group(1));
+            if (isPointValue(value)) return value;
+        }
+        return null;
     }
 
     private boolean isPointValue(String value) {
         if (value == null) return false;
         String lower = value.toLowerCase(Locale.ROOT);
         return !(lower.startsWith("address") || lower.startsWith("landmark")
-                || lower.startsWith("drop point") || lower.startsWith("boarding point"));
+                || lower.startsWith("drop point") || lower.startsWith("boarding point")
+                || lower.endsWith("details"));
     }
 
     private String embeddedPdfText(MultipartFile file) {
