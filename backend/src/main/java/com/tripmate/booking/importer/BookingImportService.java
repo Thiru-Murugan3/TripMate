@@ -188,6 +188,8 @@ public class BookingImportService {
                 .replace(',', ' ').replaceAll("\\s+", " ").trim();
         List<String> patterns = List.of("uuuu/M/d", "uuuu-M-d", "uuuu.M.d", "d/M/uuuu", "d-M-uuuu", "d.M.uuuu",
                 "d/M/uu", "d-M-uu", "d.M.uu", "d MMM uuuu", "d MMMM uuuu", "MMM d uuuu", "MMMM d uuuu");
+        patterns = new ArrayList<>(patterns);
+        patterns.addAll(List.of("d-MMM-uuuu", "d-MMMM-uuuu", "d/MMM/uuuu", "d/MMMM/uuuu"));
         for (String pattern : patterns) {
             try { return LocalDate.parse(normalized, DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH)); }
             catch (DateTimeParseException ignored) {}
