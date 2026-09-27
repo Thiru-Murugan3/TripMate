@@ -39,7 +39,14 @@ public class BookingImportService {
     private static final Pattern REFERENCE = Pattern.compile("(?im)(?:PNR|booking(?:\\s+(?:reference|ref|id))?|confirmation(?:\\s+(?:number|no))?|reservation(?:\\s+(?:id|no))?)\\s*[:#-]?\\s*([A-Z0-9-]{5,18})");
     private static final Pattern AMOUNT = Pattern.compile("(?i)(?:total|amount(?: paid)?|fare)\\s*[:₹$ ]*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)");
     private static final Pattern ROUTE = Pattern.compile("(?im)(?:from|departure)\\s*[: -]\\s*([^\\n\\r]{2,80}).*?(?:to|arrival|destination)\\s*[: -]\\s*([^\\n\\r]{2,80})");
-    private static final Pattern DATE = Pattern.compile("(?i)(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4}|\\d{1,2}\\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\s+\\d{4})(?:[, ]+(\\d{1,2}:\\d{2})(?:\\s*(AM|PM))?)?");
+    private static final String MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
+    private static final Pattern DATE = Pattern.compile(
+            "(?i)\\b(" +
+                    "\\d{4}[./-]\\d{1,2}[./-]\\d{1,2}" +
+                    "|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}" +
+                    "|\\d{1,2}(?:st|nd|rd|th)?\\s+" + MONTH + "(?:[,]?\\s+(?:\\d{4}|\\d{2}(?!:)))?" +
+                    "|" + MONTH + "\\s+\\d{1,2}(?:st|nd|rd|th)?(?:[,]?\\s+(?:\\d{4}|\\d{2}(?!:)))?" +
+                    ")\\b(?:[, ]+(\\d{1,2}[:.]\\d{2})(?:\\s*(AM|PM))?)?");
 
     private final TripService tripService;
     private final RestClient restClient = RestClient.create();
@@ -87,7 +94,7 @@ public class BookingImportService {
                 throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                         "No readable booking text was found in this file.");
             }
-            return extract(text.toString());
+            return extract(text.toString(), trip.startDate().getYear());
         } catch (ResponseStatusException exception) {
             throw exception;
         } catch (IOException exception) {
@@ -98,7 +105,7 @@ public class BookingImportService {
         }
     }
 
-    private BookingImportDraft extract(String text) {
+    BookingImportDraft extract(String text, int defaultYear) {
         String lower = text.toLowerCase(Locale.ROOT);
         BookingType type = lower.matches("(?s).*(flight|airline|boarding pass|train|railway|bus|coach|cab|taxi).*" )
                 ? BookingType.TRANSPORT
@@ -112,7 +119,7 @@ public class BookingImportService {
         Matcher amountMatcher = AMOUNT.matcher(text);
         BigDecimal amount = amountMatcher.find()
                 ? new BigDecimal(amountMatcher.group(1).replace(",", "")) : BigDecimal.ZERO;
-        List<LocalDateTime> dates = dates(text);
+        List<LocalDateTime> dates = dates(text, defaultYear);
         String provider = provider(text, type);
         List<String> warnings = new ArrayList<>();
         if (provider == null) warnings.add("Provider name was not confidently detected.");
@@ -147,11 +154,11 @@ public class BookingImportService {
         return type == BookingType.HOTEL ? "Hotel" : null;
     }
 
-    private List<LocalDateTime> dates(String text) {
+    private List<LocalDateTime> dates(String text, int defaultYear) {
         List<LocalDateTime> values = new ArrayList<>();
         Matcher matcher = DATE.matcher(text);
         while (matcher.find() && values.size() < 2) {
-            LocalDate date = parseDate(matcher.group(1));
+            LocalDate date = parseDate(matcher.group(1), defaultYear);
             if (date == null) continue;
             LocalTime time = parseTime(matcher.group(2), matcher.group(3));
             values.add(LocalDateTime.of(date, time == null ? LocalTime.NOON : time));
@@ -159,11 +166,20 @@ public class BookingImportService {
         return values;
     }
 
-    private LocalDate parseDate(String value) {
-        for (DateTimeFormatter formatter : List.of(DateTimeFormatter.ofPattern("d/M/uuuu"),
-                DateTimeFormatter.ofPattern("d-M-uuuu"), DateTimeFormatter.ofPattern("d MMM uuuu", Locale.ENGLISH),
-                DateTimeFormatter.ofPattern("d MMMM uuuu", Locale.ENGLISH))) {
-            try { return LocalDate.parse(value, formatter); } catch (DateTimeParseException ignored) {}
+    private LocalDate parseDate(String value, int defaultYear) {
+        String normalized = value.replaceAll("(?i)(\\d)(st|nd|rd|th)", "$1")
+                .replace(',', ' ').replaceAll("\\s+", " ").trim();
+        List<String> patterns = List.of("uuuu/M/d", "uuuu-M-d", "uuuu.M.d", "d/M/uuuu", "d-M-uuuu", "d.M.uuuu",
+                "d/M/uu", "d-M-uu", "d.M.uu", "d MMM uuuu", "d MMMM uuuu", "MMM d uuuu", "MMMM d uuuu");
+        for (String pattern : patterns) {
+            try { return LocalDate.parse(normalized, DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH)); }
+            catch (DateTimeParseException ignored) {}
+        }
+        for (String pattern : List.of("d MMM", "d MMMM", "MMM d", "MMMM d")) {
+            try {
+                return LocalDate.parse(normalized + " " + defaultYear,
+                        DateTimeFormatter.ofPattern(pattern + " uuuu", Locale.ENGLISH));
+            } catch (DateTimeParseException ignored) {}
         }
         return null;
     }
@@ -171,7 +187,7 @@ public class BookingImportService {
     private LocalTime parseTime(String value, String meridiem) {
         if (value == null) return null;
         try {
-            return LocalTime.parse(value + (meridiem == null ? "" : " " + meridiem.toUpperCase(Locale.ROOT)),
+            return LocalTime.parse(value.replace('.', ':') + (meridiem == null ? "" : " " + meridiem.toUpperCase(Locale.ROOT)),
                     DateTimeFormatter.ofPattern(meridiem == null ? "H:mm" : "h:mm a", Locale.ENGLISH));
         } catch (DateTimeParseException ignored) { return null; }
     }
