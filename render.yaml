@@ -46,9 +46,13 @@ services:
       - key: APP_CORS_ALLOWED_ORIGINS
         value: https://tripmate-web-thiru-murugan3.onrender.com
       - key: JPA_DDL_AUTO
-        value: validate
+        value: none
       - key: JPA_SHOW_SQL
         value: "false"
+      - key: SPRING_MAIN_LAZY_INITIALIZATION
+        value: "true"
+      - key: SPRING_DATA_JPA_REPOSITORIES_BOOTSTRAP_MODE
+        value: lazy
       - key: SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE
         value: "5"
       - key: SPRING_DATASOURCE_HIKARI_MINIMUMIDLE
