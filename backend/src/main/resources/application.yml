@@ -1,6 +1,8 @@
 spring:
   application:
     name: tripmate-backend
+  main:
+    lazy-initialization: ${SPRING_MAIN_LAZY_INITIALIZATION:false}
   config:
     import: optional:file:.env[.properties]
   datasource:
@@ -20,6 +22,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  data:
+    jpa:
+      repositories:
+        bootstrap-mode: ${SPRING_DATA_JPA_REPOSITORIES_BOOTSTRAP_MODE:default}
   flyway:
     enabled: true
     baseline-on-migrate: true
