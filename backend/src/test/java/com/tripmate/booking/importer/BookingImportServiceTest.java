@@ -34,6 +34,8 @@ class BookingImportServiceTest {
                 Passengers: 1                       Total Fare:
                 735.0
                 Passenger Details Ms. Amaravathi Seat L2
+                Boarding Point: Sholinganallur
+                Drop Point: Erode Bus Stand
                 The departure and arrival timings mentioned on the e-ticket are only tentative timings.
                 Till 09:00 AM on 24 Sep Rs. 70.0
                 """;
@@ -44,6 +46,9 @@ class BookingImportServiceTest {
         assertEquals("ABPDS8RG", draft.bookingReference());
         assertEquals("Chennai", draft.departure());
         assertEquals("Erode", draft.arrival());
+        assertEquals("Ms. Amaravathi Seat L2", draft.passengerDetails());
+        assertEquals("Sholinganallur", draft.pickupPoint());
+        assertEquals("Erode Bus Stand", draft.dropPoint());
         assertEquals(LocalDateTime.of(2026, 9, 24, 21, 30), draft.startDatetime());
         assertNull(draft.endDatetime());
         assertEquals("735.0", draft.amount().toPlainString());

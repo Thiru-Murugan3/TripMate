@@ -42,6 +42,9 @@ public class BookingImportService {
     private static final Pattern FROM = Pattern.compile("(?im)^\\s*From\\s*:\\s*([A-Za-z][A-Za-z .'-]{1,60}?)(?=\\s{2,}|$)");
     private static final Pattern TO = Pattern.compile("(?im)^\\s*To\\s*:\\s*([A-Za-z][A-Za-z .'-]{1,60}?)(?=\\s{2,}|$)");
     private static final Pattern BUS_OPERATOR = Pattern.compile("(?im)Bus\\s+Operator\\s*:\\s*([A-Za-z0-9][A-Za-z0-9 &.'-]{1,80}?)(?=\\s{2,}|$)");
+    private static final Pattern PASSENGER_DETAILS = Pattern.compile("(?im)^\\s*Passenger\\s+Details\\s*:?\\s*(?:\\d+\\s+)?((?:Mr|Ms|Mrs)\\.?\\s+[^\\r\\n]{2,160})$");
+    private static final Pattern PICKUP_POINT = Pattern.compile("(?im)^\\s*(?:Boarding|Pickup|Pick-up)\\s+Point\\s*:\\s*([^\\r\\n]{2,255})$");
+    private static final Pattern DROP_POINT = Pattern.compile("(?im)^\\s*(?:Drop|Dropping|Drop-off)\\s+Point\\s*:\\s*([^\\r\\n]{2,255})$");
     private static final Pattern BOARDING_DATE = Pattern.compile("(?is)Boarding\\s+Date(?:\\s+and\\s+Time)?\\s*:\\s*.{0,100}?(\\d{1,2}[./-](?:[A-Za-z]{3,9}|\\d{1,2})[./-]\\d{2,4})");
     private static final Pattern CLOCK_TIME = Pattern.compile("(?i)\\b(\\d{1,2}[:.]\\d{2})(?:\\s*(AM|PM))?\\b");
     private static final String MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
@@ -120,6 +123,9 @@ public class BookingImportService {
         if (reference == null) reference = group(REFERENCE, text, 1);
         String departure = group(FROM, text, 1);
         String arrival = group(TO, text, 1);
+        String passengerDetails = group(PASSENGER_DETAILS, text, 1);
+        String pickupPoint = group(PICKUP_POINT, text, 1);
+        String dropPoint = group(DROP_POINT, text, 1);
         Matcher amountMatcher = AMOUNT.matcher(text);
         BigDecimal amount = amountMatcher.find()
                 ? new BigDecimal(amountMatcher.group(1).replace(",", "")) : BigDecimal.ZERO;
@@ -138,6 +144,7 @@ public class BookingImportService {
         int detected = 5 - warnings.size();
         double confidence = Math.max(0.25, Math.min(0.95, 0.35 + detected * 0.12));
         return new BookingImportDraft(type, transport, provider, reference, departure, arrival,
+                passengerDetails, pickupPoint, dropPoint,
                 dates.isEmpty() ? null : dates.get(0), dates.size() > 1 ? dates.get(1) : null,
                 amount, lower.contains("$") || lower.contains("usd") ? "USD" : "INR",
                 confidence, warnings, text.length() > 12000 ? text.substring(0, 12000) : text);

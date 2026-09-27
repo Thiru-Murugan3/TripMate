@@ -28,6 +28,15 @@ public record CreateBookingRequest(
         @Size(max = 180, message = "Arrival location cannot exceed 180 characters")
         String arrival,
 
+        @Size(max = 2000, message = "Passenger details cannot exceed 2000 characters")
+        String passengerDetails,
+
+        @Size(max = 255, message = "Pickup point cannot exceed 255 characters")
+        String pickupPoint,
+
+        @Size(max = 255, message = "Drop point cannot exceed 255 characters")
+        String dropPoint,
+
         LocalDateTime startDatetime,
 
         LocalDateTime endDatetime,

@@ -46,6 +46,15 @@ public class Booking {
     @Column(length = 180)
     private String arrival;
 
+    @Column(name = "passenger_details", columnDefinition = "TEXT")
+    private String passengerDetails;
+
+    @Column(name = "pickup_point", length = 255)
+    private String pickupPoint;
+
+    @Column(name = "drop_point", length = 255)
+    private String dropPoint;
+
     @Column(name = "start_datetime")
     private LocalDateTime startDatetime;
 
