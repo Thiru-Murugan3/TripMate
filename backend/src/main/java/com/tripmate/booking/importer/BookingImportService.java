@@ -44,8 +44,8 @@ public class BookingImportService {
             "(?i)\\b(" +
                     "\\d{4}[./-]\\d{1,2}[./-]\\d{1,2}" +
                     "|\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}" +
-                    "|\\d{1,2}(?:st|nd|rd|th)?\\s+" + MONTH + "(?:[,]?\\s+\\d{2,4})?" +
-                    "|" + MONTH + "\\s+\\d{1,2}(?:st|nd|rd|th)?(?:[,]?\\s+\\d{2,4})?" +
+                    "|\\d{1,2}(?:st|nd|rd|th)?\\s+" + MONTH + "(?:[,]?\\s+(?:\\d{4}|\\d{2}(?!:)))?" +
+                    "|" + MONTH + "\\s+\\d{1,2}(?:st|nd|rd|th)?(?:[,]?\\s+(?:\\d{4}|\\d{2}(?!:)))?" +
                     ")\\b(?:[, ]+(\\d{1,2}[:.]\\d{2})(?:\\s*(AM|PM))?)?");
 
     private final TripService tripService;
