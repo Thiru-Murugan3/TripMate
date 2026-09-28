@@ -26,28 +26,36 @@ class FlywayMigrationSmokeTest {
                 .locations("classpath:db/migration")
                 .load();
 
-        assertTrue(flyway.migrate().migrationsExecuted >= 12);
+        assertTrue(flyway.migrate().migrationsExecuted >= 14);
         flyway.validate();
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             assertEquals("YES", nullableState(connection, "day_id"));
             assertEquals("NO", nullableState(connection, "itinerary_day_id"));
             assertEquals("NO", nullableState(connection, "activity"));
+            assertEquals("YES", nullableState(connection, "bookings", "passenger_details"));
+            assertEquals("YES", nullableState(connection, "bookings", "pickup_point"));
+            assertEquals("YES", nullableState(connection, "bookings", "drop_point"));
         }
     }
 
     private String nullableState(Connection connection, String columnName) throws Exception {
+        return nullableState(connection, "itinerary_items", columnName);
+    }
+
+    private String nullableState(Connection connection, String tableName, String columnName) throws Exception {
         String sql = """
                 SELECT IS_NULLABLE
                 FROM information_schema.COLUMNS
                 WHERE TABLE_SCHEMA = DATABASE()
-                  AND TABLE_NAME = 'itinerary_items'
+                  AND TABLE_NAME = ?
                   AND COLUMN_NAME = ?
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, columnName);
+            statement.setString(1, tableName);
+            statement.setString(2, columnName);
             try (ResultSet result = statement.executeQuery()) {
-                if (!result.next()) throw new AssertionError("Missing itinerary_items." + columnName);
+                if (!result.next()) throw new AssertionError("Missing " + tableName + "." + columnName);
                 return result.getString(1);
             }
         }
