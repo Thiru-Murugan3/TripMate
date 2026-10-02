@@ -82,6 +82,11 @@ booking-import:
     api-url: ${OCR_SPACE_API_URL:https://api.ocr.space/parse/image}
     api-key: ${OCR_SPACE_API_KEY:}
 
+reservation-import:
+  inbound-domain: ${BREVO_INBOUND_DOMAIN:}
+  webhook-secret: ${BREVO_INBOUND_WEBHOOK_SECRET:}
+  brevo-api-url: ${BREVO_INBOUND_ATTACHMENT_URL:https://api.brevo.com/v3/inbound/attachments}
+
 server:
   port: ${PORT:${SERVER_PORT:8080}}
 

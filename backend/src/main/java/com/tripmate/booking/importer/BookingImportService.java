@@ -75,10 +75,33 @@ public class BookingImportService {
         }
         validate(file);
 
+        return processFile(file, trip.startDate().getYear());
+    }
+
+    public BookingImportDraft importEmailAttachment(
+            byte[] bytes,
+            String filename,
+            String contentType,
+            int defaultYear
+    ) {
+        MultipartFile file = new InMemoryMultipartFile(bytes, safeName(filename), contentType);
+        validate(file);
+        return processFile(file, defaultYear);
+    }
+
+    public BookingImportDraft extractEmailText(String text, int defaultYear) {
+        if (text == null || text.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "No readable booking text was found in this email.");
+        }
+        return extract(text, defaultYear);
+    }
+
+    private BookingImportDraft processFile(MultipartFile file, int defaultYear) {
         try {
             String embeddedPdfText = embeddedPdfText(file);
             if (embeddedPdfText != null && !embeddedPdfText.isBlank()) {
-                return extract(embeddedPdfText, trip.startDate().getYear());
+                return extract(embeddedPdfText, defaultYear);
             }
 
             if (apiKey == null || apiKey.isBlank()) {
@@ -112,7 +135,7 @@ public class BookingImportService {
                 throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                         "No readable booking text was found in this file.");
             }
-            return extract(extractedText, trip.startDate().getYear());
+            return extract(extractedText, defaultYear);
         } catch (ResponseStatusException exception) {
             throw exception;
         } catch (IOException exception) {
@@ -311,5 +334,28 @@ public class BookingImportService {
         private final String filename;
         private NamedByteArrayResource(byte[] bytes, String filename) { super(bytes); this.filename = filename; }
         @Override public String getFilename() { return filename; }
+    }
+
+    private static final class InMemoryMultipartFile implements MultipartFile {
+        private final byte[] bytes;
+        private final String filename;
+        private final String contentType;
+
+        private InMemoryMultipartFile(byte[] bytes, String filename, String contentType) {
+            this.bytes = bytes == null ? new byte[0] : bytes.clone();
+            this.filename = filename;
+            this.contentType = contentType;
+        }
+
+        @Override public String getName() { return "file"; }
+        @Override public String getOriginalFilename() { return filename; }
+        @Override public String getContentType() { return contentType; }
+        @Override public boolean isEmpty() { return bytes.length == 0; }
+        @Override public long getSize() { return bytes.length; }
+        @Override public byte[] getBytes() { return bytes.clone(); }
+        @Override public java.io.InputStream getInputStream() { return new java.io.ByteArrayInputStream(bytes); }
+        @Override public void transferTo(java.io.File destination) throws IOException {
+            java.nio.file.Files.write(destination.toPath(), bytes);
+        }
     }
 }
