@@ -26,9 +26,12 @@ public class BookingSchemaStartupRepair implements ApplicationRunner {
     private static final String COLUMN_COUNT_SQL = """
             SELECT COUNT(*)
             FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA = DATABASE()
-              AND TABLE_NAME = 'bookings'
-              AND COLUMN_NAME = '%s'
+            WHERE (
+                    UPPER(TABLE_SCHEMA) = UPPER(DATABASE())
+                    OR UPPER(TABLE_CATALOG) = UPPER(DATABASE())
+                  )
+              AND UPPER(TABLE_NAME) = 'BOOKINGS'
+              AND UPPER(COLUMN_NAME) = UPPER('%s')
             """;
 
     private static final List<RequiredColumn> REQUIRED_COLUMNS = List.of(
