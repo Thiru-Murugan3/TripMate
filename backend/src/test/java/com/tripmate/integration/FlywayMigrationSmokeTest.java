@@ -26,7 +26,7 @@ class FlywayMigrationSmokeTest {
                 .locations("classpath:db/migration")
                 .load();
 
-        assertTrue(flyway.migrate().migrationsExecuted >= 14);
+        assertTrue(flyway.migrate().migrationsExecuted >= 15);
         flyway.validate();
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
@@ -36,6 +36,8 @@ class FlywayMigrationSmokeTest {
             assertEquals("YES", nullableState(connection, "bookings", "passenger_details"));
             assertEquals("YES", nullableState(connection, "bookings", "pickup_point"));
             assertEquals("YES", nullableState(connection, "bookings", "drop_point"));
+            assertTrue(tableExists(connection, "reservation_import_addresses"));
+            assertTrue(tableExists(connection, "reservation_email_imports"));
         }
     }
 
@@ -57,6 +59,22 @@ class FlywayMigrationSmokeTest {
             try (ResultSet result = statement.executeQuery()) {
                 if (!result.next()) throw new AssertionError("Missing " + tableName + "." + columnName);
                 return result.getString(1);
+            }
+        }
+    }
+
+    private boolean tableExists(Connection connection, String tableName) throws Exception {
+        String sql = """
+                SELECT COUNT(*)
+                FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = ?
+                """;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, tableName);
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getInt(1) == 1;
             }
         }
     }

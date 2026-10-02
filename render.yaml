@@ -29,6 +29,10 @@ services:
         value: thirumuruganofficial3@gmail.com
       - key: TRIPMATE_BREVO_SENDER_NAME
         value: TripMate
+      - key: BREVO_INBOUND_DOMAIN
+        sync: false
+      - key: BREVO_INBOUND_WEBHOOK_SECRET
+        sync: false
       - key: R2_ENABLED
         sync: false
       - key: R2_ENDPOINT
