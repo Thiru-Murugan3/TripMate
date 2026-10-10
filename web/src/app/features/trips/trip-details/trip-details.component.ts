@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -28,6 +28,9 @@ import { PlaceManagerComponent } from '../place-manager/place-manager.component'
 import { ExpenseManagerComponent } from '../expense-manager/expense-manager.component';
 import { DocumentManagerComponent } from '../document-manager/document-manager.component';
 import { DestinationDiscoveryComponent } from '../../discovery/destination-discovery.component';
+import { ReservationEmailImportsComponent } from '../../bookings/reservation-email-imports.component';
+import { ReservationImportSelection } from '../../../core/models/reservation-import.model';
+import { ReservationImportService } from '../../../core/services/reservation-import.service';
 
 type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
@@ -42,7 +45,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
     DestinationDiscoveryComponent,
     PlaceManagerComponent,
     ExpenseManagerComponent,
-    DocumentManagerComponent
+    DocumentManagerComponent,
+    ReservationEmailImportsComponent
   ],
   template: `
     <main class="trip-details-page">
@@ -405,6 +409,12 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
         </section>
 
         <section *ngIf="activeTab === 'BOOKINGS'" class="tab-content">
+          <app-reservation-email-imports
+            *ngIf="canEditTrip"
+            [canEdit]="canEditTrip"
+            (draftSelected)="applyReservationEmailImport($event)"
+          ></app-reservation-email-imports>
+
           <div *ngIf="isLoadingBookings" class="overview-loading card">
             <div class="spinner small"></div>
             <span>Loading bookings...</span>
@@ -2639,10 +2649,14 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
   `]
 })
 export class TripDetailsComponent implements OnInit {
+  @ViewChild(ReservationEmailImportsComponent)
+  private reservationEmailImports?: ReservationEmailImportsComponent;
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly tripService = inject(TripService);
   private readonly bookingService = inject(BookingService);
+  private readonly reservationImportService = inject(ReservationImportService);
   private readonly tripMemberService = inject(TripMemberService);
   private readonly fb = inject(FormBuilder);
 
@@ -2678,6 +2692,7 @@ export class TripDetailsComponent implements OnInit {
   bookingImportError = '';
   isImportingBooking = false;
   bookingImportDraft: BookingImportDraft | null = null;
+  activeReservationImportId: number | null = null;
 
   showEditTripModal = false;
   isUpdatingTrip = false;
@@ -3372,11 +3387,13 @@ export class TripDetailsComponent implements OnInit {
   }
 
   openBookingModal(): void {
+    this.activeReservationImportId = null;
     this.showBookingModal = true;
     this.bookingModalError = '';
   }
 
   openBookingImport(): void {
+    this.activeReservationImportId = null;
     this.bookingImportFile = null;
     this.bookingImportError = '';
     this.bookingImportDraft = null;
@@ -3405,6 +3422,7 @@ export class TripDetailsComponent implements OnInit {
 
   importBookingFile(): void {
     if (!this.bookingImportFile || this.isImportingBooking) return;
+    this.activeReservationImportId = null;
     this.isImportingBooking = true;
     this.bookingImportError = '';
     this.bookingService.importBookingFile(this.tripId, this.bookingImportFile).subscribe({
@@ -3443,8 +3461,36 @@ export class TripDetailsComponent implements OnInit {
     return value ? value.slice(0, 16) : '';
   }
 
+  applyReservationEmailImport(selection: ReservationImportSelection): void {
+    const draft = selection.draft;
+    this.activeReservationImportId = selection.importId;
+    this.bookingImportDraft = draft;
+    this.bookingForm.reset({
+      bookingType: draft.bookingType,
+      transportType: draft.transportType || 'OTHER',
+      providerName: draft.providerName || '',
+      bookingReference: draft.bookingReference || '',
+      departure: draft.departure || '',
+      arrival: draft.arrival || '',
+      passengerDetails: draft.passengerDetails || '',
+      pickupPoint: draft.pickupPoint || '',
+      dropPoint: draft.dropPoint || '',
+      startDatetime: this.toDatetimeLocal(draft.startDatetime),
+      amount: draft.amount || 0,
+      notes: draft.warnings.length
+        ? `Email import review: ${draft.warnings.join(' ')}`
+        : `Imported from a forwarded reservation email with ${Math.round(draft.confidence * 100)}% confidence.`
+    });
+    this.bookingModalError = draft.warnings.length
+      ? `Email imported. Please review: ${draft.warnings.join(' ')}`
+      : '';
+    this.showBookingModal = true;
+  }
+
   closeBookingModal(): void {
     this.showBookingModal = false;
+    this.activeReservationImportId = null;
+    this.bookingImportDraft = null;
     this.bookingForm.reset({
       bookingType: 'TRANSPORT',
       transportType: 'FLIGHT',
@@ -3482,10 +3528,17 @@ export class TripDetailsComponent implements OnInit {
       notes: value.notes || undefined
     };
 
+    const reservationImportId = this.activeReservationImportId;
     this.bookingService.createBooking(this.tripId, request).subscribe({
       next: (newBooking) => {
         this.isSubmittingBooking = false;
         this.bookings = [newBooking, ...this.bookings];
+        if (reservationImportId) {
+          this.reservationImportService.complete(reservationImportId, this.tripId, newBooking.id).subscribe({
+            next: () => this.reservationEmailImports?.markCompleted(reservationImportId),
+            error: () => this.reservationEmailImports?.refresh()
+          });
+        }
         this.closeBookingModal();
         this.loadDashboard();
       },

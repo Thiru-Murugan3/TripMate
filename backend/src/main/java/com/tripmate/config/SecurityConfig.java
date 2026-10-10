@@ -71,6 +71,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/forgot-password",
                                 "/api/v1/auth/reset-password",
+                                "/api/v1/webhooks/brevo/inbound/**",
                                 "/api/v1/health",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

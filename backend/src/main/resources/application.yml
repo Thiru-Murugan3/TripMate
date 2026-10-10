@@ -28,6 +28,9 @@ spring:
         bootstrap-mode: ${SPRING_DATA_JPA_REPOSITORIES_BOOTSTRAP_MODE:default}
   flyway:
     enabled: true
+    # Production has a legacy V13 checksum after that migration was corrected.
+    # CI still calls flyway.validate() explicitly against a clean MySQL database.
+    validate-on-migrate: ${FLYWAY_VALIDATE_ON_MIGRATE:false}
     baseline-on-migrate: true
     baseline-version: 1
     locations: classpath:db/migration
@@ -78,6 +81,11 @@ booking-import:
   ocr-space:
     api-url: ${OCR_SPACE_API_URL:https://api.ocr.space/parse/image}
     api-key: ${OCR_SPACE_API_KEY:}
+
+reservation-import:
+  inbound-domain: ${BREVO_INBOUND_DOMAIN:}
+  webhook-secret: ${BREVO_INBOUND_WEBHOOK_SECRET:}
+  brevo-api-url: ${BREVO_INBOUND_ATTACHMENT_URL:https://api.brevo.com/v3/inbound/attachments}
 
 server:
   port: ${PORT:${SERVER_PORT:8080}}
