@@ -88,6 +88,25 @@ Set-EnvValue -Path $envPath -Key 'TRIPMATE_BREVO_API_KEY' -Value $apiKey
 Set-EnvValue -Path $envPath -Key 'TRIPMATE_BREVO_SENDER_EMAIL' -Value $senderEmail.Trim()
 Set-EnvValue -Path $envPath -Key 'TRIPMATE_BREVO_SENDER_NAME' -Value $senderName.Trim()
 
+$inboundDomain = Read-Host 'Inbound email domain (press Enter to skip, e.g. inbound.tripmate.app)'
+if (-not [string]::IsNullOrWhiteSpace($inboundDomain)) {
+    Set-EnvValue -Path $envPath -Key 'BREVO_INBOUND_DOMAIN' -Value $inboundDomain.Trim()
+
+    $inboundSecret = Read-Host 'Inbound Webhook Secret (press Enter for random token)'
+    if ([string]::IsNullOrWhiteSpace($inboundSecret)) {
+        $inboundSecret = [System.Guid]::NewGuid().ToString('N')
+    }
+    Set-EnvValue -Path $envPath -Key 'BREVO_INBOUND_WEBHOOK_SECRET' -Value $inboundSecret.Trim()
+
+    Write-Host ''
+    Write-Host 'Brevo Inbound Email Setup (Reservation Forwarding):' -ForegroundColor Cyan
+    Write-Host "1. In Brevo Dashboard -> Settings -> Inbound Email, add domain: $($inboundDomain.Trim())"
+    Write-Host '2. Configure MX DNS records pointing to Brevo (mail.mailin.fr or provided by Brevo).'
+    Write-Host "3. Set Inbound Webhook URL in Brevo:"
+    Write-Host "   https://<your-host>/api/v1/webhooks/brevo/inbound/$($inboundSecret.Trim())" -ForegroundColor Yellow
+    Write-Host '4. Each user receives a unique forwarding address (e.g. import+<token>@domain) under Bookings tab!' -ForegroundColor Green
+}
+
 Write-Host ''
 Write-Host 'Brevo settings saved to backend\.env.' -ForegroundColor Green
 Write-Host 'Run run-backend.bat to start TripMate.' -ForegroundColor Cyan
