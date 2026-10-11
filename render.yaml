@@ -30,9 +30,9 @@ services:
       - key: TRIPMATE_BREVO_SENDER_NAME
         value: TripMate
       - key: BREVO_INBOUND_DOMAIN
-        sync: false
+        value: inbound.suttru.in
       - key: BREVO_INBOUND_WEBHOOK_SECRET
-        sync: false
+        value: suttru_inbound_sec_8a3f91e4b27c
       - key: R2_ENABLED
         sync: false
       - key: R2_ENDPOINT
@@ -46,9 +46,9 @@ services:
       - key: R2_PRESIGNED_URL_EXPIRATION
         value: "3600"
       - key: APP_FRONTEND_URL
-        value: https://tripmate-web-thiru-murugan3.onrender.com
+        value: https://www.suttru.in
       - key: APP_CORS_ALLOWED_ORIGINS
-        value: https://tripmate-web-thiru-murugan3.onrender.com
+        value: https://www.suttru.in,https://suttru.in,https://tripmate-web-thiru-murugan3.onrender.com
       - key: JPA_DDL_AUTO
         value: none
       - key: JPA_SHOW_SQL

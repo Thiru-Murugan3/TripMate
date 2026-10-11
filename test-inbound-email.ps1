@@ -1,7 +1,7 @@
 param(
     [string]$BaseUrl = "http://localhost:8080",
-    [string]$Secret = "test-webhook-secret",
-    [string]$Recipient = "import+testtoken123@inbound.tripmate.app",
+    [string]$Secret = "suttru_inbound_sec_8a3f91e4b27c",
+    [string]$Recipient = "import+testtoken123@inbound.suttru.in",
     [string]$SenderEmail = "traveler@example.com"
 )
 
