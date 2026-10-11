@@ -31,8 +31,9 @@ import { DestinationDiscoveryComponent } from '../../discovery/destination-disco
 import { ReservationEmailImportsComponent } from '../../bookings/reservation-email-imports.component';
 import { ReservationImportSelection } from '../../../core/models/reservation-import.model';
 import { ReservationImportService } from '../../../core/services/reservation-import.service';
+import { TripTimelineComponent } from '../trip-timeline/trip-timeline.component';
 
-type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
+type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
 @Component({
   selector: 'app-trip-details',
@@ -46,7 +47,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
     PlaceManagerComponent,
     ExpenseManagerComponent,
     DocumentManagerComponent,
-    ReservationEmailImportsComponent
+    ReservationEmailImportsComponent,
+    TripTimelineComponent
   ],
   template: `
     <main class="trip-details-page">
@@ -143,6 +145,10 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
         <nav class="details-tabs dashboard-tabs" aria-label="Trip dashboard sections">
           <button type="button" class="tab-btn" [class.active]="activeTab === 'OVERVIEW'" (click)="setActiveTab('OVERVIEW')">
             Overview
+          </button>
+          <button type="button" class="tab-btn timeline-tab-btn" [class.active]="activeTab === 'TIMELINE'" (click)="setActiveTab('TIMELINE')">
+            <span class="material-symbols-outlined tab-inline-icon">timeline</span>
+            Timeline
           </button>
           <button type="button" class="tab-btn" [class.active]="activeTab === 'EXPLORE'" (click)="setActiveTab('EXPLORE')">
             Explore
@@ -297,6 +303,14 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
                     <span class="material-symbols-outlined arrow">chevron_right</span>
                   </button>
 
+                  <button type="button" class="quick-action-row" (click)="setActiveTab('TIMELINE')">
+                    <span class="quick-action-icon blue">
+                      <span class="material-symbols-outlined">timeline</span>
+                    </span>
+                    <span>View Itinerary Timeline</span>
+                    <span class="material-symbols-outlined arrow">chevron_right</span>
+                  </button>
+
                   <button type="button" class="quick-action-row" (click)="setActiveTab('ITINERARY')">
                     <span class="quick-action-icon green">
                       <span class="material-symbols-outlined">add</span>
@@ -358,7 +372,15 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
             </div>
           </ng-container>
         </section>
-
+ 
+        <section *ngIf="activeTab === 'TIMELINE'" class="tab-content timeline-tab-content">
+          <app-trip-timeline
+            [tripId]="tripId"
+            (selectBooking)="goToBookingTab($event)"
+            (selectActivity)="goToItineraryTab($event)"
+          ></app-trip-timeline>
+        </section>
+ 
         <section *ngIf="activeTab === 'EXPLORE'" class="tab-content">
           <app-destination-discovery
             [tripId]="tripId"
@@ -1230,6 +1252,10 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
     .tab-btn.active {
       color: #1d4ed8;
       background: #eff6ff;
+    }
+
+    .tab-inline-icon {
+      font-size: 1.15rem;
     }
 
     .tab-count,
@@ -2939,6 +2965,7 @@ export class TripDetailsComponent implements OnInit {
       this.loadMembers();
       this.loadDashboard();
     } else if (
+      tab === 'TIMELINE' ||
       tab === 'EXPLORE' ||
       tab === 'ITINERARY' ||
       tab === 'EXPENSES' ||
@@ -2947,6 +2974,14 @@ export class TripDetailsComponent implements OnInit {
     ) {
       this.loadDashboard();
     }
+  }
+
+  goToBookingTab(bookingId?: number): void {
+    this.setActiveTab('BOOKINGS');
+  }
+
+  goToItineraryTab(activityId?: number): void {
+    this.setActiveTab('ITINERARY');
   }
 
   loadMembers(): void {
