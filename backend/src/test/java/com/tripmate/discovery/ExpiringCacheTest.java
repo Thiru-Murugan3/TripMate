@@ -6,6 +6,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class ExpiringCacheTest {
+    @Test void priceExpiryIsReevaluatedWhenSerialized() throws Exception {
+        var price = new DiscoveryPriceOption("Adult", java.math.BigDecimal.TEN, null,
+                PriceType.PER_PERSON, "INR", "https://example.test/fee", Instant.now().minusSeconds(60),
+                PriceStatus.VERIFIED, Instant.now().minusSeconds(1), false);
+        assertTrue(price.mayHaveChanged());
+        var json = new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules().valueToTree(price);
+        assertTrue(json.path("mayHaveChanged").asBoolean());
+    }
+
     @Test void expiresAtDeadlineAndEvictsLeastRecentlyUsed() {
         Clock clock = mock(Clock.class);
         Instant now = Instant.parse("2026-10-12T10:00:00Z");

@@ -15,6 +15,11 @@ public record DiscoveryPriceOption(
         Instant expiresAt,
         boolean mayHaveChanged
 ) {
+    @Override
+    public boolean mayHaveChanged() {
+        return mayHaveChanged || expiresAt != null && !expiresAt.isAfter(Instant.now());
+    }
+
     public DiscoveryPriceOption(
             String label,
             BigDecimal amount,

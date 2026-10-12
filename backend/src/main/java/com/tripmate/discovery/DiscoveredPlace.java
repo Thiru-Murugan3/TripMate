@@ -116,6 +116,12 @@ public record DiscoveredPlace(
         );
     }
 
+    @Override
+    public boolean verificationExpired() {
+        return verificationExpired || verificationExpiresAt != null && !verificationExpiresAt.isAfter(Instant.now())
+                || priceOptions.stream().anyMatch(DiscoveryPriceOption::mayHaveChanged);
+    }
+
     private static DiscoveryItemType defaultItemType(DiscoveryCategory category) {
         if (category == DiscoveryCategory.ADVENTURE || category == DiscoveryCategory.ENTERTAINMENT
                 || category == DiscoveryCategory.FAMILY) return DiscoveryItemType.ACTIVITY;
