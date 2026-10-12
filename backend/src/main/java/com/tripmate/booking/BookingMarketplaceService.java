@@ -52,7 +52,7 @@ public class BookingMarketplaceService {
                 .endDatetime(offer.endDatetime())
                 .amount(offer.amount())
                 .status(BookingStatus.CONFIRMED)
-                .notes("Booked inside TripMate using " + request.paymentMethod())
+                .notes("Booked inside Suttru using " + request.paymentMethod())
                 .bookingSource(BookingSource.TRIPMATE_SANDBOX)
                 .paymentStatus(providerResult.paymentStatus())
                 .currency(offer.currency())

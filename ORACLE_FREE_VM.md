@@ -1,12 +1,12 @@
-# Oracle Cloud Always Free VM for TripMate + Coolify
+# Oracle Cloud Always Free VM for Suttru + Coolify
 
-This file covers only the VM/bootstrap step. The TripMate application deployment itself is documented in `COOLIFY_DEPLOYMENT.md`.
+This file covers only the VM/bootstrap step. The Suttru application deployment itself is documented in `COOLIFY_DEPLOYMENT.md`.
 
 ## Recommended VM
 
 Create an Oracle Cloud **Always Free Eligible** Ampere A1 instance in your home region.
 
-Recommended allocation for TripMate + Coolify:
+Recommended allocation for Suttru + Coolify:
 
 - Shape: `VM.Standard.A1.Flex`
 - OCPU: `2`

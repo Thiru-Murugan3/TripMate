@@ -63,7 +63,7 @@ function Wait-ForUrl {
 }
 
 Write-Host ''
-Write-Host 'TripMate Public Development Mode' -ForegroundColor Cyan
+Write-Host 'Suttru Public Development Mode' -ForegroundColor Cyan
 Write-Host 'This creates a temporary HTTPS address that works outside your Wi-Fi.'
 Write-Host ''
 
@@ -142,7 +142,7 @@ Set-DotEnvValue -Path $envPath -Name 'APP_FRONTEND_URL' -Value $publicUrl
 Set-DotEnvValue -Path $envPath -Name 'APP_CORS_ALLOWED_ORIGINS' -Value ($publicUrl + ',http://localhost:4200,http://127.0.0.1:4200')
 
 Write-Host ''
-Write-Host 'Public TripMate URL created:' -ForegroundColor Green
+Write-Host 'Public Suttru URL created:' -ForegroundColor Green
 Write-Host $publicUrl -ForegroundColor Cyan
 Write-Host ''
 Write-Host 'Starting Spring Boot while Cloudflare finishes warming up...'
@@ -194,9 +194,9 @@ Write-Host '  Public HTTPS URL   OK'
 Write-Host '  Local Spring Boot  OK'
 Write-Host '  Public /api proxy  OK'
 Write-Host ''
-Write-Host 'TripMate public development mode is ready.' -ForegroundColor Green
+Write-Host 'Suttru public development mode is ready.' -ForegroundColor Green
 Write-Host ''
-Write-Host 'Open TripMate here:' -ForegroundColor Cyan
+Write-Host 'Open Suttru here:' -ForegroundColor Cyan
 Write-Host $publicUrl
 Write-Host ''
 Write-Host 'New invitation emails will use URLs like:'

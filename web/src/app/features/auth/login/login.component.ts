@@ -72,7 +72,7 @@ export class LoginComponent {
           serverMessage.toLowerCase().includes('cors')
         ) {
           this.errorMessage =
-            'This device is not allowed by the backend CORS configuration. Restart the backend after updating the latest TripMate code.';
+            'This device is not allowed by the backend CORS configuration. Restart the backend after updating the latest Suttru code.';
         } else if (serverMessage) {
           this.errorMessage = serverMessage;
         } else {

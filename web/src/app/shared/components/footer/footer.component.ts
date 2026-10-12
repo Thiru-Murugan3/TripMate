@@ -11,12 +11,12 @@ import { CommonModule } from '@angular/common';
         <div class="footer-brand">
           <div class="brand">
             <span class="material-symbols-outlined">flight_takeoff</span>
-            TripMate
+            Suttru
           </div>
           <p class="tagline">Your intelligent AI trip & group travel companion.</p>
         </div>
         <div class="copyright">
-          &copy; {{ currentYear }} TripMate Inc. All rights reserved.
+          &copy; {{ currentYear }} Suttru Inc. All rights reserved.
         </div>
       </div>
     </footer>

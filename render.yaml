@@ -28,7 +28,7 @@ services:
       - key: TRIPMATE_BREVO_SENDER_EMAIL
         value: thirumuruganofficial3@gmail.com
       - key: TRIPMATE_BREVO_SENDER_NAME
-        value: TripMate
+        value: Suttru
       - key: BREVO_INBOUND_DOMAIN
         value: inbound.suttru.in
       - key: BREVO_INBOUND_WEBHOOK_SECRET

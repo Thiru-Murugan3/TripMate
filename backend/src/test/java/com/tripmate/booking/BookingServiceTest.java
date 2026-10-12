@@ -236,7 +236,7 @@ class BookingServiceTest {
                 .trip(trip)
                 .bookingType(BookingType.TRANSPORT)
                 .transportType(TransportType.FLIGHT)
-                .providerName("TripMate Air Sandbox")
+                .providerName("Suttru Air Sandbox")
                 .departure("Chennai")
                 .arrival("Goa")
                 .startDatetime(java.time.LocalDateTime.now().plusDays(3))

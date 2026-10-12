@@ -35,7 +35,7 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
 
         <section class="marketplace-hero">
           <div>
-            <span class="eyebrow">TRIPMATE BOOKING</span>
+            <span class="eyebrow">SUTTRU BOOKING</span>
             <h1>Search & book in one place</h1>
             <p *ngIf="trip">Search options for <strong>{{ trip.name }}</strong>.</p>
           </div>
@@ -47,7 +47,7 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
           <div>
             <strong>Why you do not see every real flight, train or bus yet</strong>
             <p>
-              TripMate currently uses simulated inventory. The results page and filters are production-ready,
+              Suttru currently uses simulated inventory. The results page and filters are production-ready,
               but real nationwide availability requires licensed airline/GDS, IRCTC-authorized and bus inventory APIs.
             </p>
           </div>

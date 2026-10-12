@@ -21,9 +21,9 @@ function Set-EnvValue {
 }
 
 Write-Host ''
-Write-Host 'TripMate Brevo OTP Email Setup' -ForegroundColor Cyan
+Write-Host 'Suttru Brevo OTP Email Setup' -ForegroundColor Cyan
 Write-Host '------------------------------' -ForegroundColor Cyan
-Write-Host 'One-time backend setup. New TripMate users need no Gmail password or App Password.' -ForegroundColor Green
+Write-Host 'One-time backend setup. New Suttru users need no Gmail password or App Password.' -ForegroundColor Green
 Write-Host ''
 
 $secureApiKey = Read-Host 'Brevo API key' -AsSecureString
@@ -38,8 +38,8 @@ if ([string]::IsNullOrWhiteSpace($senderEmail) -or $senderEmail -notmatch '^[^\s
     exit 1
 }
 
-$senderName = Read-Host 'Sender name (press Enter for TripMate)'
-if ([string]::IsNullOrWhiteSpace($senderName)) { $senderName = 'TripMate' }
+$senderName = Read-Host 'Sender name (press Enter for Suttru)'
+if ([string]::IsNullOrWhiteSpace($senderName)) { $senderName = 'Suttru' }
 
 Write-Host 'Checking Brevo API key...' -ForegroundColor Cyan
 try {
@@ -78,7 +78,7 @@ try {
 }
 
 if (-not (Test-Path (Split-Path -Parent $envPath))) { New-Item -ItemType Directory -Path (Split-Path -Parent $envPath) -Force | Out-Null }
-if (-not (Test-Path $envPath)) { @('# TripMate local environment','# This file is ignored by Git. Never commit real credentials.','') | Set-Content -Path $envPath -Encoding UTF8 }
+if (-not (Test-Path $envPath)) { @('# Suttru local environment','# This file is ignored by Git. Never commit real credentials.','') | Set-Content -Path $envPath -Encoding UTF8 }
 
 Set-EnvValue -Path $envPath -Key 'BREVO_API_URL' -Value 'https://api.brevo.com/v3/smtp/email'
 Set-EnvValue -Path $envPath -Key 'BREVO_API_KEY' -Value $apiKey
@@ -109,4 +109,4 @@ if (-not [string]::IsNullOrWhiteSpace($inboundDomain)) {
 
 Write-Host ''
 Write-Host 'Brevo settings saved to backend\.env.' -ForegroundColor Green
-Write-Host 'Run run-backend.bat to start TripMate.' -ForegroundColor Cyan
+Write-Host 'Run run-backend.bat to start Suttru.' -ForegroundColor Cyan

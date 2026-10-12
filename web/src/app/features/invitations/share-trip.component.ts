@@ -86,7 +86,7 @@ import { TripService } from '../../core/services/trip.service';
                       formControlName="email"
                       placeholder="traveler@example.com"
                     />
-                    <small>TripMate will email a secure invitation link to this address.</small>
+                    <small>Suttru will email a secure invitation link to this address.</small>
                   </div>
 
                   <div class="form-group" *ngIf="inviteForm.controls.type.value === 'MOBILE'">
@@ -97,7 +97,7 @@ import { TripService } from '../../core/services/trip.service';
                       formControlName="mobileNumber"
                       placeholder="+91 98765 43210"
                     />
-                    <small>The TripMate account mobile number must match.</small>
+                    <small>The Suttru account mobile number must match.</small>
                   </div>
 
                   <div class="form-group" *ngIf="inviteForm.controls.type.value === 'LINK'">
@@ -142,7 +142,7 @@ import { TripService } from '../../core/services/trip.service';
                     </button>
                   </div>
                   <small>
-                    For security, TripMate stores only a hash of the token. Copy this link now;
+                    For security, Suttru stores only a hash of the token. Copy this link now;
                     it cannot be reconstructed later.
                   </small>
                 </div>

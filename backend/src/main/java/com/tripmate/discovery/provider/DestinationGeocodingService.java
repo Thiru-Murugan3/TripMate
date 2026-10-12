@@ -54,7 +54,7 @@ public class DestinationGeocodingService {
         if (answered) throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Indian destination not found. Include the state, for example 'Kodaikanal, Tamil Nadu'.");
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                "Destination providers are temporarily unavailable. TripMate will not fabricate a location.");
+                "Destination providers are temporarily unavailable. Suttru will not fabricate a location.");
     }
 
     public List<DiscoverySuggestion> suggest(String query, int limit) {

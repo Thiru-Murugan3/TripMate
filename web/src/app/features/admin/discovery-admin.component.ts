@@ -25,7 +25,7 @@ type ListingCategory = Exclude<DiscoveryCategory, 'ALL'>;
     <main class="admin-page">
       <header class="page-header">
         <div>
-          <span class="eyebrow">TripMate data operations</span>
+          <span class="eyebrow">Suttru data operations</span>
           <h1>Explore India verification</h1>
           <p>Curate real listings and keep their sources, prices, timings and images auditable.</p>
         </div>
@@ -103,6 +103,25 @@ type ListingCategory = Exclude<DiscoveryCategory, 'ALL'>;
                 <label>Price status<select name="priceStatus" [(ngModel)]="draft.priceStatus" required>@for (value of priceStatuses; track value) { <option [value]="value">{{ value }}</option> }</select></label>
                 <label>Price unit<select name="priceType" [(ngModel)]="draft.priceType" required>@for (value of priceTypes; track value) { <option [value]="value">{{ value }}</option> }</select></label>
                 <label>Base price (INR)<input name="basePrice" type="number" min="0" [(ngModel)]="draft.basePrice" /></label>
+                <fieldset class="wide">
+                  <legend>Structured fees</legend>
+                  <p>Each option keeps its own source, unit and verification dates.</p>
+                  @for (price of draft.priceOptions; track $index; let i = $index) {
+                    <div class="form-grid">
+                      <label>Label<input [name]="'feeLabel' + i" [(ngModel)]="price.label" required /></label>
+                      <label>Amount<input [name]="'feeAmount' + i" type="number" min="0" [(ngModel)]="price.amount" required /></label>
+                      <label>Maximum amount<input [name]="'feeMaximum' + i" type="number" [min]="price.amount" [(ngModel)]="price.maximumAmount" /></label>
+                      <label>Currency<input [name]="'feeCurrency' + i" [(ngModel)]="price.currency" required /></label>
+                      <label>Status<select [name]="'feeStatus' + i" [(ngModel)]="price.priceStatus">@for (value of priceStatuses; track value) { <option [value]="value">{{ value }}</option> }</select></label>
+                      <label>Unit<select [name]="'feeUnit' + i" [(ngModel)]="price.priceType">@for (value of priceTypes; track value) { <option [value]="value">{{ value }}</option> }</select></label>
+                      <label>Source URL<input [name]="'feeSource' + i" type="url" [(ngModel)]="price.sourceUrl" required /></label>
+                      <label>Verified at (ISO date)<input [name]="'feeChecked' + i" [(ngModel)]="price.lastVerifiedAt" placeholder="2026-10-12T10:00:00Z" /></label>
+                      <label>Expires at (ISO date)<input [name]="'feeExpires' + i" [(ngModel)]="price.expiresAt" placeholder="2026-11-12T10:00:00Z" /></label>
+                      <button type="button" class="secondary" (click)="draft.priceOptions.splice(i, 1)">Remove fee</button>
+                    </div>
+                  }
+                  <button type="button" class="secondary" (click)="addPriceOption()">Add fee option</button>
+                </fieldset>
                 <label>Family friendly<select name="familyFriendly" [(ngModel)]="familyFriendlyValue"><option value="">Unknown</option><option value="true">Yes</option><option value="false">No</option></select></label>
                 <label class="wide">Official source name<input name="sourceName" [(ngModel)]="draft.sourceName" required placeholder="Kerala Tourism" /></label>
                 <label class="wide">Official/source URL<input name="sourceUrl" type="url" [(ngModel)]="draft.sourceUrl" required placeholder="https://…" /></label>
@@ -110,6 +129,7 @@ type ListingCategory = Exclude<DiscoveryCategory, 'ALL'>;
                 <label>Expires<input name="verificationExpiresAt" type="datetime-local" [(ngModel)]="expiresAtLocal" /></label>
                 <label class="wide">Exact image URL<input name="imageUrl" type="url" [(ngModel)]="imageUrl" placeholder="Optional; leave empty for category placeholder" /></label>
                 <label class="wide">Image source page<input name="imageSourcePage" type="url" [(ngModel)]="imageSourcePage" /></label>
+                <label>Image author<input name="imageAuthor" [(ngModel)]="imageAuthor" /></label>
                 <label>Image licence<input name="imageLicense" [(ngModel)]="imageLicense" placeholder="CC BY-SA 4.0" /></label>
                 <label>Image attribution<input name="imageAttribution" [(ngModel)]="imageAttribution" /></label>
                 <label>Conflict status<input name="conflictStatus" [(ngModel)]="draft.conflictStatus" placeholder="Optional" /></label>
@@ -170,6 +190,7 @@ export class DiscoveryAdminComponent implements OnInit {
   checkedAtLocal = '';
   expiresAtLocal = '';
   imageUrl = '';
+  imageAuthor = '';
   imageSourcePage = '';
   imageLicense = '';
   imageAttribution = '';
@@ -202,6 +223,7 @@ export class DiscoveryAdminComponent implements OnInit {
     this.checkedAtLocal = this.toLocal(this.draft.sourceLastCheckedAt);
     this.expiresAtLocal = this.toLocal(this.draft.verificationExpiresAt);
     const primary = this.draft.images.find((image) => image.primary) ?? this.draft.images[0];
+    this.imageAuthor = primary?.author ?? '';
     this.imageUrl = primary?.imageUrl ?? ''; this.imageSourcePage = primary?.sourcePage ?? '';
     this.imageLicense = primary?.license ?? ''; this.imageAttribution = primary?.attribution ?? '';
     this.editorOpen = true;
@@ -217,7 +239,7 @@ export class DiscoveryAdminComponent implements OnInit {
       verificationExpiresAt: this.iso(this.expiresAtLocal),
       familyFriendly: this.familyFriendlyValue === '' ? undefined : this.familyFriendlyValue === 'true',
       priceOptions: this.priceOptions(),
-      images: this.imageUrl ? [{ imageUrl: this.imageUrl, sourcePage: this.imageSourcePage, sourceName: this.draft.sourceName, license: this.imageLicense, attribution: this.imageAttribution, exact: true, primary: true }] : []
+      images: this.updatedImages()
     };
     const request = this.editingId ? this.service.update(this.editingId, payload) : this.service.create(payload);
     request.subscribe({
@@ -239,12 +261,32 @@ export class DiscoveryAdminComponent implements OnInit {
   location(item: AdminDiscoveryItem): string { return [item.listing.city, item.listing.district, item.listing.state].filter(Boolean).join(', ') || item.listing.fullAddress || 'Location not labelled'; }
   priceText(item: AdminDiscoveryItem): string { const amount = item.listing.estimatedCostPerPerson; return amount == null ? 'Price not verified' : new Intl.NumberFormat('en-IN', { style:'currency', currency:item.listing.currency ?? 'INR', maximumFractionDigits:0 }).format(amount); }
 
-  private priceOptions() {
-    if (this.draft.basePrice == null || this.draft.priceStatus === 'UNKNOWN') return this.draft.priceOptions ?? [];
-    return [{ label: this.draft.priceStatus === 'FREE' ? 'Entry' : 'Base price', amount: this.draft.basePrice, priceType: this.draft.priceType, currency: this.draft.currency, sourceUrl: this.draft.sourceUrl, lastVerifiedAt: this.iso(this.checkedAtLocal), status: this.draft.priceStatus, expiresAt: this.iso(this.expiresAtLocal) }];
+  addPriceOption(): void {
+    this.draft.priceOptions.push({ label: '', amount: 0, currency: this.draft.currency,
+      priceType: this.draft.priceType, priceStatus: 'UNKNOWN', sourceUrl: this.draft.sourceUrl });
   }
 
-  private resetAuxiliary(): void { this.checkedAtLocal = ''; this.expiresAtLocal = ''; this.imageUrl = ''; this.imageSourcePage = ''; this.imageLicense = ''; this.imageAttribution = ''; this.familyFriendlyValue = ''; }
+  private priceOptions() {
+    // Existing structured fees are independent of the headline base price.
+    if (this.draft.priceOptions.length) return this.draft.priceOptions;
+    if (this.draft.basePrice == null || this.draft.priceStatus === 'UNKNOWN') return this.draft.priceOptions ?? [];
+    return [{ label: this.draft.priceStatus === 'FREE' ? 'Entry' : 'Base price', amount: this.draft.basePrice, priceType: this.draft.priceType, currency: this.draft.currency, sourceUrl: this.draft.sourceUrl, lastVerifiedAt: this.iso(this.checkedAtLocal), priceStatus: this.draft.priceStatus, expiresAt: this.iso(this.expiresAtLocal) }];
+  }
+
+  private updatedImages(): AdminDiscoveryUpsert['images'] {
+    const images = this.draft.images.map(image => ({ ...image }));
+    const index = Math.max(0, images.findIndex(image => image.primary));
+    const original = images[index];
+    if (!this.imageUrl) return images.filter((_, i) => i !== index);
+    const primary = { ...original, imageUrl: this.imageUrl, sourcePage: this.imageSourcePage,
+      sourceName: original?.imageUrl === this.imageUrl ? original.sourceName : 'Curated image', author: this.imageAuthor, license: this.imageLicense,
+      attribution: this.imageAttribution, exact: original?.exact ?? true, primary: true };
+    if (original) images[index] = primary;
+    else images.push(primary);
+    return images;
+  }
+
+  private resetAuxiliary(): void { this.checkedAtLocal = ''; this.expiresAtLocal = ''; this.imageUrl = ''; this.imageAuthor = ''; this.imageSourcePage = ''; this.imageLicense = ''; this.imageAttribution = ''; this.familyFriendlyValue = ''; }
   private toLocal(value?: string): string { return value ? new Date(value).toISOString().slice(0, 16) : ''; }
   private iso(value: string): string | undefined { return value ? new Date(value).toISOString() : undefined; }
   private emptyDraft(): AdminDiscoveryUpsert {

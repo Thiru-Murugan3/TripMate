@@ -19,16 +19,19 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class WikimediaEnrichmentService {
     private final RestClient client;
+    private final CommonsImageService commons;
     private final String wikipediaBase;
     private final String wikidataBase;
     private final Map<String, CachedEnrichment> cache = new ConcurrentHashMap<>();
 
     public WikimediaEnrichmentService(
             ProviderHttpClientFactory factory,
+            CommonsImageService commons,
             @Value("${discovery.wikipedia-url:https://en.wikipedia.org}") String wikipediaBase,
             @Value("${discovery.wikidata-url:https://www.wikidata.org}") String wikidataBase
     ) {
         this.client = factory.create(5000);
+        this.commons = commons;
         this.wikipediaBase = wikipediaBase.replaceAll("/$", "");
         this.wikidataBase = wikidataBase.replaceAll("/$", "");
     }
@@ -54,8 +57,7 @@ public class WikimediaEnrichmentService {
             if (response == null) return Enrichment.empty();
             String imageUrl = response.path("thumbnail").path("source").asText(null);
             String pageUrl = response.path("content_urls").path("desktop").path("page").asText(null);
-            DiscoveryImage image = imageUrl == null ? null : new DiscoveryImage(imageUrl, pageUrl,
-                    "Wikipedia/Wikimedia Commons", null, "See source page", "Wikipedia page thumbnail", true, true);
+            DiscoveryImage image = commons.resolveUrl(imageUrl);
             return new Enrichment(response.path("extract").asText(null), image, pageUrl, null);
         } catch (RestClientException | IllegalArgumentException ex) {
             return Enrichment.empty();
@@ -73,14 +75,7 @@ public class WikimediaEnrichmentService {
             JsonNode claims = root.path("claims").path("P18");
             String fileName = claims.isArray() && !claims.isEmpty()
                     ? claims.get(0).path("mainsnak").path("datavalue").path("value").asText(null) : null;
-            DiscoveryImage image = null;
-            if (fileName != null) {
-                String fileUrl = "https://commons.wikimedia.org/wiki/Special:FilePath/"
-                        + URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
-                String sourcePage = "https://commons.wikimedia.org/wiki/File:" + fileName.replace(' ', '_');
-                image = new DiscoveryImage(fileUrl, sourcePage, "Wikimedia Commons", null,
-                        "See Wikimedia Commons file page", "Wikidata P18 exact-place image", true, true);
-            }
+            DiscoveryImage image = fileName == null ? null : commons.resolve("File:" + fileName);
             return new Enrichment(description, image, wikidataBase + "/wiki/" + id, id);
         } catch (RestClientException | IllegalArgumentException ex) {
             return Enrichment.empty();

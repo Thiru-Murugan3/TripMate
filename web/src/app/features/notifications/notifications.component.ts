@@ -16,7 +16,7 @@ type NotificationFilter = 'all' | 'unread';
       <div class="page-shell">
         <header class="page-header">
           <div>
-            <p class="eyebrow">TRIPMATE UPDATES</p>
+            <p class="eyebrow">SUTTRU UPDATES</p>
             <h1>Notifications</h1>
             <p class="subtitle">
               Keep track of trip reminders, member activity, expenses,

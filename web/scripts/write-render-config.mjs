@@ -16,4 +16,4 @@ writeFileSync(
   'utf8'
 );
 
-console.log(`TripMate runtime API configured for ${apiUrl}`);
+console.log(`Suttru runtime API configured for ${apiUrl}`);

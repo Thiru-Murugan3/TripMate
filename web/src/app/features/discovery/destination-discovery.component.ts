@@ -10,12 +10,13 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 
 import {
   DiscoveredPlace,
   DestinationDiscoveryResponse,
   DiscoveryCategory,
+  DiscoveryImage,
   DiscoveryItemType,
   DiscoveryPriceOption,
   DiscoveryPriceStatus,
@@ -160,7 +161,7 @@ import { TripService } from '../../core/services/trip.service';
 
         <div class="result-toolbar">
           <div>
-            <h3>Found {{ filteredPlaces.length }} tourist places & activities in {{ data.query }}</h3>
+            <h3>Found {{ data.resultCount }} tourist places & activities in {{ data.query }}</h3>
             <p>Select places to add to your saved list or trip itinerary.</p>
           </div>
 
@@ -247,6 +248,10 @@ import { TripService } from '../../core/services/trip.service';
               </label>
             </div>
 
+            <p class="image-credit" *ngIf="creditedImages(place)[0] as image">
+              <a [href]="image.sourcePage" target="_blank" rel="noopener noreferrer">{{ image.attribution }}</a>
+              · {{ image.license }}
+            </p>
             <div class="place-body">
               <div class="title-row">
                 <h3>{{ place.name }}</h3>
@@ -435,8 +440,11 @@ import { TripService } from '../../core/services/trip.service';
             <span class="material-symbols-outlined">close</span>
           </button>
           <div class="detail-gallery">
-            <img [src]="getPlaceImage(place)" [alt]="place.name" (error)="handleImageError($event, place)" />
-            <img *ngFor="let image of (place.imageGallery || []).slice(1, 4)" [src]="image.url" [alt]="place.name" loading="lazy" />
+            <img *ngIf="!creditedImages(place).length" src="/place-placeholder.svg" [alt]="place.name" />
+            <figure *ngFor="let image of creditedImages(place).slice(0, 4)">
+              <img [src]="image.url" [alt]="place.name" loading="lazy" (error)="handleImageError($event, place)" />
+              <figcaption><a [href]="image.sourcePage" target="_blank" rel="noopener noreferrer">{{ image.attribution }}</a> · {{ image.license }}</figcaption>
+            </figure>
           </div>
           <div class="detail-content">
             <span class="eyebrow">{{ formatCategory(place.category) }} · {{ formatItemType(place.itemType) }}</span>
@@ -466,7 +474,6 @@ import { TripService } from '../../core/services/trip.service';
               <div *ngIf="place.cancellationInformation"><dt>Cancellation</dt><dd>{{ place.cancellationInformation }}</dd></div>
               <div><dt>Source</dt><dd>{{ place.sourceName || result?.provider }}</dd></div>
               <div *ngIf="place.sourceLastCheckedAt"><dt>Last checked</dt><dd>{{ place.sourceLastCheckedAt | date:'medium' }}</dd></div>
-              <div *ngIf="place.imageAttribution"><dt>Image credit</dt><dd>{{ place.imageAttribution }}{{ place.imageLicense ? ' · ' + place.imageLicense : '' }}</dd></div>
             </dl>
             <div class="detail-lists" *ngIf="place.inclusions?.length || place.exclusions?.length || place.thingsToCarry?.length">
               <section *ngIf="place.inclusions?.length"><h3>Inclusions</h3><ul><li *ngFor="let item of place.inclusions">{{ item }}</li></ul></section>
@@ -488,6 +495,11 @@ import { TripService } from '../../core/services/trip.service';
   `,
   styles: [`
     :host { display:block; }
+    .image-credit, figcaption { font-size:.7rem; color:#475569; margin:.35rem .6rem; }
+    .image-credit a, figcaption a { color:inherit; }
+    .detail-gallery figure { margin:0; min-width:0; overflow:auto; }
+    .detail-gallery figure img { width:100%; height:75%; object-fit:cover; }
+    @media(max-width:700px) { .detail-gallery figure:not(:first-child) { display:none; } }
     .discover-page { color:#0f172a; }
     .discover-hero { display:flex; justify-content:space-between; gap:1rem; padding:1.2rem; margin-bottom:1rem; border:1px solid #dbeafe; border-radius:16px; background:linear-gradient(135deg,#eff6ff,#f8fafc); }
     .discover-hero h2 { margin:.2rem 0 .35rem; font-size:1.3rem; }
@@ -731,11 +743,17 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   suggestions: DiscoverySuggestion[] = [];
   isLocating = false;
   private suggestionTimer?: number;
+  private searchSubscription?: Subscription;
+  private detailSubscription?: Subscription;
+  private suggestionSubscription?: Subscription;
+  private routeSubscription?: Subscription;
 
   result: DestinationDiscoveryResponse | null = null;
   selectedDetail: DiscoveredPlace | null = null;
   savedPlaces: Place[] = [];
   selectedIds = new Set<string>();
+  private selectedListings = new Map<string, DiscoveredPlace>();
+  private selectionDestination = '';
   dayAssignments: Record<string, number> = {};
 
   isLoading = false;
@@ -850,7 +868,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
     this.loadTrips();
 
-    this.route.queryParams.subscribe((params) => {
+    this.routeSubscription = this.route.queryParams.subscribe((params) => {
       const searchParam = params['search'] || params['q'];
       if (searchParam && searchParam.trim().length >= 2) {
         this.searchDestination = searchParam.trim();
@@ -860,10 +878,15 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.searchSubscription?.unsubscribe();
+    this.detailSubscription?.unsubscribe();
+    this.suggestionSubscription?.unsubscribe();
+    this.routeSubscription?.unsubscribe();
     if (this.suggestionTimer) window.clearTimeout(this.suggestionTimer);
   }
 
   onDestinationInput(): void {
+    this.suggestionSubscription?.unsubscribe();
     if (this.suggestionTimer) window.clearTimeout(this.suggestionTimer);
     const query = this.searchDestination.trim();
     if (query.length < 2) {
@@ -871,7 +894,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       return;
     }
     this.suggestionTimer = window.setTimeout(() => {
-      this.discoveryService.getSuggestions(query).subscribe({
+      this.suggestionSubscription = this.discoveryService.getSuggestions(query).subscribe({
         next: (suggestions) => this.suggestions = suggestions,
         error: () => this.suggestions = []
       });
@@ -899,7 +922,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.isLocating = false;
-          this.errorMessage = 'TripMate could not resolve this location inside India.';
+          this.errorMessage = 'Suttru could not resolve this location inside India.';
         }
       }),
       () => {
@@ -993,12 +1016,15 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
     this.suggestions = [];
-    if (page === 0) {
+    if (this.selectionDestination && this.selectionDestination !== destination.toLocaleLowerCase()) {
       this.selectedIds.clear();
+      this.selectedListings.clear();
       this.dayAssignments = {};
     }
 
-    this.discoveryService.discoverPlaces(destination, this.radiusKm, this.category, {
+    this.selectionDestination = destination.toLocaleLowerCase();
+    this.searchSubscription?.unsubscribe();
+    this.searchSubscription = this.discoveryService.discoverPlaces(destination, this.radiusKm, this.category, {
       itemType: this.itemTypeFilter,
       subcategory: this.subcategoryFilter || undefined,
       minPrice: this.minPriceFilter,
@@ -1046,11 +1072,13 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   async toggleSelection(place: DiscoveredPlace): Promise<void> {
     if (this.selectedIds.has(place.externalId)) {
       this.selectedIds.delete(place.externalId);
+      this.selectedListings.delete(place.externalId);
       delete this.dayAssignments[place.externalId];
       return;
     }
 
     this.selectedIds.add(place.externalId);
+    this.selectedListings.set(place.externalId, place);
     this.dayAssignments[place.externalId] = this.dayAssignments[place.externalId] || 1;
 
     if (this.activeTripId > 0 && this.effectiveCanEdit) {
@@ -1080,6 +1108,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     if (this.selectedIds.size === 0) {
       for (const place of candidates) {
         this.selectedIds.add(place.externalId);
+        this.selectedListings.set(place.externalId, place);
       }
     }
 
@@ -1140,6 +1169,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
         this.savedPlaces = [...this.savedPlaces, created];
         this.selectedIds.delete(place.externalId);
+        this.selectedListings.delete(place.externalId);
         delete this.dayAssignments[place.externalId];
         this.placesChanged.emit();
         this.successMessage = `${place.name} added to ${this.selectedTrip?.name || 'the trip'}.`;
@@ -1152,6 +1182,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     }
 
     this.selectedIds.add(place.externalId);
+    this.selectedListings.set(place.externalId, place);
     this.dayAssignments[place.externalId] = this.dayAssignments[place.externalId] || 1;
 
     if (!this.embeddedMode) {
@@ -1166,6 +1197,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
   async addPlaceToItinerary(place: DiscoveredPlace): Promise<void> {
     this.selectedIds.add(place.externalId);
+    this.selectedListings.set(place.externalId, place);
     this.dayAssignments[place.externalId] = this.dayAssignments[place.externalId] || 1;
 
     if (this.activeTripId <= 0) {
@@ -1235,6 +1267,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       }
 
       this.selectedIds.clear();
+      this.selectedListings.clear();
       this.dayAssignments = {};
     } catch (err: any) {
       this.errorMessage = err?.error?.message || 'Unable to save the selected places.';
@@ -1377,7 +1410,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   }
 
   private selectedPlaces(): DiscoveredPlace[] {
-    return (this.result?.places ?? []).filter((place) => this.selectedIds.has(place.externalId));
+    return [...this.selectedListings.values()].filter(place => this.selectedIds.has(place.externalId));
   }
 
   isAlreadySaved(place: DiscoveredPlace): boolean {
@@ -1396,7 +1429,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
   private discoveryNotes(place: DiscoveredPlace): string {
     const parts = [
-      `Discovered via ${place.sourceName || this.result?.provider || 'TripMate Discovery'} (${place.category})`,
+      `Discovered via ${place.sourceName || this.result?.provider || 'Suttru Discovery'} (${place.category})`,
       `${place.distanceKm.toFixed(1)} km from ${this.searchDestination.trim()}`
     ];
     if (place.activityType) parts.push(`Activity: ${place.activityType}`);
@@ -1456,21 +1489,26 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       return 'Price not verified — check official website';
     }
 
-    const formattedCost = cost.toLocaleString('en-IN');
+    const formattedCost = this.formatMoney(cost, place.currency);
     const prefix = place.priceStatus === 'ESTIMATED'
       ? 'Approx.'
       : place.priceStatus === 'STARTING_FROM'
         ? 'From'
         : 'Price';
     const unit = this.priceUnit(place.priceType);
-    return `${prefix}: ₹${formattedCost}${unit}`;
+    return `${prefix}: ${formattedCost}${unit}`;
   }
 
   formatPriceOption(option: DiscoveryPriceOption): string {
-    const amount = option.amount.toLocaleString('en-IN');
-    const maximum = option.maximumAmount != null ? `–₹${option.maximumAmount.toLocaleString('en-IN')}` : '';
+    const amount = this.formatMoney(option.amount, option.currency);
+    const maximum = option.maximumAmount != null ? `–${this.formatMoney(option.maximumAmount, option.currency)}` : '';
     const prefix = option.status === 'STARTING_FROM' ? 'From ' : option.status === 'ESTIMATED' ? 'Estimated ' : '';
-    return `${prefix}₹${amount}${maximum}${this.priceUnit(option.priceType)}`;
+    return `${prefix}${amount}${maximum}${this.priceUnit(option.priceType)}`;
+  }
+
+  private formatMoney(amount: number, currency = 'INR'): string {
+    try { return new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(amount); }
+    catch { return `${currency} ${amount.toLocaleString('en-IN')}`; }
   }
 
   formatRange(minimum: number | undefined, maximum: number | undefined, unit: string): string {
@@ -1509,14 +1547,16 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   }
 
   openDetails(place: DiscoveredPlace): void {
+    this.detailSubscription?.unsubscribe();
     this.selectedDetail = place;
-    this.discoveryService.getPlace(place.externalId).subscribe({
+    this.detailSubscription = this.discoveryService.getPlace(place.externalId).subscribe({
       next: (detail) => this.selectedDetail = detail,
       error: () => { /* Search-card data remains available if the detail cache expired. */ }
     });
   }
 
   closeDetails(): void {
+    this.detailSubscription?.unsubscribe();
     this.selectedDetail = null;
   }
 
@@ -1549,12 +1589,15 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     }
   }
 
+  creditedImages(place: DiscoveredPlace): DiscoveryImage[] {
+    return (place.imageGallery ?? []).filter(image => image.exact && /^https?:\/\//i.test(image.url)
+      && /^https?:\/\//i.test(image.sourcePage ?? '') && !!image.attribution?.trim()
+      && !!image.license?.trim() && !/^see /i.test(image.license))
+      .sort((a, b) => Number(b.primary) - Number(a.primary));
+  }
+
   getPlaceImage(place: DiscoveredPlace): string {
-    const image = place.primaryImageUrl || place.imageUrl;
-    if (image && place.imageExact !== false && image.startsWith('http')) {
-      return image;
-    }
-    return '/place-placeholder.svg';
+    return this.creditedImages(place)[0]?.url ?? '/place-placeholder.svg';
   }
 
   handleImageError(event: Event, _place: DiscoveredPlace): void {

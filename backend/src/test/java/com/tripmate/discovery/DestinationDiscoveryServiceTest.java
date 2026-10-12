@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 class DestinationDiscoveryServiceTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -18,9 +18,13 @@ class DestinationDiscoveryServiceTest {
 
     @BeforeEach
     void setUp() {
+        CommonsImageService commons = mock(CommonsImageService.class);
+        when(commons.resolve("File:Exact Monument.jpg")).thenReturn(new DiscoveryImage(
+                "https://upload.wikimedia.org/exact.jpg", "https://commons.wikimedia.org/wiki/File:Exact_Monument.jpg",
+                "Wikimedia Commons", "Photographer", "CC BY-SA 4.0", "Photographer", true, true));
         provider = new OverpassDiscoveryProvider(
-                new ProviderHttpClientFactory("TripMate-Test/1.0", 1000, 3000),
-                new PriceVerificationService(30), new ImageResolverService(),
+                new ProviderHttpClientFactory("Suttru-Test/1.0", 1000, 3000),
+                new PriceVerificationService(30), new ImageResolverService(commons),
                 mock(WikimediaEnrichmentService.class),
                 "https://overpass.example.test/api/interpreter", 200
         );
@@ -117,7 +121,9 @@ class DestinationDiscoveryServiceTest {
                 """), chennai).getFirst();
         assertTrue(place.imageExact());
         assertEquals("Wikimedia Commons", place.imageSource());
-        assertTrue(place.primaryImageUrl().contains("Special:FilePath"));
+        assertEquals("https://upload.wikimedia.org/exact.jpg", place.primaryImageUrl());
+        assertEquals("Photographer", place.imageAttribution());
+        assertEquals("CC BY-SA 4.0", place.imageLicense());
         assertNotNull(place.imageGallery().getFirst().sourcePage());
     }
 

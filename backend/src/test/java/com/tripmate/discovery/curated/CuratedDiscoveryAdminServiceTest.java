@@ -18,6 +18,7 @@ import static org.mockito.Mockito.*;
 class CuratedDiscoveryAdminServiceTest {
     private CuratedDiscoveryRepository repository;
     private CuratedDiscoveryAdminService service;
+    private org.springframework.context.ApplicationEventPublisher events;
 
     @BeforeEach
     void setUp() {
@@ -27,13 +28,15 @@ class CuratedDiscoveryAdminServiceTest {
             if (item.getId() == null) item.setId(99L);
             return item;
         });
-        service = new CuratedDiscoveryAdminService(repository, new CuratedDiscoveryMapper());
+        events = mock(org.springframework.context.ApplicationEventPublisher.class);
+        service = new CuratedDiscoveryAdminService(repository, new CuratedDiscoveryMapper(), events);
     }
 
     @Test
     void createsTraceableListingWithStructuredPriceAndExactImage() {
         AdminDiscoveryItemResponse response = service.create(request(), 7L);
 
+        verify(events).publishEvent(any(DiscoveryCatalogueChanged.class));
         assertEquals(99L, response.id());
         assertEquals("curated:test-fort", response.listing().externalId());
         assertEquals(PriceStatus.VERIFIED, response.listing().priceStatus());
@@ -69,6 +72,7 @@ class CuratedDiscoveryAdminServiceTest {
 
         AdminDiscoveryItemResponse response = service.setEnabled(12L, false, 7L);
 
+        verify(events, times(2)).publishEvent(any(DiscoveryCatalogueChanged.class));
         assertFalse(response.enabled());
         assertEquals("https://tourism.example/fort", response.listing().sourceUrl());
     }

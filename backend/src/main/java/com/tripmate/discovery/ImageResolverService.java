@@ -3,31 +3,27 @@ package com.tripmate.discovery;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
 public class ImageResolverService {
-    public ResolvedImages fromOpenStreetMap(JsonNode tags, String sourceUrl) {
-        String image = clean(tags.path("image").asText(null));
-        if (image != null && (image.startsWith("https://") || image.startsWith("http://"))) {
-            DiscoveryImage result = new DiscoveryImage(image, sourceUrl, "OpenStreetMap image tag", null,
-                    "See source page", "See linked OpenStreetMap source", true, true);
-            return new ResolvedImages(result, List.of(result));
-        }
+    private final CommonsImageService commons;
 
-        String commons = clean(tags.path("wikimedia_commons").asText(null));
-        if (commons != null && commons.toLowerCase().startsWith("file:")) {
-            String fileName = commons.substring(5).trim();
-            String filePage = "https://commons.wikimedia.org/wiki/" + commons.replace(" ", "_");
-            String url = "https://commons.wikimedia.org/wiki/Special:FilePath/"
-                    + URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
-            DiscoveryImage result = new DiscoveryImage(url, filePage, "Wikimedia Commons", null,
-                    "See Wikimedia Commons file page", commons, true, true);
-            return new ResolvedImages(result, List.of(result));
+    public ImageResolverService(CommonsImageService commons) { this.commons = commons; }
+
+    public ResolvedImages fromOpenStreetMap(JsonNode tags, String sourceUrl) {
+        DiscoveryImage image = commons.resolve(clean(tags.path("wikimedia_commons").asText(null)));
+        String raw = clean(tags.path("image").asText(null));
+        if (image == null) image = commons.resolveUrl(raw);
+        if (image == null && raw != null && raw.startsWith("https://")) {
+            String author = clean(tags.path("image:author").asText(null));
+            String license = clean(tags.path("image:license").asText(null));
+            if (author != null && license != null) {
+                image = new DiscoveryImage(raw, sourceUrl, "OpenStreetMap image tag", author,
+                        license, author, true, true);
+            }
         }
-        return new ResolvedImages(null, List.of());
+        return new ResolvedImages(image, image == null ? List.of() : List.of(image));
     }
 
     public String categoryPlaceholder(DiscoveryCategory category) {

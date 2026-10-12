@@ -16,7 +16,7 @@ import { InvitationService } from '../../core/services/invitation.service';
           <div>
             <p class="eyebrow">COLLABORATION</p>
             <h1>My Invitations</h1>
-            <p>Accept or decline pending invitations sent to your TripMate email or mobile number.</p>
+            <p>Accept or decline pending invitations sent to your Suttru email or mobile number.</p>
           </div>
           <button type="button" class="refresh-btn" (click)="loadInvitations()" [disabled]="loading">
             Refresh

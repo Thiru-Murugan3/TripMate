@@ -11,7 +11,7 @@ public class ProviderHttpClientFactory {
     private final int readTimeoutMs;
 
     public ProviderHttpClientFactory(
-            @org.springframework.beans.factory.annotation.Value("${discovery.user-agent:TripMate/1.0}") String userAgent,
+            @org.springframework.beans.factory.annotation.Value("${discovery.user-agent:Suttru/1.0}") String userAgent,
             @org.springframework.beans.factory.annotation.Value("${discovery.connect-timeout-ms:8000}") int connectTimeoutMs,
             @org.springframework.beans.factory.annotation.Value("${discovery.read-timeout-ms:35000}") int readTimeoutMs
     ) {

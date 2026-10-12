@@ -1,6 +1,6 @@
-# TripMate Reachable URL Configuration
+# Suttru Reachable URL Configuration
 
-TripMate invitation emails must contain a frontend URL that the recipient can actually open.
+Suttru invitation emails must contain a frontend URL that the recipient can actually open.
 
 ## Recommended development testing: public HTTPS URL
 
@@ -52,7 +52,7 @@ LAN mode can fail on corporate Wi-Fi, guest networks, VPNs, client-isolated acce
 
 ## Production deployment
 
-For real production users, deploy TripMate to stable HTTPS frontend/backend infrastructure.
+For real production users, deploy Suttru to stable HTTPS frontend/backend infrastructure.
 
 Backend example:
 

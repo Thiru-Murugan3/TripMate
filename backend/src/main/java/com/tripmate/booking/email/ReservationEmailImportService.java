@@ -127,7 +127,7 @@ public class ReservationEmailImportService {
         String recipient = recipient(item);
         String token = tokenFromRecipient(recipient);
         if (token == null) {
-            log.warn("Ignoring inbound reservation email without a TripMate import recipient");
+            log.warn("Ignoring inbound reservation email without a Suttru import recipient");
             return false;
         }
 

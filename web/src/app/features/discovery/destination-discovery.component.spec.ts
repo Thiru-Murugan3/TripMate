@@ -393,4 +393,68 @@ describe('DestinationDiscoveryComponent', () => {
       imageExact: false
     })).toBe('/place-placeholder.svg');
   });
+  it('saves selections from multiple pages and keeps them across sorting', async () => {
+    const { discoveryService, placeService } = configure();
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.searchDestination = 'Chennai';
+    component.discover();
+    await component.toggleSelection(discoveredPlace);
+    const second = { ...discoveredPlace, externalId: 'osm:node:456', name: 'Second place' };
+    discoveryService.discoverPlaces.and.returnValue(of({ ...discoveryResponse, page: 1, places: [second] }));
+    component.discover(1);
+    await component.toggleSelection(second);
+    component.sortOrder = 'PRICE_LOW';
+    component.discover(0);
+    expect(component.selectedCount).toBe(2);
+    component.activeTripId = plannedTrip.id;
+    await component.saveSelected(false);
+    expect(placeService.createPlace.calls.allArgs().map(args => args[1].name))
+      .toEqual([discoveredPlace.name, second.name]);
+    expect(component.selectedCount).toBe(0);
+  });
+
+  it('removes deselected entries and resets the basket for a different city', async () => {
+    configure();
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.searchDestination = 'Chennai';
+    component.discover();
+    await component.toggleSelection(discoveredPlace);
+    await component.toggleSelection(discoveredPlace);
+    expect(component.selectedCount).toBe(0);
+    await component.toggleSelection(discoveredPlace);
+    component.searchDestination = 'Jaipur';
+    component.discover();
+    expect(component.selectedCount).toBe(0);
+  });
+
+  it('renders linked credits for each displayed image and rejects uncredited images', () => {
+    configure();
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.detectChanges();
+    const image = { url: 'https://images.example/fort.jpg', sourcePage: 'https://commons.example/fort',
+      sourceName: 'Wikimedia Commons', author: 'Photographer', license: 'CC BY-SA 4.0',
+      attribution: 'Photographer', exact: true, primary: true };
+    const place = { ...discoveredPlace, imageGallery: [image, { ...image, url: 'https://images.example/uncredited.jpg', license: '' }] };
+    fixture.componentInstance.result = { ...discoveryResponse, places: [place] };
+    fixture.componentInstance.selectedDetail = place;
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelector('.image-credit a')?.getAttribute('href')).toBe(image.sourcePage);
+    expect(element.querySelector('figcaption')?.textContent).toContain('CC BY-SA 4.0');
+    expect(element.querySelectorAll('.detail-gallery figure').length).toBe(1);
+    expect(fixture.componentInstance.getPlaceImage(place)).toBe(image.url);
+  });
+
+  it('formats the actual price currency instead of always showing rupees', () => {
+    configure();
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    expect(fixture.componentInstance.formatPlacePrice({ ...discoveredPlace,
+      estimatedCostPerPerson: 50, priceStatus: 'VERIFIED', priceType: 'PER_PERSON', currency: 'USD'
+    })).toContain('$50');
+  });
+
 });

@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Canonical discovery contract. Legacy aliases remain so existing TripMate
+ * Canonical discovery contract. Legacy aliases remain so existing Suttru
  * clients can upgrade without a breaking API migration.
  */
 public record DiscoveredPlace(
@@ -114,6 +114,12 @@ public record DiscoveredPlace(
                 defaultPriceStatus(estimatedCostPerPerson), PriceType.UNKNOWN, "INR", List.of(),
                 "Legacy discovery data", website, null, null, false, 0.25, null, null, 0, null, null, false
         );
+    }
+
+    @Override
+    public boolean verificationExpired() {
+        return verificationExpired || verificationExpiresAt != null && !verificationExpiresAt.isAfter(Instant.now())
+                || priceOptions.stream().anyMatch(DiscoveryPriceOption::mayHaveChanged);
     }
 
     private static DiscoveryItemType defaultItemType(DiscoveryCategory category) {

@@ -15,7 +15,8 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Service
 public class DestinationDiscoveryService {
@@ -27,8 +28,18 @@ public class DestinationDiscoveryService {
     private final Duration staticCacheDuration;
     private final Duration pricingCacheDuration;
     private final int maxResults;
-    private final Map<String, CachedSearch> searchCache = new ConcurrentHashMap<>();
-    private final Map<String, DiscoveredPlace> detailCache = new ConcurrentHashMap<>();
+    // Replacing the whole generation prevents an in-flight fetch from repopulating invalidated caches.
+    private volatile CacheGeneration caches = new CacheGeneration();
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void catalogueChanged(DiscoveryCatalogueChanged event) {
+        caches = new CacheGeneration();
+    }
+
+    private static final class CacheGeneration {
+        final ExpiringCache<String, CachedSearch> searches = new ExpiringCache<>(256);
+        final ExpiringCache<String, DiscoveredPlace> details = new ExpiringCache<>(5000);
+    }
 
     public DestinationDiscoveryService(
             DestinationGeocodingService geocodingService,
@@ -64,19 +75,23 @@ public class DestinationDiscoveryService {
         int size = Math.min(filters.size(), 100);
         String cacheKey = query.toLowerCase(Locale.ROOT) + "|" + radiusKm + "|" + (category == null ? "ALL" : category);
 
-        CachedSearch cached = searchCache.get(cacheKey);
-        if (cached == null || cacheExpired(cached)) {
+        CacheGeneration generation = caches;
+        CachedSearch cached = generation.searches.get(cacheKey);
+        if (cached == null) {
             cached = fetch(query, radiusKm, category);
-            if (cached.places().isEmpty()) {
-                searchCache.remove(cacheKey);
-            } else {
-                searchCache.put(cacheKey, cached);
+            if (!cached.places().isEmpty()) {
+                Instant expiresAt = expiry(cached);
+                generation.searches.put(cacheKey, cached, expiresAt);
+                cached.places().stream().filter(place -> !place.curated())
+                        .forEach(place -> generation.details.put(place.externalId(), place, expiresAt));
             }
         }
 
         List<DiscoveredPlace> filtered = cached.places().stream()
                 .filter(place -> itemType == null || place.itemType() == itemType)
-                .filter(place -> priceStatus == null || place.priceStatus() == priceStatus)
+                .filter(place -> priceStatus == null || place.priceStatus() == priceStatus
+                        && (!(priceStatus == PriceStatus.VERIFIED || priceStatus == PriceStatus.FREE)
+                            || !verificationExpired(place)))
                 .filter(place -> textMatches(place.subcategory(), filters.subcategory()))
                 .filter(place -> filters.minPrice() == null || place.estimatedCostPerPerson() != null
                         && place.estimatedCostPerPerson().compareTo(filters.minPrice()) >= 0)
@@ -104,12 +119,15 @@ public class DestinationDiscoveryService {
 
     @Transactional(readOnly = true)
     public DiscoveredPlace findByExternalId(String externalId) {
-        DiscoveredPlace cached = detailCache.get(externalId);
+        var curated = curatedRepository.findByExternalId(externalId);
+        if (curated.isPresent()) {
+            if (!curated.get().isEnabled()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Discovery item unavailable");
+            return curatedMapper.toDiscoveredPlace(curated.get(), 0, null);
+        }
+        DiscoveredPlace cached = caches.details.get(externalId);
         if (cached != null) return cached;
-        return curatedRepository.findByExternalId(externalId)
-                .map(item -> curatedMapper.toDiscoveredPlace(item, 0, null))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Discovery item is not cached. Search its destination again."));
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Discovery item is not cached. Search its destination again.");
     }
 
     public List<DiscoverySuggestion> suggestions(String query, int limit) {
@@ -146,20 +164,39 @@ public class DestinationDiscoveryService {
                 warnings.add(provider.name() + " was unavailable; partial results are shown.");
             }
         }
-        if (unique.isEmpty()) warnings.add("No source-backed listings were returned. TripMate did not generate placeholder activities.");
+        if (unique.isEmpty()) warnings.add("No source-backed listings were returned. Suttru did not generate placeholder activities.");
         warnings.add("Prices and opening hours may change. Confirm with the linked official provider before travelling.");
         List<DiscoveredPlace> places = unique.values().stream().limit(maxResults).toList();
-        places.forEach(place -> detailCache.put(place.externalId(), place));
         if (usedProviders.isEmpty()) usedProviders.add(destination.provider());
         return new CachedSearch(Instant.now(), destination, places, List.copyOf(usedProviders),
                 List.copyOf(new LinkedHashSet<>(warnings)), List.copyOf(new LinkedHashSet<>(attributions)));
     }
 
-    private boolean cacheExpired(CachedSearch cached) {
-        boolean containsVolatilePricing = cached.places().stream()
-                .anyMatch(place -> place.priceStatus() != PriceStatus.UNKNOWN);
-        Duration duration = containsVolatilePricing ? pricingCacheDuration : staticCacheDuration;
-        return cached.createdAt().plus(duration).isBefore(Instant.now());
+    private Instant expiry(CachedSearch cached) {
+        boolean priced = cached.places().stream().anyMatch(place -> place.priceStatus() != PriceStatus.UNKNOWN);
+        Instant expiry = cached.createdAt().plus(priced ? pricingCacheDuration : staticCacheDuration);
+        // Open/closed state is time-sensitive even when the underlying catalogue is static.
+        if (cached.places().stream().anyMatch(place -> place.openNow() != null)) {
+            expiry = earlier(expiry, cached.createdAt().plusSeconds(60));
+        }
+        for (DiscoveredPlace place : cached.places()) {
+            if (place.verificationExpiresAt() != null && place.verificationExpiresAt().isAfter(cached.createdAt()))
+                expiry = earlier(expiry, place.verificationExpiresAt());
+            for (DiscoveryPriceOption price : place.priceOptions()) {
+                if (price.expiresAt() != null && price.expiresAt().isAfter(cached.createdAt()))
+                    expiry = earlier(expiry, price.expiresAt());
+            }
+        }
+        return expiry;
+    }
+
+    private Instant earlier(Instant left, Instant right) { return left.isBefore(right) ? left : right; }
+
+    private boolean verificationExpired(DiscoveredPlace place) {
+        Instant now = Instant.now();
+        return place.verificationExpired() || place.verificationExpiresAt() != null && !place.verificationExpiresAt().isAfter(now)
+                || place.priceOptions().stream().anyMatch(price -> price.mayHaveChanged()
+                    || price.expiresAt() != null && !price.expiresAt().isAfter(now));
     }
 
     private void merge(Map<String, DiscoveredPlace> unique, List<DiscoveredPlace> places) {
@@ -207,7 +244,7 @@ public class DestinationDiscoveryService {
     }
 
     private int verificationRank(DiscoveredPlace place) {
-        if (place.verificationExpired()) return 4;
+        if (verificationExpired(place)) return 4;
         return switch (place.priceStatus()) {
             case VERIFIED, FREE -> 0;
             case STARTING_FROM -> 1;
