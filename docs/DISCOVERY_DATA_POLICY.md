@@ -53,3 +53,7 @@ Search and provider-detail caches are bounded and expire at the configured TTL o
 Invalidation events are local to one backend instance. Deployments with multiple replicas need a shared invalidation channel before relying on immediate cross-instance updates; TTL expiry remains the fallback.
 
 Selections retain complete listing snapshots across pages, filters and sorting within a destination. Changing destination clears the selection. Admin request fee options use `priceStatus`; read responses retain `status`. Editing a catalogue record preserves all existing fee options and image credits.
+
+## Starter coverage
+
+Flyway V16 seeds nine reviewed places and activities for Chennai, Mysuru and Jaipur. See [the evidence register](VERIFIED_CITY_CATALOGUE.md) for sources, coordinate provenance, tariff conflicts, expiry and maintenance instructions.
