@@ -162,7 +162,7 @@ Set-DotEnvValue -Path $envPath -Name 'APP_FRONTEND_URL' -Value $frontendUrl
 Set-DotEnvValue -Path $envPath -Name 'APP_CORS_ALLOWED_ORIGINS' -Value $corsOrigins
 
 Write-Host ''
-Write-Host 'TripMate network mode configured.' -ForegroundColor Green
+Write-Host 'Suttru network mode configured.' -ForegroundColor Green
 Write-Host "Selected adapter IP: $IpAddress"
 Write-Host "Frontend invitation URL: $frontendUrl"
 Write-Host "Backend API: http://$($IpAddress):8080/api/v1"
@@ -193,12 +193,12 @@ for ($attempt = 1; $attempt -le 30; $attempt++) {
 
 Write-Host ''
 if ($ready) {
-    Write-Host 'TripMate is reachable on the selected LAN address.' -ForegroundColor Green
+    Write-Host 'Suttru is reachable on the selected LAN address.' -ForegroundColor Green
     Write-Host 'Open this URL on another device connected to the same Wi-Fi:' -ForegroundColor Cyan
     Write-Host $frontendUrl
 }
 else {
-    Write-Host "TripMate did not respond at $frontendUrl." -ForegroundColor Red
+    Write-Host "Suttru did not respond at $frontendUrl." -ForegroundColor Red
     Write-Host ''
     Write-Host 'Possible causes:'
     Write-Host '1. The selected IP is not your real Wi-Fi/Ethernet IPv4 address.'

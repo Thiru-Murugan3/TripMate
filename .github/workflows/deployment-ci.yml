@@ -25,7 +25,7 @@ jobs:
       SERVICE_URL_WEB_8080: https://tripmate.example.com
       TRIPMATE_BREVO_API_KEY: ci-placeholder
       TRIPMATE_BREVO_SENDER_EMAIL: ci@example.com
-      TRIPMATE_BREVO_SENDER_NAME: TripMate
+      TRIPMATE_BREVO_SENDER_NAME: Suttru
     steps:
       - uses: actions/checkout@v4
       - name: Validate Coolify Docker Compose

@@ -435,7 +435,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
             <div *ngIf="canEditTrip" class="empty-booking-actions">
               <button type="button" (click)="openBookNow()" class="btn btn-primary">
                 <span class="material-symbols-outlined">travel_explore</span>
-                Book inside TripMate
+                Book inside Suttru
               </button>
               <button type="button" (click)="openBookingModal()" class="btn btn-secondary">
                 <span class="material-symbols-outlined">add</span>
@@ -462,7 +462,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
             <div class="empty-booking-actions">
               <button type="button" (click)="openBookNow()" class="btn btn-primary">
                 <span class="material-symbols-outlined">travel_explore</span>
-                Book inside TripMate
+                Book inside Suttru
               </button>
               <button type="button" (click)="openBookingModal()" class="btn btn-secondary">
                 <span class="material-symbols-outlined">add</span>
@@ -646,7 +646,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
             <div class="modal-header">
               <div>
                 <h3>Add Trip Member</h3>
-                <p>Add a registered TripMate user by email and choose their permission.</p>
+                <p>Add a registered Suttru user by email and choose their permission.</p>
               </div>
               <button type="button" class="close-btn" (click)="closeAddMemberModal()" aria-label="Close">
                 &times;
@@ -876,7 +876,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSE
             </div>
             <div class="ocr-privacy-note">
               <span class="material-symbols-outlined">verified_user</span>
-              The file is sent to OCR.Space for text recognition. TripMate does not create a booking until you confirm it.
+              The file is sent to OCR.Space for text recognition. Suttru does not create a booking until you confirm it.
             </div>
             <div *ngIf="bookingImportError" class="alert-danger">{{ bookingImportError }}</div>
             <label class="ocr-file-picker">
@@ -2873,7 +2873,7 @@ export class TripDetailsComponent implements OnInit {
         const url = URL.createObjectURL(content);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = `${this.trip?.name || 'tripmate-trip'}.ics`;
+        anchor.download = `${this.trip?.name || 'suttru-trip'}.ics`;
         anchor.click();
         URL.revokeObjectURL(url);
         this.isExportingCalendar = false;

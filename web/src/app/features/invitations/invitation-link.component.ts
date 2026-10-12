@@ -13,7 +13,7 @@ import { InvitationService } from '../../core/services/invitation.service';
   template: `
     <main class="invite-page">
       <section class="invite-shell">
-        <div class="brand-mark">TM</div>
+        <div class="brand-mark">S</div>
 
         <div *ngIf="loading" class="state">
           <div class="spinner"></div>
@@ -24,7 +24,7 @@ import { InvitationService } from '../../core/services/invitation.service';
           <span class="material-symbols-outlined">link_off</span>
           <h1>Invitation unavailable</h1>
           <p>{{ errorMessage }}</p>
-          <button type="button" (click)="goHome()">Go to TripMate</button>
+          <button type="button" (click)="goHome()">Go to Suttru</button>
         </div>
 
         <ng-container *ngIf="!loading && !errorMessage && invitation as invite">

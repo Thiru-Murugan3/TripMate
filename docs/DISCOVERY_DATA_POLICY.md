@@ -1,6 +1,6 @@
 # Discovery data policy
 
-TripMate's Explore catalogue is source-backed. It must not invent a place, coordinate, entry fee, opening time, or image in order to make a result card look complete.
+Suttru's Explore catalogue is source-backed. It must not invent a place, coordinate, entry fee, opening time, or image in order to make a result card look complete.
 
 ## Current providers
 
@@ -9,10 +9,10 @@ TripMate's Explore catalogue is source-backed. It must not invent a place, coord
 - Configured Overpass instances provide OpenStreetMap place data.
 - Wikidata/Wikipedia enrich linked objects with descriptions and exact-place identifiers.
 - Wikimedia Commons images are used only when the place's OpenStreetMap/Wikidata/Wikipedia record links to that file.
-- The Flyway-backed TripMate curated catalogue contains administrator-verified official tourism/provider records.
+- The Flyway-backed Suttru curated catalogue contains administrator-verified official tourism/provider records.
 - Geoapify can supply additional licensed records only when `DISCOVERY_GEOAPIFY_API_KEY` is configured.
 
-Provider attribution and the time TripMate checked the source are returned with each search. Geocoding, static catalogue data and volatile price-bearing searches use separate configurable cache periods. One provider failing returns partial sourced results with a warning instead of fabricated fallback data.
+Provider attribution and the time Suttru checked the source are returned with each search. Geocoding, static catalogue data and volatile price-bearing searches use separate configurable cache periods. One provider failing returns partial sourced results with a warning instead of fabricated fallback data.
 
 ## Price rules
 
@@ -27,11 +27,11 @@ Provider attribution and the time TripMate checked the source are returned with 
 - Exact images come from linked OpenStreetMap/Wikidata/Wikipedia records or curated entries. Wikimedia images resolve the file metadata for author, licence and source page. External OSM images require explicit `image:author` and `image:license` tags.
 - Cards and each gallery photo display linked attribution and the licence. Images without exact-place metadata, an explicit licence or attribution use the neutral placeholder.
 - Generic city/category stock photos are not presented as photos of a specific listing.
-- When no exact image is available, the UI shows TripMate's neutral category placeholder.
+- When no exact image is available, the UI shows Suttru's neutral category placeholder.
 
 ## Coverage limitations
 
-OpenStreetMap coverage varies across India. The catalogue can return attractions, adventure, history, worship, museums, beaches, water, viewpoints, wildlife, parks, family activities, entertainment, shopping, food, culture/events, nightlife, wellness, stays and tour/transport services when the configured sources contain them. It cannot guarantee every commercial activity, current event, operator package, availability, or live ticket price without licensed/official provider integrations. Missing data remains visibly unknown. TripMate does not perform provider booking; it links to authorized official/provider pages when supplied.
+OpenStreetMap coverage varies across India. The catalogue can return attractions, adventure, history, worship, museums, beaches, water, viewpoints, wildlife, parks, family activities, entertainment, shopping, food, culture/events, nightlife, wellness, stays and tour/transport services when the configured sources contain them. It cannot guarantee every commercial activity, current event, operator package, availability, or live ticket price without licensed/official provider integrations. Missing data remains visibly unknown. Suttru does not perform provider booking; it links to authorized official/provider pages when supplied.
 
 ## API summary
 

@@ -1,4 +1,4 @@
-# TripMate — Render + TiDB Cloud Starter Free Deployment
+# Suttru — Render + TiDB Cloud Starter Free Deployment
 
 This is the managed-cloud alternative to the Coolify/VM deployment.
 
@@ -40,7 +40,7 @@ Database records remain persistent in TiDB Cloud, while R2 stores the file bytes
 
 TiDB Cloud Starter requires TLS.
 
-For the simplest first deployment, use the default `test` database. TripMate Flyway migrations will create the application tables there.
+For the simplest first deployment, use the default `test` database. Suttru Flyway migrations will create the application tables there.
 
 Prepare these three Render values:
 
@@ -59,7 +59,7 @@ Do not commit the password or paste it into GitHub.
 3. Allow Render access to the private repository:
    `Thiru-Murugan3/TripMate`
 4. In Render, create a **Blueprint**.
-5. Select the TripMate repository.
+5. Select the `TripMate` repository.
 6. Use the repository-root `render.yaml`.
 7. Confirm the branch is `development`.
 
@@ -163,7 +163,7 @@ Check:
 
 ## 7. TiDB checks
 
-After first backend startup, connect to TiDB and verify Flyway and TripMate tables exist. At minimum, verify:
+After first backend startup, connect to TiDB and verify Flyway and Suttru tables exist. At minimum, verify:
 
 ```sql
 SHOW TABLES;
@@ -179,7 +179,7 @@ The Blueprint enables private Cloudflare R2 storage for:
 - trip documents
 - profile photos
 
-Before deploying, create the bucket and credentials described in `CLOUDFLARE_R2_SETUP.md`. The backend stores only object references and metadata in TiDB. Direct download links are short-lived and are generated only after TripMate checks the authenticated user's access.
+Before deploying, create the bucket and credentials described in `CLOUDFLARE_R2_SETUP.md`. The backend stores only object references and metadata in TiDB. Direct download links are short-lived and are generated only after Suttru checks the authenticated user's access.
 
 Local development can keep `R2_ENABLED=false` to use the existing `uploads/` fallback. Do not use that fallback for durable Render storage.
 

@@ -922,7 +922,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.isLocating = false;
-          this.errorMessage = 'TripMate could not resolve this location inside India.';
+          this.errorMessage = 'Suttru could not resolve this location inside India.';
         }
       }),
       () => {
@@ -1429,7 +1429,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
   private discoveryNotes(place: DiscoveredPlace): string {
     const parts = [
-      `Discovered via ${place.sourceName || this.result?.provider || 'TripMate Discovery'} (${place.category})`,
+      `Discovered via ${place.sourceName || this.result?.provider || 'Suttru Discovery'} (${place.category})`,
       `${place.distanceKm.toFixed(1)} km from ${this.searchDestination.trim()}`
     ];
     if (place.activityType) parts.push(`Activity: ${place.activityType}`);

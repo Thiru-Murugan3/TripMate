@@ -34,7 +34,7 @@ public class EmailService {
             @Value("${brevo.api-url:https://api.brevo.com/v3/smtp/email}") String apiUrl,
             @Value("${brevo.api-key:}") String apiKey,
             @Value("${brevo.sender-email:}") String senderEmail,
-            @Value("${brevo.sender-name:TripMate}") String senderName
+            @Value("${brevo.sender-name:Suttru}") String senderName
     ) {
         this.restClient = RestClient.create();
         this.apiUrl = apiUrl;
@@ -57,25 +57,25 @@ public class EmailService {
     }
 
     public void sendVerificationOtpEmail(String recipientEmail, String otpCode) {
-        log.info("TripMate email verification OTP for {}: {}", recipientEmail, otpCode);
+        log.info("Suttru email verification OTP for {}: {}", recipientEmail, otpCode);
         String content =
-                "Welcome to TripMate!\n\n" +
+                "Welcome to Suttru!\n\n" +
                 "Your email verification code is: " + otpCode + "\n\n" +
                 "This code expires in 5 minutes.\n" +
                 "If you did not request this account, you can safely ignore this email.";
 
         sendTransactionalEmail(
                 recipientEmail,
-                "TripMate Email Verification Code",
+                "Suttru Email Verification Code",
                 content,
                 "verification"
         );
     }
 
     public void sendPasswordResetEmail(String recipientEmail, String resetLink) {
-        log.info("TripMate password reset link for {}: {}", recipientEmail, resetLink);
+        log.info("Suttru password reset link for {}: {}", recipientEmail, resetLink);
         String content =
-                "We received a request to reset your TripMate password.\n\n" +
+                "We received a request to reset your Suttru password.\n\n" +
                 "Open this secure link to set a new password:\n" +
                 resetLink + "\n\n" +
                 "This link expires in 15 minutes and can be used only once.\n" +
@@ -83,7 +83,7 @@ public class EmailService {
 
         sendTransactionalEmail(
                 recipientEmail,
-                "Reset your TripMate password",
+                "Reset your Suttru password",
                 content,
                 "password reset"
         );
@@ -100,18 +100,18 @@ public class EmailService {
                 "EDITOR".equalsIgnoreCase(role) ? "Editor" : "Viewer";
 
         String content =
-                "You have been invited to join a trip on TripMate.\n\n" +
+                "You have been invited to join a trip on Suttru.\n\n" +
                 inviterName + " invited you to join \"" + tripName + "\" as " +
                 friendlyRole + ".\n\n" +
                 "Open this secure invitation link to review and accept the invitation:\n" +
                 invitationLink + "\n\n" +
                 "This invitation expires in 7 days. " +
-                "If you are not signed in, TripMate will ask you to sign in first and then return you to the invitation.\n\n" +
+                "If you are not signed in, Suttru will ask you to sign in first and then return you to the invitation.\n\n" +
                 "If you were not expecting this invitation, you can ignore this email.";
 
         sendTransactionalEmail(
                 recipientEmail,
-                "You're invited to join " + tripName + " on TripMate",
+                "You're invited to join " + tripName + " on Suttru",
                 content,
                 "trip invitation"
         );
@@ -147,7 +147,7 @@ public class EmailService {
                     : "not-returned";
 
             log.info(
-                    "TripMate {} email accepted by Brevo for {} (messageId={})",
+                    "Suttru {} email accepted by Brevo for {} (messageId={})",
                     emailPurpose,
                     recipientEmail,
                     messageId

@@ -37,7 +37,7 @@ import { FooterComponent } from './shared/components/footer/footer.component';
   `]
 })
 export class AppComponent implements OnDestroy {
-  title = 'TripMate';
+  title = 'Suttru';
   showAppShell = false;
 
   private selectionGestureStartedInField = false;

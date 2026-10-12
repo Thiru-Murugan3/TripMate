@@ -164,7 +164,7 @@ public class DestinationDiscoveryService {
                 warnings.add(provider.name() + " was unavailable; partial results are shown.");
             }
         }
-        if (unique.isEmpty()) warnings.add("No source-backed listings were returned. TripMate did not generate placeholder activities.");
+        if (unique.isEmpty()) warnings.add("No source-backed listings were returned. Suttru did not generate placeholder activities.");
         warnings.add("Prices and opening hours may change. Confirm with the linked official provider before travelling.");
         List<DiscoveredPlace> places = unique.values().stream().limit(maxResults).toList();
         if (usedProviders.isEmpty()) usedProviders.add(destination.provider());

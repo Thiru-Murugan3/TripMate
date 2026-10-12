@@ -1,16 +1,16 @@
-# TripMate — Cloudflare R2 Setup
+# Suttru — Cloudflare R2 Setup
 
-TripMate stores new trip documents and profile photos in one private Cloudflare R2 bucket. TiDB stores only the `r2://bucket/object-key` reference and the existing file metadata.
+Suttru stores new trip documents and profile photos in one private Cloudflare R2 bucket. TiDB stores only the `r2://bucket/object-key` reference and the existing file metadata.
 
 ## 1. Create the bucket
 
 1. In Cloudflare, open **R2 Object Storage**.
 2. Create a bucket named `tripmate-files` (or another name you prefer).
-3. Keep public access disabled. TripMate authorizes access before proxying a document or creating a short-lived signed URL.
+3. Keep public access disabled. Suttru authorizes access before proxying a document or creating a short-lived signed URL.
 
 ## 2. Create R2 API credentials
 
-Create an R2 API token with **Object Read & Write** permission limited to the TripMate bucket. Copy these values when Cloudflare shows them:
+Create an R2 API token with **Object Read & Write** permission limited to the Suttru bucket. Copy these values when Cloudflare shows them:
 
 - Access Key ID
 - Secret Access Key

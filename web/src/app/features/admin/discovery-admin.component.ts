@@ -25,7 +25,7 @@ type ListingCategory = Exclude<DiscoveryCategory, 'ALL'>;
     <main class="admin-page">
       <header class="page-header">
         <div>
-          <span class="eyebrow">TripMate data operations</span>
+          <span class="eyebrow">Suttru data operations</span>
           <h1>Explore India verification</h1>
           <p>Curate real listings and keep their sources, prices, timings and images auditable.</p>
         </div>

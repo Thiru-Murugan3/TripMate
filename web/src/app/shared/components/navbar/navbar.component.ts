@@ -21,7 +21,7 @@ import { NotificationService } from '../../../core/services/notification.service
             </svg>
           </div>
           <div class="brand-title-block">
-            <span class="brand-text">Trip<span class="brand-highlight">Mate</span></span>
+            <span class="brand-text">Suttru</span>
             <span class="brand-subtext">EXPLORE BEYOND</span>
           </div>
         </a>

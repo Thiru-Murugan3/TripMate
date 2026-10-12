@@ -14,14 +14,14 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="glow glow--two" aria-hidden="true"></div>
 
       <div class="page-shell">
-        <a routerLink="/login" class="brand" aria-label="TripMate sign in">
+        <a routerLink="/login" class="brand" aria-label="Suttru sign in">
           <span class="brand__mark" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M3.414 13.778 2 15.192l4.95 4.95 2.12-2.122-2.828-2.828 5.657-5.657 5.657 5.657-2.829 2.828 2.122 2.122 4.95-4.95-1.414-1.414L12 6.707l-8.586 7.071z"/>
               <path d="M12 2 2 12h3v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8h3L12 2zm0 3.828L18 11.8v7.2H6v-7.2l6-5.972z"/>
             </svg>
           </span>
-          <span>TripMate</span>
+          <span>Suttru</span>
         </a>
 
         <section class="recovery-card" aria-labelledby="forgot-title">
@@ -37,7 +37,7 @@ import { AuthService } from '../../../core/services/auth.service';
           <header class="card-header">
             <span class="eyebrow">ACCOUNT RECOVERY</span>
             <h1 id="forgot-title">Forgot your password?</h1>
-            <p>Enter the email linked to your TripMate account and we’ll send you a secure reset link.</p>
+            <p>Enter the email linked to your Suttru account and we’ll send you a secure reset link.</p>
           </header>
 
           <div *ngIf="errorMessage" class="alert alert--error" role="alert" aria-live="polite">

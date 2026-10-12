@@ -26,7 +26,7 @@ if exist ".env" (
 
 if "%BREVO_API_KEY%"=="" (
     echo.
-    echo TripMate Brevo API key is not configured.
+    echo Suttru Brevo API key is not configured.
     call "%~dp0setup-brevo.bat"
     if errorlevel 1 exit /b 1
     for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do if not "%%A"=="" set "%%A=%%B"
@@ -34,7 +34,7 @@ if "%BREVO_API_KEY%"=="" (
 
 if "%BREVO_SENDER_EMAIL%"=="" (
     echo.
-    echo TripMate Brevo sender email is not configured.
+    echo Suttru Brevo sender email is not configured.
     call "%~dp0setup-brevo.bat"
     if errorlevel 1 exit /b 1
     for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do if not "%%A"=="" set "%%A=%%B"
@@ -70,5 +70,5 @@ if errorlevel 1 (
 )
 
 echo.
-echo Starting TripMate Backend with the validated backend\.env configuration...
+echo Starting Suttru Backend with the validated backend\.env configuration...
 mvn spring-boot:run

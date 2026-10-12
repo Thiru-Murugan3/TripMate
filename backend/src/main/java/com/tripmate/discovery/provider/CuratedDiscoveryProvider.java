@@ -23,7 +23,7 @@ public class CuratedDiscoveryProvider implements DiscoveryProvider {
     private final CuratedDiscoveryRepository repository;
     private final CuratedDiscoveryMapper mapper;
 
-    @Override public String name() { return "TripMate verified catalogue"; }
+    @Override public String name() { return "Suttru verified catalogue"; }
 
     @Override
     @Transactional(readOnly = true)

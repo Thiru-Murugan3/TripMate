@@ -23,7 +23,7 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
               <path d="M12 2 2 12h3v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8h3L12 2zm0 3.828L18 11.8v7.2H6v-7.2l6-5.972z"/>
             </svg>
           </div>
-          <span class="brand-text">TripMate</span>
+          <span class="brand-text">Suttru</span>
         </div>
 
         <div class="mail-icon-circle">

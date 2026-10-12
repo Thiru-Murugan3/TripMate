@@ -23,7 +23,7 @@ class DestinationDiscoveryServiceTest {
                 "https://upload.wikimedia.org/exact.jpg", "https://commons.wikimedia.org/wiki/File:Exact_Monument.jpg",
                 "Wikimedia Commons", "Photographer", "CC BY-SA 4.0", "Photographer", true, true));
         provider = new OverpassDiscoveryProvider(
-                new ProviderHttpClientFactory("TripMate-Test/1.0", 1000, 3000),
+                new ProviderHttpClientFactory("Suttru-Test/1.0", 1000, 3000),
                 new PriceVerificationService(30), new ImageResolverService(commons),
                 mock(WikimediaEnrichmentService.class),
                 "https://overpass.example.test/api/interpreter", 200

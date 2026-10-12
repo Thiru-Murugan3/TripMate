@@ -14,7 +14,7 @@
   <artifactId>tripmate-backend</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>tripmate-backend</name>
-  <description>TripMate Spring Boot Backend</description>
+  <description>Suttru Spring Boot Backend</description>
 
   <properties>
     <java.version>21</java.version>

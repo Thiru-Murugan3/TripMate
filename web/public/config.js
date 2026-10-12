@@ -1,4 +1,4 @@
-// TripMate runtime deployment configuration.
+// Suttru runtime deployment configuration.
 //
 // Local development can leave apiUrl empty. The development Angular build
 // automatically uses the hostname that opened the page with backend port 8080.

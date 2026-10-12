@@ -10,4 +10,4 @@ runcmd:
   - [ bash, -lc, "curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash > /var/log/coolify-install.log 2>&1" ]
   - [ bash, -lc, "echo 'Coolify bootstrap completed. Open http://<PUBLIC_IP>:8000 and create the admin account immediately.' > /etc/motd" ]
 
-final_message: "TripMate Coolify VM bootstrap finished."
+final_message: "Suttru Coolify VM bootstrap finished."

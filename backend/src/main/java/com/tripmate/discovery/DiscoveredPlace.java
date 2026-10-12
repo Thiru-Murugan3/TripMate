@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Canonical discovery contract. Legacy aliases remain so existing TripMate
+ * Canonical discovery contract. Legacy aliases remain so existing Suttru
  * clients can upgrade without a breaking API migration.
  */
 public record DiscoveredPlace(

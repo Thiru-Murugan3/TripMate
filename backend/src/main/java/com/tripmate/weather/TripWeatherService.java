@@ -54,7 +54,7 @@ public class TripWeatherService {
                 .requestFactory(requestFactory)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.USER_AGENT,
-                        "TripMate/1.0 (+https://github.com/Thiru-Murugan3/TripMate)")
+                        "Suttru/1.0 (+https://github.com/Thiru-Murugan3/TripMate)")
                 .build();
     }
 
