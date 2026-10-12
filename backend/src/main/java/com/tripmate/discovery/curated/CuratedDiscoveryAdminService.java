@@ -1,6 +1,8 @@
 package com.tripmate.discovery.curated;
 
 import com.tripmate.discovery.PriceStatus;
+import com.tripmate.discovery.DiscoveryCatalogueChanged;
+import org.springframework.context.ApplicationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import java.util.Locale;
 public class CuratedDiscoveryAdminService {
     private final CuratedDiscoveryRepository repository;
     private final CuratedDiscoveryMapper mapper;
+    private final ApplicationEventPublisher events;
 
     @Transactional(readOnly = true)
     public List<AdminDiscoveryItemResponse> findAll(Boolean missingPrice, Boolean missingImage, Boolean conflictsOnly) {
@@ -35,14 +38,18 @@ public class CuratedDiscoveryAdminService {
         CuratedDiscoveryItem item = new CuratedDiscoveryItem();
         item.setCreatedBy(adminId);
         apply(item, request, adminId);
-        return response(repository.save(item));
+        CuratedDiscoveryItem saved = repository.save(item);
+        events.publishEvent(new DiscoveryCatalogueChanged());
+        return response(saved);
     }
 
     @Transactional
     public AdminDiscoveryItemResponse update(Long id, UpsertDiscoveryItemRequest request, Long adminId) {
         CuratedDiscoveryItem item = get(id);
         apply(item, request, adminId);
-        return response(repository.save(item));
+        CuratedDiscoveryItem saved = repository.save(item);
+        events.publishEvent(new DiscoveryCatalogueChanged());
+        return response(saved);
     }
 
     @Transactional
@@ -61,7 +68,9 @@ public class CuratedDiscoveryAdminService {
         item.setConflictStatus(null);
         item.setConflictNotes(null);
         item.setUpdatedBy(adminId);
-        return response(repository.save(item));
+        CuratedDiscoveryItem saved = repository.save(item);
+        events.publishEvent(new DiscoveryCatalogueChanged());
+        return response(saved);
     }
 
     @Transactional
@@ -69,7 +78,9 @@ public class CuratedDiscoveryAdminService {
         CuratedDiscoveryItem item = get(id);
         item.setEnabled(enabled);
         item.setUpdatedBy(adminId);
-        return response(repository.save(item));
+        CuratedDiscoveryItem saved = repository.save(item);
+        events.publishEvent(new DiscoveryCatalogueChanged());
+        return response(saved);
     }
 
     private void apply(CuratedDiscoveryItem item, UpsertDiscoveryItemRequest request, Long adminId) {

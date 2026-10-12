@@ -26,6 +26,10 @@ export interface AdminDiscoveryQuery {
   conflictsOnly?: boolean;
 }
 
+export interface AdminDiscoveryPriceRequest extends Omit<DiscoveryPriceOption, 'status' | 'mayHaveChanged'> {
+  priceStatus: DiscoveryPriceStatus;
+}
+
 export interface AdminDiscoveryUpsert {
   externalId?: string;
   name: string;
@@ -74,7 +78,7 @@ export interface AdminDiscoveryUpsert {
   conflictStatus?: string;
   conflictNotes?: string;
   enabled: boolean;
-  priceOptions: DiscoveryPriceOption[];
+  priceOptions: AdminDiscoveryPriceRequest[];
   images: Array<{
     imageUrl: string;
     sourcePage: string;
@@ -137,7 +141,9 @@ export function adminPayloadFrom(item: AdminDiscoveryItem): AdminDiscoveryUpsert
     conflictStatus: item.conflictStatus,
     conflictNotes: item.conflictNotes,
     enabled: item.enabled,
-    priceOptions: place.priceOptions ?? [],
+    priceOptions: (place.priceOptions ?? []).map(({ status, mayHaveChanged, ...price }) => ({
+      ...price, priceStatus: status ?? 'UNKNOWN'
+    })),
     images: (place.imageGallery ?? []).map((image: DiscoveryImage) => ({
       imageUrl: image.url,
       sourcePage: image.sourcePage ?? '',
