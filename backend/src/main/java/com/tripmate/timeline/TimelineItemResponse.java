@@ -5,7 +5,7 @@ import lombok.Builder;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Builder
+@Builder(toBuilder = true)
 public record TimelineItemResponse(
         String id,
         String sourceType,
@@ -29,6 +29,7 @@ public record TimelineItemResponse(
         String notes,
         String icon,
         String badgeColor,
+        boolean flexible,
         boolean conflict,
         String warning
 ) {

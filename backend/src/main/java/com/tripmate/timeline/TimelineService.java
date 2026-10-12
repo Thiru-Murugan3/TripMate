@@ -3,6 +3,7 @@ package com.tripmate.timeline;
 import com.tripmate.booking.Booking;
 import com.tripmate.booking.BookingRepository;
 import com.tripmate.booking.BookingType;
+import com.tripmate.booking.BookingStatus;
 import com.tripmate.booking.TransportType;
 import com.tripmate.itinerary.ItineraryDay;
 import com.tripmate.itinerary.ItineraryDayRepository;
@@ -63,6 +64,8 @@ public class TimelineService {
         allItems.addAll(mapBookingsToTimelineItems(bookings));
         allItems.addAll(mapItineraryToTimelineItems(itineraryDays, trip));
 
+        allItems = detectConflictsAndGaps(allItems);
+
         // Collect all distinct dates
         SortedSet<LocalDate> dates = new TreeSet<>();
         if (trip.getStartDate() != null && trip.getEndDate() != null) {
@@ -103,10 +106,11 @@ public class TimelineService {
             List<TimelineItemResponse> dayItems = itemsByDate.getOrDefault(date, new ArrayList<>());
 
             // Sort chronologically within the day
-            dayItems.sort(Comparator.comparing(TimelineItemResponse::startDatetime));
+            dayItems.sort(Comparator.comparing(TimelineItemResponse::flexible)
+                    .thenComparing(TimelineItemResponse::startDatetime));
 
             // Run smart conflict detection
-            dayItems = detectConflictsAndGaps(dayItems);
+
 
             boolean dayHasConflict = dayItems.stream().anyMatch(TimelineItemResponse::conflict);
             if (dayHasConflict) {
@@ -156,7 +160,7 @@ public class TimelineService {
     private List<TimelineItemResponse> mapBookingsToTimelineItems(List<Booking> bookings) {
         List<TimelineItemResponse> items = new ArrayList<>();
         for (Booking booking : bookings) {
-            if (booking.getStartDatetime() == null) continue;
+            if (booking.getStartDatetime() == null || booking.getStatus() == BookingStatus.CANCELLED) continue;
 
             if (booking.getBookingType() == BookingType.TRANSPORT) {
                 TransportType transportType = booking.getTransportType() != null ? booking.getTransportType() : TransportType.OTHER;
@@ -329,15 +333,16 @@ public class TimelineService {
                     start = date.atTime(item.getStartTime());
                     formattedTime = item.getStartTime().format(TIME_FORMAT);
                 } else {
-                    int order = item.getDisplayOrder() != null ? item.getDisplayOrder() : 0;
-                    start = date.atTime(LocalTime.of(10, 0)).plusMinutes(order * 45L);
+                    // Date anchor only: flexible items have no scheduled clock time.
+                    start = date.atStartOfDay();
                     formattedTime = "Flexible";
                 }
 
                 LocalDateTime end = null;
                 String endFormatted = null;
-                if (item.getEndTime() != null) {
+                if (item.getStartTime() != null && item.getEndTime() != null) {
                     end = date.atTime(item.getEndTime());
+                    if (end.isBefore(start)) end = end.plusDays(1);
                     endFormatted = item.getEndTime().format(TIME_FORMAT);
                 }
 
@@ -375,6 +380,7 @@ public class TimelineService {
                         .subtitle(item.getDescription())
                         .startDatetime(start)
                         .endDatetime(end)
+                        .flexible(item.getStartTime() == null)
                         .timeFormatted(formattedTime)
                         .endTimeFormatted(endFormatted)
                         .location(loc)
@@ -395,64 +401,66 @@ public class TimelineService {
         return items;
     }
 
-    private List<TimelineItemResponse> detectConflictsAndGaps(List<TimelineItemResponse> sortedItems) {
-        if (sortedItems.size() <= 1) return sortedItems;
-
+    private List<TimelineItemResponse> detectConflictsAndGaps(List<TimelineItemResponse> items) {
         List<TimelineItemResponse> result = new ArrayList<>();
-        TimelineItemResponse prev = sortedItems.get(0);
-        result.add(prev);
-
-        for (int i = 1; i < sortedItems.size(); i++) {
-            TimelineItemResponse curr = sortedItems.get(i);
-            boolean hasConflict = false;
-            String warningMsg = null;
-
-            if (prev.endDatetime() != null && curr.startDatetime() != null) {
-                if (curr.startDatetime().isBefore(prev.endDatetime())) {
-                    hasConflict = true;
-                    warningMsg = "Schedule conflict: Starts at " + curr.timeFormatted() + ", but '" + prev.title() + "' is scheduled until " + prev.endTimeFormatted() + ".";
-                } else {
-                    long gap = Duration.between(prev.endDatetime(), curr.startDatetime()).toMinutes();
-                    if (gap < 20 && prev.location() != null && curr.location() != null && !prev.location().equalsIgnoreCase(curr.location())) {
-                        warningMsg = "Tight schedule: Only " + gap + " min gap to travel from '" + prev.location() + "' to '" + curr.location() + "'.";
-                    }
+        for (TimelineItemResponse original : items) {
+            final TimelineItemResponse current = original;
+            if (current.flexible()) {
+                result.add(current);
+                continue;
+            }
+            TimelineItemResponse overlap = items.stream()
+                    .filter(other -> other != current && !other.flexible())
+                    .filter(other -> !(other.sourceType().equals(current.sourceType())
+                            && Objects.equals(other.sourceId(), current.sourceId())))
+                    .filter(other -> overlaps(current, other))
+                    .findFirst().orElse(null);
+            if (overlap != null) {
+                result.add(current.toBuilder().conflict(true)
+                        .warning("Schedule conflict: overlaps with '" + overlap.title()
+                                + "'. Review the saved times.").build());
+                continue;
+            }
+            // This is a buffer reminder, not an estimated route duration.
+            TimelineItemResponse previous = items.stream()
+                    .filter(other -> !other.flexible() && blocksTime(other))
+                    .filter(other -> other.endDatetime() != null
+                            && !other.endDatetime().isAfter(current.startDatetime()))
+                    .filter(other -> !Objects.equals(other.id(), current.id()))
+                    .filter(other -> !(other.sourceType().equals(current.sourceType())
+                            && Objects.equals(other.sourceId(), current.sourceId())))
+                    .max(Comparator.comparing(TimelineItemResponse::endDatetime)).orElse(null);
+            if (previous != null && hasLocation(previous) && hasLocation(current)
+                    && !previous.location().equalsIgnoreCase(current.location())) {
+                long minutes = Duration.between(previous.endDatetime(), current.startDatetime()).toMinutes();
+                if (minutes < 20) {
+                    result.add(current.toBuilder().warning("Only " + minutes
+                            + " minutes between locations. Check travel time; this is not a route estimate.").build());
+                    continue;
                 }
             }
-
-            if (hasConflict || warningMsg != null) {
-                curr = TimelineItemResponse.builder()
-                        .id(curr.id())
-                        .sourceType(curr.sourceType())
-                        .sourceId(curr.sourceId())
-                        .itemType(curr.itemType())
-                        .category(curr.category())
-                        .title(curr.title())
-                        .subtitle(curr.subtitle())
-                        .startDatetime(curr.startDatetime())
-                        .endDatetime(curr.endDatetime())
-                        .timeFormatted(curr.timeFormatted())
-                        .endTimeFormatted(curr.endTimeFormatted())
-                        .location(curr.location())
-                        .departure(curr.departure())
-                        .arrival(curr.arrival())
-                        .provider(curr.provider())
-                        .bookingReference(curr.bookingReference())
-                        .status(curr.status())
-                        .amount(curr.amount())
-                        .currency(curr.currency())
-                        .notes(curr.notes())
-                        .icon(curr.icon())
-                        .badgeColor(curr.badgeColor())
-                        .conflict(hasConflict)
-                        .warning(warningMsg)
-                        .build();
-            }
-
-            result.add(curr);
-            prev = curr;
+            result.add(current);
         }
-
         return result;
+    }
+
+    private boolean hasLocation(TimelineItemResponse item) {
+        return item.location() != null && !item.location().isBlank();
+    }
+
+    private boolean blocksTime(TimelineItemResponse item) {
+        return item.itemType() != TimelineItemType.HOTEL_CHECKIN
+                && item.itemType() != TimelineItemType.HOTEL_CHECKOUT
+                && item.itemType() != TimelineItemType.TRANSPORT_ARRIVAL;
+    }
+
+    private boolean overlaps(TimelineItemResponse a, TimelineItemResponse b) {
+        // Check-in/out and arrival are milestones, not the duration of an entire stay.
+        if (!blocksTime(a) || !blocksTime(b)) return false;
+        LocalDateTime aEnd = a.endDatetime(), bEnd = b.endDatetime();
+        if (aEnd == null || bEnd == null) return false; // Never invent durations.
+        return aEnd.isAfter(a.startDatetime()) && bEnd.isAfter(b.startDatetime())
+                && a.startDatetime().isBefore(bEnd) && b.startDatetime().isBefore(aEnd);
     }
 
     private String resolveDayTitle(ItineraryDay itinDay, List<TimelineItemResponse> items, int dayNumber, Trip trip, LocalDate date) {
