@@ -66,6 +66,7 @@ public class DestinationDiscoveryController {
     public ResponseEntity<List<String>> getPopularDestinations() {
         return ResponseEntity.ok(List.of(
                 "Chennai, Tamil Nadu",
+                "Mysuru, Karnataka",
                 "Bengaluru, Karnataka",
                 "Kodaikanal, Tamil Nadu",
                 "Ooty, Tamil Nadu",
