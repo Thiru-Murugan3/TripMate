@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
+import { adminPayloadFrom, AdminDiscoveryItem } from '../models/discovery-admin.model';
 import { DiscoveryAdminService } from './discovery-admin.service';
 
 describe('DiscoveryAdminService', () => {
@@ -42,4 +43,22 @@ describe('DiscoveryAdminService', () => {
     expect(request.request.params.get('enabled')).toBe('false');
     request.flush({});
   });
+  it('maps response status to the backend priceStatus field for create and update', () => {
+    const item = { enabled: true, listing: { name: 'Fort', externalId: 'curated:fort', category: 'HISTORICAL',
+      latitude: 13, longitude: 80, distanceKm: 0, suggestedVisitMinutes: 60, saveCategory: 'ATTRACTION',
+      priceOptions: [{ label: 'Adult', amount: 50, currency: 'INR', priceType: 'PER_PERSON',
+        status: 'VERIFIED', sourceUrl: 'https://tourism.example/fort', mayHaveChanged: false }]
+    } } as AdminDiscoveryItem;
+    const payload = adminPayloadFrom(item);
+    for (const method of ['create', 'update'] as const) {
+      (method === 'create' ? service.create(payload) : service.update(42, payload)).subscribe();
+      const request = http.expectOne(`${environment.apiUrl}/admin/discovery${method === 'update' ? '/42' : ''}`);
+      const price = request.request.body.priceOptions[0];
+      expect(price.priceStatus).toBe('VERIFIED');
+      expect(price.status).toBeUndefined();
+      expect(price.mayHaveChanged).toBeUndefined();
+      request.flush({});
+    }
+  });
+
 });
