@@ -47,6 +47,35 @@ public class BookingService {
     }
 
     @Transactional
+    public BookingResponse createImportedBooking(Long tripId, Long userId, CreateBookingRequest request) {
+        Trip trip = tripRepository.findForImportById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
+        verifyCanEdit(trip, userId);
+        if (request.bookingReference() != null && !request.bookingReference().isBlank()
+                && request.startDatetime() != null) {
+            for (Booking existing : bookingRepository.findByTripIdOrderByStartDatetimeAscIdDesc(tripId)) {
+                if (existing.getStatus() != BookingStatus.CANCELLED
+                        && existing.getBookingType() == request.bookingType()
+                        && existing.getTransportType() == request.transportType()
+                        && normalized(existing.getProviderName()).equals(normalized(request.providerName()))
+                        && normalized(existing.getBookingReference()).equals(normalized(request.bookingReference()))
+                        && java.util.Objects.equals(existing.getStartDatetime(), request.startDatetime())
+                        && normalized(existing.getDeparture()).equals(normalized(request.departure()))
+                        && normalized(existing.getArrival()).equals(normalized(request.arrival()))) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "This reservation matches booking #" + existing.getId()
+                            + " in this trip. Review the existing booking or correct the imported details.");
+                }
+            }
+        }
+        return createBooking(tripId, userId, request);
+    }
+
+    private String normalized(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase(java.util.Locale.ROOT);
+    }
+
+    @Transactional
     public BookingResponse createBooking(Long tripId, Long userId, CreateBookingRequest request) {
         Trip trip = findTripOrThrow(tripId);
         verifyCanEdit(trip, userId);

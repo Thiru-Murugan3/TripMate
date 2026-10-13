@@ -47,6 +47,19 @@ public class ReservationEmailImportController {
         return ResponseEntity.ok(reservationEmailImportService.complete(importId, principal.getId(), request));
     }
 
+    @PostMapping("/api/v1/reservation-imports/{importId}/confirm")
+    public ResponseEntity<com.tripmate.booking.BookingResponse> confirm(
+            @PathVariable Long importId, @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody ConfirmReservationImportRequest request) {
+        return ResponseEntity.ok(reservationEmailImportService.confirm(importId, principal.getId(), request));
+    }
+
+    @PostMapping("/api/v1/reservation-imports/{importId}/retry")
+    public ResponseEntity<ReservationEmailImportResponse> retry(
+            @PathVariable Long importId, @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(reservationEmailImportService.retry(importId, principal.getId()));
+    }
+
     @DeleteMapping("/api/v1/reservation-imports/{importId}")
     public ResponseEntity<ReservationEmailImportResponse> dismiss(
             @PathVariable Long importId,

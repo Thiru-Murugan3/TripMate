@@ -1,3 +1,4 @@
+import { Booking, CreateBookingRequest } from '../models/booking.model';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -26,6 +27,14 @@ export class ReservationImportService {
       tripId,
       bookingId
     });
+  }
+
+  confirm(importId: number, tripId: number, booking: CreateBookingRequest): Observable<Booking> {
+    return this.http.post<Booking>(`${this.baseUrl}/${importId}/confirm`, { tripId, booking });
+  }
+
+  retry(importId: number): Observable<ReservationEmailImport> {
+    return this.http.post<ReservationEmailImport>(`${this.baseUrl}/${importId}/retry`, {});
   }
 
   dismiss(importId: number): Observable<ReservationEmailImport> {

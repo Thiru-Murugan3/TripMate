@@ -930,6 +930,14 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
               {{ bookingModalError }}
             </div>
 
+            <section *ngIf="bookingImportDraft as draft" class="card" style="padding:1rem;margin-bottom:1rem">
+              <h4>Review extracted booking</h4>
+              <p>Check provider, reference, dates, passengers and amount before saving. Missing amounts need your confirmation.</p>
+              <p *ngIf="draft.currency && draft.currency !== 'INR'" role="alert">Source currency: {{ draft.currency }}. This form saves INR; enter the correct INR amount before saving.</p>
+              <ul><li *ngFor="let warning of draft.warnings">{{ warning }}</li></ul>
+              <details><summary>Compare with extracted text</summary><pre style="white-space:pre-wrap;max-height:220px;overflow:auto">{{ draft.extractedText }}</pre></details>
+              <p *ngIf="importDuplicate" role="alert">Possible duplicate: {{ importDuplicate.providerName }} · {{ importDuplicate.bookingReference }}. Review the booking already in this trip before saving.</p>
+            </section>
             <form [formGroup]="bookingForm" (ngSubmit)="onBookingSubmit()">
               <div class="form-row">
                 <div class="form-group half">
@@ -1007,6 +1015,10 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
                 </div>
               </div>
 
+              <div class="form-group">
+                <label class="form-label">Arrival / Check-out Date and Time</label>
+                <input type="datetime-local" class="form-control" formControlName="endDatetime" />
+              </div>
               <div class="form-group">
                 <label class="form-label">Passenger Details</label>
                 <textarea
@@ -2767,6 +2779,7 @@ export class TripDetailsComponent implements OnInit {
     pickupPoint: [''],
     dropPoint: [''],
     startDatetime: [''],
+    endDatetime: [''],
     amount: [0, [Validators.required, Validators.min(0)]],
     notes: ['']
   });
@@ -3476,7 +3489,8 @@ export class TripDetailsComponent implements OnInit {
           pickupPoint: draft.pickupPoint || '',
           dropPoint: draft.dropPoint || '',
           startDatetime: this.toDatetimeLocal(draft.startDatetime),
-          amount: draft.amount || 0,
+          endDatetime: this.toDatetimeLocal(draft.endDatetime),
+          amount: draft.amount ?? null,
           notes: draft.warnings.length
             ? `OCR review: ${draft.warnings.join(' ')}`
             : `Imported with ${Math.round(draft.confidence * 100)}% OCR confidence.`
@@ -3511,7 +3525,8 @@ export class TripDetailsComponent implements OnInit {
       pickupPoint: draft.pickupPoint || '',
       dropPoint: draft.dropPoint || '',
       startDatetime: this.toDatetimeLocal(draft.startDatetime),
-      amount: draft.amount || 0,
+          endDatetime: this.toDatetimeLocal(draft.endDatetime),
+      amount: draft.amount ?? null,
       notes: draft.warnings.length
         ? `Email import review: ${draft.warnings.join(' ')}`
         : `Imported from a forwarded reservation email with ${Math.round(draft.confidence * 100)}% confidence.`
@@ -3523,6 +3538,7 @@ export class TripDetailsComponent implements OnInit {
   }
 
   closeBookingModal(): void {
+    if (this.isSubmittingBooking) return;
     this.showBookingModal = false;
     this.activeReservationImportId = null;
     this.bookingImportDraft = null;
@@ -3533,8 +3549,19 @@ export class TripDetailsComponent implements OnInit {
     });
   }
 
+  get importDuplicate(): Booking | undefined {
+    if (!this.bookingImportDraft) return undefined;
+    const value = this.bookingForm.value;
+    const normalize = (text?: string | null) => (text || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!normalize(value.bookingReference)) return undefined;
+    return this.bookings.find(item => item.status !== 'CANCELLED'
+      && item.bookingType === value.bookingType
+      && normalize(item.bookingReference) === normalize(value.bookingReference)
+      && normalize(item.providerName) === normalize(value.providerName));
+  }
+
   onBookingSubmit(): void {
-    if (this.bookingForm.invalid) return;
+    if (this.bookingForm.invalid || this.isSubmittingBooking) return;
 
     this.isSubmittingBooking = true;
     this.bookingModalError = '';
@@ -3558,28 +3585,31 @@ export class TripDetailsComponent implements OnInit {
       dropPoint:
         value.bookingType === 'TRANSPORT' ? value.dropPoint || undefined : undefined,
       startDatetime: value.startDatetime || undefined,
+      endDatetime: value.endDatetime || undefined,
       amount: value.amount!,
       status: 'CONFIRMED',
       notes: value.notes || undefined
     };
 
     const reservationImportId = this.activeReservationImportId;
-    this.bookingService.createBooking(this.tripId, request).subscribe({
+    const save = reservationImportId
+      ? this.reservationImportService.confirm(reservationImportId, this.tripId, request)
+      : this.bookingImportDraft
+        ? this.bookingService.confirmImport(this.tripId, request)
+        : this.bookingService.createBooking(this.tripId, request);
+    save.subscribe({
       next: (newBooking) => {
         this.isSubmittingBooking = false;
-        this.bookings = [newBooking, ...this.bookings];
+        this.bookings = [newBooking, ...this.bookings.filter(b => b.id !== newBooking.id)];
         if (reservationImportId) {
-          this.reservationImportService.complete(reservationImportId, this.tripId, newBooking.id).subscribe({
-            next: () => this.reservationEmailImports?.markCompleted(reservationImportId),
-            error: () => this.reservationEmailImports?.refresh()
-          });
+          this.reservationEmailImports?.markCompleted(reservationImportId);
         }
         this.closeBookingModal();
         this.loadDashboard();
       },
       error: (err) => {
         this.isSubmittingBooking = false;
-        this.bookingModalError = err?.error?.message || 'Failed to create booking.';
+        this.bookingModalError = err?.error?.detail || err?.error?.message || 'Could not save. Your reviewed details are preserved; retry when the connection returns.';
       }
     });
   }

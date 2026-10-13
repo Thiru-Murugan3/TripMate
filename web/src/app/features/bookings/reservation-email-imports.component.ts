@@ -51,6 +51,7 @@ import { ReservationImportService } from '../../core/services/reservation-import
             <small *ngIf="item.errorMessage" class="failed">{{ item.errorMessage }}</small>
           </div>
           <div class="import-actions">
+            <button *ngIf="item.status === 'FAILED'" type="button" [disabled]="retrying.has(item.id)" (click)="retry(item)">{{ retrying.has(item.id) ? 'Retrying…' : 'Retry saved text' }}</button>
             <button *ngIf="item.draft" type="button" class="review-btn" (click)="review(item)">Review</button>
             <button type="button" class="dismiss-btn" (click)="dismiss(item)">Dismiss</button>
           </div>
@@ -92,6 +93,7 @@ export class ReservationEmailImportsComponent implements OnInit {
   loading = false;
   error = '';
   copied = false;
+  retrying = new Set<number>();
 
   get pendingImports(): ReservationEmailImport[] {
     return this.imports.filter((item) => item.status === 'NEEDS_REVIEW' || item.status === 'FAILED');
@@ -118,6 +120,22 @@ export class ReservationEmailImportsComponent implements OnInit {
 
   review(item: ReservationEmailImport): void {
     if (item.draft) this.draftSelected.emit({ importId: item.id, draft: item.draft });
+  }
+
+  retry(item: ReservationEmailImport): void {
+    if (this.retrying.has(item.id)) return;
+    this.retrying.add(item.id);
+    this.error = '';
+    this.service.retry(item.id).subscribe({
+      next: updated => {
+        this.imports = this.imports.map(row => row.id === updated.id ? updated : row);
+        this.retrying.delete(item.id);
+      },
+      error: err => {
+        this.retrying.delete(item.id);
+        this.error = err?.error?.detail || err?.error?.message || 'Retry failed. Your email is still available; upload the original PDF or image if needed.';
+      }
+    });
   }
 
   dismiss(item: ReservationEmailImport): void {

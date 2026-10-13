@@ -296,4 +296,23 @@ class BookingServiceTest {
         verify(bookingRepository, never()).save(any());
     }
 
+
+    @Test
+    void importedDuplicateReferenceIsNormalizedAndRejectedBeforeSave() {
+        var start = java.time.LocalDateTime.of(2026, 10, 15, 9, 0);
+        var request = new CreateBookingRequest(BookingType.HOTEL, null, " Hotel Name ",
+                " abc123 ", null, null, null, null, null, start, null, BigDecimal.TEN,
+                BookingStatus.CONFIRMED, null);
+        var existing = Booking.builder().id(99L).bookingType(BookingType.HOTEL)
+                .providerName("HOTEL   NAME").bookingReference("ABC123")
+                .startDatetime(start).status(BookingStatus.CONFIRMED).build();
+        when(tripRepository.findForImportById(10L)).thenReturn(Optional.of(trip));
+        when(bookingRepository.findByTripIdOrderByStartDatetimeAscIdDesc(10L))
+                .thenReturn(java.util.List.of(existing));
+        var error = assertThrows(ResponseStatusException.class,
+                () -> bookingService.createImportedBooking(10L, 1L, request));
+        assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
+        assertTrue(error.getReason().contains("#99"));
+        verify(bookingRepository, never()).save(any());
+    }
 }
