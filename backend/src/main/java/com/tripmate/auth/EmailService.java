@@ -97,7 +97,9 @@ public class EmailService {
             String invitationLink
     ) {
         String friendlyRole =
-                "EDITOR".equalsIgnoreCase(role) ? "Editor" : "Viewer";
+                "EDITOR".equalsIgnoreCase(role) ? "Editor" :
+                "PLANNER".equalsIgnoreCase(role) ? "Planner" :
+                "EXPENSE_MANAGER".equalsIgnoreCase(role) ? "Expense manager" : "Viewer";
 
         String content =
                 "You have been invited to join a trip on Suttru.\n\n" +

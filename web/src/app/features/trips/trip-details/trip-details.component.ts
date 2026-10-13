@@ -318,11 +318,11 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
                     <span class="quick-action-icon green">
                       <span class="material-symbols-outlined">add</span>
                     </span>
-                    <span>Add Itinerary</span>
+                    <span>{{ canPlanTrip ? 'Add Itinerary' : 'View Itinerary' }}</span>
                     <span class="material-symbols-outlined arrow">chevron_right</span>
                   </button>
 
-                  <button type="button" class="quick-action-row" (click)="openExpenseQuickAdd()">
+                  <button type="button" class="quick-action-row" *ngIf="canManageExpenses" (click)="openExpenseQuickAdd()">
                     <span class="quick-action-icon green">
                       <span class="material-symbols-outlined">currency_rupee</span>
                     </span>
@@ -330,7 +330,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
                     <span class="material-symbols-outlined arrow">chevron_right</span>
                   </button>
 
-                  <button type="button" class="quick-action-row" (click)="openBookNow()">
+                  <button type="button" class="quick-action-row" *ngIf="canEditTrip" (click)="openBookNow()">
                     <span class="quick-action-icon orange">
                       <span class="material-symbols-outlined">confirmation_number</span>
                     </span>
@@ -338,7 +338,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
                     <span class="material-symbols-outlined arrow">chevron_right</span>
                   </button>
 
-                  <button type="button" class="quick-action-row" (click)="openDocumentQuickUpload()">
+                  <button type="button" class="quick-action-row" *ngIf="canEditTrip" (click)="openDocumentQuickUpload()">
                     <span class="quick-action-icon violet">
                       <span class="material-symbols-outlined">upload</span>
                     </span>
@@ -391,7 +391,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
             [destination]="currentTrip.destination"
             [startDate]="currentTrip.startDate"
             [endDate]="currentTrip.endDate"
-            [canEdit]="canEditTrip"
+            [canEdit]="canPlanTrip"
             (placesChanged)="onDiscoveredPlacesChanged()"
             (itineraryChanged)="onDiscoveryItineraryChanged()"
           ></app-destination-discovery>
@@ -401,7 +401,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
           <app-itinerary-planner
             [tripId]="tripId"
             [trip]="currentTrip"
-            [canEdit]="canEditTrip"
+            [canEdit]="canPlanTrip"
             (itineraryChanged)="onItineraryChanged()"
           ></app-itinerary-planner>
         </section>
@@ -409,7 +409,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
         <section *ngIf="activeTab === 'PLACES'" class="tab-content">
           <app-place-manager
             [tripId]="tripId"
-            [canEdit]="canEditTrip"
+            [canEdit]="canPlanTrip"
             (placesChanged)="onPlacesChanged()"
           ></app-place-manager>
         </section>
@@ -419,7 +419,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
             [tripId]="tripId"
             [trip]="currentTrip"
             [members]="members"
-            [canEdit]="canEditTrip"
+            [canEdit]="canManageExpenses"
             [openRequest]="expenseOpenRequest"
             (expensesChanged)="onExpensesChanged()"
           ></app-expense-manager>
@@ -639,6 +639,8 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
                     [disabled]="updatingMemberId === member.id"
                     (change)="changeMemberRole(member, $any($event.target).value)"
                   >
+                    <option value="PLANNER">Planner — itinerary and places</option>
+                    <option value="EXPENSE_MANAGER">Expense manager — expenses and settlements</option>
                     <option value="EDITOR">Editor</option>
                     <option value="VIEWER">Viewer</option>
                   </select>
@@ -695,7 +697,9 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
               <div class="form-group">
                 <label class="form-label">Role *</label>
                 <select class="form-control" formControlName="role">
-                  <option value="EDITOR">Editor - can modify trip content</option>
+                  <option value="PLANNER">Planner — itinerary and places</option>
+                    <option value="EXPENSE_MANAGER">Expense manager — expenses and settlements</option>
+                    <option value="EDITOR">Editor - can modify trip content</option>
                   <option value="VIEWER">Viewer - read only</option>
                 </select>
               </div>
@@ -2788,6 +2792,14 @@ export class TripDetailsComponent implements OnInit {
     notes: ['']
   });
 
+  get canPlanTrip(): boolean {
+    return this.canEditTrip || this.trip?.userRole === 'PLANNER';
+  }
+
+  get canManageExpenses(): boolean {
+    return this.canEditTrip || this.trip?.userRole === 'EXPENSE_MANAGER';
+  }
+
   get canEditTrip(): boolean {
     return this.trip?.userRole === 'OWNER' || this.trip?.userRole === 'EDITOR';
   }
@@ -3074,7 +3086,7 @@ export class TripDetailsComponent implements OnInit {
     if (!this.canManageMembers || member.role === 'OWNER') return;
 
     const nextRole = role as TripRole;
-    if (nextRole !== 'EDITOR' && nextRole !== 'VIEWER') return;
+    if (!['EDITOR', 'VIEWER', 'PLANNER', 'EXPENSE_MANAGER'].includes(nextRole)) return;
     if (member.role === nextRole) return;
 
     this.updatingMemberId = member.id;
@@ -3147,6 +3159,8 @@ export class TripDetailsComponent implements OnInit {
 
   formatMemberRole(role: TripRole): string {
     if (role === 'EDITOR') return 'Contributor';
+    if (role === 'PLANNER') return 'Planner';
+    if (role === 'EXPENSE_MANAGER') return 'Expense manager';
     if (role === 'VIEWER') return 'Viewer';
     return 'Organizer';
   }
@@ -3180,6 +3194,7 @@ export class TripDetailsComponent implements OnInit {
   }
 
   openExpenseQuickAdd(): void {
+    if (!this.canManageExpenses) return;
     this.activeTab = 'EXPENSES';
     this.expenseOpenRequest += 1;
   }

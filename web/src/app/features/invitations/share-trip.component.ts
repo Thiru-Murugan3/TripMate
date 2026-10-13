@@ -114,6 +114,8 @@ import { TripService } from '../../core/services/trip.service';
                     <label for="invite-role">Trip permission</label>
                     <select id="invite-role" formControlName="role">
                       <option value="VIEWER">Viewer — read only</option>
+                      <option value="PLANNER">Planner — itinerary and places</option>
+                      <option value="EXPENSE_MANAGER">Expense manager — expenses and settlements</option>
                       <option value="EDITOR">Editor — can update trip content</option>
                     </select>
                   </div>
@@ -190,7 +192,7 @@ import { TripService } from '../../core/services/trip.service';
                         </span>
                       </div>
                       <p>
-                        {{ invitation.role === 'EDITOR' ? 'Editor' : 'Viewer' }}
+                        {{ invitation.role === 'EXPENSE_MANAGER' ? 'Expense manager' : invitation.role === 'PLANNER' ? 'Planner' : invitation.role === 'EDITOR' ? 'Editor' : 'Viewer' }}
                         · {{ invitation.type }}
                         · expires {{ invitation.expiresAt | date:'mediumDate' }}
                       </p>

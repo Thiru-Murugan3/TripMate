@@ -1,6 +1,6 @@
 export type TripType = 'ADVENTURE' | 'FAMILY' | 'COUPLE' | 'FRIENDS' | 'SOLO';
 export type TripStatus = 'PLANNED' | 'UPCOMING' | 'CONFIRMED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
-export type TripRole = 'OWNER' | 'EDITOR' | 'VIEWER';
+export type TripRole = 'OWNER' | 'EDITOR' | 'PLANNER' | 'EXPENSE_MANAGER' | 'VIEWER';
 export type MemberStatus = 'ACTIVE' | 'REMOVED';
 
 export interface Trip {

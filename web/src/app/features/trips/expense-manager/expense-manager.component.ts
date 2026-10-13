@@ -173,6 +173,10 @@ interface SplitDraft {
 
                   <div class="expense-amount">
                     <strong>{{ formatCurrency(expense.amount) }}</strong>
+                  <small *ngIf="expense.originalCurrency && expense.originalCurrency !== 'INR'">
+                    {{ expense.originalCurrency }} {{ expense.originalAmount | number:'1.2-2' }}
+                    · 1 {{ expense.originalCurrency }} = ₹{{ expense.exchangeRate | number:'1.0-8' }} (recorded rate)
+                  </small>
                     <small>{{ expense.splits.length }} split{{ expense.splits.length === 1 ? '' : 's' }}</small>
                   </div>
                 </div>
@@ -345,8 +349,24 @@ interface SplitDraft {
 
             <div class="form-grid two">
               <label class="field">
-                <span>Amount (₹) *</span>
-                <input type="number" min="0.01" step="0.01" formControlName="amount" />
+                <span>Original amount *</span>
+                <input type="number" min="0.01" max="9999999999.99" step="0.01" formControlName="originalAmount" (input)="updateConversion()" />
+              </label>
+              <label class="field">
+                <span>Currency *</span>
+                <select formControlName="originalCurrency" (change)="currencyChanged()">
+                  <option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option>
+                </select>
+              </label>
+              <label class="field" *ngIf="expenseForm.value.originalCurrency !== 'INR'">
+                <span>INR per 1 {{ expenseForm.value.originalCurrency }} *</span>
+                <input type="number" min="0.00000001" step="0.00000001" formControlName="exchangeRate" (input)="updateConversion()" />
+                <small>Enter your payment exchange rate. Rates are recorded, not fetched live.</small>
+              </label>
+              <label class="field">
+                <span>Converted total (INR)</span>
+                <input type="number" formControlName="amount" readonly />
+                <small>All budgets, splits and settlements use INR.</small>
               </label>
 
               <label class="field">
@@ -694,9 +714,25 @@ export class ExpenseManagerComponent implements OnInit, OnChanges {
     'OTHER'
   ];
 
+  readonly currencies = ['INR', 'USD', 'EUR', 'GBP', 'SGD', 'AUD', 'CAD', 'AED'];
+
+  currencyChanged(): void {
+    this.expenseForm.patchValue({ exchangeRate: this.expenseForm.value.originalCurrency === 'INR' ? 1 : null });
+    this.updateConversion();
+  }
+
+  updateConversion(): void {
+    const value = this.expenseForm.getRawValue();
+    const amount = Number(value.originalAmount) * Number(value.exchangeRate);
+    this.expenseForm.patchValue({ amount: Number.isFinite(amount) ? Math.round((amount + Number.EPSILON) * 100) / 100 : 0 });
+  }
+
   expenseForm = this.fb.group({
+    originalCurrency: ['INR', Validators.required],
+    originalAmount: [0, [Validators.required, Validators.min(0.01), Validators.max(9999999999.99)]],
+    exchangeRate: [1 as number | null, [Validators.required, Validators.min(0.00000001), Validators.max(9999999999)]],
     title: ['', [Validators.required, Validators.maxLength(180)]],
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+    amount: [0, [Validators.required, Validators.min(0.01), Validators.max(9999999999.99)]],
     category: ['FOOD' as ExpenseCategory, Validators.required],
     expenseDate: ['', Validators.required],
     paidById: [0, [Validators.required, Validators.min(1)]],
@@ -891,6 +927,7 @@ export class ExpenseManagerComponent implements OnInit, OnChanges {
     this.formError = '';
     this.expenseForm.reset({
       title: '',
+      originalCurrency: 'INR', originalAmount: 0, exchangeRate: 1,
       amount: 0,
       category: 'FOOD',
       expenseDate: this.defaultExpenseDate(),
@@ -909,6 +946,9 @@ export class ExpenseManagerComponent implements OnInit, OnChanges {
     this.formError = '';
     this.expenseForm.reset({
       title: expense.title,
+      originalCurrency: expense.originalCurrency || 'INR',
+      originalAmount: expense.originalAmount ?? expense.amount,
+      exchangeRate: expense.exchangeRate ?? 1,
       amount: expense.amount,
       category: expense.category,
       expenseDate: expense.expenseDate,
@@ -998,6 +1038,9 @@ export class ExpenseManagerComponent implements OnInit, OnChanges {
     const request: CreateExpenseRequest | UpdateExpenseRequest = {
       title: value.title!.trim(),
       amount: Number(value.amount),
+      originalCurrency: value.originalCurrency!,
+      originalAmount: Number(value.originalAmount),
+      exchangeRate: Number(value.exchangeRate),
       category: value.category as ExpenseCategory,
       expenseDate: value.expenseDate,
       paidById: Number(value.paidById),

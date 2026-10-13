@@ -271,7 +271,7 @@ public class TripService {
     private TripRole verifyUserCanEdit(Trip trip, Long userId) {
         TripRole role = resolveUserRole(trip, userId);
 
-        if (role == TripRole.VIEWER) {
+        if (!role.canEditContent()) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, "You do not have edit permission for this trip");
         }

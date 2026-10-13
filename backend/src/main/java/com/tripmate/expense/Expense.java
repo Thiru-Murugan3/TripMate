@@ -38,6 +38,17 @@ public class Expense {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
+    @Column(nullable = false, length = 3)
+    @Builder.Default
+    private String originalCurrency = "INR";
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal originalAmount;
+
+    @Column(nullable = false, precision = 18, scale = 8)
+    @Builder.Default
+    private BigDecimal exchangeRate = BigDecimal.ONE;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ExpenseCategory category;

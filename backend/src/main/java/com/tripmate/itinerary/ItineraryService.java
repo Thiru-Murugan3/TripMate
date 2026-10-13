@@ -232,7 +232,7 @@ public class ItineraryService {
         var memberOpt = tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(
                 trip.getId(), userId, MemberStatus.ACTIVE);
 
-        if (memberOpt.isEmpty() || memberOpt.get().getRole() == TripRole.VIEWER) {
+        if (memberOpt.isEmpty() || !memberOpt.get().getRole().canPlan()) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, "You do not have permission to edit the itinerary for this trip");
         }
