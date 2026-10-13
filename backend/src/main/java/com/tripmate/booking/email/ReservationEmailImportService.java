@@ -108,6 +108,10 @@ public class ReservationEmailImportService {
             CompleteReservationImportRequest request
     ) {
         ReservationEmailImport emailImport = ownedImport(importId, userId);
+        if (emailImport.getStatus() == ReservationEmailImportStatus.IMPORTED
+                && (!java.util.Objects.equals(emailImport.getTripId(), request.tripId())
+                || !java.util.Objects.equals(emailImport.getBookingId(), request.bookingId())))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This import is already linked to a booking.");
         bookingService.getBookingById(request.tripId(), request.bookingId(), userId);
         emailImport.setTripId(request.tripId());
         emailImport.setBookingId(request.bookingId());
@@ -119,8 +123,52 @@ public class ReservationEmailImportService {
     @Transactional
     public ReservationEmailImportResponse dismiss(Long importId, Long userId) {
         ReservationEmailImport emailImport = ownedImport(importId, userId);
+        if (emailImport.getStatus() == ReservationEmailImportStatus.IMPORTED)
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This import already has a saved booking.");
         emailImport.setStatus(ReservationEmailImportStatus.DISMISSED);
         return toResponse(importRepository.save(emailImport));
+    }
+
+    @Transactional
+    public com.tripmate.booking.BookingResponse confirm(Long importId, Long userId,
+            ConfirmReservationImportRequest request) {
+        ReservationEmailImport item = ownedImport(importId, userId);
+        if (item.getStatus() == ReservationEmailImportStatus.IMPORTED) {
+            if (!java.util.Objects.equals(item.getTripId(), request.tripId()))
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "This email was already saved to another trip.");
+            return bookingService.getBookingById(item.getTripId(), item.getBookingId(), userId);
+        }
+        if (item.getStatus() != ReservationEmailImportStatus.NEEDS_REVIEW)
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Retry extraction before reviewing this email.");
+        var booking = bookingService.createImportedBooking(request.tripId(), userId, request.booking());
+        item.setTripId(request.tripId());
+        item.setBookingId(booking.id());
+        item.setStatus(ReservationEmailImportStatus.IMPORTED);
+        item.setErrorMessage(null);
+        importRepository.save(item);
+        return booking;
+    }
+
+    @Transactional
+    public ReservationEmailImportResponse retry(Long importId, Long userId) {
+        ReservationEmailImport item = ownedImport(importId, userId);
+        if (item.getStatus() == ReservationEmailImportStatus.IMPORTED)
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This email already has a saved booking.");
+        String text = (item.getSubject() == null ? "" : item.getSubject()) + "\n"
+                + (item.getRawText() == null ? "" : item.getRawText());
+        if (text.isBlank())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No saved email text. Upload the original PDF or image using Import Booking.");
+        try {
+            var draft = bookingImportService.extractEmailText(text, LocalDate.now().getYear());
+            item.setDraftJson(objectMapper.writeValueAsString(draft));
+            item.setStatus(ReservationEmailImportStatus.NEEDS_REVIEW);
+            item.setErrorMessage(null);
+        } catch (RuntimeException | JsonProcessingException exception) {
+            item.setStatus(ReservationEmailImportStatus.FAILED);
+            item.setErrorMessage("Extraction failed. Retry later or upload the original PDF or image.");
+        }
+        return toResponse(importRepository.save(item));
     }
 
     private boolean receiveItem(JsonNode item) {
