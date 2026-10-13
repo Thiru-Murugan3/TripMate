@@ -1,3 +1,4 @@
+import { FlightAlertsComponent } from '../flight-alerts/flight-alerts.component';
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -51,7 +52,8 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
     DocumentManagerComponent,
     ReservationEmailImportsComponent,
     TripTimelineComponent,
-    OfflineTripComponent
+    OfflineTripComponent,
+    FlightAlertsComponent
   ],
   template: `
     <main class="trip-details-page">
@@ -378,6 +380,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
  
         <section *ngIf="activeTab === 'TIMELINE'" class="tab-content timeline-tab-content">
           <app-offline-trip [tripId]="tripId"></app-offline-trip>
+          <app-flight-alerts [tripId]="tripId" [bookings]="bookings" [canManage]="canEditTrip"></app-flight-alerts>
           <app-trip-timeline
             [tripId]="tripId"
             (selectBooking)="goToBookingTab($event)"
@@ -435,6 +438,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
         </section>
 
         <section *ngIf="activeTab === 'BOOKINGS'" class="tab-content">
+          <app-flight-alerts [tripId]="tripId" [bookings]="bookings" [canManage]="canEditTrip"></app-flight-alerts>
           <app-reservation-email-imports
             *ngIf="canEditTrip"
             [canEdit]="canEditTrip"

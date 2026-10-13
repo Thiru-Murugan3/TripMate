@@ -38,7 +38,16 @@ public class NotificationService {
         NotificationResponse response = NotificationResponse.from(saved);
 
         // Push real-time event to recipient via SSE
-        sseService.sendToUser(recipient.getId(), "notification", response);
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override public void afterCommit() {
+                            sseService.sendToUser(recipient.getId(), "notification", response);
+                        }
+                    });
+        } else {
+            sseService.sendToUser(recipient.getId(), "notification", response);
+        }
 
         return response;
     }

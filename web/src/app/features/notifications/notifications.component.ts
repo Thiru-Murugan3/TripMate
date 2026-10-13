@@ -559,6 +559,7 @@ export class NotificationsComponent implements OnInit {
       MEMBER_REMOVED: '−',
       EXPENSE_ADDED: '₹',
       ITINERARY_UPDATED: '☰',
+      FLIGHT_UPDATED: '✈',
       BOOKING_REMINDER: '◷',
       DOCUMENT_ADDED: '▤',
       GENERAL: '•'

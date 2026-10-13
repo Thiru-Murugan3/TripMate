@@ -98,3 +98,8 @@ jwt:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+flight-alerts:
+  enabled: ${FLIGHT_ALERTS_ENABLED:false}
+  api-key: ${FLIGHTAWARE_API_KEY:}
+  daily-request-limit: ${FLIGHT_ALERTS_DAILY_REQUEST_LIMIT:200}
