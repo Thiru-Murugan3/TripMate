@@ -1,3 +1,4 @@
+import { clearOffline } from '../../../../public/offline-store.js';
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -138,6 +139,7 @@ export class AuthService {
   }
 
   clearSession(): void {
+    void clearOffline().catch(() => { /* Session epoch already invalidates remaining copies. */ });
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
@@ -168,6 +170,8 @@ export class AuthService {
   }
 
   private saveUser(user: User): void {
+    const previous = this.getStoredUser();
+    if (previous && previous.id !== user.id) void clearOffline().catch(() => {});
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
