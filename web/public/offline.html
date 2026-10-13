@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#4f46e5"><title>Suttru · Offline trips</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<style>
+*{box-sizing:border-box}body{margin:0;font:16px system-ui,sans-serif;background:#f1f5f9;color:#172033}
+main{max-width:760px;margin:auto;padding:20px}h1{margin-bottom:8px}p{line-height:1.5}
+a,button{display:inline-block;padding:12px;border-radius:10px;min-height:44px;font:inherit}
+button{border:1px solid #cbd5e1;cursor:pointer;background:white;color:#172033}a{color:#3730a3}
+article,section.day{background:white;border-radius:14px;padding:16px;margin:14px 0;border:1px solid #e2e8f0}
+.event{padding:12px 0;border-bottom:1px solid #e2e8f0}.event:last-child{border:0}
+small{display:block;color:#475569;line-height:1.6}.warning{color:#9a3412}header{display:flex;gap:8px;flex-wrap:wrap}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}h3{margin:4px 0}#status{padding:12px;background:#e0e7ff;border-radius:10px}
+</style></head><body><main>
+<h1>Suttru offline trips</h1><p id="status" role="status">Loading saved trips…</p>
+<p>Read-only copies saved on this device. They may be out of date. Reconnect and save again for updates. Times are shown as saved.</p>
+<header><a href="/trips">Open online app</a><button id="reload">Reload saved trips</button><button id="clear">Remove all offline data</button></header>
+<p>For mobile access, bookmark this page or use your browser’s Add to Home Screen option. Keep your device locked; these copies are not separately encrypted.</p>
+<div id="packs"></div>
+</main><script type="module" src="/offline-viewer.js"></script></body></html>

@@ -12,7 +12,8 @@
     "test:discovery": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/discovery.service.spec.ts",
     "test:explore": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/discovery/destination-discovery.component.spec.ts",
     "test:discovery-admin": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/discovery-admin.service.spec.ts --include=src/app/features/admin/discovery-admin.component.spec.ts",
-    "build:render": "node scripts/write-render-config.mjs && ng build"
+    "build:render": "node scripts/write-render-config.mjs && ng build",
+    "test:offline": "node --test scripts/offline-worker.test.mjs && ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/offline-store.spec.ts"
   },
   "private": true,
   "dependencies": {

@@ -33,6 +33,8 @@ import { ReservationImportSelection } from '../../../core/models/reservation-imp
 import { ReservationImportService } from '../../../core/services/reservation-import.service';
 import { TripTimelineComponent } from '../trip-timeline/trip-timeline.component';
 
+import { OfflineTripComponent } from '../offline-trip/offline-trip.component';
+
 type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
 @Component({
@@ -48,7 +50,8 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
     ExpenseManagerComponent,
     DocumentManagerComponent,
     ReservationEmailImportsComponent,
-    TripTimelineComponent
+    TripTimelineComponent,
+    OfflineTripComponent
   ],
   template: `
     <main class="trip-details-page">
@@ -374,6 +377,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
         </section>
  
         <section *ngIf="activeTab === 'TIMELINE'" class="tab-content timeline-tab-content">
+          <app-offline-trip [tripId]="tripId"></app-offline-trip>
           <app-trip-timeline
             [tripId]="tripId"
             (selectBooking)="goToBookingTab($event)"
