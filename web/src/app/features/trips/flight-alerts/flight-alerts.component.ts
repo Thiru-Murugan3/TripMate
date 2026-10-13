@@ -133,7 +133,11 @@ export class FlightAlertsComponent implements OnChanges, OnDestroy {
   }
   time(value: string | null, zone: string): string {
     if (!value) return 'Unavailable';
-    return new Intl.DateTimeFormat('en-IN', { timeZone: zone, dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+    try {
+      return new Intl.DateTimeFormat('en-IN', { timeZone: zone, dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+    } catch {
+      return `${value} (UTC; selected zone unavailable in this browser)`;
+    }
   }
   private emptyForm(): FlightSetup { return { airlineCode: '', flightNumber: '', departureDate: '', origin: '', destination: '', departureZone: 'Asia/Kolkata', enabled: true }; }
 }

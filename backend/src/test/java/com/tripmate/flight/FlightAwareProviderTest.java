@@ -46,4 +46,16 @@ class FlightAwareProviderTest {
         assertFalse(provider.available()); assertThrows(IllegalStateException.class,() -> provider.lookup(flight()));
         assertFalse(new FlightAwareProvider(true,"").available());
     }
+
+    @Test void detectsRunwayDelayWithoutMislabelingGateTimes() throws Exception {
+        var data = json.readTree("""
+                {"flights":[{"fa_flight_id":"one","ident_iata":"AI101",
+                "origin":{"code_iata":"DEL"},"destination":{"code_iata":"BOM"},
+                "scheduled_off":"2026-10-14T02:00:00Z","estimated_off":"2026-10-14T03:00:00Z"}]}
+                """);
+        var result = FlightAwareProvider.select(data,flight());
+        assertEquals("DELAYED",result.snapshot().status());
+        assertNull(result.snapshot().scheduledDeparture());
+        assertNull(result.snapshot().estimatedDeparture());
+    }
 }

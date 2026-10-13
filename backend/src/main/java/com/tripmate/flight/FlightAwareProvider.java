@@ -65,10 +65,12 @@ public class FlightAwareProvider implements FlightProvider {
         String id = text(f,"fa_flight_id");
         if (id == null) throw new IllegalStateException("Missing provider flight identity");
         Instant out = time(f,"scheduled_out"), estimatedOut = time(f,"estimated_out");
+        Instant scheduledForDelay = out != null ? out : time(f,"scheduled_off");
+        Instant estimatedForDelay = estimatedOut != null ? estimatedOut : time(f,"estimated_off");
         String status = f.path("cancelled").asBoolean() ? "CANCELLED" : f.path("diverted").asBoolean() ? "DIVERTED"
                 : time(f,"actual_in") != null || time(f,"actual_on") != null ? "ARRIVED"
                 : time(f,"actual_out") != null || time(f,"actual_off") != null ? "DEPARTED"
-                : out != null && estimatedOut != null && estimatedOut.isAfter(out.plusSeconds(300)) ? "DELAYED" : "SCHEDULED";
+                : scheduledForDelay != null && estimatedForDelay != null && estimatedForDelay.isAfter(scheduledForDelay.plusSeconds(300)) ? "DELAYED" : "SCHEDULED";
         return new Result(id, new FlightSnapshot(status, out, estimatedOut, time(f,"actual_out"),
                 time(f,"scheduled_in"), time(f,"estimated_in"), time(f,"actual_in"),
                 text(f,"gate_origin"), text(f,"gate_destination"), text(f,"terminal_origin"), text(f,"terminal_destination")));
