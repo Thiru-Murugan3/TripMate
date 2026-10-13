@@ -164,6 +164,8 @@ class TimelineServiceTest {
         assertEquals(TimelineItemType.ACTIVITY, d1.items().get(4).itemType());
         assertEquals("03:30 PM", d1.items().get(4).timeFormatted());
 
+        assertEquals(0, response.conflictCount(), "Hotel stay must not block sightseeing");
+
         // Verify Day 2 has Hotel Check-out (11:00)
         TimelineDayResponse d2 = response.days().get(1);
         assertEquals(LocalDate.of(2026, 10, 16), d2.date());
@@ -217,5 +219,54 @@ class TimelineServiceTest {
         assertTrue(response.days().get(0).items().get(1).conflict());
         assertNotNull(response.days().get(0).items().get(1).warning());
         assertTrue(response.days().get(0).items().get(1).warning().contains("Schedule conflict"));
+    }
+
+    @Test
+    void detectsOvernightAndNonAdjacentConflictsWithoutSchedulingFlexibleItems() {
+        when(tripRepository.findById(100L)).thenReturn(Optional.of(trip));
+        Booking train = Booking.builder().id(50L).bookingType(BookingType.TRANSPORT)
+                .transportType(TransportType.TRAIN).status(BookingStatus.CONFIRMED)
+                .startDatetime(LocalDateTime.of(2026, 10, 15, 22, 0))
+                .endDatetime(LocalDateTime.of(2026, 10, 16, 8, 0)).build();
+        Booking cancelled = Booking.builder().id(51L).bookingType(BookingType.ACTIVITY)
+                .status(BookingStatus.CANCELLED)
+                .startDatetime(LocalDateTime.of(2026, 10, 16, 9, 0)).build();
+        when(bookingRepository.findByTripIdOrderByStartDatetimeAscIdDesc(100L))
+                .thenReturn(List.of(train, cancelled));
+        ItineraryDay day = ItineraryDay.builder().dayNumber(2)
+                .dayDate(LocalDate.of(2026, 10, 16)).build();
+        day.setItems(List.of(
+                ItineraryItem.builder().id(1L).title("Early visit")
+                        .startTime(LocalTime.of(6, 0)).endTime(LocalTime.of(6, 30)).build(),
+                ItineraryItem.builder().id(2L).title("Second visit")
+                        .startTime(LocalTime.of(7, 0)).endTime(LocalTime.of(7, 30)).build(),
+                ItineraryItem.builder().id(3L).title("Flexible museum").displayOrder(100).build()));
+        when(itineraryDayRepository.findByTripIdOrderByDayNumberAsc(100L)).thenReturn(List.of(day));
+        var response = timelineService.getTripTimeline(100L, 1L);
+        assertEquals(5, response.totalEvents()); // departure + arrival + three activities
+        assertEquals(3, response.conflictCount()); // train and both activities
+        var flexible = response.days().get(1).items().getLast();
+        assertTrue(flexible.flexible());
+        assertEquals("Flexible", flexible.timeFormatted());
+        assertNull(flexible.endDatetime());
+        assertFalse(flexible.conflict());
+        assertEquals(LocalDate.of(2026, 10, 16), flexible.startDatetime().toLocalDate());
+    }
+
+    @Test
+    void overnightActivityEndsNextDayAndAdjacentEventsDoNotOverlap() {
+        when(tripRepository.findById(100L)).thenReturn(Optional.of(trip));
+        when(bookingRepository.findByTripIdOrderByStartDatetimeAscIdDesc(100L)).thenReturn(List.of());
+        ItineraryDay day = ItineraryDay.builder().dayNumber(1).dayDate(trip.getStartDate()).build();
+        day.setItems(List.of(
+                ItineraryItem.builder().id(1L).title("Evening visit")
+                        .startTime(LocalTime.of(21, 0)).endTime(LocalTime.of(23, 0)).build(),
+                ItineraryItem.builder().id(2L).title("Night walk")
+                        .startTime(LocalTime.of(23, 0)).endTime(LocalTime.of(1, 0)).build()));
+        when(itineraryDayRepository.findByTripIdOrderByDayNumberAsc(100L)).thenReturn(List.of(day));
+        var response = timelineService.getTripTimeline(100L, 1L);
+        assertEquals(0, response.conflictCount());
+        assertEquals(LocalDateTime.of(2026, 10, 16, 1, 0),
+                response.days().getFirst().items().getLast().endDatetime());
     }
 }

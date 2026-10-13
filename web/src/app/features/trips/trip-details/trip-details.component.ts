@@ -2693,7 +2693,7 @@ export class TripDetailsComponent implements OnInit {
   bookings: Booking[] = [];
   members: TripMember[] = [];
 
-  activeTab: TripDetailsTab = 'OVERVIEW';
+  activeTab: TripDetailsTab = 'TIMELINE';
   expenseOpenRequest = 0;
   documentOpenRequest = 0;
 

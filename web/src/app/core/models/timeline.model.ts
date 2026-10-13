@@ -30,6 +30,7 @@ export interface TimelineItem {
   notes?: string;
   icon: string;
   badgeColor: string;
+  flexible?: boolean;
   conflict: boolean;
   warning?: string;
 }

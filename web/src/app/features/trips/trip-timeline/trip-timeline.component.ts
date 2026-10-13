@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, inject } from '@angular/core';
 import { TimelineDay, TimelineItem, TripTimeline } from '../../../core/models/timeline.model';
 import { TimelineService } from '../../../core/services/timeline.service';
+
+import { Subscription } from 'rxjs';
 
 type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
 
@@ -31,9 +33,9 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
         <header class="timeline-header card">
           <div class="timeline-headline">
             <div class="headline-left">
-              <span class="eyebrow">CHRONOLOGICAL TRIP STREAM</span>
-              <h2>Unified Itinerary Timeline</h2>
-              <p>Your complete journey merged in real time: transport departures, hotel check-ins, meals, and sightseeing.</p>
+              <span class="eyebrow">YOUR TRIP, DAY BY DAY</span>
+              <h2>Daily trip timeline</h2>
+              <p>Bookings and planned activities together. Times are shown as saved; time zones are not converted.</p>
             </div>
             <button type="button" class="btn-refresh" [disabled]="isLoading" (click)="loadTimeline()">
               <span class="material-symbols-outlined">refresh</span>
@@ -46,12 +48,12 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
             <div class="metric-pill">
               <span class="material-symbols-outlined icon-transport">flight</span>
               <strong>{{ data.transportCount }}</strong>
-              <span>Travel</span>
+              <span>Travel milestones</span>
             </div>
             <div class="metric-pill">
               <span class="material-symbols-outlined icon-hotel">hotel</span>
               <strong>{{ data.stayCount }}</strong>
-              <span>Stays</span>
+              <span>Stay milestones</span>
             </div>
             <div class="metric-pill">
               <span class="material-symbols-outlined icon-activity">attractions</span>
@@ -66,7 +68,7 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
             <div *ngIf="data.conflictCount > 0" class="metric-pill alert-pill">
               <span class="material-symbols-outlined">warning</span>
               <strong>{{ data.conflictCount }}</strong>
-              <span>Conflicts</span>
+              <span>Events to review</span>
             </div>
           </div>
 
@@ -135,11 +137,11 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
         <div *ngIf="data.totalEvents === 0" class="timeline-empty card">
           <span class="material-symbols-outlined empty-icon">map</span>
           <h3>Your timeline is waiting to be filled</h3>
-          <p>Add flight or train bookings, or schedule activities in the Itinerary tab. They will instantly appear here in chronological order.</p>
+          <p>Add flight or train bookings, or schedule activities in the Itinerary tab. Return here or refresh to see your updated plan.</p>
         </div>
 
         <!-- Vertical Timeline Feed Grouped by Day -->
-        <div *ngIf="data.totalEvents > 0" class="timeline-feed">
+        <div *ngIf="data.days.length > 0" class="timeline-feed">
           <section
             *ngFor="let day of data.days"
             [id]="'day-section-' + day.dayNumber"
@@ -170,8 +172,8 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
               >
                 <!-- Time Badge Column -->
                 <div class="time-col">
-                  <span class="time-main">{{ item.timeFormatted }}</span>
-                  <span *ngIf="item.endTimeFormatted" class="time-end">until {{ item.endTimeFormatted }}</span>
+                  <span class="time-main">{{ item.flexible ? "Flexible" : item.timeFormatted }}</span>
+                  <span *ngIf="item.endTimeFormatted && !item.flexible && item.itemType !== 'HOTEL_CHECKIN'" class="time-end">until {{ item.endTimeFormatted }}<span *ngIf="item.endDatetime?.slice(0, 10) !== item.startDatetime?.slice(0, 10)"> · {{ item.endDatetime | date:'MMM d' }}</span></span>
                 </div>
 
                 <!-- Timeline Spine / Node -->
@@ -194,6 +196,7 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
                     <div class="event-header-row">
                       <div class="event-title-area">
                         <span class="event-category" [attr.data-color]="item.badgeColor">{{ item.category }}</span>
+                        <span class="event-category">{{ item.sourceType === 'BOOKING' ? 'Booking' : 'Planned activity' }}</span>
                         <h4 class="event-title">{{ item.title }}</h4>
                       </div>
                       <span *ngIf="item.status" class="event-status-pill" [attr.data-status]="item.status">
@@ -213,7 +216,7 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
                         <span class="material-symbols-outlined">confirmation_number</span>
                         {{ item.bookingReference }}
                       </span>
-                      <span *ngIf="item.amount" class="meta-item cost-item">
+                      <span *ngIf="item.amount != null" class="meta-item cost-item">
                         <span class="material-symbols-outlined">payments</span>
                         {{ item.currency || 'INR' }} {{ item.amount }}
                       </span>
@@ -248,7 +251,7 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
 
               <!-- Empty state for specific filter within a day -->
               <div *ngIf="filterItems(day.items).length === 0" class="no-filter-items">
-                <span>No {{ selectedCategory.toLowerCase() }} events on this day.</span>
+                <span>{{ selectedCategory === 'ALL' ? 'Nothing planned yet. Add a booking or activity for this day.' : 'No events match this filter on this day.' }}</span>
               </div>
             </div>
           </section>
@@ -389,7 +392,7 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
     }
   `]
 })
-export class TripTimelineComponent implements OnInit {
+export class TripTimelineComponent implements OnChanges, OnDestroy {
   @Input() tripId!: number;
   @Output() selectBooking = new EventEmitter<number>();
   @Output() selectActivity = new EventEmitter<number>();
@@ -401,16 +404,26 @@ export class TripTimelineComponent implements OnInit {
   error = '';
   selectedCategory: FilterCategory = 'ALL';
 
-  ngOnInit(): void {
+  private request?: Subscription;
+
+  ngOnChanges(): void {
+    this.request?.unsubscribe();
+    this.timeline = null;
+    this.selectedCategory = 'ALL';
     if (this.tripId) {
       this.loadTimeline();
     }
   }
 
+  ngOnDestroy(): void {
+    this.request?.unsubscribe();
+  }
+
   loadTimeline(): void {
+    this.request?.unsubscribe();
     this.isLoading = true;
     this.error = '';
-    this.timelineService.getTimeline(this.tripId).subscribe({
+    this.request = this.timelineService.getTimeline(this.tripId).subscribe({
       next: (res) => {
         this.timeline = res;
         this.isLoading = false;
