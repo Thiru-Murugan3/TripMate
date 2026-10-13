@@ -17,7 +17,10 @@ public record ExpenseResponse(
         SplitType splitType,
         String notes,
         List<ExpenseSplitResponse> splits,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String originalCurrency,
+        BigDecimal originalAmount,
+        BigDecimal exchangeRate
 ) {
     public static ExpenseResponse from(Expense expense) {
         return new ExpenseResponse(
@@ -34,7 +37,10 @@ public record ExpenseResponse(
                 expense.getSplits() != null
                         ? expense.getSplits().stream().map(ExpenseSplitResponse::from).toList()
                         : List.of(),
-                expense.getCreatedAt()
+                expense.getCreatedAt(),
+                expense.getOriginalCurrency(),
+                expense.getOriginalAmount() != null ? expense.getOriginalAmount() : expense.getAmount(),
+                expense.getExchangeRate()
         );
     }
 }

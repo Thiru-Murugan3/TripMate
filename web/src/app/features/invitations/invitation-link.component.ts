@@ -32,13 +32,13 @@ import { InvitationService } from '../../core/services/invitation.service';
           <h1>You’re invited to {{ invite.tripName }}</h1>
           <p class="description">
             <strong>{{ invite.inviterName }}</strong> invited you to join as
-            <strong>{{ invite.role === 'EDITOR' ? 'an editor' : 'a viewer' }}</strong>.
+            <strong>{{ invite.role === 'EXPENSE_MANAGER' ? 'an expense manager' : invite.role === 'PLANNER' ? 'a planner' : invite.role === 'EDITOR' ? 'an editor' : 'a viewer' }}</strong>.
           </p>
 
           <div class="invite-summary">
             <div>
               <span>Permission</span>
-              <strong>{{ invite.role === 'EDITOR' ? 'Editor' : 'Viewer' }}</strong>
+              <strong>{{ invite.role === 'EXPENSE_MANAGER' ? 'Expense manager' : invite.role === 'PLANNER' ? 'Planner' : invite.role === 'EDITOR' ? 'Editor' : 'Viewer' }}</strong>
             </div>
             <div>
               <span>Valid until</span>

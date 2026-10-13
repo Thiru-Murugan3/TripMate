@@ -293,7 +293,7 @@ public class BookingService {
         var memberOpt = tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(
                 trip.getId(), userId, MemberStatus.ACTIVE);
 
-        if (memberOpt.isEmpty() || memberOpt.get().getRole() == TripRole.VIEWER) {
+        if (memberOpt.isEmpty() || !memberOpt.get().getRole().canEditContent()) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, "You do not have permission to edit bookings for this trip");
         }

@@ -24,9 +24,16 @@ class FlywayMigrationSmokeTest {
         Flyway flyway = Flyway.configure()
                 .dataSource(url, username, password)
                 .locations("classpath:db/migration")
-                .load();
+                .target("16").load();
 
         assertTrue(flyway.migrate().migrationsExecuted >= 16);
+        try (Connection c = DriverManager.getConnection(url, username, password); var st = c.createStatement()) {
+            st.executeUpdate("INSERT INTO users(id,name,email,password_hash) VALUES (99001,'Migration','migration@example.test','hash')");
+            st.executeUpdate("INSERT INTO trips(id,owner_id,name,destination,trip_type,start_date,end_date) VALUES (99001,99001,'Migration','Chennai','FRIENDS','2026-01-01','2026-01-02')");
+            st.executeUpdate("INSERT INTO expenses(id,trip_id,paid_by,title,amount,category,expense_date) VALUES (99001,99001,99001,'Legacy',125.50,'FOOD','2026-01-01')");
+        }
+        flyway = Flyway.configure().dataSource(url, username, password).locations("classpath:db/migration").load();
+        assertTrue(flyway.migrate().migrationsExecuted >= 1);
         flyway.validate();
 
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
@@ -39,6 +46,13 @@ class FlywayMigrationSmokeTest {
             assertTrue(tableExists(connection, "reservation_import_addresses"));
             assertTrue(tableExists(connection, "reservation_email_imports"));
             assertStarterCatalogue(connection);
+            assertEquals("NO", nullableState(connection, "expenses", "original_amount"));
+            try (var st = connection.createStatement(); var rows = st.executeQuery("SELECT original_currency,original_amount,exchange_rate FROM expenses WHERE id=99001")) {
+                assertTrue(rows.next());
+                assertEquals("INR", rows.getString(1));
+                assertEquals(0, new java.math.BigDecimal("125.50").compareTo(rows.getBigDecimal(2)));
+                assertEquals(0, java.math.BigDecimal.ONE.compareTo(rows.getBigDecimal(3)));
+            }
         }
     }
 

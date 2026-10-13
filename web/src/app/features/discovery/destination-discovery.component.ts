@@ -805,7 +805,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
   get editableTrips(): Trip[] {
     return this.availableTrips.filter(
-      (trip) => trip.userRole === 'OWNER' || trip.userRole === 'EDITOR'
+      (trip) => trip.userRole === 'OWNER' || trip.userRole === 'EDITOR' || trip.userRole === 'PLANNER'
     );
   }
 
@@ -815,7 +815,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
   get effectiveCanEdit(): boolean {
     if (this.embeddedMode) return this.canEdit;
-    return this.selectedTrip?.userRole === 'OWNER' || this.selectedTrip?.userRole === 'EDITOR';
+    return this.selectedTrip?.userRole === 'OWNER' || this.selectedTrip?.userRole === 'EDITOR' || this.selectedTrip?.userRole === 'PLANNER';
   }
 
   get canSelectPlaces(): boolean {

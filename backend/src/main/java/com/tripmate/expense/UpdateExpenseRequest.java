@@ -31,6 +31,14 @@ public record UpdateExpenseRequest(
 
         List<CreateExpenseRequest.SplitDetail> splits,
 
-        String notes
+        String notes,
+        String originalCurrency,
+        BigDecimal originalAmount,
+        BigDecimal exchangeRate
 ) {
+    public UpdateExpenseRequest(String title, BigDecimal amount, ExpenseCategory category, LocalDate expenseDate,
+            Long paidById, SplitType splitType, List<CreateExpenseRequest.SplitDetail> splits, String notes) {
+        this(title, amount, category, expenseDate, paidById, splitType, splits, notes, null, null, null);
+    }
+
 }

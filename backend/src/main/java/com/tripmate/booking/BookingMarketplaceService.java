@@ -111,7 +111,7 @@ public class BookingMarketplaceService {
                 trip.getId(), userId, MemberStatus.ACTIVE
         );
 
-        if (member.isEmpty() || member.get().getRole() == TripRole.VIEWER) {
+        if (member.isEmpty() || !member.get().getRole().canEditContent()) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "You do not have permission to book for this trip"

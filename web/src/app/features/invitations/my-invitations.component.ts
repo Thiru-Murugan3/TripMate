@@ -47,7 +47,7 @@ import { InvitationService } from '../../core/services/invitation.service';
             </div>
 
             <div class="content">
-              <span class="role-chip">{{ invitation.role === 'EDITOR' ? 'Editor' : 'Viewer' }}</span>
+              <span class="role-chip">{{ invitation.role === 'EXPENSE_MANAGER' ? 'Expense manager' : invitation.role === 'PLANNER' ? 'Planner' : invitation.role === 'EDITOR' ? 'Editor' : 'Viewer' }}</span>
               <h2>{{ invitation.tripName }}</h2>
               <p>
                 <strong>{{ invitation.inviterName }}</strong> invited you to join this trip.

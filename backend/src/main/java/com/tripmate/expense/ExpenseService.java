@@ -67,13 +67,16 @@ public class ExpenseService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Payer user not found"));
 
+        ExpenseMoney money = ExpenseMoney.resolve(request.amount(), request.originalCurrency(), request.originalAmount(), request.exchangeRate());
+
         SplitType splitType = request.splitType() != null ? request.splitType() : SplitType.EQUAL;
 
         Expense expense = Expense.builder()
                 .trip(trip)
                 .paidBy(paidBy)
                 .title(request.title().trim())
-                .amount(request.amount().setScale(2, RoundingMode.HALF_UP))
+                .amount(money.amount())
+                .originalCurrency(money.currency()).originalAmount(money.original()).exchangeRate(money.rate())
                 .category(request.category())
                 .expenseDate(request.expenseDate())
                 .splitType(splitType)
@@ -81,7 +84,7 @@ public class ExpenseService {
                 .build();
 
         Expense savedExpense = expenseRepository.save(expense);
-        List<ExpenseSplit> splits = generateSplits(savedExpense, trip, request.amount(), splitType, request.splits());
+        List<ExpenseSplit> splits = generateSplits(savedExpense, trip, money.amount(), splitType, request.splits());
         savedExpense.setSplits(splits);
 
         auditLogService.log(userId, tripId, com.tripmate.audit.AuditAction.EXPENSE_CREATED, "EXPENSE", savedExpense.getId(), "Created expense: " + savedExpense.getTitle() + " (" + savedExpense.getAmount() + ")");
@@ -104,11 +107,19 @@ public class ExpenseService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Payer user not found"));
 
+        ExpenseMoney money = ExpenseMoney.resolve(request.amount(), request.originalCurrency(), request.originalAmount(), request.exchangeRate());
+
         SplitType splitType = request.splitType() != null ? request.splitType() : expense.getSplitType();
 
         expense.setPaidBy(paidBy);
         expense.setTitle(request.title().trim());
-        expense.setAmount(request.amount().setScale(2, RoundingMode.HALF_UP));
+        if (request.originalCurrency() == null && !"INR".equals(expense.getOriginalCurrency())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Include original currency and rate when editing a foreign expense");
+        }
+        expense.setAmount(money.amount());
+        expense.setOriginalCurrency(money.currency());
+        expense.setOriginalAmount(money.original());
+        expense.setExchangeRate(money.rate());
         expense.setCategory(request.category());
         expense.setExpenseDate(request.expenseDate());
         expense.setSplitType(splitType);
@@ -117,7 +128,7 @@ public class ExpenseService {
         expense.getSplits().clear();
         expenseRepository.flush();
 
-        List<ExpenseSplit> splits = generateSplits(expense, trip, request.amount(), splitType, request.splits());
+        List<ExpenseSplit> splits = generateSplits(expense, trip, money.amount(), splitType, request.splits());
         expense.getSplits().addAll(splits);
 
         Expense updatedExpense = expenseRepository.save(expense);
@@ -378,9 +389,12 @@ public class ExpenseService {
                                 HttpStatus.BAD_REQUEST, "Percentage missing for user ID: " + u.getId());
                     }
                     BigDecimal pct = detail.percentage().setScale(2, RoundingMode.HALF_UP);
+                    if (pct.signum() < 0 || pct.compareTo(BigDecimal.valueOf(100)) > 0) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Percentage must be between 0 and 100");
+                    }
                     sumPercent = sumPercent.add(pct);
                     BigDecimal amt = totalAmount.multiply(pct)
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.DOWN);
 
                     splits.add(ExpenseSplit.builder()
                             .expense(expense)
@@ -397,6 +411,11 @@ public class ExpenseService {
             }
         }
 
+        if (splitType == SplitType.PERCENTAGE && !splits.isEmpty()) {
+            BigDecimal allocated = splits.stream().map(ExpenseSplit::getShareAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            ExpenseSplit recipient = splits.stream().filter(s -> s.getPercentage().signum() > 0).findFirst().orElseThrow();
+            recipient.setShareAmount(recipient.getShareAmount().add(totalAmount.subtract(allocated)));
+        }
         return splits;
     }
 
@@ -489,7 +508,7 @@ public class ExpenseService {
         var memberOpt = tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(
                 trip.getId(), userId, MemberStatus.ACTIVE);
 
-        if (memberOpt.isEmpty() || memberOpt.get().getRole() == TripRole.VIEWER) {
+        if (memberOpt.isEmpty() || !memberOpt.get().getRole().canManageExpenses()) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, "You do not have permission to edit expenses for this trip");
         }
