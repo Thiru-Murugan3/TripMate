@@ -46,6 +46,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'explore/india',
+    loadComponent: () => import('./features/india-catalogue/india-catalogue.component').then(m => m.IndiaCatalogueComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'admin/discovery',
     loadComponent: () =>
       import('./features/admin/discovery-admin.component').then((m) => m.DiscoveryAdminComponent),

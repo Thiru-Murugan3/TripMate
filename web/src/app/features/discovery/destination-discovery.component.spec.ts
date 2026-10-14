@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
 import { DestinationDiscoveryComponent } from './destination-discovery.component';
@@ -121,6 +121,7 @@ describe('DestinationDiscoveryComponent', () => {
     TestBed.configureTestingModule({
       imports: [DestinationDiscoveryComponent],
       providers: [
+        provideRouter([]),
         { provide: DiscoveryService, useValue: discoveryService },
         { provide: PlaceService, useValue: placeService },
         { provide: ItineraryService, useValue: itineraryService },

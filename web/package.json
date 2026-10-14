@@ -15,7 +15,8 @@
     "build:render": "node scripts/write-render-config.mjs && ng build",
     "test:offline": "node --test scripts/offline-worker.test.mjs && ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/offline-store.spec.ts",
     "test:expenses": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/trips/expense-manager/expense-manager.component.spec.ts",
-    "test:flights": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/trips/flight-alerts/flight-alerts.component.spec.ts"
+    "test:flights": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/trips/flight-alerts/flight-alerts.component.spec.ts",
+    "test:india-catalogue": "node --test scripts/india-catalogue.test.mjs && ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/india-catalogue/*.spec.ts"
   },
   "private": true,
   "dependencies": {
