@@ -182,5 +182,849 @@
       "file": "west-bengal.json",
       "count": 89
     }
-  ]
+  ],
+  "destinationStates": {
+    "agartala": [
+      "Tripura"
+    ],
+    "agra": [
+      "Uttar Pradesh"
+    ],
+    "ahmedabad": [
+      "Gujarat"
+    ],
+    "aizawl": [
+      "Mizoram"
+    ],
+    "ajmer": [
+      "Rajasthan"
+    ],
+    "alappuzha": [
+      "Kerala"
+    ],
+    "almora": [
+      "Uttarakhand"
+    ],
+    "alwar": [
+      "Rajasthan"
+    ],
+    "amaravati": [
+      "Andhra Pradesh"
+    ],
+    "amravati": [
+      "Maharashtra"
+    ],
+    "amritsar": [
+      "Punjab"
+    ],
+    "anantapur": [
+      "Andhra Pradesh"
+    ],
+    "anantnag": [
+      "Jammu and Kashmir"
+    ],
+    "anuppur": [
+      "Madhya Pradesh"
+    ],
+    "ariyalur": [
+      "Tamil Nadu"
+    ],
+    "arrah": [
+      "Bihar"
+    ],
+    "ayodhya": [
+      "Uttar Pradesh"
+    ],
+    "badami": [
+      "Karnataka"
+    ],
+    "badrinath": [
+      "Uttarakhand"
+    ],
+    "bagalkote": [
+      "Karnataka"
+    ],
+    "balasinor": [
+      "Gujarat"
+    ],
+    "ballari": [
+      "Karnataka"
+    ],
+    "banswara": [
+      "Rajasthan"
+    ],
+    "bareilly": [
+      "Uttar Pradesh"
+    ],
+    "bekal": [
+      "Kerala"
+    ],
+    "belagavi": [
+      "Karnataka"
+    ],
+    "bengaluru": [
+      "Karnataka"
+    ],
+    "berinag": [
+      "Uttarakhand"
+    ],
+    "bharatpur": [
+      "Rajasthan"
+    ],
+    "bhavnagar": [
+      "Gujarat"
+    ],
+    "bhimtal": [
+      "Uttarakhand"
+    ],
+    "bhongir": [
+      "Telangana"
+    ],
+    "bhopal": [
+      "Madhya Pradesh"
+    ],
+    "bhubaneswar": [
+      "Odisha"
+    ],
+    "bhuj": [
+      "Gujarat"
+    ],
+    "bidar": [
+      "Karnataka"
+    ],
+    "bikaner": [
+      "Rajasthan"
+    ],
+    "bilaspur": [
+      "Chhattisgarh",
+      "Himachal Pradesh"
+    ],
+    "bomdila": [
+      "Arunachal Pradesh"
+    ],
+    "bundi": [
+      "Rajasthan"
+    ],
+    "chamba": [
+      "Himachal Pradesh"
+    ],
+    "chamoli": [
+      "Uttarakhand"
+    ],
+    "champaner": [
+      "Gujarat"
+    ],
+    "champhai": [
+      "Mizoram"
+    ],
+    "chanderi": [
+      "Madhya Pradesh"
+    ],
+    "chandigarh": [
+      "Chandigarh"
+    ],
+    "changlang": [
+      "Arunachal Pradesh"
+    ],
+    "chengalpattu": [
+      "Tamil Nadu"
+    ],
+    "chennai": [
+      "Tamil Nadu"
+    ],
+    "cherrapunjee": [
+      "Meghalaya"
+    ],
+    "chhatrapatisambhajinagar": [
+      "Maharashtra"
+    ],
+    "chirang": [
+      "Assam"
+    ],
+    "chitrakoot": [
+      "Madhya Pradesh",
+      "Uttar Pradesh"
+    ],
+    "chittoor": [
+      "Andhra Pradesh"
+    ],
+    "chittorgarh": [
+      "Rajasthan"
+    ],
+    "coimbatore": [
+      "Tamil Nadu"
+    ],
+    "coorg": [
+      "Karnataka"
+    ],
+    "cuddalore": [
+      "Tamil Nadu"
+    ],
+    "cuttack": [
+      "Odisha"
+    ],
+    "dalhousie": [
+      "Himachal Pradesh"
+    ],
+    "daman": [
+      "Dadra and Nagar Haveli and Daman and Diu"
+    ],
+    "darjeeling": [
+      "West Bengal"
+    ],
+    "datia": [
+      "Madhya Pradesh"
+    ],
+    "dausa": [
+      "Rajasthan"
+    ],
+    "dehradun": [
+      "Uttarakhand"
+    ],
+    "delhi": [
+      "Delhi"
+    ],
+    "deoghar": [
+      "Jharkhand"
+    ],
+    "dharamshala": [
+      "Himachal Pradesh"
+    ],
+    "dharmapuri": [
+      "Tamil Nadu"
+    ],
+    "dharwad": [
+      "Karnataka"
+    ],
+    "dholpur": [
+      "Rajasthan"
+    ],
+    "dibrugarh": [
+      "Assam"
+    ],
+    "dimapur": [
+      "Nagaland"
+    ],
+    "dindigul": [
+      "Tamil Nadu"
+    ],
+    "dirang": [
+      "Arunachal Pradesh"
+    ],
+    "diu": [
+      "Dadra and Nagar Haveli and Daman and Diu"
+    ],
+    "durgapur": [
+      "West Bengal"
+    ],
+    "dwarka": [
+      "Gujarat"
+    ],
+    "erode": [
+      "Tamil Nadu"
+    ],
+    "faridabad": [
+      "Haryana"
+    ],
+    "fatehgarhsahib": [
+      "Punjab"
+    ],
+    "fazilka": [
+      "Punjab"
+    ],
+    "firozepur": [
+      "Punjab"
+    ],
+    "gandhinagar": [
+      "Gujarat"
+    ],
+    "gangotri": [
+      "Uttarakhand"
+    ],
+    "gangtok": [
+      "Sikkim"
+    ],
+    "gaya": [
+      "Bihar"
+    ],
+    "girsomnath": [
+      "Gujarat"
+    ],
+    "goa": [
+      "Goa"
+    ],
+    "gokarna": [
+      "Karnataka"
+    ],
+    "gulmarg": [
+      "Jammu and Kashmir"
+    ],
+    "guntur": [
+      "Andhra Pradesh"
+    ],
+    "gurdaspur": [
+      "Punjab"
+    ],
+    "gurugram": [
+      "Haryana"
+    ],
+    "guwahati": [
+      "Assam"
+    ],
+    "gwalior": [
+      "Madhya Pradesh"
+    ],
+    "hampi": [
+      "Karnataka"
+    ],
+    "haridwar": [
+      "Uttarakhand"
+    ],
+    "hisar": [
+      "Haryana"
+    ],
+    "howrah": [
+      "West Bengal"
+    ],
+    "hyderabad": [
+      "Telangana"
+    ],
+    "igatpuri": [
+      "Maharashtra"
+    ],
+    "imphal": [
+      "Manipur"
+    ],
+    "indore": [
+      "Madhya Pradesh"
+    ],
+    "itanagar": [
+      "Arunachal Pradesh"
+    ],
+    "jabalpur": [
+      "Madhya Pradesh"
+    ],
+    "jagdalpur": [
+      "Chhattisgarh"
+    ],
+    "jaipur": [
+      "Rajasthan"
+    ],
+    "jaisalmer": [
+      "Rajasthan"
+    ],
+    "jalandhar": [
+      "Punjab"
+    ],
+    "jalgaon": [
+      "Maharashtra"
+    ],
+    "jammu": [
+      "Jammu and Kashmir"
+    ],
+    "jamnagar": [
+      "Gujarat"
+    ],
+    "jamshedpur": [
+      "Jharkhand"
+    ],
+    "jhansi": [
+      "Uttar Pradesh"
+    ],
+    "jodhpur": [
+      "Rajasthan"
+    ],
+    "jorhat": [
+      "Assam"
+    ],
+    "junagadh": [
+      "Gujarat"
+    ],
+    "kakinada": [
+      "Andhra Pradesh"
+    ],
+    "kalaburagi": [
+      "Karnataka"
+    ],
+    "kalimpong": [
+      "West Bengal"
+    ],
+    "kallakurichi": [
+      "Tamil Nadu"
+    ],
+    "kancheepuram": [
+      "Tamil Nadu"
+    ],
+    "kanchipuram": [
+      "Tamil Nadu"
+    ],
+    "kangra": [
+      "Himachal Pradesh"
+    ],
+    "kanniyakumari": [
+      "Tamil Nadu"
+    ],
+    "kannur": [
+      "Kerala"
+    ],
+    "kanpur": [
+      "Uttar Pradesh"
+    ],
+    "kapurthala": [
+      "Punjab"
+    ],
+    "kargil": [
+      "Ladakh"
+    ],
+    "karimnagar": [
+      "Telangana"
+    ],
+    "karur": [
+      "Tamil Nadu"
+    ],
+    "kasargod": [
+      "Kerala"
+    ],
+    "kasauli": [
+      "Himachal Pradesh"
+    ],
+    "kausani": [
+      "Uttarakhand"
+    ],
+    "kavaratti": [
+      "Lakshadweep"
+    ],
+    "kedarnath": [
+      "Uttarakhand"
+    ],
+    "keylong": [
+      "Himachal Pradesh"
+    ],
+    "khajuraho": [
+      "Madhya Pradesh"
+    ],
+    "khammam": [
+      "Telangana"
+    ],
+    "kochi": [
+      "Kerala"
+    ],
+    "kohima": [
+      "Nagaland"
+    ],
+    "kolhapur": [
+      "Maharashtra"
+    ],
+    "kolkata": [
+      "West Bengal"
+    ],
+    "kollam": [
+      "Kerala"
+    ],
+    "koraput": [
+      "Odisha"
+    ],
+    "kota": [
+      "Rajasthan"
+    ],
+    "kottayam": [
+      "Kerala"
+    ],
+    "kozhikode": [
+      "Kerala"
+    ],
+    "krishnagiri": [
+      "Tamil Nadu"
+    ],
+    "kullu": [
+      "Himachal Pradesh"
+    ],
+    "kumarakom": [
+      "Kerala"
+    ],
+    "kurnool": [
+      "Andhra Pradesh"
+    ],
+    "kurukshetra": [
+      "Haryana"
+    ],
+    "kutch": [
+      "Gujarat"
+    ],
+    "lakkundi": [
+      "Karnataka"
+    ],
+    "lansdowne": [
+      "Uttarakhand"
+    ],
+    "leh": [
+      "Ladakh"
+    ],
+    "lucknow": [
+      "Uttar Pradesh"
+    ],
+    "lunglei": [
+      "Mizoram"
+    ],
+    "machilipatnam": [
+      "Andhra Pradesh"
+    ],
+    "madurai": [
+      "Tamil Nadu"
+    ],
+    "mahabaleshwar": [
+      "Maharashtra"
+    ],
+    "majuli": [
+      "Assam"
+    ],
+    "malappuram": [
+      "Kerala"
+    ],
+    "mamallapuram": [
+      "Tamil Nadu"
+    ],
+    "manali": [
+      "Himachal Pradesh"
+    ],
+    "mandsaur": [
+      "Madhya Pradesh"
+    ],
+    "mangalore": [
+      "Karnataka"
+    ],
+    "mangan": [
+      "Sikkim"
+    ],
+    "mathura": [
+      "Uttar Pradesh"
+    ],
+    "mayabunder": [
+      "Andaman and Nicobar Islands"
+    ],
+    "mayiladuthurai": [
+      "Tamil Nadu"
+    ],
+    "mayurbhanj": [
+      "Odisha"
+    ],
+    "mechuka": [
+      "Arunachal Pradesh"
+    ],
+    "mokokchung": [
+      "Nagaland"
+    ],
+    "morena": [
+      "Madhya Pradesh"
+    ],
+    "mountabu": [
+      "Rajasthan"
+    ],
+    "mumbai": [
+      "Maharashtra"
+    ],
+    "munnar": [
+      "Kerala"
+    ],
+    "mussoorie": [
+      "Uttarakhand"
+    ],
+    "mysuru": [
+      "Karnataka"
+    ],
+    "nagapattinam": [
+      "Tamil Nadu"
+    ],
+    "nagpur": [
+      "Maharashtra"
+    ],
+    "nainital": [
+      "Uttarakhand"
+    ],
+    "nalanda": [
+      "Bihar"
+    ],
+    "namakkal": [
+      "Tamil Nadu"
+    ],
+    "nashik": [
+      "Maharashtra"
+    ],
+    "nellore": [
+      "Andhra Pradesh"
+    ],
+    "newtehri": [
+      "Uttarakhand"
+    ],
+    "nilgiris": [
+      "Tamil Nadu"
+    ],
+    "ooty": [
+      "Tamil Nadu"
+    ],
+    "orchha": [
+      "Madhya Pradesh"
+    ],
+    "pachmarhi": [
+      "Madhya Pradesh"
+    ],
+    "pahalgam": [
+      "Jammu and Kashmir"
+    ],
+    "pakkekesanghillstation": [
+      "Arunachal Pradesh"
+    ],
+    "palakkad": [
+      "Kerala"
+    ],
+    "panipat": [
+      "Haryana"
+    ],
+    "pasighat": [
+      "Arunachal Pradesh"
+    ],
+    "patan": [
+      "Gujarat"
+    ],
+    "pathanamthitta": [
+      "Kerala"
+    ],
+    "pathankot": [
+      "Punjab"
+    ],
+    "patiala": [
+      "Punjab"
+    ],
+    "patna": [
+      "Bihar"
+    ],
+    "patnitop": [
+      "Jammu and Kashmir"
+    ],
+    "pelling": [
+      "Sikkim"
+    ],
+    "perambalur": [
+      "Tamil Nadu"
+    ],
+    "pithoragarh": [
+      "Uttarakhand"
+    ],
+    "porbandar": [
+      "Gujarat"
+    ],
+    "prayagraj": [
+      "Uttar Pradesh"
+    ],
+    "puducherry": [
+      "Puducherry"
+    ],
+    "pudukkottai": [
+      "Tamil Nadu"
+    ],
+    "pune": [
+      "Maharashtra"
+    ],
+    "puri": [
+      "Odisha"
+    ],
+    "raipur": [
+      "Chhattisgarh"
+    ],
+    "rajahmundry": [
+      "Andhra Pradesh"
+    ],
+    "rajkot": [
+      "Gujarat"
+    ],
+    "rajnandgaon": [
+      "Chhattisgarh"
+    ],
+    "ramanathapuram": [
+      "Tamil Nadu"
+    ],
+    "rameswaram": [
+      "Tamil Nadu"
+    ],
+    "ranchi": [
+      "Jharkhand"
+    ],
+    "rangat": [
+      "Andaman and Nicobar Islands"
+    ],
+    "ranipet": [
+      "Tamil Nadu"
+    ],
+    "rishikesh": [
+      "Uttarakhand"
+    ],
+    "roing": [
+      "Arunachal Pradesh"
+    ],
+    "rupnagar": [
+      "Punjab"
+    ],
+    "salem": [
+      "Tamil Nadu"
+    ],
+    "sanchi": [
+      "Madhya Pradesh"
+    ],
+    "sasnagar": [
+      "Punjab"
+    ],
+    "satara": [
+      "Maharashtra"
+    ],
+    "serchhip": [
+      "Mizoram"
+    ],
+    "shillong": [
+      "Meghalaya"
+    ],
+    "shimla": [
+      "Himachal Pradesh"
+    ],
+    "siliguri": [
+      "West Bengal"
+    ],
+    "silvassa": [
+      "Dadra and Nagar Haveli and Daman and Diu"
+    ],
+    "sivaganga": [
+      "Tamil Nadu"
+    ],
+    "sivasagar": [
+      "Assam"
+    ],
+    "somnathpura": [
+      "Karnataka"
+    ],
+    "spitivalley": [
+      "Himachal Pradesh"
+    ],
+    "srikakulam": [
+      "Andhra Pradesh"
+    ],
+    "srinagar": [
+      "Jammu and Kashmir"
+    ],
+    "srivijayapuram": [
+      "Andaman and Nicobar Islands"
+    ],
+    "surat": [
+      "Gujarat"
+    ],
+    "tawang": [
+      "Arunachal Pradesh"
+    ],
+    "tenkasi": [
+      "Tamil Nadu"
+    ],
+    "tezpur": [
+      "Assam"
+    ],
+    "thanjavur": [
+      "Tamil Nadu"
+    ],
+    "theni": [
+      "Tamil Nadu"
+    ],
+    "thiruvananthapuram": [
+      "Kerala"
+    ],
+    "thoothukudi": [
+      "Tamil Nadu"
+    ],
+    "thrissur": [
+      "Kerala"
+    ],
+    "tiruchirappalli": [
+      "Tamil Nadu"
+    ],
+    "tirunelveli": [
+      "Tamil Nadu"
+    ],
+    "tirupathur": [
+      "Tamil Nadu"
+    ],
+    "tirupati": [
+      "Andhra Pradesh"
+    ],
+    "tiruppur": [
+      "Tamil Nadu"
+    ],
+    "tiruvallur": [
+      "Tamil Nadu"
+    ],
+    "tiruvannamalai": [
+      "Tamil Nadu"
+    ],
+    "tiruvarur": [
+      "Tamil Nadu"
+    ],
+    "udaipur": [
+      "Rajasthan"
+    ],
+    "udupi": [
+      "Karnataka"
+    ],
+    "ujjain": [
+      "Madhya Pradesh"
+    ],
+    "umrangso": [
+      "Assam"
+    ],
+    "unakoti": [
+      "Tripura"
+    ],
+    "uttarkashi": [
+      "Uttarakhand"
+    ],
+    "vadnagar": [
+      "Gujarat"
+    ],
+    "vadodara": [
+      "Gujarat"
+    ],
+    "valsad": [
+      "Gujarat"
+    ],
+    "varanasi": [
+      "Uttar Pradesh"
+    ],
+    "varkala": [
+      "Kerala"
+    ],
+    "vellore": [
+      "Tamil Nadu"
+    ],
+    "vijayapura": [
+      "Karnataka"
+    ],
+    "viluppuram": [
+      "Tamil Nadu"
+    ],
+    "virudhunagar": [
+      "Tamil Nadu"
+    ],
+    "visakhapatnam": [
+      "Andhra Pradesh"
+    ],
+    "vizianagaram": [
+      "Andhra Pradesh"
+    ],
+    "warangal": [
+      "Telangana"
+    ],
+    "wayanad": [
+      "Kerala"
+    ],
+    "yingkiong": [
+      "Arunachal Pradesh"
+    ],
+    "ziro": [
+      "Arunachal Pradesh"
+    ]
+  }
 }

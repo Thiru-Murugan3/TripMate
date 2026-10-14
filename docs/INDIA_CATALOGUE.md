@@ -1,6 +1,6 @@
 # State-wise India catalogue
 
-Route: `/explore/india`, linked from the existing Explore screen. The route uses the existing auth guard. It is a read-only research browser with a link back to the existing destination search and trip-planning flow. Records are not automatically inserted into saved places, itineraries or the verified discovery database.
+Route: `/explore/india`, linked from both standalone and trip Explore. The same catalogue also appears inline after a destination search, independently of live-provider success. A sourced destination/district index selects a matching state; ambiguous or unknown destinations require the traveller to select a state. State names are matched ignoring spaces and punctuation. Nearby search result counts are labelled separately. The route uses the existing auth guard. It is a read-only research browser with a link back to the existing destination search and trip-planning flow. Records are not automatically inserted into saved places, itineraries or the verified discovery database.
 
 The 2026-10-14 research snapshot contains 2,089 source records across 36 states/UTs, 334 Tamil Nadu records, 108 screened historical Commons photos and 35 fee options for six attractions. It is not comprehensive; duplicate candidates and incomplete district/location information remain. The screen explicitly shows these limitations. Fees are historical source observations, not live quotes. Zero applies only to the listed visitor/scope condition. Missing fees never become free.
 

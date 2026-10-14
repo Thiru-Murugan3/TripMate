@@ -3,7 +3,7 @@ import { HttpBackend, HttpClient } from '@angular/common/http';
 
 export const CATALOGUE_ROOT = 'india-catalogue/2026-10-14/';
 export interface CatalogueState { name: string; file: string; count: number; }
-export interface CatalogueIndex { snapshot: string; total: number; states: CatalogueState[]; }
+export interface CatalogueIndex { snapshot: string; total: number; states: CatalogueState[]; destinationStates?: Record<string, string[]>; }
 export interface CatalogueFee {
   amount_inr: number; visitor_category: string; scope: string; payment_channel: string;
   condition: string; source_url: string; source_checked_at: string;
@@ -26,7 +26,7 @@ export interface CataloguePlace {
 @Injectable({ providedIn: 'root' })
 export class IndiaCatalogueService {
   private readonly http = new HttpClient(inject(HttpBackend));
-  index() { return this.http.get<CatalogueIndex>(CATALOGUE_ROOT + 'index.json'); }
+  index() { return this.http.get<CatalogueIndex>(CATALOGUE_ROOT + 'index.json?schema=2'); }
   state(state: CatalogueState) {
     return this.http.get<CataloguePlace[]>(CATALOGUE_ROOT + state.file);
   }

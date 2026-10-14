@@ -1,6 +1,8 @@
 <section class="catalogue">
-  <a routerLink="/explore">← Back to destination discovery</a>
-  <h1>Explore India by state</h1>
+  <a *ngIf="!embedded" routerLink="/explore">← Back to destination discovery</a>
+  <h1 *ngIf="!embedded">Explore India by state</h1>
+  <h2 *ngIf="embedded">India source catalogue</h2>
+  <p *ngIf="matchMessage" role="status">{{ matchMessage }}</p>
   <p>Browse tourist places from official tourism and district sources across 28 states and 8 union territories.</p>
   <aside>
     <strong>Research catalogue · snapshot {{ index?.snapshot || '2026-10-14' }}</strong>
@@ -65,7 +67,7 @@
             <a [href]="mapUrl(place)" target="_blank" rel="noopener noreferrer">View map reference</a> · Community-sourced coordinates
           </p>
           <p *ngIf="place.latitude == null || place.longitude == null">Exact location not verified; see the tourism source.</p>
-          <a routerLink="/explore" [queryParams]="{search: place.tourism_destination || place.name}">Explore this destination and plan a trip →</a>
+          <a *ngIf="!embedded" routerLink="/explore" [queryParams]="{search: place.tourism_destination || place.name}">Explore this destination and plan a trip →</a>
         </div>
       </article>
     </div>

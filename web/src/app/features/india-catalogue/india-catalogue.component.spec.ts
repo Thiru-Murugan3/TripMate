@@ -58,4 +58,30 @@ describe('IndiaCatalogueComponent', () => {
     c.page=0; c.district='__unknown'; expect(c.filtered.length).toBe(29);
     c.query='no-match'; expect(c.filtered.length).toBe(0);
   });
+  it('selects a destination from an input that arrives before the index', () => {
+    const pending = new Subject<any>(); service.index.and.returnValue(pending);
+    const fixture = TestBed.createComponent(IndiaCatalogueComponent);
+    fixture.componentRef.setInput('destination', 'Tamilnadu, India'); fixture.detectChanges();
+    pending.next({snapshot:'2026-10-14',total:30,states:[tn]}); fixture.detectChanges();
+    expect(fixture.componentInstance.selectedState).toBe('Tamil Nadu');
+    expect(fixture.nativeElement.textContent).toContain('Temple');
+  });
+  it('matches a known city and clears stale results for an unknown next destination', () => {
+    service.index.and.returnValue(of({snapshot:'2026-10-14',total:31,states:[tn,kerala],destinationStates:{chennai:['Tamil Nadu']}}));
+    const fixture = TestBed.createComponent(IndiaCatalogueComponent);
+    fixture.componentRef.setInput('destination','Chennai, Tamil Nadu, India'); fixture.detectChanges();
+    expect(fixture.componentInstance.selectedState).toBe('Tamil Nadu');
+    expect(fixture.componentInstance.query).toBe('Chennai');
+    fixture.componentRef.setInput('destination','Unmapped city'); fixture.detectChanges();
+    expect(fixture.componentInstance.places).toEqual([]);
+    expect(fixture.componentInstance.matchMessage).toContain('Choose a state');
+  });
+  it('does not guess the state of an ambiguous city', () => {
+    service.index.and.returnValue(of({snapshot:'2026-10-14',total:31,states:[tn,kerala],destinationStates:{sharedtown:['Tamil Nadu','Kerala']}}));
+    const fixture = TestBed.createComponent(IndiaCatalogueComponent);
+    fixture.componentRef.setInput('destination','Shared town'); fixture.detectChanges();
+    expect(service.state).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.selectedState).toBe('');
+  });
+
 });
