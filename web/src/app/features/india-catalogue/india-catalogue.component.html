@@ -1,0 +1,78 @@
+<section class="catalogue">
+  <a routerLink="/explore">← Back to destination discovery</a>
+  <h1>Explore India by state</h1>
+  <p>Browse tourist places from official tourism and district sources across 28 states and 8 union territories.</p>
+  <aside>
+    <strong>Research catalogue · snapshot {{ index?.snapshot || '2026-10-14' }}</strong>
+    <p>{{ index?.total || 2089 }} source records, not a complete list of every tourist place. Records still need review and may overlap.
+      Photos are real historical photographs, not live images. Check operator sources before travelling.</p>
+    <p>District coverage is detailed for Tamil Nadu; district information elsewhere may be missing.</p>
+  </aside>
+  <div class="filters">
+    <label>State or union territory
+      <select [ngModel]="selectedState" (ngModelChange)="selectState($event)" [disabled]="!index">
+        <option value="">Choose a state or union territory</option>
+        <option *ngFor="let state of index?.states" [value]="state.name">{{ state.name }} ({{ state.count }})</option>
+      </select>
+    </label>
+    <label>District
+      <select [(ngModel)]="district" (ngModelChange)="page = 0" [disabled]="loading || !places.length">
+        <option value="">All districts</option>
+        <option *ngFor="let item of districts" [value]="item">{{ item }}</option>
+        <option value="__unknown">District not recorded</option>
+      </select>
+    </label>
+    <label>Place or destination
+      <input [(ngModel)]="query" (ngModelChange)="page = 0" placeholder="Search within this state" maxlength="180" />
+    </label>
+    <label class="check"><input type="checkbox" [(ngModel)]="photoOnly" (ngModelChange)="page = 0" /> With screened photos</label>
+  </div>
+  <p *ngIf="loading" role="status">Loading catalogue…</p>
+  <p *ngIf="error" role="alert">{{ error }} <button type="button" (click)="retry()">Retry</button></p>
+  <ng-container *ngIf="!loading && !error && selectedState">
+    <p role="status">{{ filtered.length }} matching source records <span *ngIf="pageCount">· Page {{ page + 1 }} of {{ pageCount }}</span></p>
+    <p *ngIf="!filtered.length">No matching records. Try another district or clear your search and photo filter.</p>
+    <div class="cards">
+      <article *ngFor="let place of visible; trackBy: trackPlace">
+        <figure *ngIf="place.photo as photo">
+          <img *ngIf="!failedImages.has(place.place_id)" [src]="root + photo.local_thumbnail" [alt]="place.name + ' — historical source photograph'" loading="lazy" width="500" height="300" (error)="failedImages.add(place.place_id)" />
+          <p *ngIf="failedImages.has(place.place_id)" class="placeholder">Photograph unavailable</p>
+          <figcaption>
+            {{ photo.creator }} · <a [href]="photo.license_url" target="_blank" rel="noopener noreferrer">{{ photo.license }}</a>
+            · <a [href]="photo.source_page" target="_blank" rel="noopener noreferrer">Photo source</a>
+            <span>Capture date reported: {{ photo.capture_date_as_reported || 'Unknown' }} · Not live</span>
+            <details><summary>Full photo credit</summary>{{ photo.attribution_text }}<br />{{ photo.credit }}<br />{{ photo.restrictions }}<br />Provider thumbnail; no additional edits.</details>
+          </figcaption>
+        </figure>
+        <p *ngIf="!place.photo" class="placeholder">No reviewed photograph available</p>
+        <div class="content">
+          <h2>{{ place.name }}</h2>
+          <p>{{ place.district || 'District not recorded' }} · {{ place.state_ut }}</p>
+          <p *ngIf="place.tourism_destination">Tourism destination: {{ place.tourism_destination }}</p>
+          <small>Review required<span *ngIf="place.possible_duplicate_group"> · Possible duplicate listing</span></small>
+          <p *ngIf="!place.fees.length"><strong>Entry fee not verified</strong> · Unknown does not mean free.</p>
+          <details *ngIf="place.fees.length">
+            <summary>Published entry-fee options ({{ place.fees.length }})</summary>
+            <p>Historical source check; confirm the current total with the operator. Supplements and visitor categories differ.</p>
+            <ul><li *ngFor="let fee of place.fees">
+              <strong>{{ fee.amount_inr | currency:'INR':'symbol':'1.0-2' }}</strong> · {{ fee.visitor_category }} · {{ fee.scope }}
+              <span>{{ fee.condition }} · Payment: {{ fee.payment_channel }}</span>
+              <a [href]="fee.source_url" target="_blank" rel="noopener noreferrer">Fee source</a> · Checked {{ fee.source_checked_at }}
+            </li></ul>
+          </details>
+          <p><a [href]="place.source_url" target="_blank" rel="noopener noreferrer">{{ place.source_provider }}</a><br /><small>Source checked {{ place.source_checked_at }}</small></p>
+          <p *ngIf="place.latitude != null && place.longitude != null">
+            <a [href]="mapUrl(place)" target="_blank" rel="noopener noreferrer">View map reference</a> · Community-sourced coordinates
+          </p>
+          <p *ngIf="place.latitude == null || place.longitude == null">Exact location not verified; see the tourism source.</p>
+          <a routerLink="/explore" [queryParams]="{search: place.tourism_destination || place.name}">Explore this destination and plan a trip →</a>
+        </div>
+      </article>
+    </div>
+    <nav *ngIf="pageCount > 1" aria-label="Catalogue pages">
+      <button type="button" [disabled]="page === 0" (click)="page = page - 1">Previous</button>
+      <span>{{ page + 1 }} / {{ pageCount }}</span>
+      <button type="button" [disabled]="page + 1 >= pageCount" (click)="page = page + 1">Next</button>
+    </nav>
+  </ng-container>
+</section>

@@ -9,7 +9,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
 
 import {
@@ -33,7 +33,7 @@ import { TripService } from '../../core/services/trip.service';
 @Component({
   selector: 'app-destination-discovery',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <section class="discover-page">
       <div class="discover-hero">
@@ -49,6 +49,8 @@ import { TripService } from '../../core/services/trip.service';
           <span class="material-symbols-outlined">travel_explore</span>
         </div>
       </div>
+
+      <p *ngIf="!embeddedMode"><a routerLink="/explore/india">Browse India by state · tourist-place research catalogue →</a></p>
 
       <div class="search-panel">
         <label *ngIf="!embeddedMode" class="field trip-field">

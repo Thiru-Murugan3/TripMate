@@ -1,0 +1,186 @@
+{
+  "snapshot": "2026-10-14",
+  "total": 2089,
+  "states": [
+    {
+      "name": "Andaman and Nicobar Islands",
+      "file": "andaman-and-nicobar-islands.json",
+      "count": 15
+    },
+    {
+      "name": "Andhra Pradesh",
+      "file": "andhra-pradesh.json",
+      "count": 83
+    },
+    {
+      "name": "Arunachal Pradesh",
+      "file": "arunachal-pradesh.json",
+      "count": 42
+    },
+    {
+      "name": "Assam",
+      "file": "assam.json",
+      "count": 54
+    },
+    {
+      "name": "Bihar",
+      "file": "bihar.json",
+      "count": 35
+    },
+    {
+      "name": "Chandigarh",
+      "file": "chandigarh.json",
+      "count": 11
+    },
+    {
+      "name": "Chhattisgarh",
+      "file": "chhattisgarh.json",
+      "count": 10
+    },
+    {
+      "name": "Dadra and Nagar Haveli and Daman and Diu",
+      "file": "dadra-and-nagar-haveli-and-daman-and-diu.json",
+      "count": 33
+    },
+    {
+      "name": "Delhi",
+      "file": "delhi.json",
+      "count": 26
+    },
+    {
+      "name": "Goa",
+      "file": "goa.json",
+      "count": 29
+    },
+    {
+      "name": "Gujarat",
+      "file": "gujarat.json",
+      "count": 91
+    },
+    {
+      "name": "Haryana",
+      "file": "haryana.json",
+      "count": 30
+    },
+    {
+      "name": "Himachal Pradesh",
+      "file": "himachal-pradesh.json",
+      "count": 79
+    },
+    {
+      "name": "Jammu and Kashmir",
+      "file": "jammu-and-kashmir.json",
+      "count": 52
+    },
+    {
+      "name": "Jharkhand",
+      "file": "jharkhand.json",
+      "count": 26
+    },
+    {
+      "name": "Karnataka",
+      "file": "karnataka.json",
+      "count": 166
+    },
+    {
+      "name": "Kerala",
+      "file": "kerala.json",
+      "count": 105
+    },
+    {
+      "name": "Ladakh",
+      "file": "ladakh.json",
+      "count": 17
+    },
+    {
+      "name": "Lakshadweep",
+      "file": "lakshadweep.json",
+      "count": 9
+    },
+    {
+      "name": "Madhya Pradesh",
+      "file": "madhya-pradesh.json",
+      "count": 44
+    },
+    {
+      "name": "Maharashtra",
+      "file": "maharashtra.json",
+      "count": 113
+    },
+    {
+      "name": "Manipur",
+      "file": "manipur.json",
+      "count": 13
+    },
+    {
+      "name": "Meghalaya",
+      "file": "meghalaya.json",
+      "count": 25
+    },
+    {
+      "name": "Mizoram",
+      "file": "mizoram.json",
+      "count": 28
+    },
+    {
+      "name": "Nagaland",
+      "file": "nagaland.json",
+      "count": 6
+    },
+    {
+      "name": "Odisha",
+      "file": "odisha.json",
+      "count": 53
+    },
+    {
+      "name": "Puducherry",
+      "file": "puducherry.json",
+      "count": 8
+    },
+    {
+      "name": "Punjab",
+      "file": "punjab.json",
+      "count": 53
+    },
+    {
+      "name": "Rajasthan",
+      "file": "rajasthan.json",
+      "count": 175
+    },
+    {
+      "name": "Sikkim",
+      "file": "sikkim.json",
+      "count": 27
+    },
+    {
+      "name": "Tamil Nadu",
+      "file": "tamil-nadu.json",
+      "count": 334
+    },
+    {
+      "name": "Telangana",
+      "file": "telangana.json",
+      "count": 18
+    },
+    {
+      "name": "Tripura",
+      "file": "tripura.json",
+      "count": 6
+    },
+    {
+      "name": "Uttar Pradesh",
+      "file": "uttar-pradesh.json",
+      "count": 88
+    },
+    {
+      "name": "Uttarakhand",
+      "file": "uttarakhand.json",
+      "count": 96
+    },
+    {
+      "name": "West Bengal",
+      "file": "west-bengal.json",
+      "count": 89
+    }
+  ]
+}
