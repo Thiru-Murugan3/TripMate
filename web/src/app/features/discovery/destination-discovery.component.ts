@@ -28,12 +28,13 @@ import { Trip } from '../../core/models/trip.model';
 import { DiscoveryService } from '../../core/services/discovery.service';
 import { ItineraryService } from '../../core/services/itinerary.service';
 import { PlaceService } from '../../core/services/place.service';
+import { IndiaCatalogueComponent } from '../india-catalogue/india-catalogue.component';
 import { TripService } from '../../core/services/trip.service';
 
 @Component({
   selector: 'app-destination-discovery',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, IndiaCatalogueComponent],
   template: `
     <section class="discover-page">
       <div class="discover-hero">
@@ -50,7 +51,7 @@ import { TripService } from '../../core/services/trip.service';
         </div>
       </div>
 
-      <p *ngIf="!embeddedMode"><a routerLink="/explore/india">Browse India by state · tourist-place research catalogue →</a></p>
+      <p><a routerLink="/explore/india">Browse India by state · tourist-place research catalogue →</a></p>
 
       <div class="search-panel">
         <label *ngIf="!embeddedMode" class="field trip-field">
@@ -152,7 +153,10 @@ import { TripService } from '../../core/services/trip.service';
         </div>
       </div>
 
+      <app-india-catalogue *ngIf="catalogueDestination" [embedded]="true" [destination]="catalogueDestination" />
+
       <div *ngIf="result as data" class="results-container">
+        <h2>Nearby search results</h2>
         <div *ngIf="data.warnings?.length" class="data-warning">
           <span class="material-symbols-outlined">info</span>
           <div>
@@ -163,7 +167,7 @@ import { TripService } from '../../core/services/trip.service';
 
         <div class="result-toolbar">
           <div>
-            <h3>Found {{ data.resultCount }} tourist places & activities in {{ data.query }}</h3>
+            <h3>Found {{ data.resultCount }} nearby tourist places & activities in {{ data.query }}</h3>
             <p>Select places to add to your saved list or trip itinerary.</p>
           </div>
 
@@ -723,6 +727,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
   activeTripId = 0;
   searchDestination = '';
+  catalogueDestination = '';
   activeStartDate = '';
   activeEndDate = '';
   availableTrips: Trip[] = [];
@@ -1013,6 +1018,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   discover(page = 0): void {
     const destination = this.searchDestination.trim();
     if (destination.length < 2) return;
+    this.catalogueDestination = destination;
 
     this.isLoading = true;
     this.errorMessage = '';

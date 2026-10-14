@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
+import { IndiaCatalogueService } from '../india-catalogue/india-catalogue.service';
 import { DestinationDiscoveryComponent } from './destination-discovery.component';
 import { DiscoveryService } from '../../core/services/discovery.service';
 import { ItineraryService } from '../../core/services/itinerary.service';
@@ -122,6 +123,12 @@ describe('DestinationDiscoveryComponent', () => {
       imports: [DestinationDiscoveryComponent],
       providers: [
         provideRouter([]),
+        { provide: IndiaCatalogueService, useValue: {
+          index: () => of({ snapshot: '2026-10-14', total: 1, states: [{name:'Goa',file:'goa.json',count:1}] }),
+          state: () => of([{place_id:'goa-one',name:'Baga Beach',state_ut:'Goa',district:null,
+            tourism_destination:'Goa',latitude:null,longitude:null,source_provider:'Tourism source',
+            source_url:'https://example.com',source_checked_at:'2026-10-14',fees:[],photo:null}])
+        } },
         { provide: DiscoveryService, useValue: discoveryService },
         { provide: PlaceService, useValue: placeService },
         { provide: ItineraryService, useValue: itineraryService },
@@ -456,6 +463,19 @@ describe('DestinationDiscoveryComponent', () => {
     expect(fixture.componentInstance.formatPlacePrice({ ...discoveredPlace,
       estimatedCostPerPerson: 50, priceStatus: 'VERIFIED', priceType: 'PER_PERSON', currency: 'USD'
     })).toContain('$50');
+  });
+
+  it('shows catalogue places inside trip Explore even when the live provider fails', () => {
+    const { discoveryService } = configure();
+    discoveryService.discoverPlaces.and.returnValue(throwError(() => new Error('provider unavailable')));
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.componentInstance.tripId = plannedTrip.id;
+    fixture.componentInstance.destination = 'Goa';
+    fixture.detectChanges();
+    expect(fixture.componentInstance.catalogueDestination).toBe('Goa');
+    expect(fixture.nativeElement.textContent).toContain('Baga Beach');
+    expect(fixture.nativeElement.textContent).toContain('Entry fee not verified');
+    expect(fixture.nativeElement.querySelector('a[href="/explore/india"]')).not.toBeNull();
   });
 
 });
