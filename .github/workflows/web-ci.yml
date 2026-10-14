@@ -27,6 +27,7 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm run test:offline
+      - run: npm run test:flights
       - run: npm run test:expenses
       - run: npm run test:auth
       - run: npm run test:discovery

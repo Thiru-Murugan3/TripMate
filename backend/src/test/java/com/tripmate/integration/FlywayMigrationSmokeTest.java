@@ -45,6 +45,9 @@ class FlywayMigrationSmokeTest {
             assertEquals("YES", nullableState(connection, "bookings", "drop_point"));
             assertTrue(tableExists(connection, "reservation_import_addresses"));
             assertTrue(tableExists(connection, "reservation_email_imports"));
+            assertTrue(tableExists(connection, "flight_tracking"));
+            assertTrue(tableExists(connection, "flight_subscriptions"));
+            assertTrue(tableExists(connection, "flight_api_budget"));
             assertStarterCatalogue(connection);
             assertEquals("NO", nullableState(connection, "expenses", "original_amount"));
             try (var st = connection.createStatement(); var rows = st.executeQuery("SELECT original_currency,original_amount,exchange_rate FROM expenses WHERE id=99001")) {

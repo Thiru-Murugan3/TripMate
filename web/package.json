@@ -14,7 +14,8 @@
     "test:discovery-admin": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/discovery-admin.service.spec.ts --include=src/app/features/admin/discovery-admin.component.spec.ts",
     "build:render": "node scripts/write-render-config.mjs && ng build",
     "test:offline": "node --test scripts/offline-worker.test.mjs && ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/services/offline-store.spec.ts",
-    "test:expenses": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/trips/expense-manager/expense-manager.component.spec.ts"
+    "test:expenses": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/trips/expense-manager/expense-manager.component.spec.ts",
+    "test:flights": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/trips/flight-alerts/flight-alerts.component.spec.ts"
   },
   "private": true,
   "dependencies": {
