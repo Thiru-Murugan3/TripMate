@@ -134,10 +134,10 @@ import { TripService } from '../../core/services/trip.service';
         </div>
       </div>
 
-      <app-india-catalogue *ngIf="catalogueDestination" [embedded]="true" [destination]="catalogueDestination" />
+      <app-india-catalogue *ngIf="showCatalogueFallback" [embedded]="true" [destination]="catalogueDestination" />
 
-      <div *ngIf="result as data" class="results-container">
-        <h2>Nearby search results</h2>
+      <div *ngIf="displayedResult as data" class="results-container">
+        <h2>Places to explore</h2>
         <details *ngIf="data.warnings?.length" class="source-notes">
           <summary>Availability notes</summary>
           <p *ngFor="let warning of data.warnings">{{ warning }}</p>
@@ -808,6 +808,16 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
   get canSelectPlaces(): boolean {
     return this.embeddedMode ? this.effectiveCanEdit : this.editableTrips.length > 0;
+  }
+
+  // Keep the actionable discovery cards primary. The source catalogue replaces
+  // failed/empty searches rather than creating a second grid on the same page.
+  get showCatalogueFallback(): boolean {
+    return !!this.catalogueDestination && !this.isLoading && !this.result?.places.length;
+  }
+
+  get displayedResult(): DestinationDiscoveryResponse | null {
+    return this.isLoading || this.showCatalogueFallback ? null : this.result;
   }
 
   get filteredPlaces(): DiscoveredPlace[] {
