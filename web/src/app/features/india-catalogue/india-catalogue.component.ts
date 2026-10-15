@@ -23,6 +23,8 @@ export class IndiaCatalogueComponent implements OnInit, OnChanges, OnDestroy {
   index?: CatalogueIndex;
   selectedState = '';
   district = '';
+  category = '';
+  sourceKind = '';
   query = '';
   photoOnly = false;
   page = 0;
@@ -69,7 +71,8 @@ export class IndiaCatalogueComponent implements OnInit, OnChanges, OnDestroy {
     this.selectedState = name;
     this.district = ''; this.query = ''; this.page = 0;
     this.places = []; this.failedImages.clear(); this.error = ''; this.loading = false; this.matchMessage = '';
-    const state = this.index?.states.find(s => s.name === name);
+    this.category = ''; this.sourceKind = '';
+    const state = this.states.find(s => s.name === name);
     if (!state) return;
     this.loadState(state);
   }
@@ -85,18 +88,32 @@ export class IndiaCatalogueComponent implements OnInit, OnChanges, OnDestroy {
     else {
       this.stateRequest?.unsubscribe();
       this.error = '';
-      const state = this.index.states.find(s => s.name === this.selectedState);
+      const state = this.states.find(s => s.name === this.selectedState);
       if (state) this.loadState(state);
     }
   }
   get districts(): string[] {
     return [...new Set(this.places.map(p => p.district).filter((d): d is string => !!d))].sort();
   }
+  get states(): CatalogueState[] {
+    return this.index ? [...this.index.states, ...(this.index.unassigned ? [this.index.unassigned] : [])] : [];
+  }
+  get categories(): string[] {
+    return [...new Set(this.places.flatMap(p => p.categories ?? []))].sort();
+  }
+  categoryLabel(value: string): string { return value.replace(/-/g, ' '); }
+  sourceLabel(place: CataloguePlace): string {
+    if (place.source_kind === 'COMMUNITY_STRUCTURED_DATA') return 'Community candidate';
+    if (place.source_kind === 'GOVERNMENT_HERITAGE_REGISTRY') return 'Heritage register';
+    return 'Tourism source';
+  }
   get filtered(): CataloguePlace[] {
     const query = this.query.trim().toLocaleLowerCase();
     return this.places.filter(p => (!this.district || (this.district === '__unknown' ? !p.district : p.district === this.district))
       && (!this.photoOnly || !!p.photo)
-      && (!query || [p.name, p.district, p.tourism_destination].some(v => v?.toLocaleLowerCase().includes(query))));
+      && (!this.category || p.categories?.includes(this.category))
+      && (!this.sourceKind || p.source_kind === this.sourceKind)
+      && (!query || [p.name, p.district, p.tourism_destination, ...(p.name_variants ?? [])].some(v => v?.toLocaleLowerCase().includes(query))));
   }
   get pageCount(): number { return Math.ceil(this.filtered.length / this.pageSize); }
   get visible(): CataloguePlace[] { return this.filtered.slice(this.page * this.pageSize, (this.page + 1) * this.pageSize); }
