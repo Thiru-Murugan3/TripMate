@@ -26,3 +26,31 @@ li { margin:10px 0; line-height:1.5; font-size:.78rem; } ul { padding-left:18px;
 nav { display:flex; gap:16px; justify-content:center; align-items:center; margin:20px 0; font-size:.8rem; }
 button { cursor:pointer; } button:disabled { opacity:.5; cursor:default; }
 @media(max-width:480px) { .cards { grid-template-columns:1fr; } .catalogue { padding:12px; } }
+:host { background:#fff; color:#163b2c; }
+.catalogue { padding:0; max-width:none; }
+.catalogue-heading { margin-bottom:20px; align-items:flex-start; }
+.catalogue-heading h2 { font-size:clamp(24px,3vw,32px); letter-spacing:-.03em; }
+.catalogue-heading p { color:#68766b; margin:8px 0 0; font-size:14px; }
+.interest-chips { justify-content:flex-start; overflow-x:auto; gap:9px; margin:0 0 24px; padding-bottom:8px; }
+.interest-chips button { flex-shrink:0; border-radius:24px; border-color:#a6b4aa; padding:10px 17px; font-size:13px; color:#163b2c; }
+.interest-chips button.active { background:#163b2c; border-color:#163b2c; color:#fff; }
+.filter-panel { border-color:#e1e7e0; } .filter-panel > summary { display:inline-block; border:1px solid #a6b4aa; border-radius:22px; padding:10px 17px; font-size:12px; }
+.filters { padding:16px 0; } .filters select,.filters input { border-color:#b8c6bb; border-radius:20px; padding:10px 13px; }
+.guide-section { margin:26px 0 36px; min-width:0; }
+.section-title { margin:0 0 16px; font-size:23px; letter-spacing:-.025em; }
+.cards { display:flex; gap:18px; overflow-x:auto; padding:2px 2px 17px; scroll-snap-type:x mandatory; scrollbar-width:thin; scrollbar-color:#b4c3b7 #f3f5f1; }
+article { position:relative; flex:0 0 calc((100% - 54px)/4); min-width:235px; border:0; border-radius:0; overflow:visible; scroll-snap-align:start; }
+figure { overflow:hidden; border-radius:12px; } figure img { height:auto; aspect-ratio:4/3; object-fit:contain; }
+.placeholder { height:auto; aspect-ratio:4/3; border-radius:12px; background:#f0f2eb; color:#7b887c; font-size:12px; }
+.content { padding:12px 1px 0; } h3 { font-size:16px; line-height:1.35; }
+.place-selection { flex:initial; font-size:11px; margin:0 0 9px; color:#4c6955; }
+input[type=checkbox] { accent-color:#185a3b; width:17px; height:17px; }
+.location { font-size:12px; margin:6px 0; } .fee { font-size:12px; margin:8px 0; font-weight:400; } .fee strong { font-weight:500; }
+.source-label { font-size:10px; color:#7a847a; }
+.place-details { border:0; } .place-details > summary { font-size:12px; text-decoration:underline; color:#163b2c; }
+.visit-day { flex:initial; font-size:11px; } .visit-day select { padding:6px 10px; border-color:#c5d1c7; }
+figcaption { padding:6px 0 0; font-size:10px; }
+nav:not(.interest-chips) button { border-radius:20px; color:#163b2c; border-color:#bac9bd; }
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,.cards:focus-visible { outline:3px solid #61ab85; outline-offset:3px; }
+@media(max-width:1000px) { article { flex-basis:calc((100% - 36px)/3); min-width:225px; } }
+@media(max-width:700px) { article { flex-basis:72%; min-width:220px; max-width:290px; } .cards { gap:14px; } .catalogue { padding:0; } .section-title { font-size:21px; } }

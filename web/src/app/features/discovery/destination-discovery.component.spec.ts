@@ -347,6 +347,40 @@ describe('DestinationDiscoveryComponent', () => {
     expect(element.querySelectorAll('.type-tabs button').length).toBe(7);
   });
 
+  it('partitions guide rows without repeating listings and keeps category navigation wired', () => {
+    const {discoveryService}=configure();
+    const fixture=TestBed.createComponent(DestinationDiscoveryComponent); const c=fixture.componentInstance;
+    fixture.detectChanges(); c.searchDestination='Ooty';
+    c.result={...discoveryResponse,resolvedDestination:'Ooty, Tamil Nadu',places:[
+      {...discoveredPlace,externalId:'sight',itemType:'PLACE'},
+      {...discoveredPlace,externalId:'hotel',itemType:'STAY',name:'A stay'},
+      {...discoveredPlace,externalId:'food',itemType:'FOOD',name:'A restaurant'}
+    ]}; fixture.detectChanges();
+    expect(c.discoverySections.map(s=>s.title)).toEqual(['Things to do','Places to stay','Food & drink']);
+    expect(fixture.nativeElement.querySelectorAll('.place-card').length).toBe(3);
+    expect(fixture.nativeElement.querySelector('app-destination-overview h1').textContent).toBe('Ooty');
+    expect(fixture.nativeElement.querySelector('app-destination-overview img').getAttribute('src')).toContain('ooty-botanical-gardens.jpg');
+    expect(fixture.nativeElement.textContent).not.toContain('of 5 bubbles');
+    fixture.nativeElement.querySelector('.section-heading button').click();
+    expect(discoveryService.discoverPlaces.calls.mostRecent().args[3]?.itemType).toBe('PLACE');
+    c.chooseInterest('MUSEUM');
+    expect(discoveryService.discoverPlaces.calls.mostRecent().args[2]).toBe('MUSEUM');
+  });
+
+  it('keeps guide rows horizontally scrollable without forcing page overflow', () => {
+    configure(); const fixture=TestBed.createComponent(DestinationDiscoveryComponent); const c=fixture.componentInstance;
+    fixture.detectChanges(); c.searchDestination='Ooty';
+    c.result={...discoveryResponse,resolvedDestination:'Ooty, Tamil Nadu',places:Array.from({length:8},(_,i)=>({...discoveredPlace,externalId:String(i)}))};
+    fixture.detectChanges();
+    const page:HTMLElement=fixture.nativeElement.querySelector('.discover-page');
+    const row:HTMLElement=fixture.nativeElement.querySelector('.places-grid');
+    expect(getComputedStyle(row).overflowX).toBe('auto');
+    expect(row.scrollWidth).toBeGreaterThan(row.clientWidth);
+    expect(page.scrollWidth).toBeLessThanOrEqual(page.clientWidth+1);
+    expect(getComputedStyle(page).backgroundColor).toBe('rgb(255, 255, 255)');
+    expect(parseFloat(getComputedStyle(fixture.nativeElement.querySelector('app-destination-overview h1')).fontSize)).toBeGreaterThanOrEqual(32);
+  });
+
   it('uses a trip destination only when the user explicitly asks for it', () => {
     const { discoveryService } = configure();
 
@@ -556,6 +590,20 @@ describe('DestinationDiscoveryComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('app-india-catalogue').length).toBe(1);
     expect(fixture.nativeElement.querySelector('.results-container')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Baga Beach');
+  });
+
+  it('does not replace an empty hotel or restaurant search with unrelated attractions',()=>{
+    const {discoveryService}=configure();
+    discoveryService.discoverPlaces.and.returnValue(of({...discoveryResponse,places:[],resultCount:0}));
+    const fixture=TestBed.createComponent(DestinationDiscoveryComponent); const c=fixture.componentInstance;
+    c.tripId=plannedTrip.id; c.destination='Goa'; fixture.detectChanges();
+    c.selectItemType('STAY'); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-india-catalogue')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('No matching places found');
+    c.selectItemType('FOOD'); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-india-catalogue')).toBeNull();
+    c.selectItemType('PLACE'); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-india-catalogue')).not.toBeNull();
   });
 
   it('hides previous cards and the fallback while the next search loads', () => {
