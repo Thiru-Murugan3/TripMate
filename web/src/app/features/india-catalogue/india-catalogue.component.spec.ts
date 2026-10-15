@@ -84,4 +84,33 @@ describe('IndiaCatalogueComponent', () => {
     expect(fixture.componentInstance.selectedState).toBe('');
   });
 
+  it('filters candidate categories and sources, searches source aliases and clears filters on state change', () => {
+    service.state.and.returnValue(of([
+      {...place, place_id:'candidate', source_kind:'COMMUNITY_STRUCTURED_DATA', publication_status:'CANDIDATE_REVIEW_REQUIRED', categories:['temple'], name_variants:['Local shrine']},
+      {...place, place_id:'registry', source_kind:'GOVERNMENT_HERITAGE_REGISTRY', categories:['protected-heritage-site'], district_status:'ASI_PUBLISHED_DISTRICT_CURRENT_BOUNDARY_NOT_VERIFIED', district_as_published:'Old district'}
+    ]));
+    const fixture=setup(); const c=fixture.componentInstance;
+    expect(c.categories).toEqual(['protected-heritage-site','temple']);
+    c.category='temple'; c.sourceKind='COMMUNITY_STRUCTURED_DATA'; c.query='local shrine';
+    fixture.detectChanges();
+    expect(c.filtered.map(p=>p.place_id)).toEqual(['candidate']);
+    expect(fixture.nativeElement.textContent).toContain('Community candidate');
+    expect(fixture.nativeElement.textContent).toContain('visitor access have not been independently confirmed');
+    c.category=''; c.sourceKind=''; c.query=''; fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Current district boundaries have not been verified');
+    c.category='temple'; c.sourceKind='COMMUNITY_STRUCTURED_DATA'; c.page=4;
+    c.selectState('Kerala');
+    expect(c.category).toBe(''); expect(c.sourceKind).toBe(''); expect(c.page).toBe(0);
+  });
+
+  it('keeps records without a state browsable without assigning a guessed state', () => {
+    service.index.and.returnValue(of({snapshot:'2026-10-15',total:32,states:[tn,kerala],unassigned:{name:'State not assigned',file:'state-unassigned.json',count:1}}));
+    service.state.and.returnValue(of([{...place,state_ut:null}]));
+    const fixture=setup(); const c=fixture.componentInstance;
+    c.selectState('State not assigned'); fixture.detectChanges();
+    expect(service.state).toHaveBeenCalledWith({name:'State not assigned',file:'state-unassigned.json',count:1});
+    expect(c.places[0].state_ut).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('source records');
+  });
+
 });

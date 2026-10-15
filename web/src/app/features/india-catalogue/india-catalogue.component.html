@@ -3,7 +3,7 @@
   <header class="catalogue-heading">
     <h2>{{ embedded ? 'Places to explore' : 'Explore India' }}</h2>
     <details class="about"><summary>About these places</summary>
-      <p>Source records checked {{ index?.snapshot || '2026-10-14' }}. Coverage is incomplete and records may overlap or need review. Confirm fees before visiting. Photos are historical, not live.</p>
+      <p>Source snapshot {{ index?.snapshot || '2026-10-15' }}. Coverage is incomplete and records may overlap. Community candidates and heritage entries need review for tourist relevance and public access. District assignments may be historical. Confirm access and fees before visiting. Photos are historical, not live.</p>
     </details>
   </header>
   <p *ngIf="matchMessage && !selectedState" role="status">{{ matchMessage }}</p>
@@ -13,7 +13,21 @@
     <label>State or union territory
       <select [ngModel]="selectedState" (ngModelChange)="selectState($event)" [disabled]="!index">
         <option value="">Choose a state or union territory</option>
-        <option *ngFor="let state of index?.states" [value]="state.name">{{ state.name }} ({{ state.count }})</option>
+        <option *ngFor="let state of states" [value]="state.name">{{ state.name }} ({{ state.count }})</option>
+      </select>
+    </label>
+    <label>Category
+      <select [(ngModel)]="category" (ngModelChange)="page = 0" [disabled]="loading || !places.length">
+        <option value="">All categories</option>
+        <option *ngFor="let item of categories" [value]="item">{{ categoryLabel(item) }}</option>
+      </select>
+    </label>
+    <label>Source
+      <select [(ngModel)]="sourceKind" (ngModelChange)="page = 0" [disabled]="loading || !places.length">
+        <option value="">All sources</option>
+        <option value="PRIOR_CATALOGUE">Tourism sources</option>
+        <option value="COMMUNITY_STRUCTURED_DATA">Community candidates</option>
+        <option value="GOVERNMENT_HERITAGE_REGISTRY">Heritage register</option>
       </select>
     </label>
     <label>District
@@ -32,8 +46,8 @@
   <p *ngIf="loading" role="status">Loading catalogue…</p>
   <p *ngIf="error" role="alert">{{ error }} <button type="button" (click)="retry()">Retry</button></p>
   <ng-container *ngIf="!loading && !error && selectedState">
-    <p role="status">{{ filtered.length }} places <span *ngIf="pageCount">· Page {{ page + 1 }} of {{ pageCount }}</span></p>
-    <p *ngIf="!filtered.length">No matching records. Try another district or clear your search and photo filter.</p>
+    <p role="status">{{ filtered.length }} source records <span *ngIf="pageCount">· Page {{ page + 1 }} of {{ pageCount }}</span></p>
+    <p *ngIf="!filtered.length">No matching records. Try another district or clear your search, category, source and photo filters.</p>
     <div class="cards">
       <article *ngFor="let place of visible; trackBy: trackPlace">
         <figure *ngIf="place.photo as photo">
@@ -47,11 +61,15 @@
         <p *ngIf="!place.photo" class="placeholder">No reviewed photograph available</p>
         <div class="content">
           <h3>{{ place.name }}</h3>
-          <p class="location">{{ place.district || place.tourism_destination || place.state_ut }}<span *ngIf="(place.district || place.tourism_destination) && (place.district || place.tourism_destination) !== place.state_ut"> · {{ place.state_ut }}</span></p>
+          <p class="location">{{ place.district || place.tourism_destination || place.state_ut || 'Location not assigned' }}<span *ngIf="place.state_ut && (place.district || place.tourism_destination) && (place.district || place.tourism_destination) !== place.state_ut"> · {{ place.state_ut }}</span></p>
+          <small class="source-label">{{ sourceLabel(place) }} · Review required</small>
           <p class="fee"><strong>{{ place.fees.length ? 'Entry fee options available' : 'Entry fee not verified' }}</strong></p>
           <details class="place-details">
             <summary>Details</summary>
             <small>Review required<span *ngIf="place.possible_duplicate_group"> · Possible duplicate listing</span></small>
+            <p *ngIf="place.publication_status === 'CANDIDATE_REVIEW_REQUIRED'">Tourist relevance and visitor access have not been independently confirmed. Check the source before travelling.</p>
+            <p *ngIf="place.district_status === 'ASI_PUBLISHED_DISTRICT_CURRENT_BOUNDARY_NOT_VERIFIED'">District as published: {{ place.district_as_published || place.district }}. Current district boundaries have not been verified.</p>
+            <p *ngIf="place.categories?.length">Categories: <span *ngFor="let item of place.categories; let last = last">{{ categoryLabel(item) }}{{ last ? '' : ', ' }}</span></p>
             <p *ngIf="!place.fees.length">Unknown does not mean free.</p>
             <div *ngIf="place.photo as photo" class="photo-details">
             <span>Capture date reported: {{ photo.capture_date_as_reported || 'Unknown' }} · Not live</span>

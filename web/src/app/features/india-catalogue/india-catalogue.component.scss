@@ -17,6 +17,7 @@ figcaption { font-size:.65rem; padding:6px 10px; line-height:1.4; overflow-wrap:
 .placeholder { height:80px; display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding:16px; text-align:center; background:var(--bg-secondary,#f1f5f9); margin:0; font-size:.75rem; color:#64748b; }
 .content { padding:12px; } .location { color:#64748b; margin:0 0 10px; font-size:.75rem; }
 .fee { margin:0 0 8px; font-size:.78rem; }
+.source-label { display:block; margin:0 0 8px; color:#64748b; font-size:.68rem; }
 .place-details { border-top:1px solid #e2e8f0; } .place-details[open] > summary { margin-bottom:8px; }
 .place-details small,.photo-details { font-size:.72rem; color:#64748b; line-height:1.5; }
 .photo-details span,li span { display:block; }

@@ -12,6 +12,10 @@ describe('IndiaCatalogueService', () => {
     ]});
     const service = TestBed.inject(IndiaCatalogueService);
     const http = TestBed.inject(HttpTestingController);
+    service.index().subscribe();
+    const index = http.expectOne(CATALOGUE_ROOT+'index.json?schema=3');
+    expect(index.request.headers.has('Authorization')).toBeFalse();
+    index.flush({snapshot:'2026-10-15',total:42017,states:[]});
     service.state({name:'Tamil Nadu',file:'tamil-nadu.json',count:334}).subscribe();
     const request = http.expectOne(CATALOGUE_ROOT+'tamil-nadu.json');
     expect(request.request.headers.has('Authorization')).toBeFalse();
