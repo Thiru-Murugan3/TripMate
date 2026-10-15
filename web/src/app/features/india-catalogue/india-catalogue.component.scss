@@ -1,21 +1,26 @@
-:host { display:block; color:var(--text-primary, #1e293b); }
-.catalogue { max-width:1250px; margin:auto; padding:24px; }
-h1 { font-size:2rem; margin:20px 0 12px; } h2 { font-size:1.25rem; }
-p { line-height:1.6; } a { color:var(--primary, #2563eb); overflow-wrap:anywhere; }
-aside { background:var(--bg-secondary, #f1f5f9); padding:18px; border-radius:12px; }
-aside p { margin:8px 0 0; }
-.filters { display:flex; flex-wrap:wrap; gap:16px; margin:24px 0; align-items:end; }
-label { display:flex; flex-direction:column; gap:8px; flex:1 1 220px; }
-input, select, button { font:inherit; color:inherit; padding:10px; border:1px solid #94a3b8; border-radius:8px; background:var(--bg-primary, white); max-width:100%; }
+:host { display:block; background:#f8fafc; color:var(--text-primary,#1e293b); }
+.catalogue { max-width:1280px; margin:auto; padding:16px; }
+.catalogue-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+h2 { font-size:1.1rem; margin:0; } h3 { font-size:.95rem; margin:0 0 6px; line-height:1.4; overflow-wrap:anywhere; }
+p { line-height:1.5; font-size:.82rem; } a { color:var(--primary,#2563eb); overflow-wrap:anywhere; }
+summary { cursor:pointer; font-size:.8rem; font-weight:600; padding:6px 0; }
+.about { max-width:540px; color:#64748b; } .about[open] { flex-basis:100%; }
+.filter-panel { border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:12px; }
+.filters { display:flex; flex-wrap:wrap; gap:12px; padding:12px 0; align-items:end; }
+label { display:flex; flex-direction:column; gap:6px; flex:1 1 180px; font-size:.78rem; }
+input,select,button { font:inherit; color:inherit; padding:8px; border:1px solid #cbd5e1; border-radius:8px; background:var(--bg-primary,white); max-width:100%; min-width:0; }
 .check { flex-direction:row; align-items:center; }
-.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)); gap:20px; }
-article { border:1px solid #94a3b8; border-radius:14px; overflow:hidden; background:var(--bg-primary,white); }
-figure { margin:0; } img { display:block; width:100%; height:230px; object-fit:contain; background:#e2e8f0; }
-figcaption { font-size:.8rem; padding:12px; line-height:1.5; overflow-wrap:anywhere; }
-span { display:inline-block; } figcaption span, li span { display:block; }
-.placeholder { padding:36px 20px; text-align:center; background:var(--bg-secondary,#f1f5f9); margin:0; }
-.content { padding:20px; } .content h2 { margin-top:0; }
-summary { cursor:pointer; font-weight:600; } li { margin:12px 0; line-height:1.5; }
-nav { display:flex; gap:20px; justify-content:center; align-items:center; margin:24px 0; }
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr)); gap:12px; align-items:start; }
+article { border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; background:var(--bg-primary,white); }
+figure { margin:0; } img { display:block; width:100%; height:128px; object-fit:contain; background:#f1f5f9; }
+figcaption { font-size:.65rem; padding:6px 10px; line-height:1.4; overflow-wrap:anywhere; color:#64748b; }
+.placeholder { height:80px; display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding:16px; text-align:center; background:var(--bg-secondary,#f1f5f9); margin:0; font-size:.75rem; color:#64748b; }
+.content { padding:12px; } .location { color:#64748b; margin:0 0 10px; font-size:.75rem; }
+.fee { margin:0 0 8px; font-size:.78rem; }
+.place-details { border-top:1px solid #e2e8f0; } .place-details[open] > summary { margin-bottom:8px; }
+.place-details small,.photo-details { font-size:.72rem; color:#64748b; line-height:1.5; }
+.photo-details span,li span { display:block; }
+li { margin:10px 0; line-height:1.5; font-size:.78rem; } ul { padding-left:18px; }
+nav { display:flex; gap:16px; justify-content:center; align-items:center; margin:20px 0; font-size:.8rem; }
 button { cursor:pointer; } button:disabled { opacity:.5; cursor:default; }
-@media(max-width:600px) { .catalogue { padding:16px; } }
+@media(max-width:480px) { .cards { grid-template-columns:1fr; } .catalogue { padding:12px; } }

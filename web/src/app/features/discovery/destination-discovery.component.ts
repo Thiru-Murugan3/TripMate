@@ -39,19 +39,10 @@ import { TripService } from '../../core/services/trip.service';
     <section class="discover-page">
       <div class="discover-hero">
         <div>
-          <span class="eyebrow">DESTINATION DISCOVERY</span>
-          <h2>Explore {{ searchDestination || 'your destination' }}</h2>
-          <p>
-            Search any city, town or destination even when you are only browsing. A trip is optional
-            and is needed only when you want to save places or add them to an itinerary.
-          </p>
+          <h2>Explore {{ searchDestination || 'India' }}</h2>
         </div>
-        <div class="hero-icon">
-          <span class="material-symbols-outlined">travel_explore</span>
-        </div>
+        <a routerLink="/explore/india">Browse by state →</a>
       </div>
-
-      <p><a routerLink="/explore/india">Browse India by state · tourist-place research catalogue →</a></p>
 
       <div class="search-panel">
         <label *ngIf="!embeddedMode" class="field trip-field">
@@ -122,16 +113,6 @@ import { TripService } from '../../core/services/trip.service';
         </button>
       </nav>
 
-      <div *ngIf="!embeddedMode" class="casual-search-note">
-        <span class="material-symbols-outlined">public</span>
-        <div>
-          <strong>Browse any destination</strong>
-          <span>
-            Search first, select the places you like, then choose an editable trip only when you are ready to add them.
-          </span>
-        </div>
-      </div>
-
       <div *ngIf="errorMessage" class="message error">
         <span class="material-symbols-outlined">error</span>
         <div>
@@ -157,18 +138,15 @@ import { TripService } from '../../core/services/trip.service';
 
       <div *ngIf="result as data" class="results-container">
         <h2>Nearby search results</h2>
-        <div *ngIf="data.warnings?.length" class="data-warning">
-          <span class="material-symbols-outlined">info</span>
-          <div>
-            <strong>Live source coverage can vary</strong>
-            <span *ngFor="let warning of data.warnings">{{ warning }}</span>
-          </div>
-        </div>
+        <details *ngIf="data.warnings?.length" class="source-notes">
+          <summary>Availability notes</summary>
+          <p *ngFor="let warning of data.warnings">{{ warning }}</p>
+        </details>
 
         <div class="result-toolbar">
           <div>
-            <h3>Found {{ data.resultCount }} nearby tourist places & activities in {{ data.query }}</h3>
-            <p>Select places to add to your saved list or trip itinerary.</p>
+            <h3>{{ data.resultCount }} nearby places & activities</h3>
+
           </div>
 
           <label class="local-filter">
@@ -182,7 +160,7 @@ import { TripService } from '../../core/services/trip.service';
           </label>
         </div>
 
-        <button type="button" class="mobile-filter-toggle" (click)="filtersOpen = !filtersOpen">
+        <button type="button" class="mobile-filter-toggle" (click)="filtersOpen = !filtersOpen" [attr.aria-expanded]="filtersOpen">
           <span class="material-symbols-outlined">tune</span> Filters
         </button>
 
@@ -290,28 +268,6 @@ import { TripService } from '../../core/services/trip.service';
                 </span>
               </div>
 
-              <p class="description">{{ place.description || 'Details are not available from the source.' }}</p>
-
-              <p *ngIf="place.openingHours" class="opening-hours">
-                <span class="material-symbols-outlined">schedule</span>
-                {{ place.openingHours }}
-              </p>
-              <p *ngIf="place.openNow != null" class="open-status" [class.open]="place.openNow">
-                {{ place.openNow ? 'Open now' : 'Closed now' }}
-              </p>
-
-              <div class="source-row">
-                <span>
-                  Source: {{ place.sourceName || data.provider }}
-                  <ng-container *ngIf="place.sourceLastCheckedAt">
-                    · checked {{ place.sourceLastCheckedAt | date:'mediumDate' }}
-                  </ng-container>
-                </span>
-                <span *ngIf="place.confidenceScore != null">
-                  {{ place.confidenceScore * 100 | number:'1.0-0' }}% data confidence
-                </span>
-              </div>
-
               <div class="card-actions">
                 <div class="quick-actions">
                   <button type="button" class="card-action secondary-action" (click)="openDetails(place)">
@@ -330,7 +286,7 @@ import { TripService } from '../../core/services/trip.service';
                   </button>
                 </div>
 
-                <div *ngIf="place.officialWebsite || place.website || place.bookingUrl" class="provider-actions">
+                <details *ngIf="place.officialWebsite || place.website || place.bookingUrl" class="provider-links"><summary>Provider links</summary><div class="provider-actions">
                   <a
                     *ngIf="place.officialWebsite || place.website"
                     class="provider-action"
@@ -347,7 +303,7 @@ import { TripService } from '../../core/services/trip.service';
                     <span>Book with provider</span>
                     <span class="material-symbols-outlined external-icon">open_in_new</span>
                   </a>
-                </div>
+                </div></details>
 
                 <div *ngIf="canSelectPlaces" class="trip-actions">
                   <button
@@ -357,7 +313,7 @@ import { TripService } from '../../core/services/trip.service';
                     (click)="addPlaceToItinerary(place)"
                   >
                     <span class="material-symbols-outlined">event_note</span>
-                    <span>{{ isAlreadySaved(place) ? 'Add saved place to itinerary' : 'Add to itinerary' }}</span>
+                    <span>Add to itinerary</span>
                   </button>
                 </div>
               </div>
@@ -478,6 +434,8 @@ import { TripService } from '../../core/services/trip.service';
               <div *ngIf="place.accessibilityInformation"><dt>Accessibility</dt><dd>{{ place.accessibilityInformation }}</dd></div>
               <div *ngIf="place.contactPhone"><dt>Contact</dt><dd><a [href]="'tel:' + place.contactPhone">{{ place.contactPhone }}</a></dd></div>
               <div *ngIf="place.cancellationInformation"><dt>Cancellation</dt><dd>{{ place.cancellationInformation }}</dd></div>
+              <div *ngIf="place.openNow != null"><dt>Status</dt><dd>{{ place.openNow ? 'Open now' : 'Closed now' }}</dd></div>
+              <div *ngIf="place.confidenceScore != null"><dt>Data confidence</dt><dd>{{ place.confidenceScore * 100 | number:'1.0-0' }}%</dd></div>
               <div><dt>Source</dt><dd>{{ place.sourceName || result?.provider }}</dd></div>
               <div *ngIf="place.sourceLastCheckedAt"><dt>Last checked</dt><dd>{{ place.sourceLastCheckedAt | date:'medium' }}</dd></div>
             </dl>
@@ -707,6 +665,29 @@ import { TripService } from '../../core/services/trip.service';
     @media(max-width:380px){
       .quick-actions,.trip-actions { grid-template-columns:1fr; }
     }
+    .discover-page { background:#f8fafc; padding:16px; border-radius:12px; min-width:0; }
+    .discover-page .material-symbols-outlined { max-width:1.4em; overflow:hidden; vertical-align:middle; }
+    .discover-hero { align-items:center; padding:0; border:0; background:none; margin:0 0 14px; }
+    .discover-hero h2 { margin:0; font-size:1.25rem; }
+    .discover-hero > a { font-size:.8rem; white-space:nowrap; color:#2563eb; }
+    .search-panel { padding:.75rem; margin-bottom:.75rem; }
+    .source-notes { margin:0 0 12px; color:#64748b; font-size:.78rem; }
+    .source-notes summary,.provider-links summary { cursor:pointer; padding:6px 0; font-size:.75rem; }
+    .source-notes p { margin:6px 0; }
+    .catalogue-layout { display:block; }
+    .catalogue-filters { display:none; }
+    .catalogue-filters.open { display:flex; margin-bottom:12px; }
+    .mobile-filter-toggle { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; margin-bottom:12px; border:1px solid #cbd5e1; border-radius:8px; background:white; }
+    .places-grid { grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr)); gap:12px; }
+    .media { height:128px; }
+    .place-body { padding:12px; }
+    .title-row h3 { font-size:.95rem; }
+    .meta-row { gap:6px; font-size:.72rem; }
+    .image-credit { font-size:.65rem; margin:6px 10px; }
+    .card-action { min-height:36px; padding:6px; font-size:.72rem; }
+    .result-toolbar h3 { font-size:1rem; }
+    .results-container > h2 { font-size:1.1rem; }
+    @media(max-width:480px) { .places-grid { grid-template-columns:1fr; } .discover-hero { flex-wrap:wrap; } }
   `]
 })
 export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
