@@ -29,6 +29,8 @@ import { DiscoveryService } from '../../core/services/discovery.service';
 import { ItineraryService } from '../../core/services/itinerary.service';
 import { PlaceService } from '../../core/services/place.service';
 import { IndiaCatalogueComponent } from '../india-catalogue/india-catalogue.component';
+import { CataloguePlace } from '../india-catalogue/india-catalogue.service';
+import { PlanningPlace, catalogueKey, cataloguePlanningPlace } from '../india-catalogue/catalogue-selection';
 import { TripService } from '../../core/services/trip.service';
 
 @Component({
@@ -41,7 +43,8 @@ import { TripService } from '../../core/services/trip.service';
         <div>
           <h2>Explore {{ searchDestination || 'India' }}</h2>
         </div>
-        <a routerLink="/explore/india">Browse by state →</a>
+        <a *ngIf="!catalogueOnly" routerLink="/explore/india">Browse by state →</a>
+        <a *ngIf="catalogueOnly" routerLink="/explore">Back to destination discovery</a>
       </div>
 
       <div class="search-panel">
@@ -54,7 +57,7 @@ import { TripService } from '../../core/services/trip.service';
             </option>
           </select>
           <button
-            *ngIf="selectedTrip as trip"
+            *ngIf="!catalogueOnly && selectedTrip as trip"
             type="button"
             class="use-trip-link"
             (click)="useTripDestination(trip)"
@@ -63,7 +66,7 @@ import { TripService } from '../../core/services/trip.service';
           </button>
         </label>
 
-        <div class="field destination-field">
+        <div *ngIf="!catalogueOnly" class="field destination-field">
           <span>Destination</span>
           <div class="destination-input-row">
             <input
@@ -87,7 +90,7 @@ import { TripService } from '../../core/services/trip.service';
           </div>
         </div>
 
-        <label class="field">
+        <label *ngIf="!catalogueOnly" class="field">
           <span>Category</span>
           <select [(ngModel)]="category" [ngModelOptions]="{ standalone: true }">
             <option *ngFor="let item of categories" [value]="item">
@@ -97,6 +100,7 @@ import { TripService } from '../../core/services/trip.service';
         </label>
 
         <button
+          *ngIf="!catalogueOnly"
           type="button"
           class="btn primary search-btn"
           [disabled]="isLoading || searchDestination.trim().length < 2"
@@ -107,7 +111,7 @@ import { TripService } from '../../core/services/trip.service';
         </button>
       </div>
 
-      <nav class="type-tabs" aria-label="Catalogue type">
+      <nav *ngIf="!catalogueOnly" class="type-tabs" aria-label="Catalogue type">
         <button *ngFor="let tab of itemTypeTabs" type="button" [class.active]="itemTypeFilter === tab.value" (click)="selectItemType(tab.value)">
           <span class="material-symbols-outlined">{{ tab.icon }}</span>{{ tab.label }}
         </button>
@@ -134,7 +138,10 @@ import { TripService } from '../../core/services/trip.service';
         </div>
       </div>
 
-      <app-india-catalogue *ngIf="showCatalogueFallback" [embedded]="true" [destination]="catalogueDestination" />
+      <app-india-catalogue *ngIf="catalogueOnly || showCatalogueFallback" [embedded]="true" [destination]="catalogueOnly ? '' : catalogueDestination"
+        [selectable]="canSelectPlaces" [saving]="isSaving" [selectedIds]="selectedIds"
+        [dayNumbers]="activeTripId > 0 ? availableDayNumbers : []" [dayAssignments]="dayAssignments"
+        (selectionChange)="selectCataloguePlace($event)" (dayChange)="setCatalogueDay($event)" (scopeChange)="changeCatalogueScope($event)" />
 
       <div *ngIf="displayedResult as data" class="results-container">
         <h2>Places to explore</h2>
@@ -344,6 +351,7 @@ import { TripService } from '../../core/services/trip.service';
         </div>
           </main>
         </div>
+      </div>
 
         <div
           *ngIf="canSelectPlaces && selectedCount > 0"
@@ -368,7 +376,7 @@ import { TripService } from '../../core/services/trip.service';
             </select>
           </label>
 
-          <div *ngIf="activeTripId > 0" class="plan-buttons">
+          <div *ngIf="activeTripId > 0 && !hasCatalogueSelection" class="plan-buttons">
             <span>Suggested:</span>
             <button type="button" (click)="applySuggestedPlan(1)">1 Day</button>
             <button type="button" (click)="applySuggestedPlan(2)">2 Days</button>
@@ -394,7 +402,6 @@ import { TripService } from '../../core/services/trip.service';
             </button>
           </div>
         </div>
-      </div>
 
       <div *ngIf="selectedDetail as place" class="detail-backdrop" (click)="closeDetails()">
         <article class="detail-dialog" role="dialog" aria-modal="true" [attr.aria-label]="place.name" (click)="$event.stopPropagation()">
@@ -740,7 +747,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   selectedDetail: DiscoveredPlace | null = null;
   savedPlaces: Place[] = [];
   selectedIds = new Set<string>();
-  private selectedListings = new Map<string, DiscoveredPlace>();
+  private selectedListings = new Map<string, PlanningPlace>();
   private selectionDestination = '';
   dayAssignments: Record<string, number> = {};
 
@@ -809,6 +816,29 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   get canSelectPlaces(): boolean {
     return this.embeddedMode ? this.effectiveCanEdit : this.editableTrips.length > 0;
   }
+  get catalogueOnly(): boolean { return this.route.snapshot?.data?.['catalogueOnly'] === true; }
+  get hasCatalogueSelection(): boolean { return [...this.selectedIds].some(id => id.startsWith('catalogue:')); }
+
+  selectCataloguePlace(event: {place: CataloguePlace; selected: boolean}): void {
+    if (!this.canSelectPlaces || this.isSaving) return;
+    const key = catalogueKey(event.place);
+    if (event.selected) {
+      this.selectedIds.add(key); this.selectedListings.set(key, cataloguePlanningPlace(event.place));
+      this.dayAssignments[key] ||= 1;
+    } else {
+      this.selectedIds.delete(key); this.selectedListings.delete(key); delete this.dayAssignments[key];
+    }
+  }
+  setCatalogueDay(event: {place: CataloguePlace; day: number}): void {
+    if (!this.canSelectPlaces || this.isSaving) return;
+    this.dayAssignments[catalogueKey(event.place)] = Math.min(this.availableDayNumbers.length, Math.max(1,event.day || 1));
+  }
+  changeCatalogueScope(state: string): void {
+    if (this.catalogueOnly) this.searchDestination = state;
+    for (const key of [...this.selectedIds]) if (key.startsWith('catalogue:')) {
+      this.selectedIds.delete(key); this.selectedListings.delete(key); delete this.dayAssignments[key];
+    }
+  }
 
   // Keep the actionable discovery cards primary. The source catalogue replaces
   // failed/empty searches rather than creating a second grid on the same page.
@@ -865,6 +895,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     }
 
     this.loadTrips();
+    if (this.catalogueOnly) return;
 
     this.routeSubscription = this.route.queryParams.subscribe((params) => {
       const searchParam = params['search'] || params['q'];
@@ -1111,8 +1142,9 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       }
     }
 
-    const remaining = [...this.selectedPlaces()];
-    const routeOrdered: DiscoveredPlace[] = [];
+    const remaining = this.selectedPlaces().filter((place): place is PlanningPlace & {latitude:number;longitude:number} => place.latitude != null && place.longitude != null);
+    const unmapped = this.selectedPlaces().filter(place => place.latitude == null || place.longitude == null);
+    const routeOrdered: PlanningPlace[] = [];
     let current = {
       latitude: Number(this.result?.latitude ?? remaining[0]?.latitude ?? 0),
       longitude: Number(this.result?.longitude ?? remaining[0]?.longitude ?? 0)
@@ -1138,8 +1170,9 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       current = { latitude: nearest.latitude, longitude: nearest.longitude };
     }
 
-    const placesPerDay = Math.max(1, Math.ceil(routeOrdered.length / days));
-    routeOrdered.forEach((place, index) => {
+    const ordered = [...routeOrdered, ...unmapped];
+    const placesPerDay = Math.max(1, Math.ceil(ordered.length / days));
+    ordered.forEach((place, index) => {
       this.dayAssignments[place.externalId] = Math.min(days, Math.floor(index / placesPerDay) + 1);
     });
 
@@ -1276,7 +1309,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   }
 
   private async addSelectedToItinerary(
-    selected: DiscoveredPlace[],
+    selected: PlanningPlace[],
     savedMap: Map<string, Place>
   ): Promise<void> {
     const itinerary = await firstValueFrom(this.itineraryService.getItinerary(this.activeTripId));
@@ -1408,7 +1441,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     return utc.toISOString().slice(0, 10);
   }
 
-  private selectedPlaces(): DiscoveredPlace[] {
+  private selectedPlaces(): PlanningPlace[] {
     return [...this.selectedListings.values()].filter(place => this.selectedIds.has(place.externalId));
   }
 
@@ -1416,8 +1449,12 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     return this.findSavedPlace(place) !== undefined;
   }
 
-  private findSavedPlace(place: DiscoveredPlace): Place | undefined {
+  private findSavedPlace(place: PlanningPlace): Place | undefined {
     return this.savedPlaces.find((saved) => {
+      if (place.catalogueNotes) {
+        const recordId = place.externalId.slice('catalogue:'.length);
+        return saved.notes?.split(' · ').includes(`CatalogueRecord=${recordId}`) === true;
+      }
       if (saved.name.trim().toLowerCase() !== place.name.trim().toLowerCase()) return false;
       if (saved.latitude == null || saved.longitude == null) return true;
 
@@ -1426,10 +1463,11 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     });
   }
 
-  private discoveryNotes(place: DiscoveredPlace): string {
+  private discoveryNotes(place: PlanningPlace): string {
+    if (place.catalogueNotes) return place.catalogueNotes;
     const parts = [
       `Discovered via ${place.sourceName || this.result?.provider || 'Suttru Discovery'} (${place.category})`,
-      `${place.distanceKm.toFixed(1)} km from ${this.searchDestination.trim()}`
+      ...(place.distanceKm != null ? [`${place.distanceKm.toFixed(1)} km from ${this.searchDestination.trim()}`] : [])
     ];
     if (place.activityType) parts.push(`Activity: ${place.activityType}`);
     if (place.priceStatus === 'FREE') {

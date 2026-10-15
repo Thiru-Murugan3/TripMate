@@ -47,7 +47,8 @@ export const routes: Routes = [
   },
   {
     path: 'explore/india',
-    loadComponent: () => import('./features/india-catalogue/india-catalogue.component').then(m => m.IndiaCatalogueComponent),
+    loadComponent: () => import('./features/discovery/destination-discovery.component').then(m => m.DestinationDiscoveryComponent),
+    data: { catalogueOnly: true },
     canActivate: [authGuard]
   },
   {

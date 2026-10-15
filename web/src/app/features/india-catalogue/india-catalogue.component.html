@@ -60,10 +60,20 @@
         </figure>
         <p *ngIf="!place.photo" class="placeholder">No reviewed photograph available</p>
         <div class="content">
+          <label *ngIf="selectable" class="check place-selection">
+            <input type="checkbox" [checked]="selectedIds.has(selectionKey(place))" [disabled]="saving" (change)="togglePlace(place)" [attr.aria-label]="'Select ' + place.name" />
+            Select place
+          </label>
           <h3>{{ place.name }}</h3>
           <p class="location">{{ place.district || place.tourism_destination || place.state_ut || 'Location not assigned' }}<span *ngIf="place.state_ut && (place.district || place.tourism_destination) && (place.district || place.tourism_destination) !== place.state_ut"> · {{ place.state_ut }}</span></p>
           <small class="source-label">{{ sourceLabel(place) }} · Review required</small>
           <p class="fee"><strong>{{ place.fees.length ? 'Entry fee options available' : 'Entry fee not verified' }}</strong></p>
+          <label *ngIf="selectable && selectedIds.has(selectionKey(place)) && dayNumbers.length" class="visit-day">
+            Visit on
+            <select [ngModel]="dayAssignments[selectionKey(place)] || 1" (ngModelChange)="dayChange.emit({place: place, day: +$event})" [disabled]="saving">
+              <option *ngFor="let day of dayNumbers" [ngValue]="day">Day {{ day }}</option>
+            </select>
+          </label>
           <details class="place-details">
             <summary>Details</summary>
             <small>Review required<span *ngIf="place.possible_duplicate_group"> · Possible duplicate listing</span></small>

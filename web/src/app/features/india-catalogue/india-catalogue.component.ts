@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CATALOGUE_ROOT, CatalogueIndex, CataloguePlace, CatalogueState, IndiaCatalogueService } from './india-catalogue.service';
+import { catalogueKey } from './catalogue-selection';
 
 @Component({
   standalone: true,
@@ -15,6 +16,19 @@ import { CATALOGUE_ROOT, CatalogueIndex, CataloguePlace, CatalogueState, IndiaCa
 export class IndiaCatalogueComponent implements OnInit, OnChanges, OnDestroy {
   @Input() embedded = false;
   @Input() destination = '';
+  @Input() selectable = false;
+  @Input() saving = false;
+  @Input() selectedIds: ReadonlySet<string> = new Set();
+  @Input() dayNumbers: number[] = [];
+  @Input() dayAssignments: Record<string, number> = {};
+  @Output() selectionChange = new EventEmitter<{place: CataloguePlace; selected: boolean}>();
+  @Output() dayChange = new EventEmitter<{place: CataloguePlace; day: number}>();
+  @Output() scopeChange = new EventEmitter<string>();
+  readonly selectionKey = catalogueKey;
+  togglePlace(place: CataloguePlace): void {
+    if (!this.selectable || this.saving) return;
+    this.selectionChange.emit({place, selected: !this.selectedIds.has(catalogueKey(place))});
+  }
   matchMessage = '';
   private readonly catalogue = inject(IndiaCatalogueService);
   private indexRequest?: Subscription;
@@ -67,6 +81,7 @@ export class IndiaCatalogueComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
   selectState(name: string): void {
+    if (name !== this.selectedState) this.scopeChange.emit(name);
     this.stateRequest?.unsubscribe();
     this.selectedState = name;
     this.district = ''; this.query = ''; this.page = 0;
