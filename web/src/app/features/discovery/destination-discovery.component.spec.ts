@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 
 import { IndiaCatalogueService } from '../india-catalogue/india-catalogue.service';
 import { DestinationDiscoveryComponent } from './destination-discovery.component';
@@ -475,7 +475,51 @@ describe('DestinationDiscoveryComponent', () => {
     expect(fixture.componentInstance.catalogueDestination).toBe('Goa');
     expect(fixture.nativeElement.textContent).toContain('Baga Beach');
     expect(fixture.nativeElement.textContent).toContain('Entry fee not verified');
+    expect(fixture.nativeElement.querySelector('.results-container')).toBeNull();
     expect(fixture.nativeElement.querySelector('a[href="/explore/india"]')).not.toBeNull();
+  });
+
+  it('shows only actionable discovery cards when nearby results are available', () => {
+    configure();
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.componentInstance.tripId = plannedTrip.id;
+    fixture.componentInstance.destination = 'Goa';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-india-catalogue')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.results-container').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('.place-card').length).toBe(1);
+    expect(fixture.nativeElement.textContent).toContain('Sample View Point');
+  });
+
+  it('uses one catalogue section when discovery succeeds without results', () => {
+    const { discoveryService } = configure();
+    discoveryService.discoverPlaces.and.returnValue(of({...discoveryResponse,places:[],resultCount:0}));
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.componentInstance.tripId = plannedTrip.id;
+    fixture.componentInstance.destination = 'Goa';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('app-india-catalogue').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.results-container')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Baga Beach');
+  });
+
+  it('hides previous cards and the fallback while the next search loads', () => {
+    const { discoveryService } = configure();
+    const fixture = TestBed.createComponent(DestinationDiscoveryComponent);
+    fixture.componentInstance.tripId = plannedTrip.id;
+    fixture.componentInstance.destination = 'Goa';
+    fixture.detectChanges();
+    const pending = new Subject<DestinationDiscoveryResponse>();
+    discoveryService.discoverPlaces.and.returnValue(pending);
+    fixture.componentInstance.discover(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.results-container')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-india-catalogue')).toBeNull();
+    pending.next({...discoveryResponse,places:[],resultCount:0}); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('app-india-catalogue').length).toBe(1);
+    discoveryService.discoverPlaces.and.returnValue(of(discoveryResponse));
+    fixture.componentInstance.discover(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-india-catalogue')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.results-container')).not.toBeNull();
   });
 
 });
