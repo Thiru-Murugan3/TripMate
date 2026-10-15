@@ -1,15 +1,14 @@
 <section class="catalogue">
   <a *ngIf="!embedded" routerLink="/explore">← Back to destination discovery</a>
-  <h1 *ngIf="!embedded">Explore India by state</h1>
-  <h2 *ngIf="embedded">India source catalogue</h2>
-  <p *ngIf="matchMessage" role="status">{{ matchMessage }}</p>
-  <p>Browse tourist places from official tourism and district sources across 28 states and 8 union territories.</p>
-  <aside>
-    <strong>Research catalogue · snapshot {{ index?.snapshot || '2026-10-14' }}</strong>
-    <p>{{ index?.total || 2089 }} source records, not a complete list of every tourist place. Records still need review and may overlap.
-      Photos are real historical photographs, not live images. Check operator sources before travelling.</p>
-    <p>District coverage is detailed for Tamil Nadu; district information elsewhere may be missing.</p>
-  </aside>
+  <header class="catalogue-heading">
+    <h2>{{ embedded ? 'Places to explore' : 'Explore India' }}</h2>
+    <details class="about"><summary>About these places</summary>
+      <p>Source records checked {{ index?.snapshot || '2026-10-14' }}. Coverage is incomplete and records may overlap or need review. Confirm fees before visiting. Photos are historical, not live.</p>
+    </details>
+  </header>
+  <p *ngIf="matchMessage && !selectedState" role="status">{{ matchMessage }}</p>
+  <details class="filter-panel" [open]="!embedded || !selectedState">
+    <summary>Filter places <span *ngIf="selectedState">· {{ selectedState }}</span></summary>
   <div class="filters">
     <label>State or union territory
       <select [ngModel]="selectedState" (ngModelChange)="selectState($event)" [disabled]="!index">
@@ -29,10 +28,11 @@
     </label>
     <label class="check"><input type="checkbox" [(ngModel)]="photoOnly" (ngModelChange)="page = 0" /> With screened photos</label>
   </div>
+  </details>
   <p *ngIf="loading" role="status">Loading catalogue…</p>
   <p *ngIf="error" role="alert">{{ error }} <button type="button" (click)="retry()">Retry</button></p>
   <ng-container *ngIf="!loading && !error && selectedState">
-    <p role="status">{{ filtered.length }} matching source records <span *ngIf="pageCount">· Page {{ page + 1 }} of {{ pageCount }}</span></p>
+    <p role="status">{{ filtered.length }} places <span *ngIf="pageCount">· Page {{ page + 1 }} of {{ pageCount }}</span></p>
     <p *ngIf="!filtered.length">No matching records. Try another district or clear your search and photo filter.</p>
     <div class="cards">
       <article *ngFor="let place of visible; trackBy: trackPlace">
@@ -42,17 +42,21 @@
           <figcaption>
             {{ photo.creator }} · <a [href]="photo.license_url" target="_blank" rel="noopener noreferrer">{{ photo.license }}</a>
             · <a [href]="photo.source_page" target="_blank" rel="noopener noreferrer">Photo source</a>
-            <span>Capture date reported: {{ photo.capture_date_as_reported || 'Unknown' }} · Not live</span>
-            <details><summary>Full photo credit</summary>{{ photo.attribution_text }}<br />{{ photo.credit }}<br />{{ photo.restrictions }}<br />Provider thumbnail; no additional edits.</details>
           </figcaption>
         </figure>
         <p *ngIf="!place.photo" class="placeholder">No reviewed photograph available</p>
         <div class="content">
-          <h2>{{ place.name }}</h2>
-          <p>{{ place.district || 'District not recorded' }} · {{ place.state_ut }}</p>
-          <p *ngIf="place.tourism_destination">Tourism destination: {{ place.tourism_destination }}</p>
-          <small>Review required<span *ngIf="place.possible_duplicate_group"> · Possible duplicate listing</span></small>
-          <p *ngIf="!place.fees.length"><strong>Entry fee not verified</strong> · Unknown does not mean free.</p>
+          <h3>{{ place.name }}</h3>
+          <p class="location">{{ place.district || place.tourism_destination || place.state_ut }}<span *ngIf="(place.district || place.tourism_destination) && (place.district || place.tourism_destination) !== place.state_ut"> · {{ place.state_ut }}</span></p>
+          <p class="fee"><strong>{{ place.fees.length ? 'Entry fee options available' : 'Entry fee not verified' }}</strong></p>
+          <details class="place-details">
+            <summary>Details</summary>
+            <small>Review required<span *ngIf="place.possible_duplicate_group"> · Possible duplicate listing</span></small>
+            <p *ngIf="!place.fees.length">Unknown does not mean free.</p>
+            <div *ngIf="place.photo as photo" class="photo-details">
+            <span>Capture date reported: {{ photo.capture_date_as_reported || 'Unknown' }} · Not live</span>
+            <details><summary>Full photo credit</summary>{{ photo.attribution_text }}<br />{{ photo.credit }}<br />{{ photo.restrictions }}<br />Provider thumbnail; no additional edits.</details>
+            </div>
           <details *ngIf="place.fees.length">
             <summary>Published entry-fee options ({{ place.fees.length }})</summary>
             <p>Historical source check; confirm the current total with the operator. Supplements and visitor categories differ.</p>
@@ -68,6 +72,7 @@
           </p>
           <p *ngIf="place.latitude == null || place.longitude == null">Exact location not verified; see the tourism source.</p>
           <a *ngIf="!embedded" routerLink="/explore" [queryParams]="{search: place.tourism_destination || place.name}">Explore this destination and plan a trip →</a>
+          </details>
         </div>
       </article>
     </div>
