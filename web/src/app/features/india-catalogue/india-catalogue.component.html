@@ -1,11 +1,15 @@
 <section class="catalogue">
   <a *ngIf="!embedded" routerLink="/explore">← Back to destination discovery</a>
+  <app-destination-overview [title]="guideTitle" [photos]="guidePhotos" description="Find your next stop, from local landmarks to outdoor escapes. Select the places you would like to visit and make them part of your trip." />
   <header class="catalogue-heading">
-    <h2>{{ embedded ? 'Places to explore' : 'Explore India' }}</h2>
+    <div><h2>Essential {{ guideTitle }}</h2><p>Discover places at your own pace.</p></div>
     <details class="about"><summary>About these places</summary>
       <p>Source snapshot {{ index?.snapshot || '2026-10-15' }}. Coverage is incomplete and records may overlap. Community candidates and heritage entries need review for tourist relevance and public access. District assignments may be historical. Confirm access and fees before visiting. Photos are historical, not live.</p>
     </details>
   </header>
+  <nav class="interest-chips" aria-label="Catalogue interests">
+    <button *ngFor="let item of interests" type="button" [class.active]="interest === item.value" [attr.aria-pressed]="interest === item.value" (click)="chooseInterest(item.value)">{{ item.label }}</button>
+  </nav>
   <p *ngIf="matchMessage && !selectedState" role="status">{{ matchMessage }}</p>
   <details class="filter-panel" [open]="!embedded || !selectedState">
     <summary>Filter places <span *ngIf="selectedState">· {{ selectedState }}</span></summary>
@@ -48,8 +52,10 @@
   <ng-container *ngIf="!loading && !error && selectedState">
     <p role="status">{{ filtered.length }} source records <span *ngIf="pageCount">· Page {{ page + 1 }} of {{ pageCount }}</span></p>
     <p *ngIf="!filtered.length">No matching records. Try another district or clear your search, category, source and photo filters.</p>
-    <div class="cards">
-      <article *ngFor="let place of visible; trackBy: trackPlace">
+    <section *ngFor="let section of catalogueSections; trackBy: trackSection" class="guide-section" [attr.aria-label]="section.title">
+    <h3 class="section-title">{{ section.title }}</h3>
+    <div class="cards" tabindex="0" [attr.aria-label]="section.title + ' places'">
+      <article *ngFor="let place of section.places; trackBy: trackPlace">
         <figure *ngIf="place.photo as photo">
           <img *ngIf="!failedImages.has(place.place_id)" [src]="root + photo.local_thumbnail" [alt]="place.name + ' — historical source photograph'" loading="lazy" width="500" height="300" (error)="failedImages.add(place.place_id)" />
           <p *ngIf="failedImages.has(place.place_id)" class="placeholder">Photograph unavailable</p>
@@ -104,6 +110,7 @@
         </div>
       </article>
     </div>
+    </section>
     <nav *ngIf="pageCount > 1" aria-label="Catalogue pages">
       <button type="button" [disabled]="page === 0" (click)="page = page - 1">Previous</button>
       <span>{{ page + 1 }} / {{ pageCount }}</span>

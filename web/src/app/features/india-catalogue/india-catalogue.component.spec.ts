@@ -46,6 +46,23 @@ describe('IndiaCatalogueComponent', () => {
     expect(change).toHaveBeenCalledTimes(1);
     expect(fixture.nativeElement.querySelector('.place-selection input').disabled).toBeTrue();
   });
+
+  it('groups each source record once and filters interests using actual category metadata', () => {
+    service.state.and.returnValue(of([
+      {...place,place_id:'nature',categories:['lake','park']},
+      {...place,place_id:'history',categories:['temple','monument']},
+      {...place,place_id:'museum',categories:['museum']},
+      {...place,place_id:'unclassified'}
+    ]));
+    const fixture=setup(); const c=fixture.componentInstance;
+    expect(fixture.nativeElement.querySelectorAll('.cards article').length).toBe(4);
+    expect(c.catalogueSections.flatMap(s=>s.places.map(p=>p.place_id)).sort()).toEqual(['history','museum','nature','unclassified']);
+    c.page=2; c.chooseInterest('nature'); fixture.detectChanges();
+    expect(c.page).toBe(0); expect(c.filtered.map(p=>p.place_id)).toEqual(['nature']);
+    c.query='no match'; fixture.detectChanges(); expect(c.filtered.length).toBe(0);
+    c.selectState('Kerala'); expect(c.interest).toBe('all');
+    c.discoveryCategory='TEMPLE'; expect(c.filtered.map(p=>p.place_id)).toEqual(['history']);
+  });
   it('preserves a zero child tariff with its scope instead of calling the whole attraction free', () => {
     service.state.and.returnValue(of([{...place,fees:[{amount_inr:0,visitor_category:'Children under 5',scope:'entry',payment_channel:'online',condition:'Age proof required',source_url:'https://example.com/fees',source_checked_at:'2026-10-14'}]}]));
     const fixture=setup();
