@@ -31,6 +31,21 @@ describe('IndiaCatalogueComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('No reviewed photograph available');
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
   });
+  it('offers opt-in checkboxes and preserves parent selections across pagination and filters', () => {
+    service.state.and.returnValue(of(Array.from({length:30},(_,i)=>({...place,place_id:String(i)}))));
+    const fixture=setup(); const c=fixture.componentInstance;
+    expect(fixture.nativeElement.querySelector('.place-selection')).toBeNull();
+    c.selectable=true; c.selectedIds=new Set(['catalogue:0']); c.dayNumbers=[1,2];
+    const change=spyOn(c.selectionChange,'emit'); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.place-selection input').checked).toBeTrue();
+    c.page=1; fixture.detectChanges(); c.page=0; c.query='Temple'; fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.place-selection input').checked).toBeTrue();
+    fixture.nativeElement.querySelector('.place-selection input').click();
+    expect(change).toHaveBeenCalledWith({place:{...place,place_id:'0'},selected:false});
+    c.saving=true; fixture.detectChanges(); c.togglePlace({...place,place_id:'1'});
+    expect(change).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelector('.place-selection input').disabled).toBeTrue();
+  });
   it('preserves a zero child tariff with its scope instead of calling the whole attraction free', () => {
     service.state.and.returnValue(of([{...place,fees:[{amount_inr:0,visitor_category:'Children under 5',scope:'entry',payment_channel:'online',condition:'Age proof required',source_url:'https://example.com/fees',source_checked_at:'2026-10-14'}]}]));
     const fixture=setup();
