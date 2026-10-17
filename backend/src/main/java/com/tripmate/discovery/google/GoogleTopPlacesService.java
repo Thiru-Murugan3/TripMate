@@ -9,6 +9,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.ResourceAccessException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.server.ResponseStatusException;
 import java.net.URI;
 import java.time.*;
@@ -18,6 +23,8 @@ import java.util.concurrent.Semaphore;
 /** Live Google-grounded display only: never part of discovery caches, saved places or offline packs. */
 @Service
 public class GoogleTopPlacesService {
+    private static final Logger log=LoggerFactory.getLogger(GoogleTopPlacesService.class);
+    private static final ObjectMapper errors=new ObjectMapper();
     public record Source(String title, String url) {}
     public record Result(String destination, String text, List<Source> sources, String searchSuggestionsHtml, Instant checkedAt) {}
     private final RestClient client;
@@ -66,12 +73,59 @@ public class GoogleTopPlacesService {
             try {
                 response=client.post().uri("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent")
                         .header("x-goog-api-key",apiKey).body(payload).retrieve().body(JsonNode.class);
+            } catch (RestClientResponseException ex) {
+                throw providerFailure(ex);
+            } catch (ResourceAccessException ex) {
+                boolean timeout=false;
+                for (Throwable cause=ex;cause!=null;cause=cause.getCause())
+                    if (cause instanceof java.net.SocketTimeoutException || cause instanceof java.net.http.HttpTimeoutException) timeout=true;
+                log.warn("Google top-places request failed: category={}",timeout?"TIMEOUT":"NETWORK");
+                throw error(timeout?HttpStatus.GATEWAY_TIMEOUT:HttpStatus.SERVICE_UNAVAILABLE,
+                        timeout?"Google Search took too long to respond. Please try again shortly.":"The server could not connect to Google Search. Please try again later.");
             } catch (RestClientException ex) {
-                // Never expose the upstream body, request headers or key in API errors/logs.
-                throw error(HttpStatus.SERVICE_UNAVAILABLE,"Google Search suggestions are unavailable. Please try again later.");
+                log.warn("Google top-places request failed: category=CLIENT_RESPONSE");
+                throw error(HttpStatus.BAD_GATEWAY,"Google returned an unreadable search response. Please try again later.");
             }
             return map(response,area.displayName());
         } finally { inFlight.release(); }
+    }
+    private ResponseStatusException providerFailure(RestClientResponseException ex) {
+        int status=ex.getStatusCode().value();
+        String reason="";
+        // Inspect only bounded ErrorInfo reason codes. Never log a body/message, URL, key, project ID or exception.
+        byte[] body=ex.getResponseBodyAsByteArray();
+        if (body.length>0 && body.length<=65536) try {
+            JsonNode error=errors.readTree(body).path("error");
+            for (JsonNode detail:error.path("details")) {
+                String candidate=detail.path("reason").asText("");
+                if (Set.of("API_KEY_INVALID","API_KEY_EXPIRED","API_KEY_SERVICE_BLOCKED","API_KEY_HTTP_REFERRER_BLOCKED",
+                        "API_KEY_IP_ADDRESS_BLOCKED","SERVICE_DISABLED","BILLING_DISABLED","BILLING_NOT_ACTIVE").contains(candidate)) {reason=candidate;break;}
+            }
+        } catch (java.io.IOException ignored) { /* Non-JSON failures still have an HTTP category. */ }
+        String category, message;
+        HttpStatus responseStatus=HttpStatus.SERVICE_UNAVAILABLE;
+        if (reason.equals("API_KEY_INVALID") || reason.equals("API_KEY_EXPIRED") || status==401) {
+            category="KEY_REJECTED";message="Google rejected the Gemini API key. The app administrator needs to check or replace the key in Google AI Studio.";
+        } else if (reason.startsWith("API_KEY_")) {
+            category="KEY_RESTRICTION";message="Google blocked this API key's service, website or IP restrictions. The app administrator needs to review the key restrictions for backend Gemini requests.";
+        } else if (reason.equals("SERVICE_DISABLED")) {
+            category="SERVICE_DISABLED";message="The Gemini API is disabled for this Google project. The app administrator needs to enable the Generative Language API.";
+        } else if (reason.startsWith("BILLING_") || status==402) {
+            category="BILLING";message="Google requires an active billing or credit balance for this request. The app administrator needs to review the Google project's billing settings.";
+        } else if (status==403) {
+            category="ACCESS_DENIED";message="Google denied access to search suggestions. The app administrator needs to check the Gemini project's permissions, key restrictions and billing eligibility.";
+        } else if (status==404) {
+            category="MODEL_UNAVAILABLE";message="The configured Gemini model is unavailable for this key or API version. The app administrator needs to select an accessible model that supports Google Search.";
+        } else if (status==429) {
+            category="GOOGLE_QUOTA";responseStatus=HttpStatus.TOO_MANY_REQUESTS;
+            message="Google's request or usage quota has been reached. Check Google AI Studio quotas and billing, or try again later.";
+        } else if (status==400 || status==422) {
+            category="REQUEST_REJECTED";message="Google rejected the search request. The app administrator needs to check that the configured Gemini model supports Google Search and these request options.";
+        } else {
+            category="GOOGLE_SERVICE";message="Google Search is temporarily unavailable. Please try again later.";
+        }
+        log.warn("Google top-places request rejected: status={} category={}",status,category);
+        return error(responseStatus,message);
     }
     private synchronized void reserve(Long userId) {
         LocalDate today=LocalDate.now(ZoneOffset.UTC);
