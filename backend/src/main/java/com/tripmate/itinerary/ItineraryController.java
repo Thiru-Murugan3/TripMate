@@ -86,6 +86,13 @@ public class ItineraryController {
                 .body(response);
     }
 
+    @PostMapping("/tripadvisor-places")
+    public ResponseEntity<ItineraryItemResponse> addTripadvisorPlace(@PathVariable Long tripId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody AddTripadvisorPlaceRequest request) {
+        return ResponseEntity.ok(itineraryService.addTripadvisorPlace(tripId, userPrincipal.getId(), request));
+    }
+
     // 6. PUT /api/v1/trips/{tripId}/itinerary/items/{itemId}
     @PutMapping("/items/{itemId}")
     public ResponseEntity<ItineraryItemResponse> updateItem(

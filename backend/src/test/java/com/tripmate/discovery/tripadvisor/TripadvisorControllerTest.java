@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TripadvisorControllerTest {
     @Test void paginatedSearchForwardsParametersAndIsNotCacheable() throws Exception {
         var service = mock(TripadvisorService.class);
-        when(service.searchPage("Ooty", "attractions", 4, 4)).thenReturn(new TripadvisorService.SearchPage(
+        when(service.searchPage("Ooty", "attractions", 4, 4, "COMBINED")).thenReturn(new TripadvisorService.SearchPage(
                 List.of(new TripadvisorService.Location("123", "Garden", "Ooty")), 4, 4, 14L, 4, false));
         var mvc = MockMvcBuilders.standaloneSetup(new TripadvisorController(service)).build();
         mvc.perform(get("/api/v1/discovery/tripadvisor/search-page").param("query", "Ooty").param("page", "4").param("size", "4"))

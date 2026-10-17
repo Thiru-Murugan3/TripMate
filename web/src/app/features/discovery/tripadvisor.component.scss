@@ -23,3 +23,8 @@ figcaption { font-size: 10px; padding: 5px 12px; line-height: 1.4; }figcaption a
 .footnote { margin-top: 28px; max-width: 700px; }
 @media(max-width:1000px) { .cards { grid-template-columns: repeat(2,minmax(0,1fr)); }.place-photo,.no-photo { height: 200px; } }
 @media(max-width:560px) { .explore { padding: 20px 12px; }header { align-items: start; flex-direction: column; gap: 8px; }.search-form { display: grid; padding: 14px; }.cards { gap: 10px; }.place-photo,.no-photo { height: 135px; }.card-body { padding: 10px; }h3 { font-size: 15px; }.card-body p { font-size: 12px; }.result-heading { display: block; }.result-heading span { display: block; margin-top: 8px; }.pagination { gap: 10px; } }
+
+.plan-panel { border:1px solid #c0d1c5; border-radius:16px; padding:18px; margin:20px 0; background:#f1f6f2; }
+.plan-panel h2 { font-size:20px; }.plan-fields { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0; }.plan-fields label { min-width:150px; }
+.plan-panel .footnote { margin:12px 0; }.place-select { display:flex; align-items:center; gap:8px; margin:0 0 12px; cursor:pointer; }.place-select input { width:18px; height:18px; }
+.search-form { flex-wrap:wrap; }

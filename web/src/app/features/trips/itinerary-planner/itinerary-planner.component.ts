@@ -1,3 +1,4 @@
+import { TripadvisorReferenceComponent } from '../../discovery/tripadvisor-reference.component';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -59,7 +60,7 @@ interface DayRoutePlan {
 @Component({
   selector: 'app-itinerary-planner',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, TripadvisorReferenceComponent, ReactiveFormsModule],
   template: `
     <section class="planner">
       <div class="planner-toolbar">
@@ -292,7 +293,8 @@ interface DayRoutePlan {
                   <div class="activity-title-row">
                     <div>
                       <h4>{{ item.title }}</h4>
-                      <p>
+                      <app-tripadvisor-reference *ngIf="item.tripadvisorLocationId" [locationId]="item.tripadvisorLocationId"></app-tripadvisor-reference>
+                      <p *ngIf="!item.tripadvisorLocationId">
                         <span class="material-symbols-outlined">location_on</span>
                         {{ item.placeName || item.location || 'Location not set' }}
                       </p>

@@ -66,6 +66,10 @@ export class ItineraryService {
     );
   }
 
+  addTripadvisorPlace(tripId: number, request: { locationId: string; dayNumber: number; title: string }): Observable<ItineraryItem> {
+    return this.http.post<ItineraryItem>(`${this.baseUrl}/${tripId}/itinerary/tripadvisor-places`, request);
+  }
+
   updateItem(
     tripId: number,
     itemId: number,

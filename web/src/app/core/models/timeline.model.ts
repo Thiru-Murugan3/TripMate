@@ -11,6 +11,7 @@ export interface TimelineItem {
   id: string;
   sourceType: 'BOOKING' | 'ITINERARY_ITEM';
   sourceId: number;
+  tripadvisorLocationId?: string;
   itemType: TimelineItemType;
   category: string;
   title: string;

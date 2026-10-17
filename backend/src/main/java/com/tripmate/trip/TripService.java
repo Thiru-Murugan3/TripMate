@@ -226,6 +226,7 @@ public class TripService {
             for (ItineraryItem item : day.getItems()) {
                 itineraryItemRepository.save(ItineraryItem.builder().itineraryDay(copiedDay).trip(copy)
                         .place(item.getPlace() == null ? null : copiedPlaces.get(item.getPlace().getId()))
+                        .tripadvisorLocationId(item.getTripadvisorLocationId())
                         .title(item.getTitle()).legacyActivity(item.getTitle()).description(item.getDescription())
                         .startTime(item.getStartTime()).endTime(item.getEndTime()).location(item.getLocation())
                         .estimatedCost(item.getEstimatedCost()).displayOrder(item.getDisplayOrder()).build());

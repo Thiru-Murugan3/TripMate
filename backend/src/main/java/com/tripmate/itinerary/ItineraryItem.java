@@ -41,6 +41,9 @@ public class ItineraryItem {
     @JoinColumn(name = "place_id")
     private Place place;
 
+    @Column(name = "tripadvisor_location_id", length = 12)
+    private String tripadvisorLocationId;
+
     @Column(nullable = false, length = 180)
     private String title;
 

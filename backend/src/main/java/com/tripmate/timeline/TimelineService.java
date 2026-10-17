@@ -373,6 +373,7 @@ public class TimelineService {
                 items.add(TimelineItemResponse.builder()
                         .id("itinerary-item-" + item.getId())
                         .sourceType("ITINERARY_ITEM")
+                        .tripadvisorLocationId(item.getTripadvisorLocationId())
                         .sourceId(item.getId())
                         .itemType(itemType)
                         .category(category)

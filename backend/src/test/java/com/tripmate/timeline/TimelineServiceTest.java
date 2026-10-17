@@ -123,6 +123,7 @@ class TimelineServiceTest {
                 .itineraryDay(day1)
                 .trip(trip)
                 .title("Meenakshi Amman Temple Visit")
+                .tripadvisorLocationId("123")
                 .startTime(LocalTime.of(15, 30))
                 .endTime(LocalTime.of(18, 0))
                 .location("Madurai Meenakshi Temple")
@@ -162,6 +163,7 @@ class TimelineServiceTest {
         assertEquals("01:00 PM", d1.items().get(3).timeFormatted());
 
         assertEquals(TimelineItemType.ACTIVITY, d1.items().get(4).itemType());
+        assertEquals("123", d1.items().get(4).tripadvisorLocationId());
         assertEquals("03:30 PM", d1.items().get(4).timeFormatted());
 
         assertEquals(0, response.conflictCount(), "Hotel stay must not block sightseeing");

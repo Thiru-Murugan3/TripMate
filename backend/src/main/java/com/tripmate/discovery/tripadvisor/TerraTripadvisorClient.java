@@ -37,12 +37,17 @@ public class TerraTripadvisorClient {
         return searchPage(query, category, 1, 10).places();
     }
     public SearchPage searchPage(String query, String category, int page, int size) {
+        return searchPage(query, category, page, size, "COMBINED");
+    }
+    public SearchPage searchPage(String query, String category, int page, int size, String searchType) {
         validatePage(page, size);
+        if (!Set.of("COMBINED", "NAME").contains(searchType == null ? "" : searchType))
+            throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Unsupported search mode");
         if (query == null || query.trim().length() < 2 || query.length() > 180
                 || category == null || !Set.of("attractions", "hotels", "restaurants").contains(category))
             throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Choose a city or place and a supported category");
         String kind = switch (category) { case "hotels" -> "HOTEL"; case "restaurants" -> "RESTAURANT"; default -> "ATTRACTION"; };
-        JsonNode response = get("/locations/search", size, "query", query.trim(), "search_type", "COMBINED", "country_code", "IN", "category", kind, "page", String.valueOf(page), "size", String.valueOf(size));
+        JsonNode response = get("/locations/search", size, "query", query.trim(), "search_type", searchType, "country_code", "IN", "category", kind, "page", String.valueOf(page), "size", String.valueOf(size));
         List<Location> locations = new ArrayList<>();
         if (!response.path("data").isArray()) throw invalidResponse();
         for (JsonNode match : response.path("data")) {

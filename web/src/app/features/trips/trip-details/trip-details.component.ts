@@ -389,7 +389,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
         </section>
  
         <section *ngIf="activeTab === 'EXPLORE'" class="tab-content">
-          <app-tripadvisor [query]="currentTrip.destination"></app-tripadvisor>
+          <app-tripadvisor [query]="currentTrip.destination" [trip]="currentTrip" [canEdit]="canPlanTrip" (itineraryChanged)="onItineraryChanged()"></app-tripadvisor>
         </section>
 
         <section *ngIf="activeTab === 'ITINERARY'" class="tab-content">
