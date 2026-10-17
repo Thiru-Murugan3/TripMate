@@ -16,7 +16,7 @@ class TripadvisorServiceTest {
         var builder = RestClient.builder(); var server = MockRestServiceServer.bindTo(builder).build();
         var budget = mock(TripadvisorBudget.class); var service = new TripadvisorService(builder.build(), budget, "private-test-key");
         for (int i = 0; i < 2; i++) server.expect(queryParam("category", "attractions"))
-                .andExpect(queryParam("searchQuery", "Ooty India"))
+                .andExpect(queryParam("searchQuery", "Ooty%20India"))
                 .andRespond(withSuccess("{\"data\":[{\"location_id\":\"123\",\"name\":\"Garden\",\"address_obj\":{\"address_string\":\"Ooty\"}}]}", MediaType.APPLICATION_JSON));
         assertEquals("Garden", service.search("Ooty India", "attractions").get(0).name());
         service.search("Ooty India", "attractions");
