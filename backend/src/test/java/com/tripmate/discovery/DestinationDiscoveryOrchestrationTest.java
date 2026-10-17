@@ -227,4 +227,21 @@ class DestinationDiscoveryOrchestrationTest {
         recovering.search("Chennai south",25,"ALL");verify(wiki,never()).discover(any());
     }
 
+    @Test void namedLookupBypassesBroadInventoryAndKeepsSeparateCachesAndDetails() {
+        var wiki=mock(WikidataDiscoveryProvider.class);
+        var enough=java.util.stream.IntStream.range(0,30).mapToObj(i -> place("Landmark " + i,1,null,DiscoveryCategory.ATTRACTION)).toList();
+        when(primary.discover(any())).thenReturn(new DiscoveryProviderResult("Primary","Attribution",enough,List.of()));
+        when(wiki.discover(any())).thenReturn(result("Wikidata",place("Edakkal Caves",10,null,DiscoveryCategory.NATURE)));
+        var recovering=new DestinationDiscoveryService(geocoding,List.of(primary,wiki),mock(CuratedDiscoveryRepository.class),mock(CuratedDiscoveryMapper.class),6,60,25);
+        assertEquals(25,recovering.search("Wayanadu",25,"ALL").resultCount());
+        verify(wiki,never()).discover(any());
+        var filters=new DiscoverySearchFilters("ALL",null,null,null,null,null,null,null,null,null,null,null,"NAME",0,24,"Edakkal Caves");
+        var response=recovering.search("Wayanadu",25,filters);
+        assertEquals(1,response.resultCount());assertEquals("Edakkal Caves",response.places().getFirst().name());
+        verify(wiki).discover(argThat(request -> request.placeName().equals("Edakkal Caves") && request.query().equals("Wayanadu") && request.radiusKm()==25));
+        assertEquals(response.places().getFirst(),recovering.findByExternalId(response.places().getFirst().externalId()));
+        recovering.search("Wayanadu",25,filters);verify(wiki,times(1)).discover(any());
+        assertEquals(25,recovering.search("Wayanadu",25,"ALL").resultCount());
+    }
+
 }
