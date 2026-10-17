@@ -45,7 +45,7 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
                 : "?item rdfs:label ?matchedName . FILTER(CONTAINS(LCASE(STR(?matchedName)), "
                     + sparqlString(request.placeName().trim().toLowerCase(Locale.ROOT)) + "))";
         String query="""
-          SELECT DISTINCT ?item ?itemLabel ?location ?distance ?kind WHERE {
+          SELECT DISTINCT ?item ?itemLabel ?location ?distance ?kind ?sitelinks WHERE {
             SERVICE wikibase:around {
               ?item wdt:P625 ?location .
               bd:serviceParam wikibase:center "Point(%s %s)"^^geo:wktLiteral ; wikibase:radius "%d" ; wikibase:distance ?distance .
@@ -54,6 +54,7 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
             VALUES ?kind { %s }
             ?item wdt:P31/wdt:P279* ?kind .
             FILTER NOT EXISTS { ?item wdt:P17 ?country . FILTER(?country != wd:Q668) }
+            OPTIONAL { ?item wikibase:sitelinks ?sitelinks . }
             SERVICE wikibase:label { bd:serviceParam wikibase:language "en,ta" . }
           } ORDER BY ?distance LIMIT 200
           """.formatted(request.destination().longitude().toPlainString(),request.destination().latitude().toPlainString(),request.radiusKm(),nameClause,String.join(" ",kinds));
@@ -80,13 +81,17 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
                     .latitude(lat).longitude(lon).distanceKm(Math.round(distance*10)/10.0).description(extra.description())
                     .saveCategory(PlaceCategory.ATTRACTION).city(request.destination().city()).state(request.destination().state())
                     .sourceName("Wikidata · CC0").sourceUrl("https://www.wikidata.org/wiki/"+id).sourceLastCheckedAt(Instant.now())
-                    .confidenceScore(.72).priceStatus(PriceStatus.UNKNOWN).priceType(PriceType.UNKNOWN).imageGallery(extra.gallery())
+                    .confidenceScore(.72).popularityScore(sitelinks(row)).priceStatus(PriceStatus.UNKNOWN).priceType(PriceType.UNKNOWN).imageGallery(extra.gallery())
                     .primaryImageUrl(image==null?null:image.url()).imageSource(image==null?null:image.sourceName())
                     .imageAttribution(image==null?null:image.attribution()).imageLicense(image==null?null:image.license()).imageExact(image!=null && image.exact())
                     .mapUrl("https://www.google.com/maps/dir/?api=1&destination="+lat+","+lon).build());
         }
         return new DiscoveryProviderResult(name(),"Wikidata CC0; Wikimedia Commons photos where individually credited",List.copyOf(places.values()),
                 rows.size()>=200?List.of("Wikidata reached its 200-row query limit; this is not a complete destination inventory."):List.of());
+    }
+    private Integer sitelinks(JsonNode row) {
+        try {int count=Integer.parseInt(value(row,"sitelinks"));return count>=0?count:null;}
+        catch(NumberFormatException ex) {return null;}
     }
     // Encode user input as a SPARQL string literal, never as query syntax.
     private String sparqlString(String value) {

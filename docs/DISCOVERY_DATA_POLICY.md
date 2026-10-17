@@ -84,3 +84,7 @@ Sources: https://dev.opentripmap.org/price, https://dev.opentripmap.org/product,
 
 
 Photon uses the existing `DISCOVERY_PHOTON_URL` (default public demo); results are cached by destination/radius/category/name. Name lookup is only triggered by an explicit user search, with one bounded request and no bulk crawling. The public Photon server permits reasonable project use, can throttle heavy traffic and provides no availability guarantee. Configure a suitable hosted or self-hosted endpoint as traffic grows: https://github.com/komoot/photon and https://github.com/komoot/photon/blob/master/docs/api-v1.md. Public Nominatim policy (including no autocomplete and a maximum aggregate rate of one request/second) is enforced by skipping public autocomplete and a shared single-instance request gate that falls back to Photon when busy: https://operations.osmfoundation.org/policies/nominatim/. Multiple backend replicas require shared rate limiting or a suitable hosted geocoder before using the public endpoint at scale.
+
+## Free Top 10 highlights
+
+Explore offers a compact Top 10 shortlist without Gemini/Google Search or keyed discovery-provider requests. Only curated, configured OpenStreetMap and Wikidata sources are consulted in a separate cache namespace. Ranking uses editorial verification, available source prominence/coverage and distance, not visitor ratings. Fewer than ten real records are shown when coverage is limited. See [the free highlights contract](FREE_TOP_PLACES.md).

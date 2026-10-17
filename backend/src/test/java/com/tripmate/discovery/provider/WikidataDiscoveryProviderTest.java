@@ -64,4 +64,13 @@ class WikidataDiscoveryProviderTest {
         new WikidataDiscoveryProvider(builder.build(),mock(WikimediaEnrichmentService.class)).discover(new DiscoveryProviderRequest(base.query(),base.destination(),25,null,"cave \" \\ \n end"));server.verify();
     }
 
+    @Test void languageCoverageIsMappedAsProminenceWithoutInventingVisitorRatings() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+        String data=row("Q1","Known museum","Point(80.271 13.083)");
+        data=data.substring(0,data.length()-1)+",\"sitelinks\":{\"value\":\"42\"}}";
+        server.expect(anything()).andRespond(withSuccess("{\"results\":{\"bindings\":["+data+"]}}",MediaType.APPLICATION_JSON));
+        var result=new WikidataDiscoveryProvider(builder.build(),mock(WikimediaEnrichmentService.class)).discover(request(null));
+        assertEquals(42,result.places().getFirst().popularityScore());assertNull(result.places().getFirst().rating());server.verify();
+    }
+
 }

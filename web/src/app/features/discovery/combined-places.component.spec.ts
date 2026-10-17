@@ -14,7 +14,7 @@ describe('Combined compact Explore', () => {
   const response={query:'Ooty',resolvedDestination:'Ooty, India',places:[place],provider:'Geoapify + OpenTripMap',providersUsed:['Geoapify','OpenTripMap'],attribution:'ODbL',resultCount:25,page:0,size:24,totalPages:2,radiusKm:25};
   let discovery:jasmine.SpyObj<DiscoveryService>, places:jasmine.SpyObj<PlaceService>, itinerary:jasmine.SpyObj<ItineraryService>;
   beforeEach(() => {
-    discovery=jasmine.createSpyObj('DiscoveryService',['discoverPlaces','getSuggestions']);discovery.discoverPlaces.and.returnValue(of(response as any));
+    discovery=jasmine.createSpyObj('DiscoveryService',['discoverPlaces','getSuggestions','getTopPlaces']);discovery.discoverPlaces.and.returnValue(of(response as any));
     places=jasmine.createSpyObj('PlaceService',['getPlaces','createPlace']);places.getPlaces.and.returnValue(of([]));places.createPlace.and.returnValue(of({id:500,name:'Garden',latitude:11.4,longitude:76.7} as any));
     itinerary=jasmine.createSpyObj('ItineraryService',['getItinerary','createDay','createItem']);itinerary.getItinerary.and.returnValue(of({days:[]} as any));itinerary.createDay.and.returnValue(of({id:100,items:[]} as any));itinerary.createItem.and.returnValue(of({id:501} as any));
     TestBed.configureTestingModule({imports:[CombinedPlacesComponent],providers:[provideHttpClient(),provideRouter([]),{provide:DiscoveryService,useValue:discovery},{provide:PlaceService,useValue:places},{provide:ItineraryService,useValue:itinerary},{provide:TripService,useValue:{getMyTrips:()=>of([trip,{...trip,id:20,userRole:'VIEWER'}])}}]});
