@@ -11,6 +11,12 @@ services:
     healthCheckPath: /api/v1/health
     autoDeployTrigger: commit
     envVars:
+      - key: TRIPADVISOR_API_KEY
+        sync: false
+      - key: TRIPADVISOR_DAILY_LIMIT
+        value: "100"
+      - key: TRIPADVISOR_MONTHLY_LIMIT
+        value: "4000"
       - key: DB_URL
         sync: false
       - key: DB_USERNAME
@@ -32,7 +38,7 @@ services:
       - key: BREVO_INBOUND_DOMAIN
         value: inbound.suttru.in
       - key: BREVO_INBOUND_WEBHOOK_SECRET
-        value: suttru_inbound_sec_8a3f91e4b27c
+        sync: false
       - key: R2_ENABLED
         sync: false
       - key: R2_ENDPOINT
