@@ -71,7 +71,9 @@ class TripadvisorServiceTest {
                 .andRespond(withSuccess("{\"data\":[]}", MediaType.APPLICATION_JSON));
         var service = new TripadvisorService(builder.build(), mock(TripadvisorBudget.class), "test", "https://suttru.in/");
         assertTrue(service.search("Ooty", "attractions").isEmpty()); server.verify();
-        assertThrows(IllegalArgumentException.class, () -> new TripadvisorService(builder.build(), mock(TripadvisorBudget.class), "test", "https://example.com/?key=secret"));
+        var invalid = new TripadvisorService(builder.build(), mock(TripadvisorBudget.class), "test", "https://example.com/?key=secret");
+        assertFalse(invalid.available());
+        assertEquals(503, assertThrows(ResponseStatusException.class, () -> invalid.search("Ooty", "attractions")).getStatusCode().value());
     }
 
 }

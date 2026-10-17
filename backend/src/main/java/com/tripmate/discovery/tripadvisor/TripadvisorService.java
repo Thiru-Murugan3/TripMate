@@ -23,6 +23,7 @@ public class TripadvisorService {
     private final TripadvisorBudget budget;
     private final String key;
     private final String referer;
+    private final boolean refererValid;
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TripadvisorService.class);
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -38,9 +39,17 @@ public class TripadvisorService {
         this.client = client;
         this.budget = budget;
         this.key = key == null ? "" : key.trim();
-        this.referer = normalizeReferer(referer);
+        String normalized = "";
+        boolean valid = true;
+        try { normalized = normalizeReferer(referer); }
+        catch (IllegalArgumentException ex) {
+            valid = false;
+            log.warn("Tripadvisor disabled: invalid referer configuration");
+        }
+        this.referer = normalized;
+        this.refererValid = valid;
     }
-    public boolean available() { return !key.isBlank(); }
+    public boolean available() { return !key.isBlank() && refererValid; }
 
     public record Location(String id, String name, String address) {}
     public record Details(String id, String name, String address, String description, String webUrl,
