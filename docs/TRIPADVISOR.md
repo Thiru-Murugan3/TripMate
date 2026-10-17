@@ -63,7 +63,7 @@ Tripadvisor logo appears with its content; aggregate ratings use the API's bubbl
 
 ## Place selection and itinerary
 
-Choose **Particular place**, enter a venue name, and search. Select one result, choose a trip and day, optionally change the default **Planned visit** activity title, then add it. Global Explore lists only OWNER/EDITOR/PLANNER trips. A trip's Explore tab uses its existing planning permission. Server-side permission checks remain authoritative.
+Search for a city (for example Ooty) first. After the city request succeeds, use **Find a particular place in Ooty** beneath the city results. This performs a NAME search with the original city passed as Terra `geo_name` on every page. **All places in Ooty** restores the city search. Editing the city or category clears the nested search and selection. Select one result, choose a trip and day, optionally change the default **Planned visit** activity title, then add it. Global Explore lists only OWNER/EDITOR/PLANNER trips. A trip's Explore tab uses its existing planning permission. Server-side permission checks remain authoritative.
 
 `POST /api/v1/trips/{tripId}/itinerary/tripadvisor-places` accepts only `locationId`, `dayNumber` and the traveller's `title`. The transaction locks the trip, validates the day against trip dates, creates a missing day, appends the item, and returns an existing same-day reference on retry rather than duplicating it. Regular itinerary editing can set times, cost and notes afterward. Linking an independent saved place replaces the Tripadvisor reference; other edits preserve it. Trip duplication retains IDs.
 

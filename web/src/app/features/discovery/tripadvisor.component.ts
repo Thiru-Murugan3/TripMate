@@ -21,8 +21,7 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
         <a href="https://www.tripadvisor.com/" target="_blank" rel="noopener noreferrer"><img class="brand" src="https://files.readme.io/9f59534-Vector_1.png" alt="Tripadvisor" /></a>
       </header>
       <form (ngSubmit)="search()" class="search-form">
-        <label class="category">Search by<select name="searchType" [(ngModel)]="searchType" (ngModelChange)="clear()" [disabled]="saving"><option value="COMBINED">City or area</option><option value="NAME">Particular place</option></select></label>
-        <label>{{ searchType === 'NAME' ? 'Place name' : 'City or place' }}<input [disabled]="saving" name="query" [(ngModel)]="query" (ngModelChange)="clear()" maxlength="180" required [placeholder]="searchType === 'NAME' ? 'e.g. Government Botanical Garden' : 'Ooty, Tamil Nadu, India'" /></label>
+        <label>City or area<input [disabled]="saving" name="query" [(ngModel)]="query" (ngModelChange)="clear()" maxlength="180" required placeholder="Ooty, Tamil Nadu, India" /></label>
         <label class="category">Show<select [disabled]="saving" name="category" [(ngModel)]="category" (ngModelChange)="clear()"><option value="attractions">Things to do</option><option value="hotels">Hotels</option><option value="restaurants">Restaurants</option></select></label>
         <button type="submit" [disabled]="!available || busy || saving || query.trim().length < 2">Search</button>
       </form>
@@ -30,6 +29,12 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
       <div *ngIf="error" role="alert" class="notice"><p>{{ error }}</p><button *ngIf="!available && !checking" type="button" (click)="checkAvailability()">Check connection</button></div>
       <p *ngIf="searched && !busy && !results.length && !error">No accessible places found. Try a more specific name. Terra accounts may need their allowed locations or contracted geography configured.</p>
       <div *ngIf="results.length" class="result-heading"><h2>{{ submittedQuery }}</h2><span>{{ resultSummary }}</span></div>
+      <form *ngIf="cityReady" (ngSubmit)="searchPlace()" class="search-form place-search" aria-label="Search for a place within the city">
+        <label>Find a particular place in {{ submittedQuery }}<input name="placeQuery" [(ngModel)]="placeQuery" [disabled]="saving" maxlength="180" placeholder="e.g. Government Botanical Garden" /></label>
+        <button type="submit" [disabled]="busy || saving || placeQuery.trim().length < 2">Find place</button>
+        <button *ngIf="submittedPlaceQuery" type="button" [disabled]="busy || saving" (click)="showAllPlaces()">All places in {{ submittedQuery }}</button>
+      </form>
+      <p *ngIf="submittedPlaceQuery && cityReady">Results for “{{ submittedPlaceQuery }}” in {{ submittedQuery }}</p>
       <p *ngIf="photoFailure" role="alert" class="notice">{{ photoFailure }}</p>
       <p *ngIf="planningSuccess" role="status" class="notice">{{ planningSuccess }} <a [routerLink]="['/trips', savedTripId]">Open trip ↗</a></p>
       <section *ngIf="selectedPlace as selected" class="plan-panel" aria-label="Add selected place to itinerary">
@@ -85,8 +90,7 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   private itineraryService = inject(ItineraryService);
   private planningRequests = new Subscription();
   private tripsRequest?: Subscription;
-  searchType = 'COMBINED';
-  private submittedSearchType = 'COMBINED';
+  placeQuery = ''; submittedPlaceQuery = ''; cityReady = false;
   selectedPlace: Location | null = null;
   availableTrips: Trip[] = []; activeTripId = 0; selectedDay = 1; activityTitle = 'Planned visit';
   loadingTrips = false; saving = false; planningError = ''; planningSuccess = ''; savedTripId = 0;
@@ -174,13 +178,28 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   }
   clear(): void {
     this.cancelSelection(); this.planningSuccess = '';
+    this.cityReady = false; this.placeQuery = ''; this.submittedPlaceQuery = '';
     this.searchRequest?.unsubscribe(); this.photoRequests.unsubscribe(); this.photoRequests = new Subscription(); this.closeDetails();
     this.busy = false; this.error = ''; this.searched = false; this.page = 1; this.totalElements = null; this.totalPages = null; this.hasNext = false; this.results = []; this.photoStates = {}; this.submittedQuery = '';
   }
   search(): void {
     if (!this.available || this.busy || this.saving || this.query.trim().length < 2) return;
     this.clear(); this.busy = true; this.searched = true; this.submittedQuery = this.query.trim();
-    this.submittedCategory = this.category; this.submittedSearchType = this.searchType;
+    this.submittedCategory = this.category;
+    this.loadPage(1);
+  }
+  searchPlace(): void {
+    if (!this.cityReady || !this.available || this.busy || this.saving || this.placeQuery.trim().length < 2) return;
+    this.submittedPlaceQuery = this.placeQuery.trim(); this.restartWithinCity();
+  }
+  showAllPlaces(): void {
+    if (!this.cityReady || this.busy || this.saving) return;
+    this.placeQuery = ''; this.submittedPlaceQuery = ''; this.restartWithinCity();
+  }
+  private restartWithinCity(): void {
+    this.searchRequest?.unsubscribe(); this.photoRequests.unsubscribe(); this.photoRequests = new Subscription();
+    this.cancelSelection(); this.closeDetails(); this.planningSuccess = ''; this.results = []; this.photoStates = {};
+    this.page = 1; this.totalElements = null; this.totalPages = null; this.hasNext = false;
     this.loadPage(1);
   }
   setPage(page: number): void {
@@ -189,13 +208,14 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   }
   private loadPage(page: number): void {
     this.busy = true; this.error = '';
-    const params = new HttpParams().set('query', this.submittedQuery).set('category', this.submittedCategory)
-      .set('page', page).set('size', this.pageSize).set('searchType', this.submittedSearchType);
+    const params = new HttpParams().set('query', this.submittedPlaceQuery || this.submittedQuery).set('category', this.submittedCategory)
+      .set('page', page).set('size', this.pageSize).set('searchType', this.submittedPlaceQuery ? 'NAME' : 'COMBINED').set('city', this.submittedPlaceQuery ? this.submittedQuery : '');
     this.searchRequest = this.http.get<SearchPage>(`${this.base}/search-page`, {params}).subscribe({
       next: result => {
         this.photoRequests.unsubscribe(); this.photoRequests = new Subscription(); this.closeDetails();
         this.cancelSelection(); this.planningSuccess = '';
         this.photoStates = {}; this.results = result.places; this.page = result.page;
+        this.cityReady = true;
         this.totalElements = result.totalElements; this.totalPages = result.totalPages; this.hasNext = result.hasNext;
         this.busy = false; this.loadVisiblePhotos();
       },
@@ -236,6 +256,7 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
     if (e.error?.code === 'TERRA_ENTITY_LIMIT') return 'The app’s configured Terra entity budget is exhausted. Ask the app owner to review usage.';
     if (e.status === 429) return 'Tripadvisor usage limit reached. Please try later.';
     switch (e.error?.code) {
+      case 'CITY_FILTER_UNAVAILABLE': return 'Searching for a place within a city requires the Terra API connection.';
       case 'TERRA_SETUP_REQUIRED': return 'Terra setup needs a confirmed account allowance and an entity budget before activation.';
       case 'TERRA_AUTHENTICATION': return 'Terra rejected the API key. Check that the key belongs to the Terra account.';
       case 'TERRA_ACCESS_DENIED': return 'This Terra key cannot access the requested endpoint. Check your package and API permissions.';

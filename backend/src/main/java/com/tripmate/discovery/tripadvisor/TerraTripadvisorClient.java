@@ -40,14 +40,22 @@ public class TerraTripadvisorClient {
         return searchPage(query, category, page, size, "COMBINED");
     }
     public SearchPage searchPage(String query, String category, int page, int size, String searchType) {
+        return searchPage(query, category, page, size, searchType, "");
+    }
+    public SearchPage searchPage(String query, String category, int page, int size, String searchType, String city) {
         validatePage(page, size);
+        if (city == null || city.length() > 180 || !city.isBlank() && city.trim().length() < 2)
+            throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Choose a valid city");
         if (!Set.of("COMBINED", "NAME").contains(searchType == null ? "" : searchType))
             throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Unsupported search mode");
         if (query == null || query.trim().length() < 2 || query.length() > 180
                 || category == null || !Set.of("attractions", "hotels", "restaurants").contains(category))
             throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Choose a city or place and a supported category");
         String kind = switch (category) { case "hotels" -> "HOTEL"; case "restaurants" -> "RESTAURANT"; default -> "ATTRACTION"; };
-        JsonNode response = get("/locations/search", size, "query", query.trim(), "search_type", searchType, "country_code", "IN", "category", kind, "page", String.valueOf(page), "size", String.valueOf(size));
+        List<String> params = new ArrayList<>(List.of("query", query.trim(), "search_type", searchType,
+                "country_code", "IN", "category", kind, "page", String.valueOf(page), "size", String.valueOf(size)));
+        if (!city.isBlank()) { params.add("geo_name"); params.add(city.trim()); }
+        JsonNode response = get("/locations/search", size, params.toArray(String[]::new));
         List<Location> locations = new ArrayList<>();
         if (!response.path("data").isArray()) throw invalidResponse();
         for (JsonNode match : response.path("data")) {

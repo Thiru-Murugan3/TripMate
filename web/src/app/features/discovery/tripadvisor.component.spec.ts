@@ -114,10 +114,21 @@ describe('Tripadvisor-only Explore', () => {
   });
 
   const trip = {id:10,name:'Ooty break',destination:'Ooty',startDate:'2026-11-01',endDate:'2026-11-03',userRole:'OWNER'};
-  it('searches a particular place by name without changing city search defaults', () => {
-    fixture.componentInstance.searchType='NAME';fixture.componentInstance.query='Botanical Garden';fixture.componentInstance.search();
-    http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('searchType')==='NAME' && r.params.get('query')==='Botanical Garden')
+  it('shows place search only after a city search and scopes place pages to that city', () => {
+    expect(fixture.nativeElement.querySelector('.place-search')).toBeNull();
+    fixture.componentInstance.placeQuery='Garden';fixture.componentInstance.searchPlace();http.expectNone(r=>r.url===`${base}/search-page`);
+    searchResults();http.expectOne(`${base}/locations/1/photos`).flush([]);fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.place-search').textContent).toContain('Find a particular place in Ooty');
+    fixture.componentInstance.placeQuery='Botanical Garden';fixture.componentInstance.searchPlace();
+    const scoped=(page:string)=>http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('searchType')==='NAME' && r.params.get('query')==='Botanical Garden' && r.params.get('city')==='Ooty' && r.params.get('page')===page);
+    scoped('1').flush({places:[],page:1,size:4,totalElements:5,totalPages:2,hasNext:true});
+    fixture.componentInstance.setPage(2);scoped('2').flush({places:[],page:2,size:4,totalElements:5,totalPages:2,hasNext:false});
+    expect(fixture.componentInstance.query).toBe('Ooty');
+    fixture.componentInstance.showAllPlaces();
+    http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('query')==='Ooty' && r.params.get('searchType')==='COMBINED' && r.params.get('city')==='' && r.params.get('page')==='1')
       .flush({places:[],page:1,size:4,totalElements:0,totalPages:0,hasNext:false});
+    fixture.componentInstance.clear();fixture.detectChanges();expect(fixture.nativeElement.querySelector('.place-search')).toBeNull();
+    expect(fixture.componentInstance.submittedPlaceQuery).toBe('');
   });
   it('selects a place and saves only its identifier and the travellers own plan', () => {
     searchResults();http.expectOne(`${base}/locations/1/photos`).flush([]);
