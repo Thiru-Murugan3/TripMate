@@ -44,6 +44,7 @@ public class PhotonGeocodingProvider implements GeocodingProvider {
         List<GeocodedDestination> results = new ArrayList<>();
         for (JsonNode feature : features) {
             JsonNode properties = feature.path("properties");
+            if (!properties.path("osm_key").asText().matches("place|boundary|natural|landuse")) continue;
             String countryCode = first(properties, "countrycode", "country_code");
             if (!("IN".equalsIgnoreCase(countryCode) || "India".equalsIgnoreCase(properties.path("country").asText()))) continue;
             JsonNode coordinates = feature.path("geometry").path("coordinates");

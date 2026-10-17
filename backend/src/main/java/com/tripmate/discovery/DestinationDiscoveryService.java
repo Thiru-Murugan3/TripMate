@@ -90,7 +90,7 @@ public class DestinationDiscoveryService {
         }
 
         List<DiscoveredPlace> filtered = cached.places().stream()
-                .filter(place -> textMatches(place.name(), filters.name() == null ? null : filters.name().trim()))
+                .filter(place -> placeNameMatches(place.name(), filters.name()))
                 .filter(place -> itemType == null || place.itemType() == itemType)
                 .filter(place -> priceStatus == null || place.priceStatus() == priceStatus
                         && (!(priceStatus == PriceStatus.VERIFIED || priceStatus == PriceStatus.FREE)
@@ -154,13 +154,11 @@ public class DestinationDiscoveryService {
         List<String> attributions = new ArrayList<>();
 
         for (DiscoveryProvider provider : providers) {
-            if (provider instanceof WikidataDiscoveryProvider && placeName.isBlank() && unique.values().stream()
-                    .filter(place -> TouristPlacePriority.rank(place) == 0).count() >= 25) continue;
             try {
                 DiscoveryProviderResult result = provider.discover(request);
                 warnings.addAll(result.warnings());
                 List<DiscoveredPlace> matches = result.places().stream()
-                        .filter(place -> textMatches(place.name(), placeName)).toList();
+                        .filter(place -> placeNameMatches(place.name(), placeName)).toList();
                 if (!matches.isEmpty()) {
                     usedProviders.add(result.provider());
                     if (result.attribution() != null && !result.attribution().isBlank()) attributions.add(result.attribution());
@@ -284,6 +282,11 @@ public class DestinationDiscoveryService {
         if (raw == null || raw.isBlank() || "ALL".equalsIgnoreCase(raw)) return null;
         try { return Enum.valueOf(type, raw.trim().toUpperCase(Locale.ROOT)); }
         catch (IllegalArgumentException ex) { throw bad("Unsupported " + label); }
+    }
+    private boolean placeNameMatches(String actual, String expected) {
+        if (expected == null || expected.isBlank()) return true;
+        String needle = normalize(expected);
+        return actual != null && !needle.isBlank() && normalize(actual).contains(needle);
     }
     private boolean textMatches(String actual, String expected) { return expected == null || expected.isBlank() || actual != null && actual.toLowerCase(Locale.ROOT).contains(expected.toLowerCase(Locale.ROOT)); }
     private int effectiveDuration(DiscoveredPlace place) { return Optional.ofNullable(place.activityDuration()).orElse(Optional.ofNullable(place.suggestedVisitMinutes()).orElse(0)); }

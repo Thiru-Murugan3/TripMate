@@ -13,7 +13,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/** Key-free, bounded landmark fallback; orchestration invokes it only for sparse inventories. */
+/** Key-free, bounded landmark discovery supplementing configured providers. */
 @Component
 @Order(50)
 public class WikidataDiscoveryProvider implements DiscoveryProvider {
@@ -23,7 +23,10 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
             Map.entry("Q23397",DiscoveryCategory.LAKE),Map.entry("Q34038",DiscoveryCategory.WATERFALL),
             Map.entry("Q8502",DiscoveryCategory.NATURE),Map.entry("Q40080",DiscoveryCategory.BEACH),
             Map.entry("Q4989906",DiscoveryCategory.HISTORICAL),Map.entry("Q23413",DiscoveryCategory.HISTORICAL),
-            Map.entry("Q35509",DiscoveryCategory.NATURE),Map.entry("Q839954",DiscoveryCategory.HISTORICAL));
+            Map.entry("Q35509",DiscoveryCategory.NATURE),Map.entry("Q839954",DiscoveryCategory.HISTORICAL),
+            Map.entry("Q16970",DiscoveryCategory.CHURCH),Map.entry("Q4022",DiscoveryCategory.RIVER),
+            Map.entry("Q12323",DiscoveryCategory.NATURE),Map.entry("Q43501",DiscoveryCategory.WILDLIFE),
+            Map.entry("Q179049",DiscoveryCategory.WILDLIFE));
     private static final Pattern ENTITY = Pattern.compile("https?://www\\.wikidata\\.org/entity/(Q[0-9]+)");
     private static final Pattern POINT = Pattern.compile("Point\\(\\s*([-+0-9.eE]+)\\s+([-+0-9.eE]+)\\s*\\)");
     private final RestClient client;
