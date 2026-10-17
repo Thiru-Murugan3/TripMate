@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Subscription, catchError, from, map, mergeMap, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
-interface Location { id: string; name: string; address: string | null; }
+interface Location { id: string; name: string; address: string | null; webUrl?: string | null; }
 interface Details extends Location { description: string | null; webUrl: string | null; ratingImageUrl: string | null; reviewCount: string | null; }
-interface Photo { url: string; caption: string | null; author: string; sourceUrl: string; }
+interface Photo { url: string; caption: string | null; author: string; sourceUrl: string | null; }
 interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
 @Component({
   selector: 'app-tripadvisor', standalone: true, imports: [CommonModule, FormsModule],
@@ -22,18 +22,18 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
       </form>
       <p *ngIf="checking || busy" role="status">{{ checking ? 'Connecting to Tripadvisor…' : 'Finding places…' }}</p>
       <div *ngIf="error" role="alert" class="notice"><p>{{ error }}</p><button *ngIf="!available && !checking" type="button" (click)="checkAvailability()">Check connection</button></div>
-      <p *ngIf="searched && !busy && !results.length && !error">No places found. Try a more specific city or place name.</p>
+      <p *ngIf="searched && !busy && !results.length && !error">No accessible places found. Try a more specific name. Terra accounts may need their allowed locations or contracted geography configured.</p>
       <div *ngIf="results.length" class="result-heading"><h2>{{ submittedQuery }}</h2><span>{{ results.length }} matches from Tripadvisor</span></div>
       <p *ngIf="photoFailure" role="alert" class="notice">{{ photoFailure }}</p>
       <div class="cards">
         <article *ngFor="let place of visiblePlaces; trackBy: trackPlace" class="card">
           <ng-container *ngIf="photoStates[place.id] as state">
-            <figure *ngIf="state.photos[0] as photo; else noPhoto">
-              <img class="place-photo" [src]="photo.url" [alt]="photo.caption || place.name" (error)="hidePhoto(place.id, photo)" />
-              <figcaption><a [href]="photo.sourceUrl" target="_blank" rel="noopener noreferrer">{{ photo.author }} / Tripadvisor ↗</a></figcaption>
+            <figure *ngIf="visiblePhoto(place) as photo; else noPhoto">
+              <a [href]="photoLink(place, photo)" target="_blank" rel="noopener noreferrer"><img class="place-photo" [src]="photo.url" [alt]="photo.caption || place.name" (error)="hidePhoto(place.id, photo)" /></a>
+              <figcaption><a [href]="photoLink(place, photo)" target="_blank" rel="noopener noreferrer">{{ photo.author }} / Tripadvisor ↗</a></figcaption>
             </figure>
             <ng-template #noPhoto><div class="no-photo">{{ state.loading ? 'Loading photo…' : state.error ? 'Photo unavailable' : 'No photo supplied' }}</div></ng-template>
-            <div class="card-body"><h3>{{ place.name }}</h3><p>{{ place.address }}</p>
+            <div class="card-body"><h3><a *ngIf="place.webUrl; else plainName" [href]="place.webUrl" target="_blank" rel="noopener noreferrer">{{ place.name }}</a><ng-template #plainName>{{ place.name }}</ng-template></h3><p>{{ place.address }}</p>
               <button type="button" [disabled]="detailsLoading" (click)="open(place.id)">View details &amp; ratings</button>
               <button *ngIf="state.error && !state.loading" type="button" class="text-button" (click)="retryPhoto(place.id)">Retry photo</button>
             </div>
@@ -47,7 +47,7 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
       <p *ngIf="detailError" role="alert" class="notice">{{ detailError }}</p>
       <article *ngIf="detail as d" class="details" aria-label="Place details">
         <header><h2>{{ d.name }}</h2><button type="button" (click)="closeDetails()">Close details</button></header><p>{{ d.address }}</p>
-        <div *ngIf="d.ratingImageUrl" class="rating"><img class="brand" src="https://files.readme.io/9f59534-Vector_1.png" alt="Tripadvisor" /><img class="bubbles" [src]="d.ratingImageUrl" alt="Tripadvisor traveller rating" /><span *ngIf="d.reviewCount">{{ d.reviewCount }} reviews</span></div>
+        <div *ngIf="d.ratingImageUrl" class="rating"><img class="brand" src="https://files.readme.io/9f59534-Vector_1.png" alt="Tripadvisor" /><img class="bubbles" [src]="d.ratingImageUrl" alt="Tripadvisor traveller rating" /><a *ngIf="d.reviewCount && d.webUrl" [href]="d.webUrl" target="_blank" rel="noopener noreferrer">{{ d.reviewCount }} reviews</a></div>
         <p>{{ d.description }}</p><a *ngIf="d.webUrl" [href]="d.webUrl" target="_blank" rel="noopener noreferrer">View on Tripadvisor ↗</a>
       </article>
       <p class="footnote">Photos are traveller uploads, not live camera images. Entry fees and booking prices should be checked with the venue or booking provider.</p>
@@ -73,8 +73,8 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   ngOnChanges(changes: SimpleChanges): void { if (changes['query'] && !changes['query'].firstChange) this.clear(); }
   checkAvailability(): void {
     this.statusRequest?.unsubscribe(); this.checking = true; this.error = '';
-    this.statusRequest = this.http.get<{available: boolean}>(`${this.base}/status`).subscribe({
-      next: status => { this.checking = false; this.available = status.available; if (!status.available) this.error = 'Tripadvisor is not connected. Please check the app’s API configuration.'; },
+    this.statusRequest = this.http.get<{available: boolean; apiMode?: string; setupCode?: string}>(`${this.base}/status`).subscribe({
+      next: status => { this.checking = false; this.available = status.available; if (!status.available) this.error = status.setupCode === 'TERRA_SETUP_REQUIRED' ? 'Terra setup needs a confirmed account allowance and an entity budget before activation.' : 'Tripadvisor is not connected. Please check the app’s API configuration.'; },
       error: () => { this.checking = false; this.available = false; this.error = 'Unable to connect to Tripadvisor. Please try again.'; }
     });
   }
@@ -119,10 +119,20 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   }
   closeDetails(): void { this.detailRequest?.unsubscribe(); this.detail = null; this.detailsLoading = false; this.detailError = ''; }
   hidePhoto(id: string, photo: Photo): void { const state = this.photoStates[id]; if (state) state.photos = state.photos.filter(p => p !== photo); }
+  photoLink(place: Location, photo: Photo): string { return place.webUrl || photo.sourceUrl || ''; }
+  visiblePhoto(place: Location): Photo | undefined {
+    const photo = this.photoStates[place.id]?.photos[0];
+    return photo && this.photoLink(place, photo) ? photo : undefined;
+  }
   trackPlace(_: number, place: Location): string { return place.id; }
   private errorMessage(e: {status?: number; error?: {code?: string}}): string {
+    if (e.error?.code === 'TERRA_ENTITY_LIMIT') return 'The app’s configured Terra entity budget is exhausted. Ask the app owner to review usage.';
     if (e.status === 429) return 'Tripadvisor usage limit reached. Please try later.';
     switch (e.error?.code) {
+      case 'TERRA_SETUP_REQUIRED': return 'Terra setup needs a confirmed account allowance and an entity budget before activation.';
+      case 'TERRA_AUTHENTICATION': return 'Terra rejected the API key. Check that the key belongs to the Terra account.';
+      case 'TERRA_ACCESS_DENIED': return 'This Terra key cannot access the requested endpoint. Check your package and API permissions.';
+      case 'LOCATION_ACCESS_REQUIRED': return 'This place is unavailable or outside your Terra location access. Check allowed locations or contracted geography.';
       case 'ACCESS_DENIED': return 'Tripadvisor rejected the connection. Check the API key’s allowed domain/IP and Content API v1 access.';
       case 'NOT_CONFIGURED': return 'Tripadvisor is not connected. Please check the app’s API configuration.';
       case 'LOCATION_UNAVAILABLE': return 'This Tripadvisor place is currently unavailable.';

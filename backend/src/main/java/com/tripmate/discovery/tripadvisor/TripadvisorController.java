@@ -15,7 +15,7 @@ import java.util.Map;
 public class TripadvisorController {
     private final TripadvisorService service;
     @GetMapping("/status")
-    public ResponseEntity<Map<String, Boolean>> status() { return live(Map.of("available", service.available())); }
+    public ResponseEntity<Map<String, Object>> status() { return live(Map.of("available", service.available(), "apiMode", service.apiMode(), "setupCode", service.setupCode())); }
     @GetMapping("/search")
     public ResponseEntity<List<TripadvisorService.Location>> search(@RequestParam String query,
             @RequestParam(defaultValue = "attractions") String category) { return live(service.search(query, category)); }

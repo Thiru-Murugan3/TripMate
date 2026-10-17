@@ -24,13 +24,19 @@ public class TripadvisorService {
     private final String key;
     private final String referer;
     private final boolean refererValid;
+    private String apiMode = "LEGACY";
+    private TerraTripadvisorClient terra;
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TripadvisorService.class);
 
     @org.springframework.beans.factory.annotation.Autowired
     public TripadvisorService(ProviderHttpClientFactory factory, TripadvisorBudget budget,
             @Value("${discovery.tripadvisor.api-key:}") String key,
-            @Value("${discovery.tripadvisor.referer:https://www.suttru.in}") String referer) {
+            @Value("${discovery.tripadvisor.referer:https://www.suttru.in}") String referer,
+            @Value("${discovery.tripadvisor.api-mode:LEGACY}") String apiMode,
+            TerraTripadvisorClient terra) {
         this(factory.create(10000), budget, key, referer);
+        this.apiMode = "TERRA".equalsIgnoreCase(apiMode) ? "TERRA" : "LEGACY".equalsIgnoreCase(apiMode) ? "LEGACY" : "UNKNOWN";
+        this.terra = terra;
     }
     TripadvisorService(RestClient client, TripadvisorBudget budget, String key) {
         this(client, budget, key, "https://www.suttru.in");
@@ -49,14 +55,19 @@ public class TripadvisorService {
         this.referer = normalized;
         this.refererValid = valid;
     }
-    public boolean available() { return !key.isBlank() && refererValid; }
+    public boolean available() { return "TERRA".equals(apiMode) ? terra != null && terra.available() : "LEGACY".equals(apiMode) && !key.isBlank() && refererValid; }
+    public String apiMode() { return apiMode; }
+    public String setupCode() { return "TERRA".equals(apiMode) && terra != null ? terra.setupCode() : available() ? "" : "NOT_CONFIGURED"; }
 
-    public record Location(String id, String name, String address) {}
+    public record Location(String id, String name, String address, String webUrl) {
+        public Location(String id, String name, String address) { this(id, name, address, null); }
+    }
     public record Details(String id, String name, String address, String description, String webUrl,
                           String ratingImageUrl, String reviewCount) {}
     public record Photo(String url, String caption, String author, String sourceUrl) {}
 
     public List<Location> search(String query, String category) {
+        if ("TERRA".equals(apiMode)) return terra.search(query, category);
         if (query == null || query.trim().length() < 2 || query.length() > 180
                 || !Set.of("attractions", "hotels", "restaurants").contains(category))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose a destination and a supported category");
@@ -71,6 +82,7 @@ public class TripadvisorService {
         return results;
     }
     public Details details(String id) {
+        if ("TERRA".equals(apiMode)) return terra.details(id);
         validateId(id);
         JsonNode node = get("/" + id + "/details", "currency", "INR");
         return new Details(id, text(node, "name"), text(node.path("address_obj"), "address_string"),
@@ -78,6 +90,7 @@ public class TripadvisorService {
                 safeUrl(text(node, "rating_image_url"), true), text(node, "num_reviews"));
     }
     public List<Photo> photos(String id) {
+        if ("TERRA".equals(apiMode)) return terra.photos(id);
         validateId(id);
         JsonNode response = get("/" + id + "/photos", "limit", "5");
         List<Photo> photos = new ArrayList<>();
