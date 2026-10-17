@@ -1,5 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TopPlacesComponent } from './top-places.component';
 import { provideRouter } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { CombinedPlacesComponent } from './combined-places.component';
@@ -14,7 +16,7 @@ describe('Combined compact Explore', () => {
   const response={query:'Ooty',resolvedDestination:'Ooty, India',places:[place],provider:'Geoapify + OpenTripMap',providersUsed:['Geoapify','OpenTripMap'],attribution:'ODbL',resultCount:25,page:0,size:24,totalPages:2,radiusKm:25};
   let discovery:jasmine.SpyObj<DiscoveryService>, places:jasmine.SpyObj<PlaceService>, itinerary:jasmine.SpyObj<ItineraryService>;
   beforeEach(() => {
-    discovery=jasmine.createSpyObj('DiscoveryService',['discoverPlaces','getSuggestions','getTopPlaces']);discovery.discoverPlaces.and.returnValue(of(response as any));
+    discovery=jasmine.createSpyObj('DiscoveryService',['discoverPlaces','getSuggestions','getTopPlaces']);discovery.discoverPlaces.and.returnValue(of(response as any));discovery.getTopPlaces.and.returnValue(of(response as any));
     places=jasmine.createSpyObj('PlaceService',['getPlaces','createPlace']);places.getPlaces.and.returnValue(of([]));places.createPlace.and.returnValue(of({id:500,name:'Garden',latitude:11.4,longitude:76.7} as any));
     itinerary=jasmine.createSpyObj('ItineraryService',['getItinerary','createDay','createItem']);itinerary.getItinerary.and.returnValue(of({days:[]} as any));itinerary.createDay.and.returnValue(of({id:100,items:[]} as any));itinerary.createItem.and.returnValue(of({id:501} as any));
     TestBed.configureTestingModule({imports:[CombinedPlacesComponent],providers:[provideHttpClient(),provideRouter([]),{provide:DiscoveryService,useValue:discovery},{provide:PlaceService,useValue:places},{provide:ItineraryService,useValue:itinerary},{provide:TripService,useValue:{getMyTrips:()=>of([trip,{...trip,id:20,userRole:'VIEWER'}])}}]});
@@ -45,4 +47,15 @@ describe('Combined compact Explore', () => {
     await c.toggleSelection(place as any);c.searchDestination='Chennai';c.cityChanged();pending.next(response);
     expect(c.result).toBeNull();expect(c.selectedCount).toBe(0);expect(c.isLoading).toBeFalse();fixture.destroy();
   });
+  it('passes trip context into Top 10 and forwards successful itinerary changes', async () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);
+    for(const [key,value] of Object.entries({tripId:10,destination:'Ooty',startDate:trip.startDate,endDate:trip.endDate,canEdit:true}))fixture.componentRef.setInput(key,value);
+    fixture.detectChanges();
+    const c=fixture.componentInstance,changed=spyOn(c.itineraryChanged,'emit');
+    const top=fixture.debugElement.query(By.directive(TopPlacesComponent)).componentInstance as TopPlacesComponent;
+    expect(top.activeTripId).toBe(10);expect(top.canEdit).toBeTrue();expect(top.availableDayNumbers).toEqual([1,2,3]);
+    top.load();await top.toggleSelection(place as any);top.setDayAssignment(place as any,2);await top.saveSelected(true);
+    expect(itinerary.createItem).toHaveBeenCalledWith(10,100,jasmine.objectContaining({placeId:500}));expect(changed).toHaveBeenCalled();expect(c.isSaving).toBeFalse();fixture.destroy();
+  });
+
 });

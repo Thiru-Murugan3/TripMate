@@ -21,7 +21,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
       <p *ngIf="errorMessage" role="alert" class="notice">{{ errorMessage }}</p>
       <p *ngIf="successMessage && !selectedCount" role="status" class="notice">{{ successMessage }}</p>
       <ng-container *ngIf="result as data">
-        <app-top-places *ngIf="!isLoading" [destination]="data.query" [radiusKm]="radiusKm" [disabled]="isSaving" [canFind]="true" (placeRequested)="filterText=$event; discover()" />
+        <app-top-places *ngIf="!isLoading" [destination]="data.query" [radiusKm]="radiusKm" [tripId]="activeTripId" [startDate]="activeStartDate" [endDate]="activeEndDate" [canEdit]="effectiveCanEdit" [disabled]="isSaving" (savingChanged)="isSaving=$event" (placesChanged)="loadSavedPlaces(); placesChanged.emit()" (itineraryChanged)="itineraryChanged.emit()" [canFind]="true" (placeRequested)="filterText=$event; discover()" />
         <div class="result-heading"><h2>{{ data.resolvedDestination }}</h2><span>{{ data.resultCount }} available matches</span></div>
         <form class="search-form" (ngSubmit)="discover()">
           <label>Find a particular place here<input name="placeName" [(ngModel)]="filterText" [disabled]="isSaving" maxlength="180" placeholder="e.g. Botanical Garden" /></label>

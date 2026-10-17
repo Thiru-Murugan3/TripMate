@@ -1,12 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+import { TripService } from '../../core/services/trip.service';
 import { TopPlacesComponent } from './top-places.component';
 const place={externalId:'wikidata:Q1',name:'Ooty Lake',category:'LAKE',distanceKm:2,sourceName:'Wikidata',sourceUrl:'https://www.wikidata.org/wiki/Q1',priceStatus:'UNKNOWN'};
 const response={query:'Ooty',resolvedDestination:'Ooty, India',places:[place],resultCount:1,radiusKm:25,attribution:'Wikidata CC0',warnings:[],totalPages:1};
 describe('Free Top 10 places',()=>{
   let http:HttpTestingController;
-  beforeEach(()=>{TestBed.configureTestingModule({imports:[TopPlacesComponent],providers:[provideHttpClient(),provideHttpClientTesting()]});http=TestBed.inject(HttpTestingController);});
+  beforeEach(()=>{TestBed.configureTestingModule({imports:[TopPlacesComponent],providers:[provideHttpClient(),provideHttpClientTesting(),provideRouter([]),{provide:TripService,useValue:{getMyTrips:()=>of([])}}]});http=TestBed.inject(HttpTestingController);});
   afterEach(()=>http.verify());
   it('loads only on click without Google and displays real source links and the supported count',()=>{
     const f=TestBed.createComponent(TopPlacesComponent);f.componentRef.setInput('destination','Ooty');f.detectChanges();http.expectNone(r=>r.url.includes('top-places'));
