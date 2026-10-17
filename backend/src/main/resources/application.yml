@@ -55,6 +55,11 @@ storage:
     presigned-url-expiration-seconds: ${R2_PRESIGNED_URL_EXPIRATION:3600}
 
 discovery:
+  google-top-places:
+    enabled: ${GOOGLE_TOP_PLACES_ENABLED:false}
+    api-key: ${GOOGLE_TOP_PLACES_API_KEY:}
+    model: ${GOOGLE_TOP_PLACES_MODEL:gemini-3.5-flash-lite}
+    daily-request-limit: ${GOOGLE_TOP_PLACES_DAILY_REQUEST_LIMIT:50}
   nominatim-url: ${DISCOVERY_NOMINATIM_URL:https://nominatim.openstreetmap.org}
   photon-url: ${DISCOVERY_PHOTON_URL:https://photon.komoot.io}
   overpass-urls: ${DISCOVERY_OVERPASS_URLS:${DISCOVERY_OVERPASS_URL:}}
