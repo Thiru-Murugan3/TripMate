@@ -30,6 +30,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
     private final ImageResolverService imageResolver;
     private final WikimediaEnrichmentService wikimediaEnrichment;
     private final int maxResults;
+    private final Map<String, Instant> retryAfter = new java.util.concurrent.ConcurrentHashMap<>();
 
     public OverpassDiscoveryProvider(
             ProviderHttpClientFactory factory,
@@ -37,7 +38,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             ImageResolverService imageResolver,
             WikimediaEnrichmentService wikimediaEnrichment,
             @Value("${discovery.overpass-urls:${discovery.overpass-url:}}") String urls,
-            @Value("${discovery.max-results:200}") int maxResults
+            @Value("${discovery.max-results:500}") int maxResults
     ) {
         this.client = factory.create(Integer.MAX_VALUE);
         this.priceVerification = priceVerification;
@@ -58,17 +59,21 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
         String body = "data=" + URLEncoder.encode(query, StandardCharsets.UTF_8);
         List<String> warnings = new ArrayList<>();
         for (int index = 0; index < endpoints.size(); index++) {
+            if (retryAfter.getOrDefault(endpoints.get(index), Instant.MIN).isAfter(Instant.now())) continue;
             try {
                 JsonNode response = client.post().uri(endpoints.get(index))
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED).body(body)
                         .retrieve().body(JsonNode.class);
+                retryAfter.remove(endpoints.get(index));
                 List<DiscoveredPlace> places = map(response, request);
                 if (!places.isEmpty()) {
+                    if (places.size() >= maxResults) warnings.add("OpenStreetMap reached the configured " + maxResults + "-place inventory limit.");
                     if (index > 0) warnings.add("The primary OpenStreetMap endpoint was unavailable; a global fallback was used.");
                     return new DiscoveryProviderResult(name(), ATTRIBUTION, places, warnings);
                 }
                 log.warn("Overpass endpoint returned no matching elements: index={}", index + 1);
             } catch (RestClientException ex) {
+                retryAfter.put(endpoints.get(index), Instant.now().plusSeconds(120));
                 log.warn("Overpass endpoint failed: index={} error={}", index + 1, ex.getClass().getSimpleName());
             }
         }
@@ -153,7 +158,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
                     + "|" + longitude.setScale(3, RoundingMode.HALF_UP);
             unique.putIfAbsent(key, place);
         }
-        return unique.values().stream().sorted(Comparator.comparingDouble(DiscoveredPlace::distanceKm))
+        return unique.values().stream().sorted(Comparator.comparingInt(TouristPlacePriority::rank).thenComparingDouble(DiscoveredPlace::distanceKm))
                 .limit(maxResults).toList();
     }
 
@@ -334,7 +339,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
     private BigDecimal decimal(String value) { try { return value == null || value.isBlank() ? null : new BigDecimal(value); } catch (NumberFormatException ex) { return null; } }
     private Double decimalDouble(String value) { try { return value == null ? null : Double.valueOf(value); } catch (NumberFormatException ex) { return null; } }
     private Integer integer(JsonNode tags, String key) { try { String value = value(tags, key).replaceAll("[^0-9]", ""); return value.isBlank() ? null : Integer.valueOf(value); } catch (NumberFormatException ex) { return null; } }
-    private String normalize(String value) { return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", ""); }
+    private String normalize(String value) { return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}\\p{M}]", ""); }
     private String slug(String value) { return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", ""); }
     private String title(String value) { return Arrays.stream(value.replace('_', ' ').split("\\s+")).filter(part -> !part.isBlank()).map(part -> part.substring(0, 1).toUpperCase(Locale.ROOT) + part.substring(1)).reduce((a, b) -> a + " " + b).orElse(value); }
     private double round(double value) { return Math.round(value * 10.0) / 10.0; }

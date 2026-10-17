@@ -41,14 +41,27 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
         if (apiKey.isBlank()) return new DiscoveryProviderResult(name(), "", List.of(), List.of("Geoapify is inactive until its backend API key is configured."));
         double lat = request.destination().latitude().doubleValue();
         double lon = request.destination().longitude().doubleValue();
-        URI uri = UriComponentsBuilder.fromUri(URI.create(baseUrl + "/v2/places"))
-                .queryParam("categories", categories(request.category()))
-                .queryParam("filter", "circle:" + lon + "," + lat + "," + request.radiusKm() * 1000)
-                .queryParam("bias", "proximity:" + lon + "," + lat)
-                .queryParam("limit", 100).queryParam("apiKey", apiKey).build().encode().toUri();
-        JsonNode response = client.get().uri(uri).retrieve().body(JsonNode.class);
-        JsonNode features = response == null ? null : response.path("features");
-        if (features == null || !features.isArray()) return new DiscoveryProviderResult(name(), "Geoapify Places API", List.of(), List.of());
+        var features = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.arrayNode();
+        List<String> warnings = new ArrayList<>();
+        for (int offset = 0; offset < 300; offset += 100) {
+            URI uri = UriComponentsBuilder.fromUri(URI.create(baseUrl + "/v2/places"))
+                    .queryParam("categories", categories(request.category()))
+                    .queryParam("filter", "circle:" + lon + "," + lat + "," + request.radiusKm() * 1000)
+                    .queryParam("bias", "proximity:" + lon + "," + lat)
+                    .queryParam("limit", 100).queryParam("offset", offset).queryParam("apiKey", apiKey).build().encode().toUri();
+            try {
+                JsonNode response = client.get().uri(uri).retrieve().body(JsonNode.class);
+                JsonNode page = response == null ? null : response.path("features");
+                if (page == null || !page.isArray()) throw new IllegalStateException("Unsupported Geoapify response");
+                features.addAll((com.fasterxml.jackson.databind.node.ArrayNode) page);
+                if (page.size() < 100) break;
+                if (offset == 200) warnings.add("Geoapify reached the configured 300-place retrieval limit; narrow the category or radius for a more focused search.");
+            } catch (org.springframework.web.client.RestClientException | IllegalStateException ex) {
+                if (features.isEmpty()) throw ex;
+                warnings.add("Additional Geoapify results were unavailable; earlier pages are retained.");
+                break;
+            }
+        }
         List<DiscoveredPlace> places = new ArrayList<>();
         Instant checked = Instant.now();
         for (JsonNode feature : features) {
@@ -80,7 +93,7 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
                     "https://www.geoapify.com/places-api/", checked, null, false, .75, rating, null, 0, null, null, false
             ));
         }
-        return new DiscoveryProviderResult(name(), "Places data © Geoapify and its data providers", places, List.of());
+        return new DiscoveryProviderResult(name(), "Places data © Geoapify and its data providers", places, warnings);
     }
 
     private String categories(DiscoveryCategory category) {

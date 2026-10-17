@@ -20,6 +20,7 @@ describe('Combined compact Explore', () => {
   });
   it('shows a compact single result grid with sources and unknown prices', () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
+    expect(fixture.nativeElement.textContent).toContain('100 km');
     expect(discovery.discoverPlaces).not.toHaveBeenCalled();c.searchDestination='Ooty';c.discover();fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.cards').length).toBe(1);expect(fixture.nativeElement.querySelector('app-india-catalogue')).toBeNull();
     const open=spyOn(window,'open');

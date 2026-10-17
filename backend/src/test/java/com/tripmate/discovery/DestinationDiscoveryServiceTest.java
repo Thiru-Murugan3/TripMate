@@ -134,4 +134,13 @@ class DestinationDiscoveryServiceTest {
     private JsonNode response(String element) throws Exception {
         return objectMapper.readTree("{\"elements\":[" + element + "]}");
     }
+    @Test void doesNotCollapseDifferentTamilNamesAtTheSameCoordinates() throws Exception {
+        var json=new com.fasterxml.jackson.databind.ObjectMapper().readTree("""
+          {"elements":[
+            {"type":"node","id":901,"lat":13.083,"lon":80.271,"tags":{"name":"கோவில்","tourism":"attraction"}},
+            {"type":"node","id":902,"lat":13.083,"lon":80.271,"tags":{"name":"பூங்கா","tourism":"attraction"}}]}
+          """);
+        assertEquals(2,provider.map(json,chennai).size());
+    }
+
 }

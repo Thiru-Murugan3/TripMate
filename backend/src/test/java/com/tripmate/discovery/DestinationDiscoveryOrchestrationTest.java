@@ -207,4 +207,24 @@ class DestinationDiscoveryOrchestrationTest {
         assertEquals(1,response.resultCount());assertEquals("Garden",response.places().get(0).name());
     }
 
+    @Test void attractionsSurviveTheInventoryCapAheadOfNearbyHotels() {
+        var hotels=java.util.stream.IntStream.range(0,30).mapToObj(i -> place("Hotel " + i,1,null,DiscoveryCategory.STAY)).toList();
+        when(primary.discover(any())).thenReturn(new DiscoveryProviderResult("Primary","Attribution",hotels,List.of()));
+        when(fallback.discover(any())).thenReturn(result("Fallback",place("Regional landmark",20,null,DiscoveryCategory.ATTRACTION)));
+        var bounded=new DestinationDiscoveryService(geocoding,List.of(primary,fallback),mock(CuratedDiscoveryRepository.class),mock(CuratedDiscoveryMapper.class),6,60,25);
+        var response=bounded.search("Chennai",25,"ALL");assertEquals(25,response.resultCount());
+        assertTrue(response.places().stream().anyMatch(p -> p.name().equals("Regional landmark")));
+    }
+    @Test void keyFreeLandmarkLookupRunsOnlyWhenTouristInventoryIsSparse() {
+        var wiki=mock(WikidataDiscoveryProvider.class);
+        when(primary.discover(any())).thenReturn(result("Primary",place("First landmark",1,null,DiscoveryCategory.ATTRACTION)));
+        when(wiki.discover(any())).thenReturn(result("Wikidata",place("Extra landmark",2,null,DiscoveryCategory.ATTRACTION)));
+        var recovering=new DestinationDiscoveryService(geocoding,List.of(primary,wiki),mock(CuratedDiscoveryRepository.class),mock(CuratedDiscoveryMapper.class),6,60,500);
+        assertEquals(2,recovering.search("Chennai",25,"ALL").resultCount());
+        clearInvocations(wiki);
+        var enough=java.util.stream.IntStream.range(0,25).mapToObj(i -> place("Landmark " + i,1,null,DiscoveryCategory.ATTRACTION)).toList();
+        when(primary.discover(any())).thenReturn(new DiscoveryProviderResult("Primary","Attribution",enough,List.of()));
+        recovering.search("Chennai south",25,"ALL");verify(wiki,never()).discover(any());
+    }
+
 }
