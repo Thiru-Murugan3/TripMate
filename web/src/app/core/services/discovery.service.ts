@@ -48,6 +48,11 @@ export class DiscoveryService {
     return this.http.get<DestinationDiscoveryResponse>(this.apiUrl, { params });
   }
 
+  getTopPlaces(destination: string, radiusKm=25): Observable<DestinationDiscoveryResponse> {
+    const params = new HttpParams().set('destination',destination.trim()).set('radiusKm',radiusKm);
+    return this.http.get<DestinationDiscoveryResponse>(`${environment.apiUrl}/discovery/top-places`,{params});
+  }
+
   getPlace(externalId: string): Observable<DiscoveredPlace> {
     return this.http.get<DiscoveredPlace>(`${this.apiUrl}/${encodeURIComponent(externalId)}`);
   }

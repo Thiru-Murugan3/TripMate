@@ -1,4 +1,4 @@
-import { GoogleTopPlacesComponent } from './google-top-places.component';
+import { TopPlacesComponent } from './top-places.component';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -15,7 +15,7 @@ interface Details extends Location { description: string | null; webUrl: string 
 interface Photo { url: string; caption: string | null; author: string; sourceUrl: string | null; }
 interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
 @Component({
-  selector: 'app-tripadvisor', standalone: true, imports: [GoogleTopPlacesComponent,CommonModule, FormsModule, RouterLink],
+  selector: 'app-tripadvisor', standalone: true, imports: [TopPlacesComponent,CommonModule, FormsModule, RouterLink],
   template: `
     <section class="explore" aria-labelledby="explore-title">
       <header><div><span class="eyebrow">Explore</span><h1 id="explore-title">Find your next stop</h1><p>Places and traveller photos from Tripadvisor.</p></div>
@@ -29,7 +29,7 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
       <p *ngIf="checking || busy" role="status">{{ checking ? 'Connecting to Tripadvisor…' : 'Finding places…' }}</p>
       <div *ngIf="error" role="alert" class="notice"><p>{{ error }}</p><button *ngIf="!available && !checking" type="button" (click)="checkAvailability()">Check connection</button></div>
       <p *ngIf="searched && !busy && !results.length && !error">No accessible places found. Try a more specific name. Terra accounts may need their allowed locations or contracted geography configured.</p>
-      <app-google-top-places *ngIf="cityReady && !busy" [destination]="submittedQuery" [disabled]="saving" />
+      <app-top-places *ngIf="cityReady && !busy" [destination]="submittedQuery" [disabled]="saving" />
       <div *ngIf="results.length" class="result-heading"><h2>{{ submittedQuery }}</h2><span>{{ resultSummary }}</span></div>
       <form *ngIf="cityReady" (ngSubmit)="searchPlace()" class="search-form place-search" aria-label="Search for a place within the city">
         <label>Find a particular place in {{ submittedQuery }}<input name="placeQuery" [(ngModel)]="placeQuery" [disabled]="saving" maxlength="180" placeholder="e.g. Government Botanical Garden" /></label>

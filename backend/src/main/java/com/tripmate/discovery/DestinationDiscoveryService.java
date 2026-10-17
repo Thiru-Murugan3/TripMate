@@ -66,7 +66,16 @@ public class DestinationDiscoveryService {
         ));
     }
 
+    public DestinationDiscoveryResponse topPlaces(String destination, int radiusKm) {
+        return search(destination, radiusKm, new DiscoverySearchFilters("ALL",null,null,null,null,null,null,null,null,
+                null,null,null,"RELEVANCE",0,10), true);
+    }
+
     public DestinationDiscoveryResponse search(String destination, int radiusKm, DiscoverySearchFilters filters) {
+        return search(destination,radiusKm,filters,false);
+    }
+
+    private DestinationDiscoveryResponse search(String destination, int radiusKm, DiscoverySearchFilters filters, boolean freeOnly) {
         String query = destination == null ? "" : destination.trim();
         validate(query, radiusKm, filters);
         if (filters.name() != null && filters.name().length() > 180) throw bad("Place name is too long");
@@ -75,12 +84,12 @@ public class DestinationDiscoveryService {
         PriceStatus priceStatus = enumValue(PriceStatus.class, filters.priceStatus(), "price status");
         int size = Math.min(filters.size(), 100);
         String placeName = filters.name() == null ? "" : filters.name().trim();
-        String cacheKey = query.toLowerCase(Locale.ROOT) + "|" + radiusKm + "|" + (category == null ? "ALL" : category) + "|name:" + placeName.toLowerCase(Locale.ROOT);
+        String cacheKey = (freeOnly ? "FREE|" : "ALL|") + query.toLowerCase(Locale.ROOT) + "|" + radiusKm + "|" + (category == null ? "ALL" : category) + "|name:" + placeName.toLowerCase(Locale.ROOT);
 
         CacheGeneration generation = caches;
         CachedSearch cached = generation.searches.get(cacheKey);
         if (cached == null) {
-            cached = fetch(query, radiusKm, category, placeName);
+            cached = fetch(query, radiusKm, category, placeName, freeOnly);
             if (!cached.places().isEmpty()) {
                 Instant expiresAt = expiry(cached);
                 generation.searches.put(cacheKey, cached, expiresAt);
@@ -90,6 +99,7 @@ public class DestinationDiscoveryService {
         }
 
         List<DiscoveredPlace> filtered = cached.places().stream()
+                .filter(place -> !freeOnly || highlight(place))
                 .filter(place -> placeNameMatches(place.name(), filters.name()))
                 .filter(place -> itemType == null || place.itemType() == itemType)
                 .filter(place -> priceStatus == null || place.priceStatus() == priceStatus
@@ -106,7 +116,8 @@ public class DestinationDiscoveryService {
                 .filter(place -> filters.minDuration() == null || effectiveDuration(place) >= filters.minDuration())
                 .filter(place -> filters.maxDuration() == null || effectiveDuration(place) <= filters.maxDuration())
                 .filter(place -> filters.minRating() == null || place.rating() != null && place.rating() >= filters.minRating())
-                .sorted(comparator(filters.sort()))
+                .sorted(freeOnly ? highlightOrder() : comparator(filters.sort()))
+                .limit(freeOnly ? 10 : Long.MAX_VALUE)
                 .toList();
 
         int from = Math.min(filters.page() * size, filtered.size());
@@ -145,7 +156,7 @@ public class DestinationDiscoveryService {
                 result.latitude(), result.longitude(), result.provider());
     }
 
-    private CachedSearch fetch(String query, int radiusKm, DiscoveryCategory category, String placeName) {
+    private CachedSearch fetch(String query, int radiusKm, DiscoveryCategory category, String placeName, boolean freeOnly) {
         GeocodedDestination destination = geocodingService.geocode(query);
         DiscoveryProviderRequest request = new DiscoveryProviderRequest(query, destination, radiusKm, category, placeName);
         Map<String, DiscoveredPlace> unique = new LinkedHashMap<>();
@@ -154,6 +165,8 @@ public class DestinationDiscoveryService {
         List<String> attributions = new ArrayList<>();
 
         for (DiscoveryProvider provider : providers) {
+            if (freeOnly && !(provider instanceof CuratedDiscoveryProvider || provider instanceof OverpassDiscoveryProvider
+                    || provider instanceof WikidataDiscoveryProvider)) continue;
             try {
                 DiscoveryProviderResult result = provider.discover(request);
                 warnings.addAll(result.warnings());
@@ -163,7 +176,7 @@ public class DestinationDiscoveryService {
                     usedProviders.add(result.provider());
                     if (result.attribution() != null && !result.attribution().isBlank()) attributions.add(result.attribution());
                 }
-                merge(unique, matches);
+                merge(unique, freeOnly ? matches.stream().filter(this::highlight).toList() : matches);
             } catch (RuntimeException ex) {
                 log.warn("Discovery provider failed: provider={} error={}", provider.name(), ex.getClass().getSimpleName());
                 warnings.add(provider.name() + " was unavailable; partial results are shown.");
@@ -235,6 +248,22 @@ public class DestinationDiscoveryService {
         if (leftName.isBlank() || !leftName.equals(rightName)) return false;
         return haversine(left.latitude().doubleValue(), left.longitude().doubleValue(),
                 right.latitude().doubleValue(), right.longitude().doubleValue()) <= 0.25;
+    }
+
+    private boolean highlight(DiscoveredPlace place) {
+        if (place.sourceUrl()==null || !place.sourceUrl().startsWith("https://")) return false;
+        return switch(place.category()) {
+            case ATTRACTION,NATURE,WATERFALL,LAKE,RIVER,BEACH,VIEWPOINT,TEMPLE,CHURCH,MUSEUM,PARK,
+                    WILDLIFE,ADVENTURE,ENTERTAINMENT,FAMILY,HISTORICAL,CULTURAL -> true;
+            default -> false;
+        };
+    }
+    private Comparator<DiscoveredPlace> highlightOrder() {
+        return Comparator.comparing((DiscoveredPlace place) -> !place.curated())
+                .thenComparing(Comparator.comparingInt((DiscoveredPlace place) -> value(place.popularityScore())).reversed())
+                .thenComparing(Comparator.comparingDouble(DiscoveredPlace::confidenceScore).reversed())
+                .thenComparingDouble(DiscoveredPlace::distanceKm)
+                .thenComparing(DiscoveredPlace::name,String.CASE_INSENSITIVE_ORDER);
     }
 
     private Comparator<DiscoveredPlace> comparator(String value) {

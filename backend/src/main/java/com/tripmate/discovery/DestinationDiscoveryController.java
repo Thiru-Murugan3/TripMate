@@ -49,6 +49,12 @@ public class DestinationDiscoveryController {
         );
     }
 
+    @GetMapping("/top-places")
+    public ResponseEntity<DestinationDiscoveryResponse> topPlaces(@RequestParam String destination,
+            @RequestParam(defaultValue = "25") int radiusKm) {
+        return ResponseEntity.ok(destinationDiscoveryService.topPlaces(destination,radiusKm));
+    }
+
     @GetMapping("/places/{externalId}")
     public ResponseEntity<DiscoveredPlace> getPlace(@PathVariable String externalId) {
         return ResponseEntity.ok(destinationDiscoveryService.findByExternalId(externalId));

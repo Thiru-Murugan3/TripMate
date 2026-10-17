@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { GoogleTopPlacesComponent } from './google-top-places.component';
+import { TopPlacesComponent } from './top-places.component';
 import { DestinationDiscoveryComponent } from './destination-discovery.component';
 
 /** Compact view reusing existing discovery, credited media and itinerary selection/save logic. */
 @Component({
-  selector:'app-combined-places', standalone:true, imports:[CommonModule,FormsModule,RouterLink,GoogleTopPlacesComponent],
+  selector:'app-combined-places', standalone:true, imports:[CommonModule,FormsModule,RouterLink,TopPlacesComponent],
   template:`
     <section class="explore">
       <header><h1>Explore places</h1><p>Find places, choose your trip day and build your itinerary.</p></header>
@@ -21,7 +21,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
       <p *ngIf="errorMessage" role="alert" class="notice">{{ errorMessage }}</p>
       <p *ngIf="successMessage && !selectedCount" role="status" class="notice">{{ successMessage }}</p>
       <ng-container *ngIf="result as data">
-        <app-google-top-places *ngIf="!isLoading" [destination]="data.query" [disabled]="isSaving" />
+        <app-top-places *ngIf="!isLoading" [destination]="data.query" [radiusKm]="radiusKm" [disabled]="isSaving" [canFind]="true" (placeRequested)="filterText=$event; discover()" />
         <div class="result-heading"><h2>{{ data.resolvedDestination }}</h2><span>{{ data.resultCount }} available matches</span></div>
         <form class="search-form" (ngSubmit)="discover()">
           <label>Find a particular place here<input name="placeName" [(ngModel)]="filterText" [disabled]="isSaving" maxlength="180" placeholder="e.g. Botanical Garden" /></label>
