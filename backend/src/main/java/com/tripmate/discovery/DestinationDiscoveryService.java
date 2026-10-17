@@ -37,7 +37,7 @@ public class DestinationDiscoveryService {
     }
 
     private static final class CacheGeneration {
-        final ExpiringCache<String, CachedSearch> searches = new ExpiringCache<>(256);
+        final ExpiringCache<String, CachedSearch> searches = new ExpiringCache<>(64);
         final ExpiringCache<String, DiscoveredPlace> details = new ExpiringCache<>(5000);
     }
 
@@ -48,7 +48,7 @@ public class DestinationDiscoveryService {
             CuratedDiscoveryMapper curatedMapper,
             @Value("${discovery.static-cache-hours:6}") long staticCacheHours,
             @Value("${discovery.price-cache-minutes:${discovery.cache-minutes:60}}") long priceCacheMinutes,
-            @Value("${discovery.max-results:200}") int maxResults
+            @Value("${discovery.max-results:500}") int maxResults
     ) {
         this.geocodingService = geocodingService;
         this.providers = List.copyOf(providers);
@@ -153,6 +153,8 @@ public class DestinationDiscoveryService {
         List<String> attributions = new ArrayList<>();
 
         for (DiscoveryProvider provider : providers) {
+            if (provider instanceof WikidataDiscoveryProvider && unique.values().stream()
+                    .filter(place -> TouristPlacePriority.rank(place) == 0).count() >= 25) continue;
             try {
                 DiscoveryProviderResult result = provider.discover(request);
                 warnings.addAll(result.warnings());
@@ -169,7 +171,8 @@ public class DestinationDiscoveryService {
         if (unique.isEmpty()) warnings.add("No source-backed listings were returned. Suttru did not generate placeholder activities.");
         warnings.add("Prices and opening hours may change. Confirm with the linked official provider before travelling.");
         if (unique.size() > maxResults) warnings.add("The configured " + maxResults + "-place search limit was reached. Narrow the category or radius for more focused results.");
-        List<DiscoveredPlace> places = unique.values().stream().limit(maxResults).toList();
+        List<DiscoveredPlace> places = unique.values().stream().sorted(Comparator.comparingInt(TouristPlacePriority::rank)
+                .thenComparingDouble(DiscoveredPlace::distanceKm)).limit(maxResults).toList();
         return new CachedSearch(Instant.now(), destination, places, List.copyOf(usedProviders),
                 List.copyOf(new LinkedHashSet<>(warnings)), List.copyOf(new LinkedHashSet<>(attributions)));
     }
@@ -181,6 +184,8 @@ public class DestinationDiscoveryService {
         if (cached.places().stream().anyMatch(place -> place.openNow() != null)) {
             expiry = earlier(expiry, cached.createdAt().plusSeconds(60));
         }
+        if (cached.warnings().stream().anyMatch(w -> w.contains("unavailable")))
+            expiry = earlier(expiry, cached.createdAt().plusSeconds(120));
         for (DiscoveredPlace place : cached.places()) {
             if (place.verificationExpiresAt() != null && place.verificationExpiresAt().isAfter(cached.createdAt()))
                 expiry = earlier(expiry, place.verificationExpiresAt());

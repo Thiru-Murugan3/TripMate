@@ -13,7 +13,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
       <form class="search-form" (ngSubmit)="discover()">
         <label>City or area<input name="destination" [(ngModel)]="searchDestination" (ngModelChange)="cityChanged()" [disabled]="isSaving" maxlength="180" placeholder="Ooty, Tamil Nadu" required /></label>
         <label>Show<select name="category" [(ngModel)]="category" [disabled]="isSaving"><option value="ALL">Places & activities</option><option value="FOOD">Restaurants</option><option value="STAY">Hotels</option></select></label>
-        <label>Within<select name="radius" [(ngModel)]="radiusKm" [disabled]="isSaving"><option [ngValue]="10">10 km</option><option [ngValue]="25">25 km</option><option [ngValue]="50">50 km</option></select></label>
+        <label>Within<select name="radius" [(ngModel)]="radiusKm" [disabled]="isSaving"><option [ngValue]="10">10 km</option><option [ngValue]="25">25 km</option><option [ngValue]="50">50 km</option><option [ngValue]="100">100 km · wider region</option></select></label>
         <button [disabled]="isLoading || isSaving || searchDestination.trim().length < 2">Search</button>
       </form>
       <p *ngIf="isLoading" role="status">Finding places from configured sources…</p>
