@@ -74,12 +74,13 @@ public class DestinationDiscoveryService {
         DiscoveryItemType itemType = enumValue(DiscoveryItemType.class, filters.itemType(), "item type");
         PriceStatus priceStatus = enumValue(PriceStatus.class, filters.priceStatus(), "price status");
         int size = Math.min(filters.size(), 100);
-        String cacheKey = query.toLowerCase(Locale.ROOT) + "|" + radiusKm + "|" + (category == null ? "ALL" : category);
+        String placeName = filters.name() == null ? "" : filters.name().trim();
+        String cacheKey = query.toLowerCase(Locale.ROOT) + "|" + radiusKm + "|" + (category == null ? "ALL" : category) + "|name:" + placeName.toLowerCase(Locale.ROOT);
 
         CacheGeneration generation = caches;
         CachedSearch cached = generation.searches.get(cacheKey);
         if (cached == null) {
-            cached = fetch(query, radiusKm, category);
+            cached = fetch(query, radiusKm, category, placeName);
             if (!cached.places().isEmpty()) {
                 Instant expiresAt = expiry(cached);
                 generation.searches.put(cacheKey, cached, expiresAt);
@@ -89,7 +90,7 @@ public class DestinationDiscoveryService {
         }
 
         List<DiscoveredPlace> filtered = cached.places().stream()
-                .filter(place -> textMatches(place.name(), filters.name() == null ? null : filters.name().trim()))
+                .filter(place -> placeNameMatches(place.name(), filters.name()))
                 .filter(place -> itemType == null || place.itemType() == itemType)
                 .filter(place -> priceStatus == null || place.priceStatus() == priceStatus
                         && (!(priceStatus == PriceStatus.VERIFIED || priceStatus == PriceStatus.FREE)
@@ -144,25 +145,25 @@ public class DestinationDiscoveryService {
                 result.latitude(), result.longitude(), result.provider());
     }
 
-    private CachedSearch fetch(String query, int radiusKm, DiscoveryCategory category) {
+    private CachedSearch fetch(String query, int radiusKm, DiscoveryCategory category, String placeName) {
         GeocodedDestination destination = geocodingService.geocode(query);
-        DiscoveryProviderRequest request = new DiscoveryProviderRequest(query, destination, radiusKm, category);
+        DiscoveryProviderRequest request = new DiscoveryProviderRequest(query, destination, radiusKm, category, placeName);
         Map<String, DiscoveredPlace> unique = new LinkedHashMap<>();
         List<String> usedProviders = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
         List<String> attributions = new ArrayList<>();
 
         for (DiscoveryProvider provider : providers) {
-            if (provider instanceof WikidataDiscoveryProvider && unique.values().stream()
-                    .filter(place -> TouristPlacePriority.rank(place) == 0).count() >= 25) continue;
             try {
                 DiscoveryProviderResult result = provider.discover(request);
                 warnings.addAll(result.warnings());
-                if (!result.places().isEmpty()) {
+                List<DiscoveredPlace> matches = result.places().stream()
+                        .filter(place -> placeNameMatches(place.name(), placeName)).toList();
+                if (!matches.isEmpty()) {
                     usedProviders.add(result.provider());
                     if (result.attribution() != null && !result.attribution().isBlank()) attributions.add(result.attribution());
                 }
-                merge(unique, result.places());
+                merge(unique, matches);
             } catch (RuntimeException ex) {
                 log.warn("Discovery provider failed: provider={} error={}", provider.name(), ex.getClass().getSimpleName());
                 warnings.add(provider.name() + " was unavailable; partial results are shown.");
@@ -281,6 +282,11 @@ public class DestinationDiscoveryService {
         if (raw == null || raw.isBlank() || "ALL".equalsIgnoreCase(raw)) return null;
         try { return Enum.valueOf(type, raw.trim().toUpperCase(Locale.ROOT)); }
         catch (IllegalArgumentException ex) { throw bad("Unsupported " + label); }
+    }
+    private boolean placeNameMatches(String actual, String expected) {
+        if (expected == null || expected.isBlank()) return true;
+        String needle = normalize(expected);
+        return actual != null && !needle.isBlank() && normalize(actual).contains(needle);
     }
     private boolean textMatches(String actual, String expected) { return expected == null || expected.isBlank() || actual != null && actual.toLowerCase(Locale.ROOT).contains(expected.toLowerCase(Locale.ROOT)); }
     private int effectiveDuration(DiscoveredPlace place) { return Optional.ofNullable(place.activityDuration()).orElse(Optional.ofNullable(place.suggestedVisitMinutes()).orElse(0)); }

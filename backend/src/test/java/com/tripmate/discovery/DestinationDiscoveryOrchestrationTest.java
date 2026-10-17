@@ -215,7 +215,7 @@ class DestinationDiscoveryOrchestrationTest {
         var response=bounded.search("Chennai",25,"ALL");assertEquals(25,response.resultCount());
         assertTrue(response.places().stream().anyMatch(p -> p.name().equals("Regional landmark")));
     }
-    @Test void keyFreeLandmarkLookupRunsOnlyWhenTouristInventoryIsSparse() {
+    @Test void keyFreeLandmarkLookupAlsoAugmentsAnAlreadyPopulatedInventory() {
         var wiki=mock(WikidataDiscoveryProvider.class);
         when(primary.discover(any())).thenReturn(result("Primary",place("First landmark",1,null,DiscoveryCategory.ATTRACTION)));
         when(wiki.discover(any())).thenReturn(result("Wikidata",place("Extra landmark",2,null,DiscoveryCategory.ATTRACTION)));
@@ -224,7 +224,32 @@ class DestinationDiscoveryOrchestrationTest {
         clearInvocations(wiki);
         var enough=java.util.stream.IntStream.range(0,25).mapToObj(i -> place("Landmark " + i,1,null,DiscoveryCategory.ATTRACTION)).toList();
         when(primary.discover(any())).thenReturn(new DiscoveryProviderResult("Primary","Attribution",enough,List.of()));
-        recovering.search("Chennai south",25,"ALL");verify(wiki,never()).discover(any());
+        recovering.search("Chennai south",25,"ALL");verify(wiki).discover(any());
+    }
+
+    @Test void namedLookupBypassesBroadInventoryAndKeepsSeparateCachesAndDetails() {
+        var wiki=mock(WikidataDiscoveryProvider.class);
+        var enough=java.util.stream.IntStream.range(0,30).mapToObj(i -> place("Landmark " + i,1,null,DiscoveryCategory.ATTRACTION)).toList();
+        when(primary.discover(any())).thenReturn(new DiscoveryProviderResult("Primary","Attribution",enough,List.of()));
+        when(wiki.discover(any())).thenReturn(result("Wikidata",place("Edakkal Caves",10,null,DiscoveryCategory.NATURE)));
+        var recovering=new DestinationDiscoveryService(geocoding,List.of(primary,wiki),mock(CuratedDiscoveryRepository.class),mock(CuratedDiscoveryMapper.class),6,60,25);
+        assertEquals(25,recovering.search("Wayanadu",25,"ALL").resultCount());
+        verify(wiki).discover(any());
+        clearInvocations(wiki);
+        var filters=new DiscoverySearchFilters("ALL",null,null,null,null,null,null,null,null,null,null,null,"NAME",0,24,"Edakkal Caves");
+        var response=recovering.search("Wayanadu",25,filters);
+        assertEquals(1,response.resultCount());assertEquals("Edakkal Caves",response.places().getFirst().name());
+        verify(wiki).discover(argThat(request -> request.placeName().equals("Edakkal Caves") && request.query().equals("Wayanadu") && request.radiusKm()==25));
+        assertEquals(response.places().getFirst(),recovering.findByExternalId(response.places().getFirst().externalId()));
+        recovering.search("Wayanadu",25,filters);verify(wiki,times(1)).discover(any());
+        assertEquals(25,recovering.search("Wayanadu",25,"ALL").resultCount());
+    }
+
+    @Test void punctuationInPlaceNamesDoesNotHideSourceMatches() {
+        when(primary.discover(any())).thenReturn(result("Primary",place("Coaker's Walk",2,null,DiscoveryCategory.VIEWPOINT)));
+        when(fallback.discover(any())).thenReturn(result("Fallback"));
+        var response=service.search("Kodaikanal",25,new DiscoverySearchFilters("ALL",null,null,null,null,null,null,null,null,null,null,null,"NAME",0,24,"Coakers Walk"));
+        assertEquals(1,response.resultCount());assertEquals("Coaker's Walk",response.places().getFirst().name());
     }
 
 }

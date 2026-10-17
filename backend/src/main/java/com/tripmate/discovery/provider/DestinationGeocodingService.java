@@ -34,6 +34,7 @@ public class DestinationGeocodingService {
     }
 
     public GeocodedDestination geocode(String query) {
+        query = canonicalQuery(query);
         String key = query.trim().toLowerCase(Locale.ROOT);
         CachedDestination cached = cache.get(key);
         if (cached != null && cached.createdAt().plus(cacheDuration).isAfter(Instant.now())) return cached.value();
@@ -61,7 +62,7 @@ public class DestinationGeocodingService {
         Map<String, DiscoverySuggestion> unique = new LinkedHashMap<>();
         for (GeocodingProvider provider : providers) {
             try {
-                for (DiscoverySuggestion suggestion : provider.suggest(query, limit)) {
+                for (DiscoverySuggestion suggestion : provider.suggest(canonicalQuery(query), limit)) {
                     String key = suggestion.label().toLowerCase(Locale.ROOT);
                     unique.putIfAbsent(key, suggestion);
                     if (unique.size() >= limit) return List.copyOf(unique.values());
@@ -87,6 +88,13 @@ public class DestinationGeocodingService {
             }
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No Indian destination was found for these coordinates");
+    }
+
+    // Common district spelling: avoid an unrelated business named "Wayanadu" winning geocoding.
+    private String canonicalQuery(String query) {
+        String clean = query.trim();
+        if (clean.equalsIgnoreCase("Wayanadu") || clean.equalsIgnoreCase("Wayanad")) return "Wayanad, Kerala";
+        return clean.replaceFirst("(?i)^wayanadu(?=\\s*,)", "Wayanad");
     }
 
     private record CachedDestination(Instant createdAt, GeocodedDestination value) {

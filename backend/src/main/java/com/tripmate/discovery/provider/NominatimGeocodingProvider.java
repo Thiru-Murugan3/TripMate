@@ -19,6 +19,7 @@ import java.util.Optional;
 public class NominatimGeocodingProvider implements GeocodingProvider {
     private final RestClient client;
     private final String baseUrl;
+    private long nextPublicRequestNanos;
 
     public NominatimGeocodingProvider(
             ProviderHttpClientFactory factory,
@@ -32,11 +33,13 @@ public class NominatimGeocodingProvider implements GeocodingProvider {
 
     @Override
     public Optional<GeocodedDestination> geocode(String query) {
-        return search(query, 1).stream().findFirst();
+        return search(query, 8).stream().findFirst();
     }
 
     @Override
     public List<DiscoverySuggestion> suggest(String query, int limit) {
+        // Public Nominatim forbids autocomplete; the existing Photon provider supplies suggestions.
+        if ("nominatim.openstreetmap.org".equalsIgnoreCase(URI.create(baseUrl).getHost())) return List.of();
         return search(query, limit).stream().map(result -> new DiscoverySuggestion(
                 result.displayName(), result.city(), result.district(), result.state(),
                 result.latitude(), result.longitude(), name()
@@ -48,6 +51,7 @@ public class NominatimGeocodingProvider implements GeocodingProvider {
         URI uri = UriComponentsBuilder.fromUri(ProviderUrlSupport.uri(baseUrl, "/reverse"))
                 .queryParam("lat", latitude).queryParam("lon", longitude).queryParam("format", "jsonv2")
                 .queryParam("addressdetails", 1).build().encode().toUri();
+        reservePublicRequest();
         JsonNode node = client.get().uri(uri).retrieve().body(JsonNode.class);
         if (node == null || node.path("error").isTextual()) return Optional.empty();
         JsonNode address = node.path("address");
@@ -62,6 +66,7 @@ public class NominatimGeocodingProvider implements GeocodingProvider {
                 .queryParam("q", query + ", India").queryParam("format", "jsonv2")
                 .queryParam("countrycodes", "in").queryParam("limit", Math.max(1, Math.min(limit, 8)))
                 .queryParam("addressdetails", 1).build().encode().toUri();
+        reservePublicRequest();
         JsonNode response = client.get()
                 .uri(uri)
                 .retrieve().body(JsonNode.class);
@@ -70,6 +75,7 @@ public class NominatimGeocodingProvider implements GeocodingProvider {
         for (JsonNode node : response) {
             BigDecimal lat = decimal(node.path("lat").asText(null));
             BigDecimal lon = decimal(node.path("lon").asText(null));
+            if (!isDestinationArea(node.path("category").asText(node.path("class").asText()))) continue;
             JsonNode address = node.path("address");
             if (lat == null || lon == null || !"in".equalsIgnoreCase(address.path("country_code").asText("in"))) continue;
             results.add(new GeocodedDestination(lat, lon, node.path("display_name").asText(query),
@@ -80,6 +86,17 @@ public class NominatimGeocodingProvider implements GeocodingProvider {
         return List.copyOf(results);
     }
 
+    // Single-instance aggregate limit. A busy public endpoint falls back through the existing geocoder chain.
+    private synchronized void reservePublicRequest() {
+        if (!"nominatim.openstreetmap.org".equalsIgnoreCase(URI.create(baseUrl).getHost())) return;
+        long now = System.nanoTime();
+        if (nextPublicRequestNanos != 0 && now - nextPublicRequestNanos < 0)
+            throw new org.springframework.web.client.RestClientException("Public destination geocoder is rate limited");
+        nextPublicRequestNanos = now + 1_000_000_000L;
+    }
+    private boolean isDestinationArea(String key) {
+        return key.matches("place|boundary|natural|landuse");
+    }
     private String first(JsonNode node, String... names) {
         for (String name : names) if (!node.path(name).asText("").isBlank()) return node.path(name).asText();
         return null;

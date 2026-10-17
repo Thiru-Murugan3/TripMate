@@ -13,16 +13,20 @@ import java.time.Instant;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/** Key-free, bounded landmark fallback; orchestration invokes it only for sparse inventories. */
+/** Key-free, bounded landmark discovery supplementing configured providers. */
 @Component
 @Order(50)
 public class WikidataDiscoveryProvider implements DiscoveryProvider {
-    private static final Map<String,DiscoveryCategory> KINDS = Map.of(
-            "Q570116",DiscoveryCategory.ATTRACTION,"Q33506",DiscoveryCategory.MUSEUM,
-            "Q44539",DiscoveryCategory.TEMPLE,"Q22698",DiscoveryCategory.PARK,
-            "Q23397",DiscoveryCategory.LAKE,"Q34038",DiscoveryCategory.WATERFALL,
-            "Q8502",DiscoveryCategory.NATURE,"Q40080",DiscoveryCategory.BEACH,
-            "Q4989906",DiscoveryCategory.HISTORICAL,"Q23413",DiscoveryCategory.HISTORICAL);
+    private static final Map<String,DiscoveryCategory> KINDS = Map.ofEntries(
+            Map.entry("Q570116",DiscoveryCategory.ATTRACTION),Map.entry("Q33506",DiscoveryCategory.MUSEUM),
+            Map.entry("Q44539",DiscoveryCategory.TEMPLE),Map.entry("Q22698",DiscoveryCategory.PARK),
+            Map.entry("Q23397",DiscoveryCategory.LAKE),Map.entry("Q34038",DiscoveryCategory.WATERFALL),
+            Map.entry("Q8502",DiscoveryCategory.NATURE),Map.entry("Q40080",DiscoveryCategory.BEACH),
+            Map.entry("Q4989906",DiscoveryCategory.HISTORICAL),Map.entry("Q23413",DiscoveryCategory.HISTORICAL),
+            Map.entry("Q35509",DiscoveryCategory.NATURE),Map.entry("Q839954",DiscoveryCategory.HISTORICAL),
+            Map.entry("Q16970",DiscoveryCategory.CHURCH),Map.entry("Q4022",DiscoveryCategory.RIVER),
+            Map.entry("Q12323",DiscoveryCategory.NATURE),Map.entry("Q43501",DiscoveryCategory.WILDLIFE),
+            Map.entry("Q179049",DiscoveryCategory.WILDLIFE));
     private static final Pattern ENTITY = Pattern.compile("https?://www\\.wikidata\\.org/entity/(Q[0-9]+)");
     private static final Pattern POINT = Pattern.compile("Point\\(\\s*([-+0-9.eE]+)\\s+([-+0-9.eE]+)\\s*\\)");
     private final RestClient client;
@@ -37,18 +41,22 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
         var kinds=KINDS.entrySet().stream().filter(e -> request.category()==null || e.getValue()==request.category())
                 .map(e -> "wd:"+e.getKey()).sorted().toList();
         if(kinds.isEmpty() || !request.destination().isIndia()) return new DiscoveryProviderResult(name(),"",List.of(),List.of());
+        String nameClause = request.placeName() == null || request.placeName().isBlank() ? ""
+                : "?item rdfs:label ?matchedName . FILTER(CONTAINS(LCASE(STR(?matchedName)), "
+                    + sparqlString(request.placeName().trim().toLowerCase(Locale.ROOT)) + "))";
         String query="""
           SELECT DISTINCT ?item ?itemLabel ?location ?distance ?kind WHERE {
             SERVICE wikibase:around {
               ?item wdt:P625 ?location .
               bd:serviceParam wikibase:center "Point(%s %s)"^^geo:wktLiteral ; wikibase:radius "%d" ; wikibase:distance ?distance .
             }
+            %s
             VALUES ?kind { %s }
             ?item wdt:P31/wdt:P279* ?kind .
             FILTER NOT EXISTS { ?item wdt:P17 ?country . FILTER(?country != wd:Q668) }
             SERVICE wikibase:label { bd:serviceParam wikibase:language "en,ta" . }
           } ORDER BY ?distance LIMIT 200
-          """.formatted(request.destination().longitude().toPlainString(),request.destination().latitude().toPlainString(),request.radiusKm(),String.join(" ",kinds));
+          """.formatted(request.destination().longitude().toPlainString(),request.destination().latitude().toPlainString(),request.radiusKm(),nameClause,String.join(" ",kinds));
         var uri=UriComponentsBuilder.fromUriString("https://query.wikidata.org/sparql")
                 .queryParam("query",query).queryParam("format","json").build().encode().toUri();
         JsonNode response=client.get().uri(uri).header("Accept","application/sparql-results+json").retrieve().body(JsonNode.class);
@@ -79,6 +87,16 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
         }
         return new DiscoveryProviderResult(name(),"Wikidata CC0; Wikimedia Commons photos where individually credited",List.copyOf(places.values()),
                 rows.size()>=200?List.of("Wikidata reached its 200-row query limit; this is not a complete destination inventory."):List.of());
+    }
+    // Encode user input as a SPARQL string literal, never as query syntax.
+    private String sparqlString(String value) {
+        StringBuilder out = new StringBuilder("\"");
+        for (char c : value.toCharArray()) {
+            if (c == '\\' || c == '"') out.append('\\').append(c);
+            else if (c < 32 || c == 127) out.append(String.format("\\u%04x", (int)c));
+            else out.append(c);
+        }
+        return out.append('"').toString();
     }
     private String value(JsonNode row,String key){return row.path(key).path("value").asText("");}
     private double distance(double a,double b,double c,double d){

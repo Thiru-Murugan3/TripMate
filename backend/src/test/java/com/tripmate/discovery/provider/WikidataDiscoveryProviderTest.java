@@ -40,4 +40,28 @@ class WikidataDiscoveryProviderTest {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();server.expect(anything()).andRespond(withSuccess("{}",MediaType.APPLICATION_JSON));
         assertThrows(IllegalStateException.class,()->new WikidataDiscoveryProvider(builder.build(),mock(WikimediaEnrichmentService.class)).discover(request(null)));server.verify();
     }
+    @Test void namedLookupFiltersAtTheSourceAndIncludesCavesBeforeTheRowLimit() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+        server.expect(anything()).andExpect(request -> {
+            String query=org.springframework.web.util.UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams().getFirst("query");
+            query=java.net.URLDecoder.decode(query,java.nio.charset.StandardCharsets.UTF_8);
+            assertTrue(query.contains("wd:Q35509"));assertTrue(query.contains("wd:Q839954"));
+            assertTrue(query.contains("FILTER(CONTAINS(LCASE(STR(?matchedName)), \"edakkal caves\"))"));
+            assertTrue(query.indexOf("?matchedName") < query.indexOf("LIMIT 200"));
+        }).andRespond(withSuccess("{\"results\":{\"bindings\":["+row("Q2372682","Edakkal Caves","Point(76.230541 11.631499)").replace("Q33506","Q35509")+","+row("Q999","Unrelated distant cave","Point(80 13)")+ "]}}",MediaType.APPLICATION_JSON));
+        var req=new DiscoveryProviderRequest("Wayanadu",new GeocodedDestination(new BigDecimal("11.7"),new BigDecimal("76.1"),"Wayanad, Kerala, India",null,"Wayanad","Kerala","IN","Test"),25,null,"Edakkal Caves");
+        var result=new WikidataDiscoveryProvider(builder.build(),mock(WikimediaEnrichmentService.class)).discover(req);
+        assertEquals(1,result.places().size());assertEquals("wikidata:Q2372682",result.places().getFirst().externalId());
+        assertEquals(DiscoveryCategory.NATURE,result.places().getFirst().category());server.verify();
+    }
+    @Test void namedLookupEscapesQuotesBackslashesAndControlCharacters() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+        server.expect(anything()).andExpect(request -> {
+            String query=java.net.URLDecoder.decode(org.springframework.web.util.UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams().getFirst("query"),java.nio.charset.StandardCharsets.UTF_8);
+            assertTrue(query.contains("\\\""));assertTrue(query.contains("\\\\"));assertTrue(query.contains("\\u000a"));
+        }).andRespond(withSuccess("{\"results\":{\"bindings\":[]}}",MediaType.APPLICATION_JSON));
+        var base=request(null);
+        new WikidataDiscoveryProvider(builder.build(),mock(WikimediaEnrichmentService.class)).discover(new DiscoveryProviderRequest(base.query(),base.destination(),25,null,"cave \" \\ \n end"));server.verify();
+    }
+
 }
