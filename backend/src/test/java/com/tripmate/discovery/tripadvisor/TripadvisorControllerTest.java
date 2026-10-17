@@ -19,6 +19,7 @@ class TripadvisorControllerTest {
                 .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(jsonPath("$[0].name").value("Garden"));
         mvc.perform(get("/api/v1/discovery/tripadvisor/locations/123"))
-                .andExpect(status().isTooManyRequests()).andExpect(header().string("Cache-Control", "no-store"));
+                .andExpect(status().isTooManyRequests()).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.code").value("USAGE_LIMIT"));
     }
 }

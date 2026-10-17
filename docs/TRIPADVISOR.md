@@ -1,34 +1,42 @@
-# Tripadvisor live lookup
+# Tripadvisor-only Explore
 
-Explore → **Tripadvisor photos & ratings** opens a compact, keyboard-accessible dialog. Search a city or named place, choose attractions/hotels/restaurants, then open details and optionally load traveller photos. Search returns up to 10 matches. It does not claim exhaustive coverage, current entry fees, bookable room prices or live camera imagery. Traveller review text and popularity rankings are deliberately omitted.
+`/explore` and each trip's Explore tab now render only `TripadvisorComponent`. The previous `/explore/india` URL redirects to `/explore`. Existing saved places, itinerary entries, group permissions, offline packs and their APIs are retained; the old source-catalogue component is no longer part of Explore. No catalogue fallback runs when Tripadvisor fails.
 
-The backend uses the **legacy Content API v1** (`api.content.tripadvisor.com`), the product with the advertised 5,000 free monthly calls. Tripadvisor now marks this API deprecated in favour of Terra. A Terra key is not interchangeable. Confirm the product in your account; this implementation has not verified the owner's key or subscription. Do not place keys in Angular, commits, or chat.
+The page has a destination search and attraction/hotel/restaurant selector, followed by small photo cards. Search returns up to 10 provider matches in their original order. Four cards display per page; their credited photos load automatically, with two requests in flight per page. Details and provider bubble ratings load on demand. Missing/broken photos have a text placeholder, never a fabricated or unrelated image. Photo failures retain the place name and offer explicit retry. Search changes/navigation cancel pending requests and discard content.
 
-## Render configuration
+## API configuration
 
-The existing `TRIPADVISOR_API_KEY` belongs on the backend service. Configuration maps it to `discovery.tripadvisor.api-key`. Missing keys disable live requests while existing discovery remains usable. Merge and deploy backend/frontend together. Flyway migration V19 creates the request-counter table before use. No existing trip, place, itinerary or catalogue schema changes.
+The adapter targets **legacy Content API v1**, `api.content.tripadvisor.com`. Terra uses different endpoints/authentication and is not supported by this adapter. Key presence is not proof of key validity, product entitlement or location/photo access.
 
-Optional backend variables:
+Set these variables on the **backend** service, never in Angular:
 
-| Variable | Default | Meaning |
+| Variable | Default | Purpose |
 | --- | --- | --- |
-| `TRIPADVISOR_DAILY_LIMIT` | 100 | Maximum attempted outbound API calls per UTC day |
-| `TRIPADVISOR_MONTHLY_LIMIT` | 4000 | Maximum attempted outbound API calls per UTC calendar month |
+| `TRIPADVISOR_API_KEY` | Empty | Secret API key; missing key disables live requests |
+| `TRIPADVISOR_REFERER` | `APP_FRONTEND_URL`, otherwise `https://www.suttru.in` | HTTPS URL of your actual application domain registered in Tripadvisor |
+| `TRIPADVISOR_DAILY_LIMIT` | 100 | Maximum attempted API calls per UTC day |
+| `TRIPADVISOR_MONTHLY_LIMIT` | 4000 | Maximum attempted API calls per UTC calendar month |
 
-Set either limit to zero to stop calls. Limits are durable in MySQL/TiDB and shared by all instances using that database. A row lock reserves and commits each call before the outbound request; failed calls count conservatively. Concurrent requests and restarts cannot reset the counts. Counter storage failure prevents outbound calls. Existing authentication protects all endpoints. Never delete/reset the counter to bypass a limit.
+Tripadvisor requires an HTTP **Referer** for domain-restricted keys. The adapter sends the configured `Referer` and corresponding `Origin` on search, details and photo calls. It never uses an incoming browser-controlled header as the provider referer. Configure the exact registered domain: `suttru.in` and `www.suttru.in` may have different restrictions. If you registered `suttru.in`, set `TRIPADVISOR_REFERER=https://suttru.in`. Keep appropriate domain/IP restrictions in place. Invalid referer URLs (including credentials, query parameters or fragments) disable only the Tripadvisor integration rather than preventing the rest of the application from starting.
 
-These are **Suttru usage caps**, not a guarantee of zero billing: usage before deployment, use of the same key elsewhere, Tripadvisor billing-cycle differences, and provider pricing still apply. Set your provider daily budget too and inspect its usage dashboard. One search = one call; opening details = another; explicitly loading photos = another. No background requests, auto-refresh or automatic retries. `/status` consumes no provider calls.
+The previous adapter omitted these headers, a concrete compatibility bug for domain-restricted keys. Production logs showed V19 migrated successfully but did not record the provider's failure status, so the specific live rejection has not yet been verified. New safe logs include operation and status or exception class only; client errors use stable codes. No key, raw provider body or exception URL is exposed. `ACCESS_DENIED` means checking the key, domain/IP restrictions and legacy-vs-Terra access; it is not an invitation to remove security restrictions.
 
-## Content handling
+Merge and deploy backend/frontend together. New `render.yaml` settings require a Blueprint sync if using that configuration; Git-linked deploys alone do not necessarily sync Blueprint values. The application fallback uses the existing `APP_FRONTEND_URL` if no explicit referer is set. Existing API key stays in Render. No credentials were read or changed during this update.
 
-Tripadvisor's caching policy allows retaining only location IDs. This adapter is intentionally separate from `DiscoveryProvider`, `DestinationDiscoveryService` caches, saved-place creation and offline packs. JSON is projected into a small DTO, returned with `Cache-Control: no-store`, kept only while the lookup is open, and discarded on close/filter change/navigation. No server-side content cache, index or DB import. The existing service worker excludes APIs. Photos load from provider URLs; no image files are downloaded into the dataset. The key and upstream error body/URL never enter client responses. Outbound host is fixed; returned media/link URLs are restricted to trusted HTTPS Tripadvisor/TACDN domains.
+## Calls and storage
 
-Existing Suttru checkboxes, day assignments, guest permissions, save operations, price contracts and offline packs retain their existing code paths. The Tripadvisor dialog is a live reference lookup; it does **not** offer to copy Tripadvisor content into itineraries. Use Suttru's independent catalogue/discovery records for itinerary planning. Extending that behaviour requires separately licensed data or permission to store the fields.
+One search costs one outbound call; visible cards each fetch a photo endpoint; details cost another. The first full four-card page normally uses five calls. Opening later pages loads their photos. No duplicate photo request within the same displayed search, background refresh or automatic retry. The page does not promise exhaustive results, entry fees, room prices or live camera imagery.
 
-Tripadvisor logo appears beside its content. Aggregate ratings use the bubble graphic supplied by the API, never custom stars. Credited photos include their author and provider photo link; incomplete/untrusted photo entries are omitted. Broken photos are removed. Text remains Angular-escaped. Required logo asset: https://files.readme.io/9f59534-Vector_1.png (official display-requirements page).
+Flyway V19 stores durable request counts only, shared by all instances on the database. A row lock reserves each attempt before outbound access; failures count conservatively. Missing counter storage prevents provider calls. Set either limit to zero to stop calls. Application caps exclude usage before deployment, other applications using the key and provider billing-cycle differences; also configure the provider's own daily budget.
 
-## Official references
+Tripadvisor content stays outside discovery caches, place creation, database catalogue imports, offline packs and indexes. Responses are `Cache-Control: no-store`; the browser retains only transient display state. The API key remains server-side, outbound host is fixed and content URLs are limited to trusted HTTPS Tripadvisor/TACDN hosts. Only location IDs may be retained under the documented caching policy. No imported Tripadvisor fields are saved to an itinerary by this UI. Existing independent saved-place and itinerary features remain available in their respective trip tabs.
 
+Tripadvisor logo appears with its content; aggregate ratings use the API's bubble graphic. Photos include author and provider photo link. Uncredited photo entries are omitted. Text uses Angular interpolation, not HTML injection.
+
+## References
+
+- https://tripadvisor-content-api.readme.io/reference/api-security
+- https://tripadvisor-content-api.readme.io/reference/authentication
 - https://tripadvisor-content-api.readme.io/reference/overview
 - https://tripadvisor-content-api.readme.io/reference/caching-policy
 - https://tripadvisor-content-api.readme.io/reference/display-requirements
@@ -38,5 +46,4 @@ Tripadvisor logo appears beside its content. Aggregate ratings use the bubble gr
 
 ## Validation
 
-Backend: mocked provider contract/error handling, no key leakage, invalid requests, trusted media, no caching, controller no-store, H2 transaction tests for durable caps, rollover and concurrent reservations. Existing discovery orchestration tests cover saved-place/cache behaviour separately.
-Frontend: mocked HTTP flow, no automatic paid requests, provider bubbles/photo credits, stale-request cancellation, quota recovery and disposal, plus existing Explore and catalogue selection tests. Production Angular build. Live key, account entitlement and Render deployment require verification after merge.
+Backend tests verify referer/origin headers, configurable domains, sanitized denial codes, no key leakage, invalid requests, credited media, no-store responses and transactional budget caps. Frontend tests cover direct routes, no modal/fallback, automatic visible-page photos, request concurrency, provider order, pagination, attribution, domain errors, quota recovery and cancellation. Existing discovery/catalogue selection regression tests are retained; production Angular and full CI builds validate the trip-page integration.

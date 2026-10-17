@@ -13,6 +13,8 @@ services:
     envVars:
       - key: TRIPADVISOR_API_KEY
         sync: false
+      - key: TRIPADVISOR_REFERER
+        value: https://www.suttru.in
       - key: TRIPADVISOR_DAILY_LIMIT
         value: "100"
       - key: TRIPADVISOR_MONTHLY_LIMIT

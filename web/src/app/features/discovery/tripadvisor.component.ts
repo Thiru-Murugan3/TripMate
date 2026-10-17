@@ -1,88 +1,134 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ElementRef, ViewChild, Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subscription, catchError, from, map, mergeMap, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 interface Location { id: string; name: string; address: string | null; }
 interface Details extends Location { description: string | null; webUrl: string | null; ratingImageUrl: string | null; reviewCount: string | null; }
 interface Photo { url: string; caption: string | null; author: string; sourceUrl: string; }
+interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
 @Component({
   selector: 'app-tripadvisor', standalone: true, imports: [CommonModule, FormsModule],
   template: `
-    <dialog #dialog (cancel)="close.emit()" aria-labelledby="ta-title">
-      <header><h2 id="ta-title">Explore with Tripadvisor</h2><button type="button" (click)="close.emit()">Close ✕</button></header>
-      <a href="https://www.tripadvisor.com/" target="_blank" rel="noopener noreferrer"><img class="brand" src="https://files.readme.io/9f59534-Vector_1.png" alt="Tripadvisor" /></a>
-      <p>Look up places, ratings and real photos. Photos are traveller uploads, not a live camera feed.</p>
-      <p class="hint">Use Suttru’s place checkboxes to plan your itinerary. Tripadvisor content is for live viewing and is not saved to your trip or offline pack.</p>
-      <form (ngSubmit)="search()">
+    <section class="explore" aria-labelledby="explore-title">
+      <header><div><span class="eyebrow">Explore</span><h1 id="explore-title">Find your next stop</h1><p>Places and traveller photos from Tripadvisor.</p></div>
+        <a href="https://www.tripadvisor.com/" target="_blank" rel="noopener noreferrer"><img class="brand" src="https://files.readme.io/9f59534-Vector_1.png" alt="Tripadvisor" /></a>
+      </header>
+      <form (ngSubmit)="search()" class="search-form">
         <label>City or place<input name="query" [(ngModel)]="query" (ngModelChange)="clear()" maxlength="180" required placeholder="Ooty, Tamil Nadu, India" /></label>
-        <label>Show<select name="category" [(ngModel)]="category" (ngModelChange)="clear()"><option value="attractions">Things to do</option><option value="hotels">Hotels</option><option value="restaurants">Restaurants</option></select></label>
-        <button type="submit" [disabled]="!available || busy || query.trim().length < 2">Search Tripadvisor</button>
+        <label class="category">Show<select name="category" [(ngModel)]="category" (ngModelChange)="clear()"><option value="attractions">Things to do</option><option value="hotels">Hotels</option><option value="restaurants">Restaurants</option></select></label>
+        <button type="submit" [disabled]="!available || busy || query.trim().length < 2">Search</button>
       </form>
-      <p *ngIf="busy" role="status">Loading from Tripadvisor…</p><p *ngIf="error" role="alert">{{ error }}</p>
-      <p *ngIf="searched && !busy && !results.length && !error">No matching places returned. Try a more specific place name.</p>
-      <p *ngIf="results.length" class="hint">Up to 10 matches. Open a place for ratings; load photos only when needed.</p>
-      <div class="results"><button type="button" *ngFor="let place of results" [disabled]="busy" (click)="open(place.id)"><strong>{{ place.name }}</strong><small>{{ place.address }}</small><span>View details →</span></button></div>
-      <article *ngIf="detail as d">
-        <h3>{{ d.name }}</h3><p>{{ d.address }}</p>
+      <p *ngIf="checking || busy" role="status">{{ checking ? 'Connecting to Tripadvisor…' : 'Finding places…' }}</p>
+      <div *ngIf="error" role="alert" class="notice"><p>{{ error }}</p><button *ngIf="!available && !checking" type="button" (click)="checkAvailability()">Check connection</button></div>
+      <p *ngIf="searched && !busy && !results.length && !error">No places found. Try a more specific city or place name.</p>
+      <div *ngIf="results.length" class="result-heading"><h2>{{ submittedQuery }}</h2><span>{{ results.length }} matches from Tripadvisor</span></div>
+      <p *ngIf="photoFailure" role="alert" class="notice">{{ photoFailure }}</p>
+      <div class="cards">
+        <article *ngFor="let place of visiblePlaces; trackBy: trackPlace" class="card">
+          <ng-container *ngIf="photoStates[place.id] as state">
+            <figure *ngIf="state.photos[0] as photo; else noPhoto">
+              <img class="place-photo" [src]="photo.url" [alt]="photo.caption || place.name" (error)="hidePhoto(place.id, photo)" />
+              <figcaption><a [href]="photo.sourceUrl" target="_blank" rel="noopener noreferrer">{{ photo.author }} / Tripadvisor ↗</a></figcaption>
+            </figure>
+            <ng-template #noPhoto><div class="no-photo">{{ state.loading ? 'Loading photo…' : state.error ? 'Photo unavailable' : 'No photo supplied' }}</div></ng-template>
+            <div class="card-body"><h3>{{ place.name }}</h3><p>{{ place.address }}</p>
+              <button type="button" [disabled]="detailsLoading" (click)="open(place.id)">View details &amp; ratings</button>
+              <button *ngIf="state.error && !state.loading" type="button" class="text-button" (click)="retryPhoto(place.id)">Retry photo</button>
+            </div>
+          </ng-container>
+        </article>
+      </div>
+      <nav *ngIf="results.length > pageSize" aria-label="Tripadvisor results pages" class="pagination">
+        <button type="button" [disabled]="page === 0" (click)="setPage(page - 1)">Previous</button><span>Page {{ page + 1 }} of {{ totalPages }}</span><button type="button" [disabled]="page + 1 >= totalPages" (click)="setPage(page + 1)">Next</button>
+      </nav>
+      <p *ngIf="detailsLoading" role="status">Loading place details…</p>
+      <p *ngIf="detailError" role="alert" class="notice">{{ detailError }}</p>
+      <article *ngIf="detail as d" class="details" aria-label="Place details">
+        <header><h2>{{ d.name }}</h2><button type="button" (click)="closeDetails()">Close details</button></header><p>{{ d.address }}</p>
         <div *ngIf="d.ratingImageUrl" class="rating"><img class="brand" src="https://files.readme.io/9f59534-Vector_1.png" alt="Tripadvisor" /><img class="bubbles" [src]="d.ratingImageUrl" alt="Tripadvisor traveller rating" /><span *ngIf="d.reviewCount">{{ d.reviewCount }} reviews</span></div>
         <p>{{ d.description }}</p><a *ngIf="d.webUrl" [href]="d.webUrl" target="_blank" rel="noopener noreferrer">View on Tripadvisor ↗</a>
-        <p class="hint">Entry fees and bookable hotel prices are not supplied by this lookup. Check the official venue or booking provider.</p>
-        <button type="button" (click)="loadPhotos(d.id)" [disabled]="busy || photosLoaded">{{ photosLoaded ? 'Photos loaded' : 'Load traveller photos' }}</button>
-        <p *ngIf="photosLoaded && !photos.length">No credited photos available.</p>
-        <div class="photos"><figure *ngFor="let photo of photos"><img [src]="photo.url" [alt]="photo.caption || d.name" loading="lazy" (error)="hidePhoto(photo)" /><figcaption>{{ photo.caption }} · {{ photo.author }} / Tripadvisor <a [href]="photo.sourceUrl" target="_blank" rel="noopener noreferrer">Photo source ↗</a></figcaption></figure></div>
       </article>
-    </dialog>`,
-  styles: [`dialog{background:#fff;color:#172d23;border:0;border-radius:20px;padding:24px;width:850px;max-width:calc(100vw - 32px);max-height:90dvh;overflow:auto;box-sizing:border-box}dialog::backdrop{background:#0008}header{display:flex;justify-content:space-between;gap:16px;align-items:center}h2{font-size:24px;margin:0 0 14px}.brand{height:24px;width:auto;max-width:100%}p{line-height:1.5}.hint,small{color:#53655c;font-size:13px}form{display:flex;flex-wrap:wrap;align-items:end;gap:12px}label{display:grid;gap:6px;flex:1}input,select{padding:10px;border:1px solid #bac9c0;border-radius:9px;min-width:0;width:100%;box-sizing:border-box}button{border:1px solid #cedbd3;border-radius:12px;background:#f2f7f3;padding:10px 14px;color:#163d28;cursor:pointer}button:disabled{opacity:.5;cursor:default}.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:16px 0}.results button{text-align:left;display:grid;gap:7px}.results span{font-size:12px}.rating{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:white}.bubbles{min-width:55px;height:22px;width:auto}article{border-top:1px solid #dae4dd;padding-top:12px}.photos{display:flex;gap:12px;overflow:auto;margin-top:14px}figure{margin:0;flex:0 0 240px}figure img{width:240px;height:180px;object-fit:contain;background:#f2f7f3}figcaption{font-size:12px;line-height:1.5}a{color:#165d38}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #1b7650;outline-offset:2px}@media(max-width:500px){dialog{padding:16px;max-height:95dvh}h2{font-size:20px}form{display:grid}}`]
+      <p class="footnote">Photos are traveller uploads, not live camera images. Entry fees and booking prices should be checked with the venue or booking provider.</p>
+    </section>`,
+  styleUrl: './tripadvisor.component.scss'
 })
-export class TripadvisorComponent implements OnInit, OnDestroy, AfterViewInit {
+export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   @Input() query = '';
-  @Output() close = new EventEmitter<void>();
-  @ViewChild('dialog') dialog!: ElementRef<HTMLDialogElement>;
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/discovery/tripadvisor`;
-  private request?: Subscription;
+  private searchRequest?: Subscription;
   private statusRequest?: Subscription;
-  category = 'attractions'; available = false; busy = false; error = ''; searched = false;
-  results: Location[] = []; detail: Details | null = null; photos: Photo[] = []; photosLoaded = false;
-  ngAfterViewInit(): void { this.dialog.nativeElement.showModal(); }
-  ngOnInit(): void {
+  private detailRequest?: Subscription;
+  private photoRequests = new Subscription();
+  readonly pageSize = 4;
+  category = 'attractions'; available = false; checking = false; busy = false; error = ''; searched = false;
+  submittedQuery = ''; page = 0; results: Location[] = []; detail: Details | null = null;
+  detailsLoading = false; detailError = ''; photoStates: Record<string, PhotoState> = {};
+  get visiblePlaces(): Location[] { return this.results.slice(this.page * this.pageSize, (this.page + 1) * this.pageSize); }
+  get photoFailure(): string { return this.visiblePlaces.map(p => this.photoStates[p.id]?.error).find(Boolean) || ''; }
+  get totalPages(): number { return Math.ceil(this.results.length / this.pageSize); }
+  ngOnInit(): void { this.checkAvailability(); }
+  ngOnChanges(changes: SimpleChanges): void { if (changes['query'] && !changes['query'].firstChange) this.clear(); }
+  checkAvailability(): void {
+    this.statusRequest?.unsubscribe(); this.checking = true; this.error = '';
     this.statusRequest = this.http.get<{available: boolean}>(`${this.base}/status`).subscribe({
-      next: status => { this.available = status.available; if (!status.available) this.error = 'Tripadvisor is not configured yet. Suttru discovery remains available.'; },
-      error: () => this.error = 'Unable to check Tripadvisor availability. Close and reopen to retry.'
+      next: status => { this.checking = false; this.available = status.available; if (!status.available) this.error = 'Tripadvisor is not connected. Please check the app’s API configuration.'; },
+      error: () => { this.checking = false; this.available = false; this.error = 'Unable to connect to Tripadvisor. Please try again.'; }
     });
   }
   clear(): void {
-    this.request?.unsubscribe(); this.busy = false; this.error = ''; this.searched = false;
-    this.results = []; this.detail = null; this.photos = []; this.photosLoaded = false;
+    this.searchRequest?.unsubscribe(); this.photoRequests.unsubscribe(); this.photoRequests = new Subscription(); this.closeDetails();
+    this.busy = false; this.error = ''; this.searched = false; this.page = 0; this.results = []; this.photoStates = {}; this.submittedQuery = '';
   }
   search(): void {
     if (!this.available || this.busy || this.query.trim().length < 2) return;
-    this.clear(); this.busy = true; this.searched = true;
-    const params = new HttpParams().set('query', this.query.trim()).set('category', this.category);
-    this.request = this.http.get<Location[]>(`${this.base}/search`, {params}).subscribe({
-      next: results => { this.results = results; this.busy = false; }, error: e => this.fail(e)
+    this.clear(); this.busy = true; this.searched = true; this.submittedQuery = this.query.trim();
+    const params = new HttpParams().set('query', this.submittedQuery).set('category', this.category);
+    this.searchRequest = this.http.get<Location[]>(`${this.base}/search`, {params}).subscribe({
+      next: results => { this.results = results; this.busy = false; this.loadVisiblePhotos(); },
+      error: e => { this.busy = false; this.error = this.errorMessage(e); }
     });
+  }
+  setPage(page: number): void {
+    if (page < 0 || page >= this.totalPages || page === this.page) return;
+    this.page = page; this.closeDetails(); this.loadVisiblePhotos();
+  }
+  private loadVisiblePhotos(): void {
+    const pending = this.visiblePlaces.filter(p => !this.photoStates[p.id]);
+    pending.forEach(p => this.photoStates[p.id] = {photos:[], loading:true, error:''});
+    this.photoRequests.add(from(pending).pipe(mergeMap(place => this.fetchPhotos(place.id), 2)).subscribe(result => this.photoStates[result.id] = result.state));
+  }
+  private fetchPhotos(id: string) {
+    return this.http.get<Photo[]>(`${this.base}/locations/${encodeURIComponent(id)}/photos`).pipe(
+      map(photos => ({id, state: {photos, loading:false, error:''}})),
+      catchError(e => of({id, state: {photos:[] as Photo[], loading:false, error:this.errorMessage(e)}}))
+    );
+  }
+  retryPhoto(id: string): void {
+    if (this.photoStates[id]?.loading) return;
+    this.photoStates[id] = {photos:[], loading:true, error:''};
+    this.photoRequests.add(this.fetchPhotos(id).subscribe(result => this.photoStates[result.id] = result.state));
   }
   open(id: string): void {
-    if (this.busy) return;
-    this.detail = null; this.photos = []; this.photosLoaded = false; this.error = ''; this.busy = true;
-    this.request = this.http.get<Details>(`${this.base}/locations/${encodeURIComponent(id)}`).subscribe({
-      next: d => { this.detail = d; this.busy = false; }, error: e => this.fail(e)
+    this.closeDetails(); this.detailsLoading = true;
+    this.detailRequest = this.http.get<Details>(`${this.base}/locations/${encodeURIComponent(id)}`).subscribe({
+      next: d => { this.detail = d; this.detailsLoading = false; }, error: e => { this.detailsLoading = false; this.detailError = this.errorMessage(e); }
     });
   }
-  loadPhotos(id: string): void {
-    if (this.busy || this.photosLoaded) return;
-    this.error = ''; this.busy = true;
-    this.request = this.http.get<Photo[]>(`${this.base}/locations/${encodeURIComponent(id)}/photos`).subscribe({
-      next: photos => { this.photos = photos; this.photosLoaded = true; this.busy = false; }, error: e => this.fail(e)
-    });
+  closeDetails(): void { this.detailRequest?.unsubscribe(); this.detail = null; this.detailsLoading = false; this.detailError = ''; }
+  hidePhoto(id: string, photo: Photo): void { const state = this.photoStates[id]; if (state) state.photos = state.photos.filter(p => p !== photo); }
+  trackPlace(_: number, place: Location): string { return place.id; }
+  private errorMessage(e: {status?: number; error?: {code?: string}}): string {
+    if (e.status === 429) return 'Tripadvisor usage limit reached. Please try later.';
+    switch (e.error?.code) {
+      case 'ACCESS_DENIED': return 'Tripadvisor rejected the connection. Check the API key’s allowed domain/IP and Content API v1 access.';
+      case 'NOT_CONFIGURED': return 'Tripadvisor is not connected. Please check the app’s API configuration.';
+      case 'LOCATION_UNAVAILABLE': return 'This Tripadvisor place is currently unavailable.';
+      case 'CONNECTION_FAILED': return 'Unable to reach Tripadvisor. Please try again.';
+      default: return 'Tripadvisor is temporarily unavailable. Please try again.';
+    }
   }
-  hidePhoto(photo: Photo): void { this.photos = this.photos.filter(p => p !== photo); }
-  private fail(e: {status?: number}): void {
-    this.busy = false;
-    this.error = e.status === 429 ? 'Tripadvisor usage limit reached. Please try later; your Suttru places are still available.' : 'Tripadvisor is unavailable. Please try again; your Suttru places are still available.';
-  }
-  ngOnDestroy(): void { this.statusRequest?.unsubscribe(); this.request?.unsubscribe(); this.results = []; this.detail = null; this.photos = []; this.dialog?.nativeElement.close(); }
+  ngOnDestroy(): void { this.clear(); this.statusRequest?.unsubscribe(); }
 }

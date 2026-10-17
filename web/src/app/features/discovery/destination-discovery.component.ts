@@ -30,7 +30,6 @@ import { ItineraryService } from '../../core/services/itinerary.service';
 import { PlaceService } from '../../core/services/place.service';
 import { IndiaCatalogueComponent } from '../india-catalogue/india-catalogue.component';
 import { DestinationOverviewComponent, DestinationPhoto } from './destination-overview.component';
-import { TripadvisorComponent } from './tripadvisor.component';
 import { destinationPhotography } from './destination-photography';
 import { CataloguePlace } from '../india-catalogue/india-catalogue.service';
 import { PlanningPlace, catalogueKey, cataloguePlanningPlace } from '../india-catalogue/catalogue-selection';
@@ -39,7 +38,7 @@ import { TripService } from '../../core/services/trip.service';
 @Component({
   selector: 'app-destination-discovery',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, IndiaCatalogueComponent, DestinationOverviewComponent, TripadvisorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, IndiaCatalogueComponent, DestinationOverviewComponent],
   template: `
     <section class="discover-page">
       <div class="discover-hero">
@@ -113,9 +112,6 @@ import { TripService } from '../../core/services/trip.service';
           {{ isLoading ? 'Searching...' : 'Find Tourist Places' }}
         </button>
       </div>
-
-      <button *ngIf="!catalogueOnly" type="button" class="use-trip-link" (click)="tripadvisorOpen = true">Tripadvisor photos &amp; ratings ↗</button>
-      <app-tripadvisor *ngIf="tripadvisorOpen" [query]="searchDestination" (close)="tripadvisorOpen = false"></app-tripadvisor>
 
       <nav *ngIf="!catalogueOnly" class="type-tabs" aria-label="Catalogue type">
         <button *ngFor="let tab of itemTypeTabs" type="button" [class.active]="itemTypeFilter === tab.value" [attr.aria-pressed]="itemTypeFilter === tab.value" (click)="selectItemType(tab.value)">
@@ -486,7 +482,6 @@ import { TripService } from '../../core/services/trip.service';
   styleUrls: ['./destination-discovery.base.scss', './destination-guide.scss']
 })
 export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
-  tripadvisorOpen = false;
   private readonly discoveryService = inject(DiscoveryService);
   private readonly placeService = inject(PlaceService);
   private readonly itineraryService = inject(ItineraryService);

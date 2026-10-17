@@ -29,6 +29,8 @@ public class TripadvisorController {
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, String>> unavailable(ResponseStatusException ex) {
         return ResponseEntity.status(ex.getStatusCode()).cacheControl(CacheControl.noStore())
-                .body(Map.of("message", ex.getReason() == null ? "Tripadvisor unavailable" : ex.getReason()));
+                .body(Map.of("message", ex.getReason() == null ? "Tripadvisor unavailable" : ex.getReason(),
+                        "code", ex instanceof TripadvisorFailure failure ? failure.code()
+                                : ex.getStatusCode().value() == 429 ? "USAGE_LIMIT" : "REQUEST_FAILED"));
     }
 }

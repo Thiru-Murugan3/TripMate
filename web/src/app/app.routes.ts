@@ -42,14 +42,13 @@ export const routes: Routes = [
   {
     path: 'explore',
     loadComponent: () =>
-      import('./features/discovery/destination-discovery.component').then((m) => m.DestinationDiscoveryComponent),
+      import('./features/discovery/tripadvisor.component').then((m) => m.TripadvisorComponent),
     canActivate: [authGuard]
   },
   {
     path: 'explore/india',
-    loadComponent: () => import('./features/discovery/destination-discovery.component').then(m => m.DestinationDiscoveryComponent),
-    data: { catalogueOnly: true },
-    canActivate: [authGuard]
+    redirectTo: '/explore',
+    pathMatch: 'full'
   },
   {
     path: 'admin/discovery',

@@ -22,18 +22,34 @@ public class TripadvisorService {
     private final RestClient client;
     private final TripadvisorBudget budget;
     private final String key;
+    private final String referer;
+    private final boolean refererValid;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TripadvisorService.class);
 
     @org.springframework.beans.factory.annotation.Autowired
     public TripadvisorService(ProviderHttpClientFactory factory, TripadvisorBudget budget,
-            @Value("${discovery.tripadvisor.api-key:}") String key) {
-        this(factory.create(10000), budget, key);
+            @Value("${discovery.tripadvisor.api-key:}") String key,
+            @Value("${discovery.tripadvisor.referer:https://www.suttru.in}") String referer) {
+        this(factory.create(10000), budget, key, referer);
     }
     TripadvisorService(RestClient client, TripadvisorBudget budget, String key) {
+        this(client, budget, key, "https://www.suttru.in");
+    }
+    TripadvisorService(RestClient client, TripadvisorBudget budget, String key, String referer) {
         this.client = client;
         this.budget = budget;
         this.key = key == null ? "" : key.trim();
+        String normalized = "";
+        boolean valid = true;
+        try { normalized = normalizeReferer(referer); }
+        catch (IllegalArgumentException ex) {
+            valid = false;
+            log.warn("Tripadvisor disabled: invalid referer configuration");
+        }
+        this.referer = normalized;
+        this.refererValid = valid;
     }
-    public boolean available() { return !key.isBlank(); }
+    public boolean available() { return !key.isBlank() && refererValid; }
 
     public record Location(String id, String name, String address) {}
     public record Details(String id, String name, String address, String description, String webUrl,
@@ -76,22 +92,36 @@ public class TripadvisorService {
         return photos;
     }
     private JsonNode get(String path, String... params) {
-        if (!available()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Tripadvisor is not configured");
+        if (!available()) throw new TripadvisorFailure(HttpStatus.SERVICE_UNAVAILABLE, "NOT_CONFIGURED", "Tripadvisor is not configured");
         budget.reserve();
         var builder = UriComponentsBuilder.fromUriString(BASE + path).queryParam("key", key).queryParam("language", "en");
         for (int i = 0; i < params.length; i += 2) builder.queryParam(params[i], params[i + 1]);
         try {
-            JsonNode body = client.get().uri(builder.build().encode().toUri()).retrieve().body(JsonNode.class);
+            var request = client.get().uri(builder.build().encode().toUri());
+            if (!referer.isEmpty()) {
+                request.header("Referer", referer);
+                URI site = URI.create(referer);
+                request.header("Origin", site.getScheme() + "://" + site.getAuthority());
+            }
+            JsonNode body = request.retrieve().body(JsonNode.class);
             if (body == null || body.has("error") || body.has("errors"))
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Tripadvisor returned an unavailable response");
+                throw new TripadvisorFailure(HttpStatus.BAD_GATEWAY, "PROVIDER_RESPONSE", "Tripadvisor returned an unavailable response");
             return body;
         } catch (RestClientResponseException ex) {
             // Never expose upstream exception text: its URL/body may contain the API key.
-            if (ex.getStatusCode().value() == 429)
-                throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Tripadvisor request allowance reached. Please try later.");
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Tripadvisor is temporarily unavailable. Please try again later.");
+            int status = ex.getStatusCode().value();
+            log.warn("Tripadvisor request rejected: operation={} status={}", path, status);
+            if (status == 401 || status == 403)
+                throw new TripadvisorFailure(HttpStatus.BAD_GATEWAY, "ACCESS_DENIED",
+                        "Tripadvisor rejected this connection. Check the API key, its allowed domain/IP and Content API v1 access.");
+            if (status == 429)
+                throw new TripadvisorFailure(HttpStatus.TOO_MANY_REQUESTS, "PROVIDER_LIMIT", "Tripadvisor request allowance reached. Please try later.");
+            if (status == 404)
+                throw new TripadvisorFailure(HttpStatus.BAD_GATEWAY, "LOCATION_UNAVAILABLE", "This Tripadvisor location is unavailable.");
+            throw new TripadvisorFailure(HttpStatus.BAD_GATEWAY, "PROVIDER_UNAVAILABLE", "Tripadvisor is temporarily unavailable. Please try again later.");
         } catch (RestClientException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Unable to reach Tripadvisor. Please try again later.");
+            log.warn("Tripadvisor connection failed: operation={} type={}", path, ex.getClass().getSimpleName());
+            throw new TripadvisorFailure(HttpStatus.BAD_GATEWAY, "CONNECTION_FAILED", "Unable to reach Tripadvisor. Please try again later.");
         }
     }
     private void validateId(String id) {
@@ -101,6 +131,18 @@ public class TripadvisorService {
     private String text(JsonNode node, String field) {
         String value = node.path(field).asText(null);
         return value == null || value.isBlank() ? null : value;
+    }
+    private static String normalizeReferer(String value) {
+        if (value == null || value.isBlank()) return "";
+        try {
+            URI uri = URI.create(value.trim());
+            if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null
+                    || uri.getRawQuery() != null || uri.getFragment() != null)
+                throw new IllegalArgumentException();
+            return uri.toString();
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("TRIPADVISOR_REFERER must be an HTTPS URL without credentials, query or fragment");
+        }
     }
     static String safeUrl(String value, boolean image) {
         if (value == null) return null;

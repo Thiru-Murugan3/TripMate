@@ -17,6 +17,8 @@ class TripadvisorServiceTest {
         var budget = mock(TripadvisorBudget.class); var service = new TripadvisorService(builder.build(), budget, "private-test-key");
         for (int i = 0; i < 2; i++) server.expect(queryParam("category", "attractions"))
                 .andExpect(queryParam("searchQuery", "Ooty%20India"))
+                .andExpect(header("Referer", "https://www.suttru.in"))
+                .andExpect(header("Origin", "https://www.suttru.in"))
                 .andRespond(withSuccess("{\"data\":[{\"location_id\":\"123\",\"name\":\"Garden\",\"address_obj\":{\"address_string\":\"Ooty\"}}]}", MediaType.APPLICATION_JSON));
         assertEquals("Garden", service.search("Ooty India", "attractions").get(0).name());
         service.search("Ooty India", "attractions");
@@ -28,7 +30,7 @@ class TripadvisorServiceTest {
         var service = new TripadvisorService(builder.build(), mock(TripadvisorBudget.class), "secret-test-key");
         var ex = assertThrows(ResponseStatusException.class, () -> service.details("123"));
         assertEquals(502, ex.getStatusCode().value()); assertFalse(ex.toString().contains("secret-test-key"));
-        assertNull(ex.getCause()); server.verify();
+        assertNull(ex.getCause()); assertEquals("ACCESS_DENIED", ((TripadvisorFailure)ex).code()); server.verify();
     }
     @Test void missingKeyInvalidIdsAndUnsupportedCategoriesMakeNoCalls() {
         var budget = mock(TripadvisorBudget.class);
@@ -62,4 +64,16 @@ class TripadvisorServiceTest {
         assertNull(TripadvisorService.safeUrl("https://tripadvisor.com.evil.example/", false));
         assertNull(TripadvisorService.safeUrl("https://www.tripadvisor.com/?key=test", false));
     }
+    @Test void configurableRefererMatchesTheOwnersRestrictedDomain() {
+        var builder = RestClient.builder(); var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(header("Referer", "https://suttru.in/"))
+                .andExpect(header("Origin", "https://suttru.in"))
+                .andRespond(withSuccess("{\"data\":[]}", MediaType.APPLICATION_JSON));
+        var service = new TripadvisorService(builder.build(), mock(TripadvisorBudget.class), "test", "https://suttru.in/");
+        assertTrue(service.search("Ooty", "attractions").isEmpty()); server.verify();
+        var invalid = new TripadvisorService(builder.build(), mock(TripadvisorBudget.class), "test", "https://example.com/?key=secret");
+        assertFalse(invalid.available());
+        assertEquals(503, assertThrows(ResponseStatusException.class, () -> invalid.search("Ooty", "attractions")).getStatusCode().value());
+    }
+
 }
