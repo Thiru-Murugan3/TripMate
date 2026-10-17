@@ -19,8 +19,8 @@ describe('Tripadvisor-only Explore', () => {
   afterEach(() => { fixture.destroy(); http.verify(); });
   function searchResults(count=1): void {
     fixture.componentInstance.search();
-    http.expectOne(r=>r.url===`${base}/search` && r.params.get('query')==='Ooty' && r.params.get('category')==='attractions')
-      .flush(Array.from({length:count},(_,i)=>({id:String(i+1),name:'Place '+(i+1),address:'Ooty'})));
+    http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('query')==='Ooty' && r.params.get('category')==='attractions')
+      .flush({places:Array.from({length:count},(_,i)=>({id:String(i+1),name:'Place '+(i+1),address:'Ooty'})),page:1,size:4,totalElements:count,totalPages:1,hasNext:false});
   }
   it('routes Explore directly to Tripadvisor and redirects the former source catalogue', async () => {
     const page = await routes.find(r=>r.path==='explore')!.loadComponent!();
@@ -28,7 +28,7 @@ describe('Tripadvisor-only Explore', () => {
     expect(routes.find(r=>r.path==='explore/india')?.redirectTo).toBe('/explore');
   });
   it('renders a page without a modal, catalogue or automatic paid search', () => {
-    expect(fixture.componentInstance.available).toBeTrue(); http.expectNone(`${base}/search`);
+    expect(fixture.componentInstance.available).toBeTrue(); http.expectNone(`${base}/search-page`);
     expect(fixture.nativeElement.querySelector('dialog')).toBeNull();
     expect(fixture.nativeElement.querySelector('app-india-catalogue')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Suttru’s place checkboxes');
@@ -40,20 +40,41 @@ describe('Tripadvisor-only Explore', () => {
     fixture.componentInstance.open('1'); http.expectOne(`${base}/locations/1`).flush({id:'1',name:'Garden',address:'Ooty',description:'A garden',webUrl:'https://www.tripadvisor.com/place',ratingImageUrl:'https://static.tacdn.com/rating.png',reviewCount:'20'});
     fixture.detectChanges(); expect(fixture.nativeElement.querySelector('.bubbles').getAttribute('src')).toContain('tacdn.com');
   });
-  it('bounds photo loading to visible pages, keeps API order and avoids duplicate loads', () => {
-    searchResults(6); const first=http.expectOne(`${base}/locations/1/photos`); const second=http.expectOne(`${base}/locations/2/photos`);
-    http.expectNone(`${base}/locations/3/photos`); first.flush([photo]); http.expectOne(`${base}/locations/3/photos`).flush([]);
-    http.expectOne(`${base}/locations/4/photos`).flush([]); second.flush([]);
-    expect(fixture.componentInstance.visiblePlaces.map(p=>p.id)).toEqual(['1','2','3','4']);
-    fixture.componentInstance.setPage(1); http.expectOne(`${base}/locations/5/photos`).flush([]); http.expectOne(`${base}/locations/6/photos`).flush([]);
-    fixture.componentInstance.setPage(0); http.expectNone(`${base}/locations/1/photos`);
+  it('requests provider pages beyond ten matches and loads only current page photos', () => {
+    fixture.componentInstance.search();
+    http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('page')==='1' && r.params.get('size')==='4')
+      .flush({places:[{id:'1',name:'First',address:'Ooty'}],page:1,size:4,totalElements:14,totalPages:4,hasNext:true});
+    http.expectOne(`${base}/locations/1/photos`).flush([]);
+    fixture.detectChanges();expect(fixture.nativeElement.textContent).toContain('of 14 available matches');
+    for (let page=2;page<=4;page++) {
+      fixture.componentInstance.setPage(page);
+      http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('page')===String(page))
+        .flush({places:[{id:String(page*4),name:'Later place',address:'Ooty'}],page,size:4,totalElements:14,totalPages:4,hasNext:page<4});
+      http.expectOne(`${base}/locations/${page*4}/photos`).flush([]);
+    }
+    expect(fixture.componentInstance.page).toBe(4);expect(fixture.componentInstance.hasNext).toBeFalse();
+    fixture.componentInstance.setPage(5);http.expectNone(r=>r.url===`${base}/search-page`);
+    fixture.componentInstance.setPage(3);
+    http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('page')==='3')
+      .flush({places:[],page:3,size:4,totalElements:14,totalPages:4,hasNext:true});
+  });
+  it('retains the current page after a page request fails and allows retry', () => {
+    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search-page`)
+      .flush({places:[{id:'1',name:'First',address:'Ooty'}],page:1,size:4,totalElements:null,totalPages:null,hasNext:true});
+    http.expectOne(`${base}/locations/1/photos`).flush([photo]);
+    fixture.componentInstance.setPage(2);http.expectOne(r=>r.url===`${base}/search-page`).flush({}, {status:502,statusText:'Unavailable'});
+    expect(fixture.componentInstance.page).toBe(1);expect(fixture.componentInstance.results[0].id).toBe('1');
+    expect(fixture.componentInstance.visiblePhoto(fixture.componentInstance.results[0])).toEqual(photo);
+    fixture.componentInstance.setPage(2);const request=http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('page')==='2');
+    fixture.componentInstance.clear();expect(request.cancelled).toBeTrue();expect(fixture.componentInstance.hasNext).toBeFalse();
+    expect(fixture.componentInstance.totalElements).toBeNull();
   });
   it('clears data and cancels photos when changing city', () => {
     searchResults(); const request=http.expectOne(`${base}/locations/1/photos`); fixture.componentInstance.clear();
     expect(request.cancelled).toBeTrue(); expect(fixture.componentInstance.results).toEqual([]);expect(fixture.componentInstance.photoStates).toEqual({});
   });
   it('shows an actionable key/domain error without falling back to Suttru data', () => {
-    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search`).flush({code:'ACCESS_DENIED',message:'do not render raw upstream text'}, {status:502,statusText:'Denied'});
+    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search-page`).flush({code:'ACCESS_DENIED',message:'do not render raw upstream text'}, {status:502,statusText:'Denied'});
     fixture.detectChanges();expect(fixture.nativeElement.textContent).toContain('allowed domain/IP');
     expect(fixture.nativeElement.textContent).not.toContain('do not render raw');expect(fixture.componentInstance.results).toEqual([]);
     http.expectNone(r=>!r.url.startsWith(base));
@@ -64,7 +85,7 @@ describe('Tripadvisor-only Explore', () => {
     fixture.componentInstance.retryPhoto('1');http.expectOne(`${base}/locations/1/photos`).flush([photo]);expect(fixture.componentInstance.photoFailure).toBe('');
   });
   it('recovers from a search limit without retaining stale data', () => {
-    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search`).flush({}, {status:429,statusText:'Limit'});
+    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search-page`).flush({}, {status:429,statusText:'Limit'});
     expect(fixture.componentInstance.error).toContain('usage limit');searchResults();http.expectOne(`${base}/locations/1/photos`).flush([]);
     expect(fixture.componentInstance.error).toBe('');
   });
@@ -74,7 +95,7 @@ describe('Tripadvisor-only Explore', () => {
     expect(fixture.componentInstance.results).toEqual([]);expect(fixture.componentInstance.detail).toBeNull();
   });
   it('links Terra names and photos to the provider property page when photos have no page URL', () => {
-    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search`).flush([{id:'1',name:'Garden',address:'Ooty',webUrl:'https://www.tripadvisor.com/Attraction_Review-d123'}]);
+    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search-page`).flush({places:[{id:'1',name:'Garden',address:'Ooty',webUrl:'https://www.tripadvisor.com/Attraction_Review-d123'}],page:1,size:4,totalElements:1,totalPages:1,hasNext:false});
     http.expectOne(`${base}/locations/1/photos`).flush([{...photo,sourceUrl:null}]);fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('figure a').getAttribute('href')).toBe('https://www.tripadvisor.com/Attraction_Review-d123');
     expect(fixture.nativeElement.querySelector('h3 a').getAttribute('href')).toContain('tripadvisor.com');
@@ -82,12 +103,12 @@ describe('Tripadvisor-only Explore', () => {
   it('keeps Terra unavailable until its account allowance and entity budget are configured', () => {
     fixture.componentInstance.checkAvailability();http.expectOne(`${base}/status`).flush({available:false,apiMode:'TERRA',setupCode:'TERRA_SETUP_REQUIRED'});
     expect(fixture.componentInstance.available).toBeFalse();expect(fixture.componentInstance.error).toContain('confirmed account allowance');
-    fixture.componentInstance.search();http.expectNone(r=>r.url===`${base}/search`);
+    fixture.componentInstance.search();http.expectNone(r=>r.url===`${base}/search-page`);
   });
   it('explains Terra endpoint access and entity budget failures without suggesting blind retry', () => {
-    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search`).flush({code:'TERRA_ACCESS_DENIED'}, {status:502,statusText:'Denied'});
+    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search-page`).flush({code:'TERRA_ACCESS_DENIED'}, {status:502,statusText:'Denied'});
     expect(fixture.componentInstance.error).toContain('package and API permissions');
-    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search`).flush({code:'TERRA_ENTITY_LIMIT'}, {status:429,statusText:'Budget'});
+    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search-page`).flush({code:'TERRA_ENTITY_LIMIT'}, {status:429,statusText:'Budget'});
     expect(fixture.componentInstance.error).toContain('entity budget is exhausted');
   });
 
