@@ -53,9 +53,9 @@ class TerraTripadvisorClientTest {
     }
     @Test void particularPlaceSearchUsesProviderNameMatching() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var budget=activeBudget();
-        server.expect(queryParam("search_type","NAME")).andExpect(queryParam("query","Botanical%20Garden"))
+        server.expect(queryParam("search_type","NAME")).andExpect(queryParam("query","Botanical%20Garden")).andExpect(queryParam("geo_name","Ooty"))
           .andRespond(withSuccess("{\"data\":[],\"pagination\":{\"total_elements\":0,\"total_pages\":0}}",MediaType.APPLICATION_JSON));
-        var page=new TerraTripadvisorClient(builder.build(),budget,"test").searchPage("Botanical Garden","attractions",1,4,"NAME");
+        var page=new TerraTripadvisorClient(builder.build(),budget,"test").searchPage("Botanical Garden","attractions",1,4,"NAME","Ooty");
         assertTrue(page.places().isEmpty());assertFalse(page.hasNext());server.verify();
     }
     @Test void readsDocumentedDetailsAndProviderBubbleImage() {
