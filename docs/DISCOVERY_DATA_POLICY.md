@@ -6,11 +6,12 @@ Suttru's Explore catalogue is source-backed. It must not invent a place, coordin
 
 - Nominatim is the primary India-only destination geocoder.
 - Photon is the fallback India-only destination geocoder.
-- Configured Overpass instances provide OpenStreetMap place data.
+- Explicitly configured Overpass instances provide OpenStreetMap place data. No public Overpass servers are silently appended as fallbacks.
 - Wikidata/Wikipedia enrich linked objects with descriptions and exact-place identifiers.
 - Wikimedia Commons images are used only when the place's OpenStreetMap/Wikidata/Wikipedia record links to that file.
 - The Flyway-backed Suttru curated catalogue contains administrator-verified official tourism/provider records.
 - Geoapify can supply additional licensed records only when `DISCOVERY_GEOAPIFY_API_KEY` is configured.
+- OpenTripMap supplies additional nearby places when `DISCOVERY_OPENTRIPMAP_ENABLED=true` and its backend API key are configured. The published free plan is non-commercial; key presence alone does not activate it.
 
 Provider attribution and the time Suttru checked the source are returned with each search. Geocoding, static catalogue data and volatile price-bearing searches use separate configurable cache periods. One provider failing returns partial sourced results with a warning instead of fabricated fallback data.
 
@@ -39,6 +40,7 @@ OpenStreetMap coverage varies across India. The catalogue can return attractions
 
 - `destination`, `radiusKm`, and `category`
 - `itemType`, `subcategory`, `priceStatus`, `minPrice`, `maxPrice`, `openNow`, `familyFriendly`, `difficulty`, duration and rating filters
+- `name` filters the full fetched inventory before pagination, retaining the destination/radius
 - `sort` (`RELEVANCE`, `DISTANCE`, `VERIFIED`, `RECENTLY_VERIFIED`, `POPULAR`, `PRICE_LOW`, `PRICE_HIGH`, or `NAME`)
 - `page` and `size`
 
@@ -57,3 +59,24 @@ Selections retain complete listing snapshots across pages, filters and sorting w
 ## Starter coverage
 
 Flyway V16 seeds nine reviewed places and activities for Chennai, Mysuru and Jaipur. See [the evidence register](VERIFIED_CITY_CATALOGUE.md) for sources, coordinate provenance, tariff conflicts, expiry and maintenance instructions.
+
+## Combined Explore setup
+
+`/explore` and trip Explore now use a compact **Combined places** view by default. Tripadvisor remains a separate source tab, preserving its live-only storage policy and existing selection flow. Combined discovery reuses the original provider orchestration, curated records, bounded caches, India geocoding, duplicate detection, credited images and saved-place/itinerary APIs. It does not insert Tripadvisor content into these caches. Duplicate detection uses matching normalized names within 250 metres, preserves Unicode/Tamil names, and retains a credited photo from the duplicate record when the preferred record lacks one. Different spelling/transliteration may still produce duplicates.
+
+Configure these only on the backend service:
+
+| Variable | Activation |
+| --- | --- |
+| `DISCOVERY_GEOAPIFY_API_KEY` | Geoapify backend key; blank skips the provider. Published free plan is 3,000 credits/day with attribution; credit cost depends on query. |
+| `DISCOVERY_OPENTRIPMAP_API_KEY` | OpenTripMap key; do not put it in Angular or commit it. |
+| `DISCOVERY_OPENTRIPMAP_ENABLED` | Defaults to `false`. Set `true` only with a plan appropriate to the application's use. Published free plan: non-commercial, 5,000 requests/day, 10 requests/second. |
+| `DISCOVERY_OVERPASS_URLS` | Comma-separated HTTPS Overpass endpoints whose policies permit your deployment. Defaults empty; use a permitted hosted service or your own server for production. Geoapify also supplies OSM-based data without direct Overpass access. |
+
+Provider keys and endpoints were not configured in Render by this change. Configured provider failures return partial results and availability notes. Default-empty direct Overpass configuration intentionally removes the old implicit public-server traffic; existing explicit endpoint values are preserved and used in their configured order. Review the chosen server's current usage policy. Geoapify and OpenTripMap remain inactive without configuration; curated records can still appear for seeded cities.
+
+OpenTripMap calls the documented `/0.1/en/places/radius` once per uncached search with JSON output and a 100-place limit. It maps XID, name, kinds, coordinates and linked Wikidata IDs, verifies coordinates/radius, and leaves fees/rating unknown. It does not bulk-fetch individual OpenTripMap details. At most four linked Wikidata records are enriched per provider fetch, with existing Commons metadata checks for exact photos, author, licence and source page. No generated, generic-city or uncredited image is substituted.
+
+The combined inventory is bounded by `DISCOVERY_MAX_RESULTS` (default 200); OpenTripMap and Geoapify fetch up to 100 each. Pagination browses the fetched combined inventory, not every possible place in India. Limits and partial failures are shown in source notes. Small cards show name/category/distance, supported price status, credited photo when available, source and itinerary selection. Name search runs across fetched records before pagination. Selections persist across pages and require an explicit trip/day confirmation in the compact view; changing city cancels the old search and clears selection.
+
+Sources: https://dev.opentripmap.org/price, https://dev.opentripmap.org/product, https://dev.opentripmap.org/openapi.en.json, https://www.geoapify.com/pricing/, https://apidocs.geoapify.com/docs/places/, https://wiki.openstreetmap.org/wiki/Overpass_API.

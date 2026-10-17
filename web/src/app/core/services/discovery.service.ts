@@ -30,6 +30,7 @@ export class DiscoveryService {
       .set('radiusKm', radiusKm)
       .set('category', category);
 
+    if (filters.name?.trim()) params = params.set('name', filters.name.trim());
     if (filters.itemType && filters.itemType !== 'ALL') params = params.set('itemType', filters.itemType);
     if (filters.subcategory) params = params.set('subcategory', filters.subcategory);
     if (filters.minPrice != null) params = params.set('minPrice', filters.minPrice);

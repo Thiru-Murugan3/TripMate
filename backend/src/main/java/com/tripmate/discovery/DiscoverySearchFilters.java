@@ -19,11 +19,19 @@ public record DiscoverySearchFilters(
         Double minRating,
         String sort,
         int page,
-        int size
+        int size,
+        String name
 ) {
+    public DiscoverySearchFilters(String category, String subcategory, String itemType, BigDecimal minPrice,
+            BigDecimal maxPrice, String priceStatus, Boolean openNow, Boolean familyFriendly, String difficulty,
+            Integer minDuration, Integer maxDuration, Double minRating, String sort, int page, int size) {
+        this(category, subcategory, itemType, minPrice, maxPrice, priceStatus, openNow, familyFriendly, difficulty,
+                minDuration, maxDuration, minRating, sort, page, size, null);
+    }
     public Map<String, Object> asMap() {
         Map<String, Object> filters = new LinkedHashMap<>();
         put(filters, "category", category);
+        put(filters, "name", name);
         put(filters, "subcategory", subcategory);
         put(filters, "itemType", itemType);
         put(filters, "minPrice", minPrice);

@@ -24,11 +24,6 @@ import java.util.*;
 public class OverpassDiscoveryProvider implements DiscoveryProvider {
     private static final Logger log = LoggerFactory.getLogger(OverpassDiscoveryProvider.class);
     private static final String ATTRIBUTION = "© OpenStreetMap contributors · Wikimedia Commons where credited";
-    private static final List<String> GLOBAL_FALLBACK_ENDPOINTS = List.of(
-            "https://overpass-api.de/api/interpreter",
-            "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-            "https://overpass.private.coffee/api/interpreter"
-    );
     private final RestClient client;
     private final List<String> endpoints;
     private final PriceVerificationService priceVerification;
@@ -41,7 +36,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             PriceVerificationService priceVerification,
             ImageResolverService imageResolver,
             WikimediaEnrichmentService wikimediaEnrichment,
-            @Value("${discovery.overpass-urls:${discovery.overpass-url:https://overpass-api.de/api/interpreter}}") String urls,
+            @Value("${discovery.overpass-urls:${discovery.overpass-url:}}") String urls,
             @Value("${discovery.max-results:200}") int maxResults
     ) {
         this.client = factory.create(Integer.MAX_VALUE);
@@ -56,6 +51,8 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
 
     @Override
     public DiscoveryProviderResult discover(DiscoveryProviderRequest request) {
+        if (endpoints.isEmpty()) return new DiscoveryProviderResult(name(), ATTRIBUTION, List.of(),
+                List.of("Direct OpenStreetMap discovery needs a configured Overpass endpoint; Geoapify can also supply OpenStreetMap data."));
         String query = buildQuery(request.destination().latitude().doubleValue(),
                 request.destination().longitude().doubleValue(), request.radiusKm() * 1000, request.category());
         String body = "data=" + URLEncoder.encode(query, StandardCharsets.UTF_8);
@@ -328,7 +325,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
         Arrays.stream(csv.split(",")).map(String::trim)
                 .filter(url -> url.startsWith("https://"))
                 .forEach(urls::add);
-        urls.addAll(GLOBAL_FALLBACK_ENDPOINTS);
+
         return List.copyOf(urls);
     }
     private String value(JsonNode tags, String key) { return tags.path(key).asText(""); }

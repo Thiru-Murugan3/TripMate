@@ -149,6 +149,7 @@ export interface DestinationDiscoveryResponse {
 }
 
 export interface DiscoverySearchFilters {
+  name?: string;
   itemType?: DiscoveryItemType | 'ALL';
   subcategory?: string;
   minPrice?: number;

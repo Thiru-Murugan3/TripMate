@@ -2,6 +2,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { TripadvisorComponent } from './tripadvisor.component';
+import { ExploreComponent } from './explore.component';
 import { environment } from '../../../environments/environment';
 import { provideRouter } from '@angular/router';
 import { routes } from '../../app.routes';
@@ -23,9 +24,9 @@ describe('Tripadvisor-only Explore', () => {
     http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('query')==='Ooty' && r.params.get('category')==='attractions')
       .flush({places:Array.from({length:count},(_,i)=>({id:String(i+1),name:'Place '+(i+1),address:'Ooty'})),page:1,size:4,totalElements:count,totalPages:1,hasNext:false});
   }
-  it('routes Explore directly to Tripadvisor and redirects the former source catalogue', async () => {
+  it('routes Explore to the source selector and redirects the former source catalogue', async () => {
     const page = await routes.find(r=>r.path==='explore')!.loadComponent!();
-    expect(page).toBe(TripadvisorComponent);
+    expect(page).toBe(ExploreComponent);
     expect(routes.find(r=>r.path==='explore/india')?.redirectTo).toBe('/explore');
   });
   it('renders a page without a modal, catalogue or automatic paid search', () => {

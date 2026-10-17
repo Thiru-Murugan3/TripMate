@@ -504,6 +504,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   activeEndDate = '';
   availableTrips: Trip[] = [];
 
+  autoAddOnSelect = true;
   radiusKm = 25;
   category: DiscoveryCategory = 'ALL';
   filterText = '';
@@ -838,7 +839,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
         Math.max(1, this.dayAssignments[externalId] || 1)
       );
     }
-    if (this.selectedIds.size > 0 && this.activeTripId > 0 && this.effectiveCanEdit) {
+    if (this.autoAddOnSelect && this.selectedIds.size > 0 && this.activeTripId > 0 && this.effectiveCanEdit) {
       await this.saveSelected(true);
     }
   }
@@ -866,6 +867,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     this.selectionDestination = destination.toLocaleLowerCase();
     this.searchSubscription?.unsubscribe();
     this.searchSubscription = this.discoveryService.discoverPlaces(destination, this.radiusKm, this.category, {
+      name: this.filterText || undefined,
       itemType: this.itemTypeFilter,
       subcategory: this.subcategoryFilter || undefined,
       minPrice: this.minPriceFilter,
@@ -910,7 +912,12 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     }
   }
 
+  cancelDiscoverySearch(): void { this.searchSubscription?.unsubscribe(); this.isLoading = false; this.result = null; }
+
+  clearSelection(): void { this.selectedIds.clear(); this.selectedListings.clear(); this.dayAssignments = {}; }
+
   async toggleSelection(place: DiscoveredPlace): Promise<void> {
+    if (this.isSaving || !this.canSelectPlaces) return;
     if (this.selectedIds.has(place.externalId)) {
       this.selectedIds.delete(place.externalId);
       this.selectedListings.delete(place.externalId);
@@ -922,7 +929,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     this.selectedListings.set(place.externalId, place);
     this.dayAssignments[place.externalId] = this.dayAssignments[place.externalId] || 1;
 
-    if (this.activeTripId > 0 && this.effectiveCanEdit) {
+    if (this.autoAddOnSelect && this.activeTripId > 0 && this.effectiveCanEdit) {
       await this.saveSelected(true);
       return;
     }
