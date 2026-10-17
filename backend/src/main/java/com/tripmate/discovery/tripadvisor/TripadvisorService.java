@@ -72,8 +72,13 @@ public class TripadvisorService {
             throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Page must be positive and size between 1 and 20");
     }
     public SearchPage searchPage(String query, String category, int page, int size) {
+        return searchPage(query, category, page, size, "COMBINED");
+    }
+    public SearchPage searchPage(String query, String category, int page, int size, String searchType) {
         validatePage(page, size);
-        if ("TERRA".equals(apiMode)) return terra.searchPage(query, category, page, size);
+        if (!Set.of("COMBINED", "NAME").contains(searchType == null ? "" : searchType))
+            throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Unsupported search mode");
+        if ("TERRA".equals(apiMode)) return terra.searchPage(query, category, page, size, searchType);
         // Legacy search has no provider pagination. Do not pretend more matches can be fetched.
         if (page != 1) throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Pagination requires Terra API mode");
         List<Location> places = search(query, category);

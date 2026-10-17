@@ -15,7 +15,8 @@ public record ItineraryItemResponse(
         LocalTime endTime,
         String location,
         BigDecimal estimatedCost,
-        Integer displayOrder
+        Integer displayOrder,
+        String tripadvisorLocationId
 ) {
     public static ItineraryItemResponse from(ItineraryItem item) {
         return new ItineraryItemResponse(
@@ -30,7 +31,8 @@ public record ItineraryItemResponse(
                 item.getEndTime(),
                 item.getLocation(),
                 item.getEstimatedCost(),
-                item.getDisplayOrder()
+                item.getDisplayOrder(),
+                item.getTripadvisorLocationId()
         );
     }
 }

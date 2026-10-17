@@ -130,6 +130,34 @@ public class ItineraryService {
         return ItineraryItemResponse.from(saved);
     }
 
+    @Transactional
+    public ItineraryItemResponse addTripadvisorPlace(Long tripId, Long userId, AddTripadvisorPlaceRequest request) {
+        Trip trip = tripRepository.findForPlanningById(tripId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
+        verifyCanEdit(trip, userId);
+        if (request.locationId() == null || !request.locationId().matches("[0-9]{1,12}")
+                || request.dayNumber() == null || request.dayNumber() < 1 || request.title() == null
+                || request.title().isBlank() || request.title().length() > 180)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose a place, trip day and activity title");
+        long duration = trip.getStartDate() == null || trip.getEndDate() == null ? 0
+                : java.time.temporal.ChronoUnit.DAYS.between(trip.getStartDate(), trip.getEndDate()) + 1;
+        if (request.dayNumber() > duration)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose a day within the trip dates");
+        var days = itineraryDayRepository.findByTripIdOrderByDayNumberAsc(tripId);
+        ItineraryDay day = days.stream().filter(d -> d.getDayNumber().equals(request.dayNumber())).findFirst().orElse(null);
+        if (day == null) {
+            day = itineraryDayRepository.save(ItineraryDay.builder().trip(trip).dayNumber(request.dayNumber())
+                    .dayDate(trip.getStartDate().plusDays(request.dayNumber() - 1)).title("Day " + request.dayNumber()).build());
+        }
+        var existing = itineraryItemRepository.findByItineraryDayIdAndTripadvisorLocationId(day.getId(), request.locationId());
+        if (existing.isPresent()) return ItineraryItemResponse.from(existing.get());
+        int order = itineraryItemRepository.findByItineraryDayIdOrderByDisplayOrderAscIdAsc(day.getId()).stream()
+                .mapToInt(i -> i.getDisplayOrder() == null ? 0 : i.getDisplayOrder()).max().orElse(0) + 1;
+        ItineraryItem item = ItineraryItem.builder().trip(trip).itineraryDay(day)
+                .tripadvisorLocationId(request.locationId()).title(request.title().trim()).displayOrder(order).build();
+        return ItineraryItemResponse.from(itineraryItemRepository.save(item));
+    }
+
     // 6. PUT /api/v1/trips/{tripId}/itinerary/items/{itemId}
     @Transactional
     public ItineraryItemResponse updateItem(Long tripId, Long itemId, Long userId, UpdateItineraryItemRequest request) {
@@ -147,6 +175,7 @@ public class ItineraryService {
         }
 
         item.setPlace(place);
+        if (place != null) item.setTripadvisorLocationId(null);
         item.setTitle(request.title().trim());
         item.setDescription(request.description());
         item.setStartTime(request.startTime());

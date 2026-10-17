@@ -1,5 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Output, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Trip } from '../../core/models/trip.model';
+import { TripService } from '../../core/services/trip.service';
+import { ItineraryService } from '../../core/services/itinerary.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Subscription, catchError, from, map, mergeMap, of } from 'rxjs';
@@ -10,22 +14,38 @@ interface Details extends Location { description: string | null; webUrl: string 
 interface Photo { url: string; caption: string | null; author: string; sourceUrl: string | null; }
 interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
 @Component({
-  selector: 'app-tripadvisor', standalone: true, imports: [CommonModule, FormsModule],
+  selector: 'app-tripadvisor', standalone: true, imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <section class="explore" aria-labelledby="explore-title">
       <header><div><span class="eyebrow">Explore</span><h1 id="explore-title">Find your next stop</h1><p>Places and traveller photos from Tripadvisor.</p></div>
         <a href="https://www.tripadvisor.com/" target="_blank" rel="noopener noreferrer"><img class="brand" src="https://files.readme.io/9f59534-Vector_1.png" alt="Tripadvisor" /></a>
       </header>
       <form (ngSubmit)="search()" class="search-form">
-        <label>City or place<input name="query" [(ngModel)]="query" (ngModelChange)="clear()" maxlength="180" required placeholder="Ooty, Tamil Nadu, India" /></label>
-        <label class="category">Show<select name="category" [(ngModel)]="category" (ngModelChange)="clear()"><option value="attractions">Things to do</option><option value="hotels">Hotels</option><option value="restaurants">Restaurants</option></select></label>
-        <button type="submit" [disabled]="!available || busy || query.trim().length < 2">Search</button>
+        <label class="category">Search by<select name="searchType" [(ngModel)]="searchType" (ngModelChange)="clear()" [disabled]="saving"><option value="COMBINED">City or area</option><option value="NAME">Particular place</option></select></label>
+        <label>{{ searchType === 'NAME' ? 'Place name' : 'City or place' }}<input [disabled]="saving" name="query" [(ngModel)]="query" (ngModelChange)="clear()" maxlength="180" required [placeholder]="searchType === 'NAME' ? 'e.g. Government Botanical Garden' : 'Ooty, Tamil Nadu, India'" /></label>
+        <label class="category">Show<select [disabled]="saving" name="category" [(ngModel)]="category" (ngModelChange)="clear()"><option value="attractions">Things to do</option><option value="hotels">Hotels</option><option value="restaurants">Restaurants</option></select></label>
+        <button type="submit" [disabled]="!available || busy || saving || query.trim().length < 2">Search</button>
       </form>
       <p *ngIf="checking || busy" role="status">{{ checking ? 'Connecting to Tripadvisor…' : 'Finding places…' }}</p>
       <div *ngIf="error" role="alert" class="notice"><p>{{ error }}</p><button *ngIf="!available && !checking" type="button" (click)="checkAvailability()">Check connection</button></div>
       <p *ngIf="searched && !busy && !results.length && !error">No accessible places found. Try a more specific name. Terra accounts may need their allowed locations or contracted geography configured.</p>
       <div *ngIf="results.length" class="result-heading"><h2>{{ submittedQuery }}</h2><span>{{ resultSummary }}</span></div>
       <p *ngIf="photoFailure" role="alert" class="notice">{{ photoFailure }}</p>
+      <p *ngIf="planningSuccess" role="status" class="notice">{{ planningSuccess }} <a [routerLink]="['/trips', savedTripId]">Open trip ↗</a></p>
+      <section *ngIf="selectedPlace as selected" class="plan-panel" aria-label="Add selected place to itinerary">
+        <header><h2>{{ selected.name }}</h2><button type="button" [disabled]="saving" (click)="cancelSelection()">Cancel</button></header>
+        <p *ngIf="loadingTrips" role="status">Loading your trips…</p>
+        <div class="plan-fields">
+          <label>Trip<select [(ngModel)]="activeTripId" (ngModelChange)="selectedDay = 1" [disabled]="saving || loadingTrips">
+            <option [ngValue]="0">Choose a trip</option><option *ngFor="let t of availableTrips" [ngValue]="t.id">{{ t.name }}</option>
+          </select></label>
+          <label>Trip day<input type="number" min="1" [max]="tripDayCount" step="1" [(ngModel)]="selectedDay" [disabled]="saving || !activeTripId" /></label>
+          <label>Your activity title<input maxlength="180" [(ngModel)]="activityTitle" [disabled]="saving" placeholder="e.g. Morning sightseeing" /></label>
+        </div>
+        <p class="footnote">Your title and schedule stay in your itinerary. Tripadvisor place information loads online.</p>
+        <p *ngIf="planningError" role="alert" class="notice">{{ planningError }}</p>
+        <button type="button" [disabled]="saving || loadingTrips || !validPlan" (click)="addSelectedPlace()">{{ saving ? 'Adding…' : 'Add to itinerary' }}</button>
+      </section>
       <div class="cards">
         <article *ngFor="let place of visiblePlaces; trackBy: trackPlace" class="card">
           <ng-container *ngIf="photoStates[place.id] as state">
@@ -35,6 +55,7 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
             </figure>
             <ng-template #noPhoto><div class="no-photo">{{ state.loading ? 'Loading photo…' : state.error ? 'Photo unavailable' : 'No photo supplied' }}</div></ng-template>
             <div class="card-body"><h3><a *ngIf="place.webUrl; else plainName" [href]="place.webUrl" target="_blank" rel="noopener noreferrer">{{ place.name }}</a><ng-template #plainName>{{ place.name }}</ng-template></h3><p>{{ place.address }}</p>
+              <label class="place-select"><input type="checkbox" [checked]="selectedPlace?.id === place.id" [disabled]="saving || (!!trip && !canEdit)" (change)="selectPlace(place)" /> Select place</label>
               <button type="button" [disabled]="detailsLoading" (click)="open(place.id)">View details &amp; ratings</button>
               <button *ngIf="state.error && !state.loading" type="button" class="text-button" (click)="retryPhoto(place.id)">Retry photo</button>
             </div>
@@ -42,7 +63,7 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
         </article>
       </div>
       <nav *ngIf="searched && (hasNext || page > 1)" aria-label="Tripadvisor results pages" class="pagination">
-        <button type="button" [disabled]="busy || page === 1" (click)="setPage(page - 1)">Previous</button><span>Page {{ page }}<ng-container *ngIf="totalPages !== null"> of {{ totalPages }}</ng-container></span><button type="button" [disabled]="busy || !hasNext" (click)="setPage(page + 1)">Next</button>
+        <button type="button" [disabled]="busy || saving || page === 1" (click)="setPage(page - 1)">Previous</button><span>Page {{ page }}<ng-container *ngIf="totalPages !== null"> of {{ totalPages }}</ng-container></span><button type="button" [disabled]="busy || saving || !hasNext" (click)="setPage(page + 1)">Next</button>
       </nav>
       <p *ngIf="detailsLoading" role="status">Loading place details…</p>
       <p *ngIf="detailError" role="alert" class="notice">{{ detailError }}</p>
@@ -57,6 +78,68 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
 })
 export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   @Input() query = '';
+  @Input() trip: Trip | null = null;
+  @Input() canEdit = false;
+  @Output() itineraryChanged = new EventEmitter<void>();
+  private tripService = inject(TripService);
+  private itineraryService = inject(ItineraryService);
+  private planningRequests = new Subscription();
+  private tripsRequest?: Subscription;
+  searchType = 'COMBINED';
+  private submittedSearchType = 'COMBINED';
+  selectedPlace: Location | null = null;
+  availableTrips: Trip[] = []; activeTripId = 0; selectedDay = 1; activityTitle = 'Planned visit';
+  loadingTrips = false; saving = false; planningError = ''; planningSuccess = ''; savedTripId = 0;
+  get tripDayCount(): number {
+    const trip = this.availableTrips.find(t => t.id === this.activeTripId);
+    if (!trip) return 0;
+    return Math.max(0, Math.round((Date.parse(trip.endDate) - Date.parse(trip.startDate)) / 86400000) + 1) || 0;
+  }
+  get validPlan(): boolean {
+    return !!this.selectedPlace && this.availableTrips.some(t => t.id === this.activeTripId)
+      && Number.isInteger(this.selectedDay) && this.selectedDay >= 1 && this.selectedDay <= this.tripDayCount
+      && this.activityTitle.trim().length > 0 && this.activityTitle.length <= 180;
+  }
+  selectPlace(place: Location): void {
+    if (this.saving || (this.trip && !this.canEdit)) return;
+    if (this.selectedPlace?.id === place.id) { this.cancelSelection(); return; }
+    this.cancelSelection(); this.selectedPlace = place; this.planningSuccess = '';
+    this.activityTitle = 'Planned visit'; this.selectedDay = 1;
+    if (this.trip) { this.availableTrips = [this.trip]; this.activeTripId = this.trip.id; return; }
+    this.loadingTrips = true;
+    this.tripsRequest = this.tripService.getMyTrips().subscribe({
+      next: trips => {
+        this.loadingTrips = false;
+        this.availableTrips = trips.filter(t => ['OWNER','EDITOR','PLANNER'].includes(t.userRole));
+        this.activeTripId = this.availableTrips.length === 1 ? this.availableTrips[0].id : 0;
+        if (!this.availableTrips.length) this.planningError = 'Create a trip or ask for planner access before adding a place.';
+      },
+      error: () => { this.loadingTrips = false; this.planningError = 'Unable to load your trips. Select the place again to retry.'; }
+    });
+  }
+  cancelSelection(): void {
+    if (this.saving) return;
+    this.tripsRequest?.unsubscribe(); this.loadingTrips = false; this.selectedPlace = null;
+    this.planningError = ''; this.availableTrips = []; this.activeTripId = 0;
+  }
+  addSelectedPlace(): void {
+    if (this.saving || !this.validPlan || !this.selectedPlace) return;
+    const tripId = this.activeTripId;
+    this.saving = true; this.planningError = '';
+    this.planningRequests.add(this.itineraryService.addTripadvisorPlace(tripId, {
+      locationId: this.selectedPlace.id, dayNumber: this.selectedDay, title: this.activityTitle.trim()
+    }).subscribe({
+      next: () => {
+        this.saving = false; this.savedTripId = tripId; this.cancelSelection();
+        this.planningSuccess = 'Place added to your itinerary.'; this.itineraryChanged.emit();
+      },
+      error: e => {
+        this.saving = false;
+        this.planningError = e.status === 403 ? 'You no longer have permission to edit this trip.'
+          : e.status === 400 ? 'Check your activity title and choose a day within the trip dates.' : 'Unable to add this place. Please retry; it will not be added twice to the same day.';
+      }
+    }));
+  }
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/discovery/tripadvisor`;
   private searchRequest?: Subscription;
@@ -78,7 +161,10 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
       : `${this.results.length} places on page ${this.page} from Tripadvisor`;
   }
   ngOnInit(): void { this.checkAvailability(); }
-  ngOnChanges(changes: SimpleChanges): void { if (changes['query'] && !changes['query'].firstChange) this.clear(); }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['query'] && !changes['query'].firstChange) this.clear();
+    else if (changes['trip'] || changes['canEdit']) this.cancelSelection();
+  }
   checkAvailability(): void {
     this.statusRequest?.unsubscribe(); this.checking = true; this.error = '';
     this.statusRequest = this.http.get<{available: boolean; apiMode?: string; setupCode?: string}>(`${this.base}/status`).subscribe({
@@ -87,26 +173,28 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
   clear(): void {
+    this.cancelSelection(); this.planningSuccess = '';
     this.searchRequest?.unsubscribe(); this.photoRequests.unsubscribe(); this.photoRequests = new Subscription(); this.closeDetails();
     this.busy = false; this.error = ''; this.searched = false; this.page = 1; this.totalElements = null; this.totalPages = null; this.hasNext = false; this.results = []; this.photoStates = {}; this.submittedQuery = '';
   }
   search(): void {
-    if (!this.available || this.busy || this.query.trim().length < 2) return;
+    if (!this.available || this.busy || this.saving || this.query.trim().length < 2) return;
     this.clear(); this.busy = true; this.searched = true; this.submittedQuery = this.query.trim();
-    this.submittedCategory = this.category;
+    this.submittedCategory = this.category; this.submittedSearchType = this.searchType;
     this.loadPage(1);
   }
   setPage(page: number): void {
-    if (this.busy || page < 1 || page === this.page || (page > this.page && !this.hasNext)) return;
+    if (this.busy || this.saving || page < 1 || page === this.page || (page > this.page && !this.hasNext)) return;
     this.loadPage(page);
   }
   private loadPage(page: number): void {
     this.busy = true; this.error = '';
     const params = new HttpParams().set('query', this.submittedQuery).set('category', this.submittedCategory)
-      .set('page', page).set('size', this.pageSize);
+      .set('page', page).set('size', this.pageSize).set('searchType', this.submittedSearchType);
     this.searchRequest = this.http.get<SearchPage>(`${this.base}/search-page`, {params}).subscribe({
       next: result => {
         this.photoRequests.unsubscribe(); this.photoRequests = new Subscription(); this.closeDetails();
+        this.cancelSelection(); this.planningSuccess = '';
         this.photoStates = {}; this.results = result.places; this.page = result.page;
         this.totalElements = result.totalElements; this.totalPages = result.totalPages; this.hasNext = result.hasNext;
         this.busy = false; this.loadVisiblePhotos();
@@ -159,5 +247,5 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
       default: return 'Tripadvisor is temporarily unavailable. Please try again.';
     }
   }
-  ngOnDestroy(): void { this.clear(); this.statusRequest?.unsubscribe(); }
+  ngOnDestroy(): void { this.planningRequests.unsubscribe(); this.saving = false; this.clear(); this.statusRequest?.unsubscribe(); }
 }

@@ -51,6 +51,13 @@ class TerraTripadvisorClientTest {
           assertThrows(TripadvisorFailure.class,()->client.searchPage("Ooty","attractions",values[0],values[1]));
         verify(budget,never()).reserveTerra(anyInt());
     }
+    @Test void particularPlaceSearchUsesProviderNameMatching() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var budget=activeBudget();
+        server.expect(queryParam("search_type","NAME")).andExpect(queryParam("query","Botanical%20Garden"))
+          .andRespond(withSuccess("{\"data\":[],\"pagination\":{\"total_elements\":0,\"total_pages\":0}}",MediaType.APPLICATION_JSON));
+        var page=new TerraTripadvisorClient(builder.build(),budget,"test").searchPage("Botanical Garden","attractions",1,4,"NAME");
+        assertTrue(page.places().isEmpty());assertFalse(page.hasNext());server.verify();
+    }
     @Test void readsDocumentedDetailsAndProviderBubbleImage() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var budget=activeBudget();
         server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://terra.tripadvisor.com/api/locations/123?"))).andRespond(withSuccess(LOCATION,MediaType.APPLICATION_JSON));

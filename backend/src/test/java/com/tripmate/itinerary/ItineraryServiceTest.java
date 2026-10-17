@@ -163,4 +163,52 @@ class ItineraryServiceTest {
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertTrue(ex.getReason().contains("End time cannot be before start time"));
     }
+    private void planningTrip() {
+        trip.setStartDate(LocalDate.of(2026, 11, 1)); trip.setEndDate(LocalDate.of(2026, 11, 3));
+        when(tripRepository.findForPlanningById(10L)).thenReturn(Optional.of(trip));
+    }
+    @Test void addsProviderReferenceWithoutCopyingProviderContentAndReusesDay() {
+        planningTrip();
+        when(itineraryDayRepository.findByTripIdOrderByDayNumberAsc(10L)).thenReturn(List.of(day1));
+        when(itineraryItemRepository.save(any(ItineraryItem.class))).thenAnswer(call -> { ItineraryItem item=call.getArgument(0); item.setId(500L); return item; });
+        var response=itineraryService.addTripadvisorPlace(10L,1L,new AddTripadvisorPlaceRequest("123",1,"Morning visit"));
+        assertEquals("123",response.tripadvisorLocationId());assertEquals("Morning visit",response.title());
+        assertNull(response.location());assertNull(response.description());assertNull(response.placeId());assertEquals(1,response.displayOrder());
+        verify(itineraryDayRepository,never()).save(any());
+    }
+    @Test void retriesReturnExistingItemWithoutDuplicatingOrOverwritingIt() {
+        planningTrip();when(itineraryDayRepository.findByTripIdOrderByDayNumberAsc(10L)).thenReturn(List.of(day1));
+        var item=ItineraryItem.builder().id(500L).trip(trip).itineraryDay(day1).tripadvisorLocationId("123").title("My original visit").build();
+        when(itineraryItemRepository.findByItineraryDayIdAndTripadvisorLocationId(100L,"123")).thenReturn(Optional.of(item));
+        var response=itineraryService.addTripadvisorPlace(10L,1L,new AddTripadvisorPlaceRequest("123",1,"Retry"));
+        assertEquals(500L,response.id());assertEquals("My original visit",response.title());verify(itineraryItemRepository,never()).save(any());
+    }
+    @Test void createsMissingDayWithinTripDates() {
+        planningTrip();when(itineraryDayRepository.save(any())).thenAnswer(call -> { ItineraryDay day=call.getArgument(0);day.setId(101L);return day; });
+        when(itineraryItemRepository.save(any())).thenAnswer(call -> { ItineraryItem item=call.getArgument(0);item.setId(500L);assertEquals(LocalDate.of(2026,11,2),item.getItineraryDay().getDayDate());return item; });
+        var response=itineraryService.addTripadvisorPlace(10L,1L,new AddTripadvisorPlaceRequest("123",2,"Visit"));
+        assertEquals(101L,response.dayId());verify(itineraryDayRepository).save(any());
+    }
+    @Test void rejectsDaysOutsideTripAndMalformedReferencesBeforeWriting() {
+        planningTrip();
+        for(var request:List.of(new AddTripadvisorPlaceRequest("123",4,"Visit"),new AddTripadvisorPlaceRequest("../123",1,"Visit"),new AddTripadvisorPlaceRequest("123",1," "))) {
+            assertEquals(HttpStatus.BAD_REQUEST,assertThrows(ResponseStatusException.class,()->itineraryService.addTripadvisorPlace(10L,1L,request)).getStatusCode());
+        }
+        verify(itineraryDayRepository,never()).save(any());verify(itineraryItemRepository,never()).save(any());
+    }
+    @Test void nonPlannersCannotAddProviderPlaces() {
+        planningTrip();
+        assertEquals(HttpStatus.FORBIDDEN,assertThrows(ResponseStatusException.class,()->itineraryService.addTripadvisorPlace(10L,2L,new AddTripadvisorPlaceRequest("123",1,"Visit"))).getStatusCode());
+        verify(itineraryItemRepository,never()).save(any());verify(itineraryDayRepository,never()).save(any());
+    }
+
+    @Test void activePlannerCanAddPlace() {
+        planningTrip();
+        when(tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(10L,2L,com.tripmate.member.MemberStatus.ACTIVE))
+                .thenReturn(Optional.of(com.tripmate.member.TripMember.builder().role(com.tripmate.member.TripRole.PLANNER).build()));
+        when(itineraryDayRepository.findByTripIdOrderByDayNumberAsc(10L)).thenReturn(List.of(day1));
+        when(itineraryItemRepository.save(any())).thenAnswer(call -> { ItineraryItem item=call.getArgument(0);item.setId(500L);return item; });
+        assertEquals("123",itineraryService.addTripadvisorPlace(10L,2L,new AddTripadvisorPlaceRequest("123",1,"Visit")).tripadvisorLocationId());
+    }
+
 }

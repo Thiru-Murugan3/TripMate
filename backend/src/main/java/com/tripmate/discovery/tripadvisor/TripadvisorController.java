@@ -22,8 +22,9 @@ public class TripadvisorController {
     @GetMapping("/search-page")
     public ResponseEntity<TripadvisorService.SearchPage> searchPage(@RequestParam String query,
             @RequestParam(defaultValue = "attractions") String category,
-            @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "4") int size) {
-        return live(service.searchPage(query, category, page, size));
+            @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "4") int size,
+            @RequestParam(defaultValue = "COMBINED") String searchType) {
+        return live(service.searchPage(query, category, page, size, searchType));
     }
     @GetMapping("/locations/{id}")
     public ResponseEntity<TripadvisorService.Details> details(@PathVariable String id) { return live(service.details(id)); }

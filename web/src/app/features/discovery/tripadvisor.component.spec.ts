@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { TripadvisorComponent } from './tripadvisor.component';
 import { environment } from '../../../environments/environment';
+import { provideRouter } from '@angular/router';
 import { routes } from '../../app.routes';
 
 describe('Tripadvisor-only Explore', () => {
@@ -11,7 +12,7 @@ describe('Tripadvisor-only Explore', () => {
   const base = `${environment.apiUrl}/discovery/tripadvisor`;
   const photo = {url:'https://media-cdn.tripadvisor.com/photo.jpg',caption:'Garden',author:'Photographer',sourceUrl:'https://www.tripadvisor.com/photo'};
   beforeEach(async () => {
-    await TestBed.configureTestingModule({imports:[TripadvisorComponent],providers:[provideHttpClient(),provideHttpClientTesting()]}).compileComponents();
+    await TestBed.configureTestingModule({imports:[TripadvisorComponent],providers:[provideHttpClient(),provideHttpClientTesting(),provideRouter([])]}).compileComponents();
     fixture=TestBed.createComponent(TripadvisorComponent); http=TestBed.inject(HttpTestingController);
     fixture.componentRef.setInput('query','Ooty'); fixture.detectChanges();
     http.expectOne(`${base}/status`).flush({available:true}); fixture.detectChanges();
@@ -110,6 +111,46 @@ describe('Tripadvisor-only Explore', () => {
     expect(fixture.componentInstance.error).toContain('package and API permissions');
     fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search-page`).flush({code:'TERRA_ENTITY_LIMIT'}, {status:429,statusText:'Budget'});
     expect(fixture.componentInstance.error).toContain('entity budget is exhausted');
+  });
+
+  const trip = {id:10,name:'Ooty break',destination:'Ooty',startDate:'2026-11-01',endDate:'2026-11-03',userRole:'OWNER'};
+  it('searches a particular place by name without changing city search defaults', () => {
+    fixture.componentInstance.searchType='NAME';fixture.componentInstance.query='Botanical Garden';fixture.componentInstance.search();
+    http.expectOne(r=>r.url===`${base}/search-page` && r.params.get('searchType')==='NAME' && r.params.get('query')==='Botanical Garden')
+      .flush({places:[],page:1,size:4,totalElements:0,totalPages:0,hasNext:false});
+  });
+  it('selects a place and saves only its identifier and the travellers own plan', () => {
+    searchResults();http.expectOne(`${base}/locations/1/photos`).flush([]);
+    fixture.componentInstance.selectPlace(fixture.componentInstance.results[0]);
+    http.expectOne(`${environment.apiUrl}/trips`).flush([trip,{...trip,id:20,userRole:'VIEWER'}]);
+    expect(fixture.componentInstance.availableTrips.length).toBe(1);
+    fixture.componentInstance.activityTitle='Morning outing';fixture.componentInstance.selectedDay=2;
+    let changed=0;fixture.componentInstance.itineraryChanged.subscribe(()=>changed++);
+    fixture.componentInstance.addSelectedPlace();fixture.componentInstance.addSelectedPlace();
+    const request=http.expectOne(`${environment.apiUrl}/trips/10/itinerary/tripadvisor-places`);
+    expect(request.request.body).toEqual({locationId:'1',dayNumber:2,title:'Morning outing'});
+    request.flush({id:500,tripadvisorLocationId:'1'});fixture.detectChanges();
+    expect(changed).toBe(1);expect(fixture.componentInstance.selectedPlace).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Place added to your itinerary');
+  });
+  it('retains selection on save failure, prevents invalid days, and permits retry', () => {
+    fixture.componentRef.setInput('trip',trip);fixture.componentRef.setInput('canEdit',true);fixture.detectChanges();
+    searchResults();http.expectOne(`${base}/locations/1/photos`).flush([]);
+    fixture.componentInstance.selectPlace(fixture.componentInstance.results[0]);http.expectNone(`${environment.apiUrl}/trips`);
+    fixture.componentInstance.selectedDay=4;fixture.componentInstance.addSelectedPlace();
+    http.expectNone(`${environment.apiUrl}/trips/10/itinerary/tripadvisor-places`);
+    fixture.componentInstance.selectedDay=1;fixture.componentInstance.addSelectedPlace();
+    http.expectOne(`${environment.apiUrl}/trips/10/itinerary/tripadvisor-places`).flush({}, {status:500,statusText:'Unavailable'});
+    expect(fixture.componentInstance.selectedPlace?.id).toBe('1');expect(fixture.componentInstance.saving).toBeFalse();
+    fixture.componentInstance.addSelectedPlace();http.expectOne(`${environment.apiUrl}/trips/10/itinerary/tripadvisor-places`).flush({id:500});
+  });
+  it('blocks selection in a read-only trip and cancels stale trip loading on city change', () => {
+    fixture.componentRef.setInput('trip',trip);fixture.detectChanges();
+    const place={id:'1',name:'Garden',address:'Ooty'};fixture.componentInstance.selectPlace(place);
+    expect(fixture.componentInstance.selectedPlace).toBeNull();http.expectNone(`${environment.apiUrl}/trips`);
+    fixture.componentRef.setInput('trip',null);fixture.detectChanges();fixture.componentInstance.selectPlace(place);
+    const request=http.expectOne(`${environment.apiUrl}/trips`);fixture.componentInstance.clear();
+    expect(request.cancelled).toBeTrue();expect(fixture.componentInstance.selectedPlace).toBeNull();
   });
 
 });

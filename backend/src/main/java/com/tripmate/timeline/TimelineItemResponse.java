@@ -31,6 +31,7 @@ public record TimelineItemResponse(
         String badgeColor,
         boolean flexible,
         boolean conflict,
-        String warning
+        String warning,
+        String tripadvisorLocationId
 ) {
 }

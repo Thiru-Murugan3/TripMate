@@ -9,6 +9,8 @@ public interface ItineraryItemRepository extends JpaRepository<ItineraryItem, Lo
 
     List<ItineraryItem> findByItineraryDayIdOrderByDisplayOrderAscIdAsc(Long dayId);
 
+    Optional<ItineraryItem> findByItineraryDayIdAndTripadvisorLocationId(Long dayId, String locationId);
+
     Optional<ItineraryItem> findByIdAndTripId(Long id, Long tripId);
 
     List<ItineraryItem> findByTripIdOrderByItineraryDayDayNumberAscDisplayOrderAscIdAsc(Long tripId);
