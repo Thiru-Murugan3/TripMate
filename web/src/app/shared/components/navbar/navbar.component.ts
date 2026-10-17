@@ -45,14 +45,6 @@ import { NotificationService } from '../../../core/services/notification.service
             My Trips
           </a>
           <a
-            routerLink="/explore"
-            routerLinkActive="active"
-            class="nav-link"
-            aria-label="Explore tourist places"
-          >
-            Explore
-          </a>
-          <a
             *ngIf="authService.currentUser()?.systemRole === 'ADMIN'"
             routerLink="/admin/discovery"
             routerLinkActive="active"
