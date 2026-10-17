@@ -73,4 +73,22 @@ describe('Tripadvisor-only Explore', () => {
     fixture.componentInstance.ngOnDestroy();expect(photos.cancelled).toBeTrue();expect(details.cancelled).toBeTrue();
     expect(fixture.componentInstance.results).toEqual([]);expect(fixture.componentInstance.detail).toBeNull();
   });
+  it('links Terra names and photos to the provider property page when photos have no page URL', () => {
+    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search`).flush([{id:'1',name:'Garden',address:'Ooty',webUrl:'https://www.tripadvisor.com/Attraction_Review-d123'}]);
+    http.expectOne(`${base}/locations/1/photos`).flush([{...photo,sourceUrl:null}]);fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('figure a').getAttribute('href')).toBe('https://www.tripadvisor.com/Attraction_Review-d123');
+    expect(fixture.nativeElement.querySelector('h3 a').getAttribute('href')).toContain('tripadvisor.com');
+  });
+  it('keeps Terra unavailable until its account allowance and entity budget are configured', () => {
+    fixture.componentInstance.checkAvailability();http.expectOne(`${base}/status`).flush({available:false,apiMode:'TERRA',setupCode:'TERRA_SETUP_REQUIRED'});
+    expect(fixture.componentInstance.available).toBeFalse();expect(fixture.componentInstance.error).toContain('confirmed account allowance');
+    fixture.componentInstance.search();http.expectNone(r=>r.url===`${base}/search`);
+  });
+  it('explains Terra endpoint access and entity budget failures without suggesting blind retry', () => {
+    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search`).flush({code:'TERRA_ACCESS_DENIED'}, {status:502,statusText:'Denied'});
+    expect(fixture.componentInstance.error).toContain('package and API permissions');
+    fixture.componentInstance.search();http.expectOne(r=>r.url===`${base}/search`).flush({code:'TERRA_ENTITY_LIMIT'}, {status:429,statusText:'Budget'});
+    expect(fixture.componentInstance.error).toContain('entity budget is exhausted');
+  });
+
 });

@@ -76,4 +76,13 @@ class TripadvisorServiceTest {
         assertEquals(503, assertThrows(ResponseStatusException.class, () -> invalid.search("Ooty", "attractions")).getStatusCode().value());
     }
 
+    @Test void terraModeUsesOnlyTheTerraAdapter() {
+        var factory=mock(com.tripmate.discovery.provider.ProviderHttpClientFactory.class);
+        when(factory.create(anyInt())).thenReturn(RestClient.create());
+        var terra=mock(TerraTripadvisorClient.class);when(terra.available()).thenReturn(true);
+        when(terra.search("Ooty","attractions")).thenReturn(java.util.List.of());
+        var service=new TripadvisorService(factory,mock(TripadvisorBudget.class),"test","https://www.suttru.in","TERRA",terra);
+        assertTrue(service.available());assertEquals("TERRA",service.apiMode());service.search("Ooty","attractions");verify(terra).search("Ooty","attractions");
+    }
+
 }
