@@ -188,4 +188,23 @@ class DestinationDiscoveryOrchestrationTest {
                 PlaceCategory.ATTRACTION, price, null
         );
     }
+    @Test void keepsDistinctTamilNamesAndMergesCreditedDuplicatePhotos() {
+        var image = new DiscoveryImage("https://upload.wikimedia.org/photo.jpg","https://commons.wikimedia.org/wiki/File:Photo.jpg","Commons","Author","CC BY 4.0","Author",true,true);
+        var winner=place("Garden",1,null,DiscoveryCategory.PARK).toBuilder().confidenceScore(.9).build();
+        var donor=winner.toBuilder().externalId("otm:other").confidenceScore(.7).imageGallery(List.of(image)).primaryImageUrl(image.url()).imageExact(true).build();
+        var tamil1=winner.toBuilder().externalId("osm:t1").name("கோவில்").build();
+        var tamil2=winner.toBuilder().externalId("osm:t2").name("பூங்கா").build();
+        when(primary.discover(any())).thenReturn(result("Primary",winner,tamil1));
+        when(fallback.discover(any())).thenReturn(result("Fallback",donor,tamil2));
+        var response=service.search("Chennai",25,"ALL");assertEquals(3,response.resultCount());
+        var garden=response.places().stream().filter(p -> p.name().equals("Garden")).findFirst().orElseThrow();
+        assertEquals(winner.externalId(),garden.externalId());assertEquals(image,garden.imageGallery().get(0));
+    }
+    @Test void nameFilteringRunsBeforePaginationAcrossTheCombinedInventory() {
+        when(primary.discover(any())).thenReturn(result("Primary",place("Beach",1,null,DiscoveryCategory.BEACH),place("Garden",2,null,DiscoveryCategory.PARK)));
+        when(fallback.discover(any())).thenReturn(result("Fallback",place("Museum",3,null,DiscoveryCategory.MUSEUM)));
+        var response=service.search("Chennai",25,new DiscoverySearchFilters("ALL",null,null,null,null,null,null,null,null,null,null,null,"NAME",0,1,"Garden"));
+        assertEquals(1,response.resultCount());assertEquals("Garden",response.places().get(0).name());
+    }
+
 }

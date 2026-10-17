@@ -42,7 +42,7 @@ export const routes: Routes = [
   {
     path: 'explore',
     loadComponent: () =>
-      import('./features/discovery/tripadvisor.component').then((m) => m.TripadvisorComponent),
+      import('./features/discovery/explore.component').then((m) => m.ExploreComponent),
     canActivate: [authGuard]
   },
   {

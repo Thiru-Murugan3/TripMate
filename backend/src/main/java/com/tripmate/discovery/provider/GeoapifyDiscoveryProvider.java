@@ -38,7 +38,7 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
 
     @Override
     public DiscoveryProviderResult discover(DiscoveryProviderRequest request) {
-        if (apiKey.isBlank()) return new DiscoveryProviderResult(name(), "", List.of(), List.of());
+        if (apiKey.isBlank()) return new DiscoveryProviderResult(name(), "", List.of(), List.of("Geoapify is inactive until its backend API key is configured."));
         double lat = request.destination().latitude().doubleValue();
         double lon = request.destination().longitude().doubleValue();
         URI uri = UriComponentsBuilder.fromUri(URI.create(baseUrl + "/v2/places"))

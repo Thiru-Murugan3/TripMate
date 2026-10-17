@@ -57,7 +57,7 @@ storage:
 discovery:
   nominatim-url: ${DISCOVERY_NOMINATIM_URL:https://nominatim.openstreetmap.org}
   photon-url: ${DISCOVERY_PHOTON_URL:https://photon.komoot.io}
-  overpass-urls: ${DISCOVERY_OVERPASS_URLS:${DISCOVERY_OVERPASS_URL:https://overpass-api.de/api/interpreter,https://maps.mail.ru/osm/tools/overpass/api/interpreter,https://overpass.private.coffee/api/interpreter}}
+  overpass-urls: ${DISCOVERY_OVERPASS_URLS:${DISCOVERY_OVERPASS_URL:}}
   user-agent: ${DISCOVERY_USER_AGENT:Suttru/1.0 (+https://github.com/Thiru-Murugan3/TripMate)}
   connect-timeout-ms: ${DISCOVERY_CONNECT_TIMEOUT_MS:8000}
   read-timeout-ms: ${DISCOVERY_READ_TIMEOUT_MS:35000}
@@ -76,6 +76,9 @@ discovery:
     referer: ${TRIPADVISOR_REFERER:${APP_FRONTEND_URL:https://www.suttru.in}}
     daily-limit: ${TRIPADVISOR_DAILY_LIMIT:100}
     monthly-limit: ${TRIPADVISOR_MONTHLY_LIMIT:4000}
+  opentripmap:
+    enabled: ${DISCOVERY_OPENTRIPMAP_ENABLED:false}
+    api-key: ${DISCOVERY_OPENTRIPMAP_API_KEY:}
   geoapify:
     url: ${DISCOVERY_GEOAPIFY_URL:https://api.geoapify.com}
     api-key: ${DISCOVERY_GEOAPIFY_API_KEY:}

@@ -38,12 +38,13 @@ public class DestinationDiscoveryController {
             @RequestParam(required = false) Double minRating,
             @RequestParam(defaultValue = "RELEVANCE") String sort,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "100") int size
+            @RequestParam(defaultValue = "100") int size,
+            @RequestParam(required = false) String name
     ) {
         return ResponseEntity.ok(
                 destinationDiscoveryService.search(destination, radiusKm, new DiscoverySearchFilters(
                         category, subcategory, itemType, minPrice, maxPrice, priceStatus, openNow,
-                        familyFriendly, difficulty, minDuration, maxDuration, minRating, sort, page, size
+                        familyFriendly, difficulty, minDuration, maxDuration, minRating, sort, page, size, name
                 ))
         );
     }

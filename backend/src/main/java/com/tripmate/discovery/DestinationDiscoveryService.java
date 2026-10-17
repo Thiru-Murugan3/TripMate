@@ -69,6 +69,7 @@ public class DestinationDiscoveryService {
     public DestinationDiscoveryResponse search(String destination, int radiusKm, DiscoverySearchFilters filters) {
         String query = destination == null ? "" : destination.trim();
         validate(query, radiusKm, filters);
+        if (filters.name() != null && filters.name().length() > 180) throw bad("Place name is too long");
         DiscoveryCategory category = enumValue(DiscoveryCategory.class, filters.category(), "category");
         DiscoveryItemType itemType = enumValue(DiscoveryItemType.class, filters.itemType(), "item type");
         PriceStatus priceStatus = enumValue(PriceStatus.class, filters.priceStatus(), "price status");
@@ -88,6 +89,7 @@ public class DestinationDiscoveryService {
         }
 
         List<DiscoveredPlace> filtered = cached.places().stream()
+                .filter(place -> textMatches(place.name(), filters.name() == null ? null : filters.name().trim()))
                 .filter(place -> itemType == null || place.itemType() == itemType)
                 .filter(place -> priceStatus == null || place.priceStatus() == priceStatus
                         && (!(priceStatus == PriceStatus.VERIFIED || priceStatus == PriceStatus.FREE)
@@ -111,7 +113,7 @@ public class DestinationDiscoveryService {
         int totalPages = filtered.isEmpty() ? 0 : (int) Math.ceil(filtered.size() / (double) size);
         return new DestinationDiscoveryResponse(
                 query, cached.destination().displayName(), cached.destination().latitude(), cached.destination().longitude(),
-                radiusKm, category == null ? "ALL" : category.name(), String.join(" + ", cached.providers()),
+                radiusKm, category == null ? "ALL" : category.name(), cached.providers().isEmpty() ? "No place source returned results" : String.join(" + ", cached.providers()),
                 String.join(" · ", cached.attributions()), filters.asMap(), filtered.size(), filtered.subList(from, to),
                 cached.providers(), cached.warnings(), cached.createdAt(), filters.page(), size, totalPages
         );
@@ -166,8 +168,8 @@ public class DestinationDiscoveryService {
         }
         if (unique.isEmpty()) warnings.add("No source-backed listings were returned. Suttru did not generate placeholder activities.");
         warnings.add("Prices and opening hours may change. Confirm with the linked official provider before travelling.");
+        if (unique.size() > maxResults) warnings.add("The configured " + maxResults + "-place search limit was reached. Narrow the category or radius for more focused results.");
         List<DiscoveredPlace> places = unique.values().stream().limit(maxResults).toList();
-        if (usedProviders.isEmpty()) usedProviders.add(destination.provider());
         return new CachedSearch(Instant.now(), destination, places, List.copyOf(usedProviders),
                 List.copyOf(new LinkedHashSet<>(warnings)), List.copyOf(new LinkedHashSet<>(attributions)));
     }
@@ -208,15 +210,23 @@ public class DestinationDiscoveryService {
                     .map(Map.Entry::getKey).findFirst().orElse(null);
             if (nearbyKey == null) {
                 unique.put(providerKey, candidate);
-            } else if (candidate.curated() || candidate.confidenceScore() > unique.get(nearbyKey).confidenceScore()) {
-                unique.put(nearbyKey, candidate);
+            } else {
+                DiscoveredPlace existing = unique.get(nearbyKey);
+                DiscoveredPlace winner = candidate.curated() || !existing.curated() && candidate.confidenceScore() > existing.confidenceScore() ? candidate : existing;
+                DiscoveredPlace donor = winner == candidate ? existing : candidate;
+                if (winner.imageGallery().isEmpty() && !donor.imageGallery().isEmpty()) {
+                    winner = winner.toBuilder().imageGallery(donor.imageGallery()).imageUrl(donor.imageUrl())
+                            .primaryImageUrl(donor.primaryImageUrl()).imageSource(donor.imageSource())
+                            .imageAttribution(donor.imageAttribution()).imageLicense(donor.imageLicense()).imageExact(donor.imageExact()).build();
+                }
+                unique.put(nearbyKey, winner);
             }
         }
     }
 
     private boolean samePlace(DiscoveredPlace left, DiscoveredPlace right) {
         String leftName = normalize(left.name()), rightName = normalize(right.name());
-        if (!leftName.equals(rightName)) return false;
+        if (leftName.isBlank() || !leftName.equals(rightName)) return false;
         return haversine(left.latitude().doubleValue(), left.longitude().doubleValue(),
                 right.latitude().doubleValue(), right.longitude().doubleValue()) <= 0.25;
     }
@@ -270,7 +280,7 @@ public class DestinationDiscoveryService {
     private boolean textMatches(String actual, String expected) { return expected == null || expected.isBlank() || actual != null && actual.toLowerCase(Locale.ROOT).contains(expected.toLowerCase(Locale.ROOT)); }
     private int effectiveDuration(DiscoveredPlace place) { return Optional.ofNullable(place.activityDuration()).orElse(Optional.ofNullable(place.suggestedVisitMinutes()).orElse(0)); }
     private int value(Integer value) { return value == null ? 0 : value; }
-    private String normalize(String value) { return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", ""); }
+    private String normalize(String value) { return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}\\p{M}]", ""); }
     private ResponseStatusException bad(String message) { return new ResponseStatusException(HttpStatus.BAD_REQUEST, message); }
     private double haversine(double lat1, double lon1, double lat2, double lon2) {
         double dLat = Math.toRadians(lat2 - lat1), dLon = Math.toRadians(lon2 - lon1);

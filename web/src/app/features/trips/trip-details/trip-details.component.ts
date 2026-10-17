@@ -28,7 +28,7 @@ import { ItineraryPlannerComponent } from '../itinerary-planner/itinerary-planne
 import { PlaceManagerComponent } from '../place-manager/place-manager.component';
 import { ExpenseManagerComponent } from '../expense-manager/expense-manager.component';
 import { DocumentManagerComponent } from '../document-manager/document-manager.component';
-import { TripadvisorComponent } from '../../discovery/tripadvisor.component';
+import { ExploreComponent } from '../../discovery/explore.component';
 import { ReservationEmailImportsComponent } from '../../bookings/reservation-email-imports.component';
 import { ReservationImportSelection } from '../../../core/models/reservation-import.model';
 import { ReservationImportService } from '../../../core/services/reservation-import.service';
@@ -46,7 +46,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
     FormsModule,
     ReactiveFormsModule,
     ItineraryPlannerComponent,
-    TripadvisorComponent,
+    ExploreComponent,
     PlaceManagerComponent,
     ExpenseManagerComponent,
     DocumentManagerComponent,
@@ -389,7 +389,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
         </section>
  
         <section *ngIf="activeTab === 'EXPLORE'" class="tab-content">
-          <app-tripadvisor [query]="currentTrip.destination" [trip]="currentTrip" [canEdit]="canPlanTrip" (itineraryChanged)="onItineraryChanged()"></app-tripadvisor>
+          <app-explore (placesChanged)="onPlacesChanged()" [trip]="currentTrip" [canEdit]="canPlanTrip" (itineraryChanged)="onItineraryChanged()"></app-explore>
         </section>
 
         <section *ngIf="activeTab === 'ITINERARY'" class="tab-content">
