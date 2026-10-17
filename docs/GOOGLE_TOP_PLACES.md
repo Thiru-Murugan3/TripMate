@@ -37,3 +37,9 @@ Primary references (checked October 17, 2026):
 - https://ai.google.dev/gemini-api/docs/models
 - https://ai.google.dev/gemini-api/terms (Grounding with Google Search restrictions and application requirements)
 - https://developers.google.com/custom-search/v1/overview
+
+## Diagnosing live failures
+
+The backend distinguishes rejected/expired keys, blocked key restrictions, disabled API service, billing/credit requirements, access denial, unavailable model/API version, Google quota exhaustion, request-option errors, transient provider failures, socket timeouts and connection failures. Runtime warnings contain only a numeric upstream HTTP status and fixed category (or a fixed network category). No upstream body/message, raw reason code, key, model value, destination, project ID, request URL or exception stack is logged. A 429 from Google remains 429 in Suttru; a socket timeout becomes 504. Automatic retries and model changes are not introduced, so failed requests cannot silently multiply billable attempts.
+
+Use the category to choose a next step; do not assume a billing requirement or change models based only on the former generic unavailable message. After the diagnostic version is deployed, retry once and inspect the displayed category-specific guidance or `Google top-places request rejected` runtime warning. Live key access/model compatibility still needs verification with the configured project.

@@ -90,4 +90,49 @@ class GoogleTopPlacesServiceTest {
         assertEquals("no-store",response.getHeaders().getCacheControl());assertEquals("no-cache",response.getHeaders().getFirst("Pragma"));
         verify(mock).search(1L,"Ooty");
     }
+    @Test void distinguishesUpstreamFailuresWithoutLeakingAnyProviderData() {
+        var cases=java.util.List.of(
+                new Object[]{400,"API_KEY_INVALID","rejected the Gemini API key",503},
+                new Object[]{403,"API_KEY_HTTP_REFERRER_BLOCKED","restrictions",503},
+                new Object[]{403,"SERVICE_DISABLED","Generative Language API",503},
+                new Object[]{403,"BILLING_DISABLED","billing",503},
+                new Object[]{403,"","denied access",503},
+                new Object[]{404,"","model is unavailable",503},
+                new Object[]{429,"","quota",429},
+                new Object[]{400,"","rejected the search request",503},
+                new Object[]{503,"","temporarily unavailable",503});
+        long user=10;
+        for (Object[] c:cases) {
+            server.reset();
+            String body="{\"error\":{\"message\":\"private-test-key secret upstream contents\",\"details\":[{\"reason\":\""+c[1]+"\",\"metadata\":{\"project\":\"private-project\"}}]}}";
+            server.expect(anything()).andRespond(withStatus(org.springframework.http.HttpStatus.valueOf((Integer)c[0])).contentType(MediaType.APPLICATION_JSON).body(body));
+            long current=user++;
+            var error=assertThrows(ResponseStatusException.class,()->service.search(current,"Ooty"));
+            assertEquals(c[3],error.getStatusCode().value());assertTrue(error.getReason().contains((String)c[2]),error.getReason());
+            assertFalse(error.getReason().contains("private-test-key"));assertFalse(error.getReason().contains("private-project"));server.verify();
+        }
+    }
+    @Test void logsOnlyFixedFailureCategoriesRatherThanKeysBodiesOrUnknownReasonCodes() {
+        var logger=(ch.qos.logback.classic.Logger)org.slf4j.LoggerFactory.getLogger(GoogleTopPlacesService.class);
+        var appender=new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();appender.start();logger.addAppender(appender);
+        try {
+            server.expect(anything()).andRespond(withBadRequest().contentType(MediaType.APPLICATION_JSON).body("{\"error\":{\"message\":\"private-test-key\",\"details\":[{\"reason\":\"private-test-key\"}]}}"));
+            assertThrows(ResponseStatusException.class,()->service.search(1L,"Ooty"));
+            String messages=appender.list.stream().map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage).collect(java.util.stream.Collectors.joining());
+            assertTrue(messages.contains("status=400 category=REQUEST_REJECTED"));assertFalse(messages.contains("private-test-key"));
+            assertTrue(appender.list.stream().allMatch(e->e.getThrowableProxy()==null));server.verify();
+        } finally {logger.detachAppender(appender);appender.stop();}
+    }
+    @Test void separatesNetworkAndTimeoutFailuresFromProviderRejections() {
+        var builder=RestClient.builder();var local=MockRestServiceServer.bindTo(builder).build();
+        var factory=mock(ProviderHttpClientFactory.class);when(factory.create(anyInt())).thenReturn(builder.build());
+        var service=new GoogleTopPlacesService(factory,geocoding,true,"private-test-key","gemini-3.5-flash-lite",50);
+        local.expect(anything()).andRespond(request->{throw new java.net.SocketTimeoutException("private-test-key");});
+        var timed=assertThrows(ResponseStatusException.class,()->service.search(1L,"Ooty"));
+        assertEquals(504,timed.getStatusCode().value());assertTrue(timed.getReason().contains("too long"));assertFalse(timed.getReason().contains("private-test-key"));local.verify();
+        local.reset();local.expect(anything()).andRespond(request->{throw new java.net.ConnectException("private-test-key");});
+        var network=assertThrows(ResponseStatusException.class,()->service.search(2L,"Ooty"));
+        assertEquals(503,network.getStatusCode().value());assertTrue(network.getReason().contains("could not connect"));local.verify();
+    }
+
 }
