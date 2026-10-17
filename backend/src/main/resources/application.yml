@@ -71,6 +71,7 @@ discovery:
   wikidata-url: ${DISCOVERY_WIKIDATA_URL:https://www.wikidata.org}
   tripadvisor:
     api-key: ${TRIPADVISOR_API_KEY:}
+    referer: ${TRIPADVISOR_REFERER:${APP_FRONTEND_URL:https://www.suttru.in}}
     daily-limit: ${TRIPADVISOR_DAILY_LIMIT:100}
     monthly-limit: ${TRIPADVISOR_MONTHLY_LIMIT:4000}
   geoapify:
