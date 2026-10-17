@@ -66,6 +66,20 @@ public class TripadvisorService {
                           String ratingImageUrl, String reviewCount) {}
     public record Photo(String url, String caption, String author, String sourceUrl) {}
 
+    public record SearchPage(List<Location> places, int page, int size, Long totalElements, Integer totalPages, boolean hasNext) {}
+    static void validatePage(int page, int size) {
+        if (page < 1 || size < 1 || size > 20)
+            throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Page must be positive and size between 1 and 20");
+    }
+    public SearchPage searchPage(String query, String category, int page, int size) {
+        validatePage(page, size);
+        if ("TERRA".equals(apiMode)) return terra.searchPage(query, category, page, size);
+        // Legacy search has no provider pagination. Do not pretend more matches can be fetched.
+        if (page != 1) throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Pagination requires Terra API mode");
+        List<Location> places = search(query, category);
+        return new SearchPage(places, 1, places.size(), (long) places.size(), 1, false);
+    }
+
     public List<Location> search(String query, String category) {
         if ("TERRA".equals(apiMode)) return terra.search(query, category);
         if (query == null || query.trim().length() < 2 || query.length() > 180

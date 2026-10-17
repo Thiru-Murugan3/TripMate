@@ -34,11 +34,15 @@ public class TerraTripadvisorClient {
     public String setupCode() { return key.isBlank() ? "NOT_CONFIGURED" : !budget.terraConfigured() ? "TERRA_SETUP_REQUIRED" : ""; }
 
     public List<Location> search(String query, String category) {
+        return searchPage(query, category, 1, 10).places();
+    }
+    public SearchPage searchPage(String query, String category, int page, int size) {
+        validatePage(page, size);
         if (query == null || query.trim().length() < 2 || query.length() > 180
                 || category == null || !Set.of("attractions", "hotels", "restaurants").contains(category))
             throw new TripadvisorFailure(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Choose a city or place and a supported category");
         String kind = switch (category) { case "hotels" -> "HOTEL"; case "restaurants" -> "RESTAURANT"; default -> "ATTRACTION"; };
-        JsonNode response = get("/locations/search", 10, "query", query.trim(), "search_type", "COMBINED", "country_code", "IN", "category", kind, "page", "1", "size", "10");
+        JsonNode response = get("/locations/search", size, "query", query.trim(), "search_type", "COMBINED", "country_code", "IN", "category", kind, "page", String.valueOf(page), "size", String.valueOf(size));
         List<Location> locations = new ArrayList<>();
         if (!response.path("data").isArray()) throw invalidResponse();
         for (JsonNode match : response.path("data")) {
@@ -46,9 +50,15 @@ public class TerraTripadvisorClient {
             String id = text(node, "id"), name = translated(node.path("names"));
             if (id == null || !id.matches("[0-9]{1,12}") || name == null) continue;
             locations.add(new Location(id, name, address(node), safeUrl(text(node.path("urls").path("tripadvisor"), "main"), false)));
-            if (locations.size() == 10) break;
+            if (locations.size() == size) break;
         }
-        return locations;
+        JsonNode pagination = response.path("pagination");
+        Long total = pagination.path("total_elements").canConvertToLong() && pagination.path("total_elements").asLong() >= 0
+                ? pagination.path("total_elements").asLong() : null;
+        Integer pages = pagination.path("total_pages").canConvertToInt() && pagination.path("total_pages").asInt() >= 0
+                ? pagination.path("total_pages").asInt() : null;
+        boolean hasNext = pages != null ? page < pages : total != null ? (long) page * size < total : response.path("data").size() >= size;
+        return new SearchPage(locations, page, size, total, pages, hasNext);
     }
     public Details details(String id) {
         validateId(id);

@@ -19,6 +19,12 @@ public class TripadvisorController {
     @GetMapping("/search")
     public ResponseEntity<List<TripadvisorService.Location>> search(@RequestParam String query,
             @RequestParam(defaultValue = "attractions") String category) { return live(service.search(query, category)); }
+    @GetMapping("/search-page")
+    public ResponseEntity<TripadvisorService.SearchPage> searchPage(@RequestParam String query,
+            @RequestParam(defaultValue = "attractions") String category,
+            @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "4") int size) {
+        return live(service.searchPage(query, category, page, size));
+    }
     @GetMapping("/locations/{id}")
     public ResponseEntity<TripadvisorService.Details> details(@PathVariable String id) { return live(service.details(id)); }
     @GetMapping("/locations/{id}/photos")

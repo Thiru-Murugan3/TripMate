@@ -31,6 +31,26 @@ class TerraTripadvisorClientTest {
         assertEquals(1,results.size());assertEquals("Garden",results.get(0).name());assertEquals("Ooty, India",results.get(0).address());assertTrue(results.get(0).webUrl().contains("tripadvisor.com"));
         verify(budget).reserveTerra(10);verify(budget,never()).reserve();server.verify();
     }
+    @Test void forwardsLaterPagesAndReservesOnlyRequestedSize() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var budget=activeBudget();
+        server.expect(queryParam("page","4")).andExpect(queryParam("size","4"))
+          .andRespond(withSuccess("{\"data\":[{\"location\":"+LOCATION+"}],\"pagination\":{\"page\":4,\"size\":4,\"total_elements\":14,\"total_pages\":4}}",MediaType.APPLICATION_JSON));
+        var page=new TerraTripadvisorClient(builder.build(),budget,"test").searchPage("Ooty","attractions",4,4);
+        assertEquals(4,page.page());assertEquals(14L,page.totalElements());assertEquals(4,page.totalPages());assertFalse(page.hasNext());
+        verify(budget).reserveTerra(4);server.verify();
+    }
+    @Test void missingPaginationUsesRawPageSizeWithoutInventingTotal() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var budget=activeBudget();
+        server.expect(queryParam("page","2")).andRespond(withSuccess("{\"data\":[{\"location\":"+LOCATION+"}]}",MediaType.APPLICATION_JSON));
+        var page=new TerraTripadvisorClient(builder.build(),budget,"test").searchPage("Ooty","attractions",2,1);
+        assertTrue(page.hasNext());assertNull(page.totalElements());assertNull(page.totalPages());server.verify();
+    }
+    @Test void rejectsInvalidPaginationBeforeReservingOrCallingProvider() {
+        var budget=activeBudget();var client=new TerraTripadvisorClient(RestClient.create(),budget,"test");
+        for(int[] values:new int[][]{{0,4},{1,0},{1,21}})
+          assertThrows(TripadvisorFailure.class,()->client.searchPage("Ooty","attractions",values[0],values[1]));
+        verify(budget,never()).reserveTerra(anyInt());
+    }
     @Test void readsDocumentedDetailsAndProviderBubbleImage() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var budget=activeBudget();
         server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://terra.tripadvisor.com/api/locations/123?"))).andRespond(withSuccess(LOCATION,MediaType.APPLICATION_JSON));

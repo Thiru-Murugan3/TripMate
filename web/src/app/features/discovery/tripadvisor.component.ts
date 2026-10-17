@@ -5,6 +5,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Subscription, catchError, from, map, mergeMap, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 interface Location { id: string; name: string; address: string | null; webUrl?: string | null; }
+interface SearchPage { places: Location[]; page: number; size: number; totalElements: number | null; totalPages: number | null; hasNext: boolean; }
 interface Details extends Location { description: string | null; webUrl: string | null; ratingImageUrl: string | null; reviewCount: string | null; }
 interface Photo { url: string; caption: string | null; author: string; sourceUrl: string | null; }
 interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
@@ -23,7 +24,7 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
       <p *ngIf="checking || busy" role="status">{{ checking ? 'Connecting to Tripadvisor…' : 'Finding places…' }}</p>
       <div *ngIf="error" role="alert" class="notice"><p>{{ error }}</p><button *ngIf="!available && !checking" type="button" (click)="checkAvailability()">Check connection</button></div>
       <p *ngIf="searched && !busy && !results.length && !error">No accessible places found. Try a more specific name. Terra accounts may need their allowed locations or contracted geography configured.</p>
-      <div *ngIf="results.length" class="result-heading"><h2>{{ submittedQuery }}</h2><span>{{ results.length }} matches from Tripadvisor</span></div>
+      <div *ngIf="results.length" class="result-heading"><h2>{{ submittedQuery }}</h2><span>{{ resultSummary }}</span></div>
       <p *ngIf="photoFailure" role="alert" class="notice">{{ photoFailure }}</p>
       <div class="cards">
         <article *ngFor="let place of visiblePlaces; trackBy: trackPlace" class="card">
@@ -40,8 +41,8 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
           </ng-container>
         </article>
       </div>
-      <nav *ngIf="results.length > pageSize" aria-label="Tripadvisor results pages" class="pagination">
-        <button type="button" [disabled]="page === 0" (click)="setPage(page - 1)">Previous</button><span>Page {{ page + 1 }} of {{ totalPages }}</span><button type="button" [disabled]="page + 1 >= totalPages" (click)="setPage(page + 1)">Next</button>
+      <nav *ngIf="searched && (hasNext || page > 1)" aria-label="Tripadvisor results pages" class="pagination">
+        <button type="button" [disabled]="busy || page === 1" (click)="setPage(page - 1)">Previous</button><span>Page {{ page }}<ng-container *ngIf="totalPages !== null"> of {{ totalPages }}</ng-container></span><button type="button" [disabled]="busy || !hasNext" (click)="setPage(page + 1)">Next</button>
       </nav>
       <p *ngIf="detailsLoading" role="status">Loading place details…</p>
       <p *ngIf="detailError" role="alert" class="notice">{{ detailError }}</p>
@@ -64,11 +65,18 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   private photoRequests = new Subscription();
   readonly pageSize = 4;
   category = 'attractions'; available = false; checking = false; busy = false; error = ''; searched = false;
-  submittedQuery = ''; page = 0; results: Location[] = []; detail: Details | null = null;
+  submittedQuery = ''; page = 1;
+  totalElements: number | null = null; totalPages: number | null = null; hasNext = false;
+  private submittedCategory = 'attractions';
+  results: Location[] = []; detail: Details | null = null;
   detailsLoading = false; detailError = ''; photoStates: Record<string, PhotoState> = {};
-  get visiblePlaces(): Location[] { return this.results.slice(this.page * this.pageSize, (this.page + 1) * this.pageSize); }
+  get visiblePlaces(): Location[] { return this.results; }
   get photoFailure(): string { return this.visiblePlaces.map(p => this.photoStates[p.id]?.error).find(Boolean) || ''; }
-  get totalPages(): number { return Math.ceil(this.results.length / this.pageSize); }
+  get resultSummary(): string {
+    const start = (this.page - 1) * this.pageSize + 1;
+    return this.totalElements !== null ? `Showing ${start}–${start + this.results.length - 1} of ${this.totalElements} available matches from Tripadvisor`
+      : `${this.results.length} places on page ${this.page} from Tripadvisor`;
+  }
   ngOnInit(): void { this.checkAvailability(); }
   ngOnChanges(changes: SimpleChanges): void { if (changes['query'] && !changes['query'].firstChange) this.clear(); }
   checkAvailability(): void {
@@ -80,20 +88,31 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   }
   clear(): void {
     this.searchRequest?.unsubscribe(); this.photoRequests.unsubscribe(); this.photoRequests = new Subscription(); this.closeDetails();
-    this.busy = false; this.error = ''; this.searched = false; this.page = 0; this.results = []; this.photoStates = {}; this.submittedQuery = '';
+    this.busy = false; this.error = ''; this.searched = false; this.page = 1; this.totalElements = null; this.totalPages = null; this.hasNext = false; this.results = []; this.photoStates = {}; this.submittedQuery = '';
   }
   search(): void {
     if (!this.available || this.busy || this.query.trim().length < 2) return;
     this.clear(); this.busy = true; this.searched = true; this.submittedQuery = this.query.trim();
-    const params = new HttpParams().set('query', this.submittedQuery).set('category', this.category);
-    this.searchRequest = this.http.get<Location[]>(`${this.base}/search`, {params}).subscribe({
-      next: results => { this.results = results; this.busy = false; this.loadVisiblePhotos(); },
-      error: e => { this.busy = false; this.error = this.errorMessage(e); }
-    });
+    this.submittedCategory = this.category;
+    this.loadPage(1);
   }
   setPage(page: number): void {
-    if (page < 0 || page >= this.totalPages || page === this.page) return;
-    this.page = page; this.closeDetails(); this.loadVisiblePhotos();
+    if (this.busy || page < 1 || page === this.page || (page > this.page && !this.hasNext)) return;
+    this.loadPage(page);
+  }
+  private loadPage(page: number): void {
+    this.busy = true; this.error = '';
+    const params = new HttpParams().set('query', this.submittedQuery).set('category', this.submittedCategory)
+      .set('page', page).set('size', this.pageSize);
+    this.searchRequest = this.http.get<SearchPage>(`${this.base}/search-page`, {params}).subscribe({
+      next: result => {
+        this.photoRequests.unsubscribe(); this.photoRequests = new Subscription(); this.closeDetails();
+        this.photoStates = {}; this.results = result.places; this.page = result.page;
+        this.totalElements = result.totalElements; this.totalPages = result.totalPages; this.hasNext = result.hasNext;
+        this.busy = false; this.loadVisiblePhotos();
+      },
+      error: e => { this.busy = false; this.error = this.errorMessage(e); }
+    });
   }
   private loadVisiblePhotos(): void {
     const pending = this.visiblePlaces.filter(p => !this.photoStates[p.id]);
