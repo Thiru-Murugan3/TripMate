@@ -29,7 +29,7 @@ interface PhotoState { photos: Photo[]; loading: boolean; error: string; }
       <p *ngIf="checking || busy" role="status">{{ checking ? 'Connecting to Tripadvisor…' : 'Finding places…' }}</p>
       <div *ngIf="error" role="alert" class="notice"><p>{{ error }}</p><button *ngIf="!available && !checking" type="button" (click)="checkAvailability()">Check connection</button></div>
       <p *ngIf="searched && !busy && !results.length && !error">No accessible places found. Try a more specific name. Terra accounts may need their allowed locations or contracted geography configured.</p>
-      <app-top-places *ngIf="cityReady && !busy" [destination]="submittedQuery" [disabled]="saving" />
+      <app-top-places *ngIf="cityReady && !busy" [destination]="submittedQuery" [tripId]="trip?.id || 0" [startDate]="trip?.startDate || ''" [endDate]="trip?.endDate || ''" [canEdit]="canEdit" [disabled]="saving" (savingChanged)="saving=$event" (placesChanged)="placesChanged.emit()" (itineraryChanged)="itineraryChanged.emit()" />
       <div *ngIf="results.length" class="result-heading"><h2>{{ submittedQuery }}</h2><span>{{ resultSummary }}</span></div>
       <form *ngIf="cityReady" (ngSubmit)="searchPlace()" class="search-form place-search" aria-label="Search for a place within the city">
         <label>Find a particular place in {{ submittedQuery }}<input name="placeQuery" [(ngModel)]="placeQuery" [disabled]="saving" maxlength="180" placeholder="e.g. Government Botanical Garden" /></label>
@@ -88,6 +88,7 @@ export class TripadvisorComponent implements OnInit, OnChanges, OnDestroy {
   @Input() trip: Trip | null = null;
   @Input() canEdit = false;
   @Output() itineraryChanged = new EventEmitter<void>();
+  @Output() placesChanged = new EventEmitter<void>();
   private tripService = inject(TripService);
   private itineraryService = inject(ItineraryService);
   private planningRequests = new Subscription();

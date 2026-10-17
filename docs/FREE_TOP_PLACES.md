@@ -12,7 +12,7 @@ Highlights rank administrator-curated records first, then existing source covera
 
 The free path has a separate cache namespace from ordinary discovery, so optional paid-provider records cannot enter it through an earlier search. It uses the existing bounded TTL/invalidation cache, duplicate detection, exact-image attribution rules, fee expiry and detail lookup. Missing fees stay unknown and the feature does not generate images. Partial provider failures retain valid results with warnings.
 
-The panel is compact and shows names, category, distance and source links. In Combined places, **Find in Explore** submits the selected name through the existing discovery/checkbox/trip-day workflow. The usual itinerary and group permissions are preserved. The Tripadvisor tab's free shortlist is sourced separately from Tripadvisor content.
+The panel is compact and shows names, category, distance and source links. Select shortlist checkboxes, choose trip days and click **Add selected to itinerary**. Trip Explore uses the current trip; standalone Explore offers editable trips. Selection does not write data. Saving refreshes saved places, reuses matches and skips existing items on the chosen day. Failed saves retain selections and day choices for retry. Read-only guests cannot select or save. Both source views refresh the trip after changes. In Combined places, **Find in Explore** remains available for detailed name searches. The usual itinerary and group permissions are preserved. The Tripadvisor tab's free shortlist is sourced separately from Tripadvisor content.
 
 ## Configuration
 
