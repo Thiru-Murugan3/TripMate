@@ -94,7 +94,7 @@ function response(url){
     const gallery=page.locator('app-combined-places app-place-photo-gallery').first();
     await gallery.getByRole('button',{name:'Next photo',exact:true}).waitFor();
     await gallery.getByRole('button',{name:'Next photo',exact:true}).click();
-    assert.match(await gallery.locator('figcaption').textContent(),/photographer two/);
+    await gallery.locator('figcaption').filter({hasText:'Test photographer two'}).waitFor();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'photo gallery overflows phone viewport');
     await page.screenshot({animations:'disabled',path:path.join(output,'explore-second-photo.png')});
     await page.getByRole('button',{name:'Top 10 places to visit',exact:true}).click();await page.locator('app-top-places li').first().waitFor();
