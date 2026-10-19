@@ -17,6 +17,8 @@ interface DisplayTrip {
   status: string;
   statusClass: string;
   dates: string;
+  startDate: string;
+  endDate: string;
   countdown: string;
   countdownClass: string;
   spent: string;
@@ -55,7 +57,7 @@ interface PopularDestination {
         </section>
         <article class="mobile-next-trip" *ngIf="upcomingTrips[0] as next; else noMobileTrip">
           <div class="mobile-card-heading"><h2>Your next trip</h2><span>{{next.tag}}</span></div>
-          <button type="button" class="mobile-trip-link" (click)="openMobileTrip('OVERVIEW')"><img [src]="next.image" alt="" width="60" height="60" /><div><strong>{{next.name}}</strong><span>{{next.dates}}</span><small>{{next.countdown}}</small></div><span aria-hidden="true">›</span></button>
+          <button type="button" class="mobile-trip-link" (click)="openMobileTrip('OVERVIEW')"><img [src]="next.image" alt="" width="60" height="60" /><div><strong>{{next.name}}</strong><span>{{next.startDate | date:'d MMM'}} – {{next.endDate | date:'d MMM yyyy'}}</span><small>{{next.countdown}}</small></div><span aria-hidden="true">›</span></button>
           <div class="mobile-trip-budget" *ngIf="mobileBudget as budget"><div><span>Budget used</span><strong>{{budget.budgetUtilizationPercentage | number:'1.0-0'}}%</strong></div><progress [value]="budget.budgetUtilizationPercentage" max="100" aria-label="Trip budget used"></progress><div><small>Spent: {{budget.totalExpenses | currency:'INR':'symbol':'1.0-0'}}</small><small>Limit: {{budget.budget | currency:'INR':'symbol':'1.0-0'}}</small></div></div>
         </article>
         <ng-template #noMobileTrip><article class="mobile-next-trip"><h2>Your next journey starts here</h2><p>Create a trip, invite your group and plan each day together.</p><button class="mobile-text-link" (click)="openCreateModal()">Create your first trip →</button></article></ng-template>
@@ -1063,6 +1065,7 @@ export class DashboardComponent implements OnInit {
             ? 'status-planning'
             : 'status-confirmed',
       dates: `${trip.startDate} - ${trip.endDate}`,
+      startDate:trip.startDate, endDate:trip.endDate,
       ...this.tripCountdown(trip.startDate),
       spent: '₹0',
       limit: `₹${trip.budget.toLocaleString()}`,

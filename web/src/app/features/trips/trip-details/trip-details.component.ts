@@ -74,8 +74,8 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
       </section>
 
       <div *ngIf="!isLoadingTrip && trip as currentTrip" class="trip-details-container">
-        <a routerLink="/trips" class="mobile-trips-back">‹ My trips</a>
-        <section class="trip-header card">
+        <div class="mobile-trip-controls"><a routerLink="/trips" class="mobile-trips-back">‹ My trips</a><button type="button" class="mobile-trip-more" (click)="mobileActionsOpen = !mobileActionsOpen" [attr.aria-expanded]="mobileActionsOpen" aria-controls="trip-secondary-actions">{{mobileActionsOpen ? 'Close actions' : 'Trip actions'}} ⋯</button></div>
+        <section class="trip-header card" [class.mobile-expanded]="mobileActionsOpen">
           <div class="trip-header-main">
             <div>
               <div class="title-row">
@@ -109,7 +109,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
               </p>
             </div>
 
-            <button type="button" class="mobile-trip-more" (click)="mobileActionsOpen = !mobileActionsOpen" [attr.aria-expanded]="mobileActionsOpen" aria-controls="trip-secondary-actions">{{mobileActionsOpen ? 'Close actions' : 'Trip actions'}} ⋯</button>
             <div class="trip-header-actions" id="trip-secondary-actions" [class.mobile-expanded]="mobileActionsOpen">
               <button type="button" class="btn btn-outline" [disabled]="isDuplicatingTrip" (click)="duplicateCurrentTrip()">
                 <span class="material-symbols-outlined">content_copy</span>
@@ -2697,11 +2696,16 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
     }
 
 @include mobile.panels;
-    .mobile-trips-back,.mobile-trip-more { display:none; }
+    .mobile-trip-controls,.mobile-trips-back,.mobile-trip-more { display:none; }
     @media(max-width:760px) {
       .trip-details-container { padding:8px 20px 24px; }
+      .mobile-trip-controls { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:8px; }
+      .trip-header-main { gap:8px; }
+      .trip-meta-row > span:nth-child(n+3),.trip-header-description { display:none; }
+      .trip-header.mobile-expanded .trip-meta-row > span:nth-child(n+3) { display:inline-flex; }
+      .trip-header.mobile-expanded .trip-header-description { display:block; }
       .mobile-trips-back { display:inline-flex; align-items:center; min-height:44px; color:#2563eb; text-decoration:none; font-size:13px; font-weight:650; }
-      .trip-header { padding:16px; border-radius:16px; box-shadow:0 4px 16px #2563eb08; border:0; }
+      .trip-header { padding:14px; border-radius:16px; box-shadow:0 4px 16px #2563eb08; border:0; background:white; }
       .title-row h1 { font-size:20px; line-height:1.3; letter-spacing:-.03em; }
       .trip-meta-row { gap:8px; font-size:11px; }
       .trip-header-description { font-size:12px; }
@@ -2711,7 +2715,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
       .dashboard-tabs { padding:4px; gap:4px; box-shadow:none; border-radius:12px; }
       .dashboard-tabs .tab-btn { padding:12px; font-size:12px; border-radius:9px; }
       .dashboard-tabs .tab-inline-icon { display:none; }
-      .summary-card,.compact-summary-card,.budget-card,.overview-panel,.sidebar-card { border:0; box-shadow:0 4px 16px #2563eb08; border-radius:16px; }
+      .summary-card,.compact-summary-card,.budget-card,.overview-panel,.sidebar-card { background:white; border:0; box-shadow:0 4px 16px #2563eb08; border-radius:16px; }
       .compact-summary-grid { gap:10px; }
       .compact-summary-card { padding:12px; }
       .compact-summary-card strong { font-size:18px; }

@@ -3,6 +3,10 @@
   :host { display: block; min-width: 0; max-width: 100%; }
   @media (max-width: 760px) {
     :host { overflow-wrap: anywhere; color:#0f172a; }
+    .budget-summary { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    .document-summary,.places-summary,.summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .budget-summary strong,.document-summary strong,.places-summary strong,.summary-grid strong { font-size:16px; }
+    .budget-summary article>span,.document-summary article>span,.places-summary article>span,.summary-grid article>span { font-size:9px; }
     h2 { font-size:18px; letter-spacing:-.025em; }
     .eyebrow { font-size:10px; color:#64748b; }
     .expense-toolbar p,.documents-toolbar p,.places-toolbar p,.planner-toolbar p { font-size:12px; line-height:1.6; }

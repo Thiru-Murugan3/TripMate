@@ -57,7 +57,7 @@ function response(url){
       await page.screenshot({path:path.join(output,name+'.png')});
     }
     await page.goto(origin+'/dashboard');await page.locator('.mobile-home').waitFor();
-    await page.getByRole('link',{name:'Plan a new trip',exact:true}).click();await page.locator('.modal-card').waitFor();
+    await page.getByRole('link',{name:'Plan a new trip',exact:true}).click();await page.locator('.modal-content').waitFor();
     await page.screenshot({path:path.join(output,'create-trip.png')});
     await page.setViewportSize({width:1280,height:900});await page.goto(origin+'/dashboard');await page.locator('.hero-section').waitFor();
     assert.equal(await page.locator('.mobile-navigation').isVisible(),false);

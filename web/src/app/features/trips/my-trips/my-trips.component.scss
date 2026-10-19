@@ -469,3 +469,19 @@ select:focus {
  .delete-button .material-symbols-outlined { display:none; }
  .results-header h2 { font-size:16px; }.results-header p { display:none; }
 }
+
+.mobile-filter-toggle,.mobile-create-label,.mobile-create-icon { display:none; }
+@media(max-width:760px) {
+ .desktop-create-label { display:none; }.mobile-create-label,.mobile-create-icon { display:block; }
+ .toolbar { grid-template-columns:minmax(0,1fr) auto; }
+ .search-field { grid-column:1; }
+ .search-field>span { display:none; }
+ .mobile-filter-toggle { display:block; min-height:44px; padding:8px 12px; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; color:#475569; font:inherit; font-size:12px; cursor:pointer; }
+ .toolbar .select-field,.toolbar .clear-button { display:none; }
+ .toolbar.filters-open .select-field,.toolbar.filters-open .clear-button { display:flex; }
+ .toolbar.filters-open .select-field { grid-column:1/-1; }
+ .trip-card { box-shadow:0 4px 16px #2563eb08; }
+ .meta-row { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+ .meta-right { text-align:right; }
+ .meta-label { display:none; }
+}

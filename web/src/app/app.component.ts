@@ -11,7 +11,7 @@ import { FooterComponent } from './shared/components/footer/footer.component';
   standalone: true,
   imports: [RouterOutlet, NavbarComponent, FooterComponent, MobileNavigationComponent],
   template: `
-    <div class="app-layout">
+    <div class="app-layout" [class.mobile-inner-view]="isMobileInnerView" [class.has-app-shell]="showAppShell">
       @if (showAppShell) {
         <app-navbar></app-navbar>
       }
@@ -28,8 +28,9 @@ import { FooterComponent } from './shared/components/footer/footer.component';
   `,
   styles: [`
     @media(max-width:760px) {
-      .main-content { padding-bottom:calc(96px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px))); background:#f8fafc; }
+      .has-app-shell .main-content { padding-bottom:calc(96px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px))); background:#f8fafc; }
       .desktop-footer { display:none; }
+      .mobile-inner-view app-navbar { display:none; }
     }
 
     .app-layout {
@@ -48,6 +49,7 @@ import { FooterComponent } from './shared/components/footer/footer.component';
   `]
 })
 export class AppComponent implements OnDestroy {
+  get isMobileInnerView():boolean { return this.router.url.split('?')[0] !== '/dashboard'; }
   title = 'Suttru';
   showAppShell = false;
 
