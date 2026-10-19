@@ -20,14 +20,14 @@ import { InvitationService } from '../../core/services/invitation.service';
           <p>Checking invitation...</p>
         </div>
 
-        <div *ngIf="!loading && errorMessage" class="state error">
+        <div *ngIf="!loading && errorMessage && !invitation" class="state error">
           <span class="material-symbols-outlined">link_off</span>
           <h1>Invitation unavailable</h1>
           <p>{{ errorMessage }}</p>
           <button type="button" (click)="goHome()">Go to Suttru</button>
         </div>
 
-        <ng-container *ngIf="!loading && !errorMessage && invitation as invite">
+        <ng-container *ngIf="!loading && invitation as invite">
           <p class="eyebrow">TRIP INVITATION</p>
           <h1>You’re invited to {{ invite.tripName }}</h1>
           <p class="description">
@@ -46,6 +46,9 @@ import { InvitationService } from '../../core/services/invitation.service';
             </div>
           </div>
 
+          <p *ngIf="acceptError" class="accept-error" role="alert">{{ acceptError }}</p>
+          <button *ngIf="acceptError" type="button" class="secondary-btn" (click)="switchAccount()" [disabled]="accepting">Sign in with another account</button>
+          <a *ngIf="showAndroidLink" class="secondary-btn open-app" [href]="androidLink">Open in Suttru Android app</a>
           <div *ngIf="invite.status !== 'PENDING'" class="processed">
             This invitation is {{ invite.status.toLowerCase() }} and can no longer be accepted.
           </div>
@@ -91,6 +94,8 @@ import { InvitationService } from '../../core/services/invitation.service';
     .primary-btn, .secondary-btn, .state button { width:100%; min-height:46px; border-radius:10px; font:inherit; font-weight:800; cursor:pointer; }
     .primary-btn { border:0; background:#2563eb; color:#fff; margin-top:.5rem; }
     .secondary-btn { border:0; background:transparent; color:#64748b; margin-top:.45rem; }
+    .accept-error { color:#991b1b; background:#fef2f2; padding:12px; border-radius:10px; }
+    .open-app { display:flex; align-items:center; justify-content:center; text-decoration:none; }
     .processed { padding:.8rem; margin:1rem 0; border-radius:10px; background:#f8fafc; color:#475569; }
     .state { min-height:260px; display:grid; place-items:center; align-content:center; gap:.5rem; color:#64748b; }
     .state.error { color:#991b1b; }
@@ -115,6 +120,9 @@ export class InvitationLinkComponent implements OnInit {
   loading = true;
   accepting = false;
   errorMessage = '';
+  acceptError = '';
+  readonly showAndroidLink = /Android/i.test(navigator.userAgent) && !(window as any).SuttruNative;
+  get androidLink():string { return 'suttru://invite/' + encodeURIComponent(this.token); }
 
   ngOnInit(): void {
     this.token = this.route.snapshot.paramMap.get('token') || '';
@@ -148,7 +156,7 @@ export class InvitationLinkComponent implements OnInit {
     if (!this.token || this.accepting) return;
 
     this.accepting = true;
-    this.errorMessage = '';
+    this.acceptError = '';
 
     this.invitationService.acceptInvitationByToken(this.token).subscribe({
       next: (accepted) => {
@@ -157,9 +165,15 @@ export class InvitationLinkComponent implements OnInit {
       },
       error: (err) => {
         this.accepting = false;
-        this.errorMessage = err?.error?.message || 'Unable to accept this invitation.';
+        this.acceptError = err?.error?.message || 'Unable to accept this invitation. Please try again.';
       }
     });
+  }
+
+  switchAccount(): void {
+    if (this.accepting) return;
+    this.accepting = true;
+    this.authService.logout().subscribe(() => this.signInToAccept());
   }
 
   goHome(): void {

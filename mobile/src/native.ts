@@ -1,3 +1,4 @@
+import { invitationPath } from './invitation-link.mjs';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
@@ -33,6 +34,23 @@ if (Capacitor.isNativePlatform()) {
     }
   };
   void nativeWindow.SuttruNative.clearTemporaryFiles();
+  const openInvitation = (raw:string) => {
+    const path = invitationPath(raw);
+    if (path && window.location.pathname !== path) {
+      if (!document.querySelector('app-root')) {
+        window.location.assign(new URL(path, window.location.origin).href);
+        return;
+      }
+      (window as any).SuttruPendingInvitationPath = path;
+      window.dispatchEvent(new Event('suttru:invitation-link'));
+    }
+  };
+  void App.addListener('appUrlOpen', ({url}) => {
+    void Browser.close().catch(() => {});
+    openInvitation(url);
+  });
+  void App.getLaunchUrl().then(result => { if(result?.url) openInvitation(result.url); });
+
   void App.addListener('backButton', ({ canGoBack }) => {
     if (canGoBack) window.history.back(); else void App.exitApp();
   });

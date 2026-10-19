@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { authReturnUrl } from '../../../core/utils/auth-return-url';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -17,6 +18,8 @@ export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  readonly returnUrl = authReturnUrl(this.route.snapshot.queryParams['returnUrl']);
 
   isLoading = false;
   showPassword = false;
@@ -47,8 +50,7 @@ export class LoginComponent {
 
     this.authService.login(credentials).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-        this.router.navigateByUrl(returnUrl);
+        void this.router.navigateByUrl(this.returnUrl);
       },
       error: (err) => {
         this.isLoading = false;

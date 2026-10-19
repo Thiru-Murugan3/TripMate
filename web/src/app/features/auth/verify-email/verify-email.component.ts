@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { authReturnUrl } from '../../../core/utils/auth-return-url';
 import { ApiErrorResponse } from '../../../core/models/auth.model';
 
 @Component({
@@ -108,8 +109,8 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
         </div>
 
         <div class="verify-footer">
-          <a routerLink="/login" class="back-link">Already verified? Sign in</a>
-          <a routerLink="/register" class="back-link">
+          <a routerLink="/login" [queryParams]="{returnUrl}" class="back-link">Already verified? Sign in</a>
+          <a routerLink="/register" [queryParams]="{returnUrl}" class="back-link">
             ← Change email or details
           </a>
         </div>
@@ -329,6 +330,7 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private authService = inject(AuthService);
 
+  readonly returnUrl = authReturnUrl(this.route.snapshot.queryParams['returnUrl']);
   email = '';
   maskedEmail = '';
   otpDigits = ['', '', '', '', '', ''];
@@ -343,7 +345,7 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
     this.email = this.route.snapshot.queryParams['email'] || '';
 
     if (!this.email) {
-      void this.router.navigate(['/register']);
+      void this.router.navigate(['/register'], {queryParams:{returnUrl:this.returnUrl}});
       return;
     }
 
@@ -424,8 +426,8 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
     this.authService.verifyEmail({ email: this.email, otp: otpCode }).subscribe({
       next: (res) => {
         this.clearTimer();
-        this.successMessage = 'Account created. Opening your home…';
-        void this.router.navigate(['/dashboard'], { replaceUrl: true });
+        this.successMessage = 'Account created. Signing you in…';
+        void this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
