@@ -111,6 +111,7 @@ import { NotificationService } from '../../../core/services/notification.service
               <button 
                 type="button" 
                 class="user-profile-btn" 
+                aria-label="Open account menu"
                 (click)="toggleProfileDropdown()" 
                 [attr.aria-expanded]="showProfileDropdown"
                 title="View Profile Details"
@@ -724,6 +725,59 @@ import { NotificationService } from '../../../core/services/notification.service
     @keyframes slideDown {
       from { transform: translateY(-12px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Keep every navigation action available without widening the phone viewport. */
+    @media (max-width: 900px) {
+      .navbar { padding: 0.5rem 0.75rem; }
+      .nav-container {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.5rem;
+      }
+      .brand-logo { min-width: 0; gap: 0.4rem; }
+      .logo-icon-badge { flex-shrink: 0; }
+      .brand-title-block { min-width: 0; }
+      .brand-subtext { font-size: 0.5rem; letter-spacing: 0.04em; }
+      .nav-actions { grid-column: 2; grid-row: 1; gap: 0; }
+      .icon-btn, .user-profile-btn { min-width: 44px; min-height: 44px; padding: 0.25rem; }
+      .user-name, .chevron-icon, .header-divider { display: none; }
+      .nav-links {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        border-top: 1px solid #f1f5f9;
+      }
+      .nav-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0.5rem 0.75rem; }
+      .nav-link.active::after { bottom: 0; }
+      .profile-popover {
+        position: fixed;
+        top: auto;
+        left: 0.75rem;
+        right: 0.75rem;
+        width: auto;
+        max-width: 360px;
+        margin-left: auto;
+        max-height: 70dvh;
+        overflow-y: auto;
+      }
+      .popover-user-info { min-width: 0; }
+      .popover-name { overflow-wrap: anywhere; }
+      .popover-avatar { flex-shrink: 0; }
+      .search-modal-backdrop { height: 100dvh; overflow-y: auto; padding: 1rem 0 2rem; }
+      .search-modal-card { width: calc(100% - 1.5rem); padding: 0.75rem; }
+      .search-input-header {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr) 44px;
+        gap: 0.5rem;
+        padding: 0.5rem;
+      }
+      .search-modal-input { min-width: 0; width: 100%; font-size: 16px; }
+      .search-submit-btn { grid-column: 1 / -1; grid-row: 2; min-height: 44px; }
+      .search-close-btn { grid-column: 3; grid-row: 1; min-height: 44px; }
+      .search-chip, .popover-close-btn, .popover-logout-btn { min-height: 44px; }
+      .nav-actions > .btn { padding: 0.5rem; min-height: 44px; }
     }
   `]
 })

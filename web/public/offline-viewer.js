@@ -43,6 +43,13 @@ async function render() {
       for (const doc of pack.documents) {
         const url = URL.createObjectURL(doc.blob); urls.add(url);
         const link = node('a', 'Download ' + doc.name, card);
+        if (globalThis.SuttruNative) {
+          link.onclick = async event => {
+            event.preventDefault();
+            try { await globalThis.SuttruNative.shareFile(doc.blob, doc.name); }
+            catch { status.textContent = 'Unable to open this saved document. Please retry.'; }
+          };
+        }
         link.href = url; link.download = doc.name; // Download only; do not execute uploaded HTML/SVG.
       }
     }

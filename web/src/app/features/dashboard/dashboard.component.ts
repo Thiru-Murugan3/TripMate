@@ -844,8 +844,12 @@ interface PopularDestination {
     }
 
     @media (max-width: 640px) {
+      .hero-content { width: 100%; min-width: 0; padding: 0 1rem; }
+      .hero-actions { flex-wrap: wrap; gap: 0.75rem; }
+      .btn-hero { min-height: 44px; }
+      .trips-grid, .destinations-grid { min-width: 0; }
       .trips-grid, .destinations-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
       }
       .hero-title {
         font-size: 2.2rem;

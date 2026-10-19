@@ -1,3 +1,4 @@
+import { hasNativeFiles, shareNativeFile } from '../../../core/utils/native-files';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -539,13 +540,18 @@ export class DocumentManagerComponent implements OnInit, OnChanges {
   viewDocument(document: TripDocument): void {
     if (this.viewingDocumentId !== null) return;
 
-    const previewWindow = window.open('', '_blank');
+    const previewWindow = hasNativeFiles() ? null : window.open('', '_blank');
     this.viewingDocumentId = document.id;
     this.loadError = '';
 
     this.documentService.getDocumentContent(this.tripId, document.id).subscribe({
-      next: (blob) => {
-        this.viewingDocumentId = null;
+      next: async (blob) => {
+        try {
+          if (await shareNativeFile(blob, document.fileName)) return;
+        } catch {
+          this.loadError = 'Unable to open this document on the device. Please try again.';
+          return;
+        } finally { this.viewingDocumentId = null; }
         const objectUrl = URL.createObjectURL(blob);
 
         if (previewWindow) {

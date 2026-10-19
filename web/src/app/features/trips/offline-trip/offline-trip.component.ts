@@ -1,3 +1,4 @@
+import { hasNativeFiles } from '../../../core/utils/native-files';
 import { CommonModule } from '@angular/common';
 import { Component, Input, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -68,17 +69,19 @@ export class OfflineTripComponent {
     this.message = '';
     const tripId = this.tripId;
     try {
-      if (!('serviceWorker' in navigator) || !('indexedDB' in window) || !window.isSecureContext)
+      if ((!hasNativeFiles() && !('serviceWorker' in navigator)) || !('indexedDB' in window) || !window.isSecureContext)
         throw new Error('Offline saving needs HTTPS and a browser with offline storage support.');
       const identity = session();
       const chosen = this.documents.filter(d => this.selected.has(d.id));
       if (chosen.length > 10 || chosen.reduce((n, d) => n + d.fileSize, 0) > 25 * 1024 * 1024)
         throw new Error('Choose up to 10 documents totalling 25 MB or less.');
-      await navigator.serviceWorker.register('/offline-worker.js', { scope: '/', updateViaCache: 'none' });
-      await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Offline viewer setup timed out. Reconnect and retry.')), 20000))
-      ]);
+      if (!hasNativeFiles()) {
+        await navigator.serviceWorker.register('/offline-worker.js', { scope: '/', updateViaCache: 'none' });
+        await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Offline viewer setup timed out. Reconnect and retry.')), 20000))
+        ]);
+      }
       const timeline = await firstValueFrom(this.timelineService.getTimeline(tripId));
       const documents: { id: number; name: string; blob: Blob }[] = [];
       let bytes = new Blob([JSON.stringify(timeline)]).size;
