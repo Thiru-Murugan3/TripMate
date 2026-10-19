@@ -1,10 +1,11 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TripService } from '../../core/services/trip.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Trip, TripType, CreateTripRequest } from '../../core/models/trip.model';
+import { Trip, TripType, TripDashboard, CreateTripRequest } from '../../core/models/trip.model';
 import { findMissedTrip } from '../../core/utils/missed-trip.util';
 import { MissedTripDialogComponent } from '../../shared/components/missed-trip-dialog/missed-trip-dialog.component';
 
@@ -16,6 +17,8 @@ interface DisplayTrip {
   status: string;
   statusClass: string;
   dates: string;
+  startDate: string;
+  endDate: string;
   countdown: string;
   countdownClass: string;
   spent: string;
@@ -47,6 +50,25 @@ interface PopularDestination {
         (reschedule)="rescheduleMissedTrip()"
         (dismiss)="dismissMissedTrip()"
       ></app-missed-trip-dialog>
+      <section class="mobile-home" aria-label="Your travel home">
+        <header class="mobile-welcome"><span>Welcome Traveller</span><h1>Let’s plan your next escape.</h1></header>
+        <section class="mobile-hero" [style.background-image]="'linear-gradient(180deg,#0f172a33,#0f172ab3),url('+(upcomingTrips[0]?.image || popularDestinations[0].image)+')'">
+          <h2>Where are you going next?</h2><button type="button" (click)="openCreateModal()">Plan New Trip</button>
+        </section>
+        <article class="mobile-next-trip" *ngIf="upcomingTrips[0] as next; else noMobileTrip">
+          <div class="mobile-card-heading"><h2>Your next trip</h2><span>{{next.tag}}</span></div>
+          <button type="button" class="mobile-trip-link" (click)="openMobileTrip('OVERVIEW')"><img [src]="next.image" alt="" width="60" height="60" /><div><strong>{{next.name}}</strong><span>{{next.startDate | date:'d MMM'}} – {{next.endDate | date:'d MMM yyyy'}}</span><small>{{next.countdown}}</small></div><span aria-hidden="true">›</span></button>
+          <div class="mobile-trip-budget" *ngIf="mobileBudget as budget"><div><span>Budget used</span><strong>{{budget.budgetUtilizationPercentage | number:'1.0-0'}}%</strong></div><progress [value]="budget.budgetUtilizationPercentage" max="100" aria-label="Trip budget used"></progress><div><small>Spent: {{budget.totalExpenses | currency:'INR':'symbol':'1.0-0'}}</small><small>Limit: {{budget.budget | currency:'INR':'symbol':'1.0-0'}}</small></div></div>
+        </article>
+        <ng-template #noMobileTrip><article class="mobile-next-trip"><h2>Your next journey starts here</h2><p>Create a trip, invite your group and plan each day together.</p><button class="mobile-text-link" (click)="openCreateModal()">Create your first trip →</button></article></ng-template>
+        <section class="mobile-quick"><h2>Quick actions</h2><div>
+          <button (click)="openCreateModal()"><span><img src="assets/mobile/plus.svg" alt="" /></span>Add trip</button>
+          <button (click)="openMobileTrip('EXPENSES')"><span><img src="assets/mobile/expense.svg" alt="" /></span>Expenses</button>
+          <button (click)="openMobileTrip('BOOKINGS')"><span><img src="assets/mobile/booking.svg" alt="" /></span>Bookings</button>
+          <button (click)="openMobileTrip('DOCUMENTS')"><span><img src="assets/mobile/document.svg" alt="" /></span>Documents</button>
+        </div></section>
+        <section class="mobile-destinations"><div class="mobile-card-heading"><h2>Find your next destination</h2></div><div class="mobile-destination-scroll"><button *ngFor="let destination of popularDestinations" (click)="planDestination(destination)"><img [src]="destination.image" [alt]="destination.name" loading="lazy" /><strong>{{destination.name}}</strong><span>{{destination.tags}}</span></button></div></section>
+      </section>
       <!-- Hero Section -->
       <section class="hero-section">
         <div class="hero-bg" style="background-image: url('assets/images/hero.jpg');"></div>
@@ -240,6 +262,7 @@ interface PopularDestination {
   `,
   styles: [`
 @use '../../shared/styles/mobile-panels' as mobile;
+@use './dashboard.mobile' as mobileHome;
 
     :host {
       display: block;
@@ -859,6 +882,7 @@ interface PopularDestination {
     }
 
 @include mobile.panels;
+@include mobileHome.home;
 
 @media(max-width:760px) {
  .home-page { width:100%; min-width:0; }
@@ -881,6 +905,16 @@ export class DashboardComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  private readonly destroyRef = inject(DestroyRef);
+  mobileBudget: TripDashboard | null = null;
+
+  openMobileTrip(tab: string): void {
+    const trip = this.upcomingTrips[0];
+    if (trip?.id) { void this.router.navigate(['/trips', trip.id], {queryParams:{tab}}); }
+    else if (tab === 'EXPENSES') { void this.router.navigate(['/expenses']); }
+    else { this.openCreateModal(); }
+  }
 
   quickDestination = 'Kodaikanal, Tamil Nadu';
   quickTripType: TripType = 'FAMILY';
@@ -941,9 +975,12 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadUserTrips();
 
-    if (this.route.snapshot.queryParamMap.get('createTrip') === '1') {
-      this.openCreateModal();
-    }
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      if(params.get('createTrip') === '1') {
+        this.openCreateModal();
+        void this.router.navigate([], {relativeTo:this.route, queryParams:{createTrip:null}, queryParamsHandling:'merge', replaceUrl:true});
+      }
+    });
   }
 
   loadUserTrips(): void {
@@ -958,6 +995,11 @@ export class DashboardComponent implements OnInit {
           );
 
         this.upcomingTrips = activeTrips.map((trip) => this.toDisplayTrip(trip));
+        this.mobileBudget = null;
+        const firstId = this.upcomingTrips[0]?.id;
+        if (firstId) this.tripService.getTripDashboard(firstId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: budget => { if(this.upcomingTrips[0]?.id === firstId) this.mobileBudget = budget; }, error: () => {}
+        });
       },
       error: () => {
         this.upcomingTrips = [];
@@ -1023,6 +1065,7 @@ export class DashboardComponent implements OnInit {
             ? 'status-planning'
             : 'status-confirmed',
       dates: `${trip.startDate} - ${trip.endDate}`,
+      startDate:trip.startDate, endDate:trip.endDate,
       ...this.tripCountdown(trip.startDate),
       spent: '₹0',
       limit: `₹${trip.budget.toLocaleString()}`,

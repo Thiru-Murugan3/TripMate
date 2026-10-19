@@ -42,6 +42,19 @@ jobs:
         working-directory: web
       - run: npm run build
         working-directory: web
+      - name: Install visual review runner
+        run: npm install --prefix "$RUNNER_TEMP/suttru-ui" --no-save --no-package-lock playwright@1.62.1
+      - name: Capture mobile UI with fixture data
+        run: node scripts/capture-mobile-ui.cjs
+        working-directory: web
+        env:
+          SUTTRU_PLAYWRIGHT: ${{ runner.temp }}/suttru-ui/node_modules/playwright
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Suttru-mobile-ui-review
+          path: web/mobile-ui-review/*.png
+          retention-days: 7
       - run: npm run prepare:web
         working-directory: mobile
         env:

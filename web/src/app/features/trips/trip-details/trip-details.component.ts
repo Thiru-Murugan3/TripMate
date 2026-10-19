@@ -1,9 +1,10 @@
 import { shareNativeFile } from '../../../core/utils/native-files';
 import { FlightAlertsComponent } from '../flight-alerts/flight-alerts.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import {
   Trip,
@@ -44,6 +45,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     FormsModule,
     ReactiveFormsModule,
     ItineraryPlannerComponent,
@@ -72,7 +74,8 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
       </section>
 
       <div *ngIf="!isLoadingTrip && trip as currentTrip" class="trip-details-container">
-        <section class="trip-header card">
+        <div class="mobile-trip-controls"><a routerLink="/trips" class="mobile-trips-back">‹ My trips</a><button type="button" class="mobile-trip-more" (click)="mobileActionsOpen = !mobileActionsOpen" [attr.aria-expanded]="mobileActionsOpen" aria-controls="trip-secondary-actions">{{mobileActionsOpen ? 'Close actions' : 'Trip actions'}} ⋯</button></div>
+        <section class="trip-header card" [class.mobile-expanded]="mobileActionsOpen">
           <div class="trip-header-main">
             <div>
               <div class="title-row">
@@ -106,7 +109,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
               </p>
             </div>
 
-            <div class="trip-header-actions">
+            <div class="trip-header-actions" id="trip-secondary-actions" [class.mobile-expanded]="mobileActionsOpen">
               <button type="button" class="btn btn-outline" [disabled]="isDuplicatingTrip" (click)="duplicateCurrentTrip()">
                 <span class="material-symbols-outlined">content_copy</span>
                 {{ isDuplicatingTrip ? 'Copying...' : 'Duplicate' }}
@@ -2693,6 +2696,32 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
     }
 
 @include mobile.panels;
+    .mobile-trip-controls,.mobile-trips-back,.mobile-trip-more { display:none; }
+    @media(max-width:760px) {
+      .trip-details-container { padding:8px 20px 24px; }
+      .mobile-trip-controls { display:flex; align-items:center; justify-content:space-between; gap:8px; padding-bottom:8px; }
+      .trip-header-main { gap:8px; }
+      .trip-meta-row > span:nth-child(n+3),.trip-header-description { display:none; }
+      .trip-header.mobile-expanded .trip-meta-row > span:nth-child(n+3) { display:inline-flex; }
+      .trip-header.mobile-expanded .trip-header-description { display:block; }
+      .mobile-trips-back { display:inline-flex; align-items:center; min-height:44px; color:#2563eb; text-decoration:none; font-size:13px; font-weight:650; }
+      .trip-header { padding:14px; border-radius:16px; box-shadow:0 4px 16px #2563eb08; border:0; background:white; }
+      .title-row h1 { font-size:20px; line-height:1.3; letter-spacing:-.03em; }
+      .trip-meta-row { gap:8px; font-size:11px; }
+      .trip-header-description { font-size:12px; }
+      .mobile-trip-more { display:inline-flex; align-items:center; min-height:44px; align-self:flex-start; border:1px solid #e2e8f0; background:#fff; color:#64748b; border-radius:10px; padding:8px 12px; cursor:pointer; font:inherit; font-size:12px; }
+      .trip-header-actions { display:none; }
+      .trip-header-actions.mobile-expanded { display:flex; }
+      .dashboard-tabs { padding:4px; gap:4px; box-shadow:none; border-radius:12px; }
+      .dashboard-tabs .tab-btn { padding:12px; font-size:12px; border-radius:9px; }
+      .dashboard-tabs .tab-inline-icon { display:none; }
+      .summary-card,.compact-summary-card,.budget-card,.overview-panel,.sidebar-card { background:white; border:0; box-shadow:0 4px 16px #2563eb08; border-radius:16px; }
+      .compact-summary-grid { gap:10px; }
+      .compact-summary-card { padding:12px; }
+      .compact-summary-card strong { font-size:18px; }
+      .compact-summary-card span { font-size:10px; }
+    }
+
 
 @media(max-width:760px) {
  .bookings-grid { grid-template-columns:minmax(0,1fr); }
@@ -2704,7 +2733,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
  .member-role select { width:100%; }
  .route, .times { flex-wrap:wrap; }
  .dashboard-tabs, .details-tabs { max-width:100%; min-width:0; }
- .compact-summary-grid, .expenses-summary { grid-template-columns:minmax(0,1fr); }
+ .compact-summary-grid, .expenses-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
  .weather-grid, .weather-forecast { min-width:0; }
 }
 `]
@@ -2713,6 +2742,7 @@ export class TripDetailsComponent implements OnInit {
   @ViewChild(ReservationEmailImportsComponent)
   private reservationEmailImports?: ReservationEmailImportsComponent;
 
+  private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly tripService = inject(TripService);
@@ -2729,6 +2759,7 @@ export class TripDetailsComponent implements OnInit {
   members: TripMember[] = [];
 
   activeTab: TripDetailsTab = 'TIMELINE';
+  mobileActionsOpen = false;
   expenseOpenRequest = 0;
   documentOpenRequest = 0;
 
@@ -2862,6 +2893,10 @@ export class TripDetailsComponent implements OnInit {
       return;
     }
 
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const tab = params.get('tab');
+      if(tab && ['OVERVIEW','TIMELINE','EXPLORE','ITINERARY','PLACES','EXPENSES','BOOKINGS','DOCUMENTS','MEMBERS'].includes(tab)) this.activeTab = tab as TripDetailsTab;
+    });
     this.loadTripDetails();
     this.loadDashboard();
     this.loadWeather();
@@ -3007,6 +3042,7 @@ export class TripDetailsComponent implements OnInit {
 
   setActiveTab(tab: TripDetailsTab): void {
     this.activeTab = tab;
+    void this.router.navigate([], { relativeTo:this.route, queryParams:{tab}, queryParamsHandling:'merge', replaceUrl:true });
 
     if (tab === 'OVERVIEW') {
       this.loadTripDetails();

@@ -19,3 +19,5 @@ mobile/android/
 mobile/dist/
 *.keystore
 *.jks
+
+web/mobile-ui-review/

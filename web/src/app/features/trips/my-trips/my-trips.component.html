@@ -16,13 +16,17 @@
       <p>View and manage every trip you are planning or travelling on.</p>
     </div>
 
-    <button type="button" class="create-button" (click)="createTrip()">
-      <span aria-hidden="true">＋</span>
-      Plan New Trip
+    <button type="button" class="create-button" aria-label="Plan New Trip" (click)="createTrip()">
+      <span class="desktop-create-label" aria-hidden="true">＋ Plan New Trip</span><img class="mobile-create-icon" src="assets/mobile/plus-white.svg" alt="" /><span class="mobile-create-label">New trip</span>
     </button>
   </section>
 
-  <section class="toolbar" aria-label="Trip filters">
+  <nav class="mobile-status-tabs" aria-label="Quick trip filters">
+    @for (status of mobileStatuses; track status) {
+      <button type="button" [class.active]="statusFilter() === status" [attr.aria-pressed]="statusFilter() === status" (click)="updateStatus(status)">{{ status === 'ALL' ? 'All' : status === 'ONGOING' ? 'Active' : formatStatus($any(status)) }}</button>
+    }
+  </nav>
+  <section class="toolbar" [class.filters-open]="mobileFiltersOpen" aria-label="Trip filters">
     <label class="search-field">
       <span>Search</span>
       <input
@@ -33,6 +37,7 @@
       />
     </label>
 
+    <button class="mobile-filter-toggle" type="button" (click)="mobileFiltersOpen = !mobileFiltersOpen" [attr.aria-expanded]="mobileFiltersOpen">Filters{{typeFilter() !== 'ALL' ? ' •' : ''}}</button>
     <label class="select-field">
       <span>Status</span>
       <select [ngModel]="statusFilter()" (ngModelChange)="updateStatus($event)">
@@ -110,10 +115,11 @@
           </div>
 
           <div class="trip-content">
+            <div class="mobile-trip-title"><div><span class="type-badge">{{formatTripType(trip.tripType)}}</span><span class="mobile-status">{{formatStatus(trip.status)}}</span></div><h3>{{trip.name}}</h3><p>{{trip.destination}}</p></div>
             <div class="meta-row">
               <div>
                 <span class="meta-label">DATES</span>
-                <strong>{{ trip.startDate }} → {{ trip.endDate }}</strong>
+                <strong class="desktop-trip-dates">{{ trip.startDate }} → {{ trip.endDate }}</strong><strong class="mobile-trip-dates">{{ trip.startDate | date:'d MMM' }} – {{ trip.endDate | date:'d MMM yyyy' }}</strong>
                 <small>{{ tripDuration(trip) }}</small>
               </div>
               <div class="meta-right">

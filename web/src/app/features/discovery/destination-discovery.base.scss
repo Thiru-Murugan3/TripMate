@@ -237,3 +237,5 @@
  .selection-bar button, .card-action, .provider-action { min-height:44px; white-space:normal; }
  .detail-content { overflow-wrap:anywhere; }
 }
+
+@media(min-width:701px) and (max-width:760px) { .selection-bar { bottom:calc(96px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px))); } }

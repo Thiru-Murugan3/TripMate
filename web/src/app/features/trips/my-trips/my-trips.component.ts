@@ -33,6 +33,9 @@ export class MyTripsComponent implements OnInit {
   statusFilter = signal<StatusFilter>('ALL');
   typeFilter = signal<TypeFilter>('ALL');
 
+  mobileFiltersOpen = false;
+  readonly mobileStatuses: StatusFilter[] = ['ALL','UPCOMING','ONGOING','COMPLETED'];
+
   readonly statusOptions: StatusFilter[] = [
     'ALL',
     'PLANNED',

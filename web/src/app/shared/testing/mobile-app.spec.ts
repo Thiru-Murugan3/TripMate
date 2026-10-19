@@ -33,7 +33,7 @@ function phone(element: HTMLElement, width: number, height = 740): void {
     doc.head.appendChild(reset);
     doc.body.appendChild(element.cloneNode(true));
     expect(doc.documentElement.scrollWidth).withContext(`${element.tagName} page width ${width}`).toBeLessThanOrEqual(width);
-    const scrollAreas = '.dashboard-tabs,.details-tabs,.photo-route,.route-summary,.day-jump-scroll';
+    const scrollAreas = '.dashboard-tabs,.details-tabs,.photo-route,.route-summary,.day-jump-scroll,.mobile-destination-scroll,.mobile-status-tabs,.mobile-day-strip';
     for (const control of doc.querySelectorAll<HTMLElement>('button,input,select,textarea,.modal,.modal-card,.modal-content,.bookings-grid,.timeline-card-wrapper,.trip-card,.document-card,.expense-card')) {
       if (control.closest(scrollAreas)) continue; // These strips intentionally scroll inside a bounded panel.
       const r = control.getBoundingClientRect();

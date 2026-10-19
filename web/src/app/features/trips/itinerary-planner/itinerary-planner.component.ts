@@ -239,8 +239,9 @@ interface DayRoutePlan {
           </button>
         </div>
 
+        <nav class="mobile-day-strip" *ngIf="itinerary?.days?.length" aria-label="Itinerary days"><button *ngFor="let day of itinerary?.days" type="button" [class.active]="mobileDayId === day.id" (click)="jumpToDay(day.id)">Day {{day.dayNumber}}<small>{{day.dayDate ? formatDate(day.dayDate) : 'Flexible'}}</small></button></nav>
         <div *ngIf="itinerary?.days?.length" class="days-list">
-          <article *ngFor="let day of itinerary?.days" class="day-card">
+          <article *ngFor="let day of itinerary?.days" class="day-card" [id]="'itinerary-day-'+day.id">
             <header class="day-header">
               <div class="day-title">
                 <div class="day-number">Day {{ day.dayNumber }}</div>
@@ -678,6 +679,16 @@ interface DayRoutePlan {
     }
 
 @include mobile.panels;
+.mobile-day-strip { display:none; }
+@media(max-width:760px) {
+ .mobile-day-strip { display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px; }
+ .mobile-day-strip button { flex:0 0 80px; display:grid; gap:4px; min-height:52px; border:1px solid #e2e8f0; border-radius:12px; padding:8px; background:white; color:#334155; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
+ .mobile-day-strip small { font-size:10px; color:#64748b; font-weight:400; }
+ .mobile-day-strip button.active { color:#2563eb; background:#eff6ff; border-color:#2563eb; }
+ .day-card { border:0; border-radius:16px; box-shadow:0 4px 16px #2563eb08; scroll-margin-top:16px; }
+ .activity-card { border-radius:12px; background:#f8fafc; }
+}
+
 
 @media(max-width:760px) {
  .time-picker { grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) minmax(0,1fr); }
@@ -703,6 +714,8 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
   @Output() itineraryChanged = new EventEmitter<void>();
   @ViewChild('routeMapPicker') routeMapPickerElement?: ElementRef<HTMLDivElement>;
 
+  mobileDayId = 0;
+  jumpToDay(id:number):void { this.mobileDayId=id; document.getElementById('itinerary-day-'+id)?.scrollIntoView({behavior:'smooth',block:'start'}); }
   itinerary: TripItinerary | null = null;
   places: Place[] = [];
 
