@@ -12,7 +12,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class CommonsImageServiceTest {
     private static final String METADATA = """
-      {"query":{"pages":{"1":{"imageinfo":[{"thumburl":"https://upload.wikimedia.org/photo.jpg",
+      {"query":{"pages":{"1":{"imageinfo":[{"mime":"image/jpeg","thumburl":"https://upload.wikimedia.org/photo.jpg",
       "descriptionurl":"https://commons.wikimedia.org/wiki/File:Photo.jpg","extmetadata":{
       "Artist":{"value":"<a href='https://example.test'>A &amp; B</a>"},
       "LicenseShortName":{"value":"CC BY-SA 4.0"},"Credit":{"value":"Own work"}}}]}}}}

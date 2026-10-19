@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
@@ -18,7 +19,7 @@ describe('IndiaCatalogueComponent', () => {
     service = jasmine.createSpyObj('IndiaCatalogueService', ['index','state']);
     service.index.and.returnValue(of({snapshot:'2026-10-14',total:31,states:[tn,kerala]}));
     service.state.and.returnValue(of([place]));
-    TestBed.configureTestingModule({ imports:[IndiaCatalogueComponent], providers:[provideRouter([]), {provide:IndiaCatalogueService,useValue:service}] });
+    TestBed.configureTestingModule({ imports:[IndiaCatalogueComponent], providers:[provideHttpClient(),provideRouter([]), {provide:IndiaCatalogueService,useValue:service}] });
   });
   function setup() {
     const fixture = TestBed.createComponent(IndiaCatalogueComponent);
@@ -28,7 +29,7 @@ describe('IndiaCatalogueComponent', () => {
   it('labels unknown fees and missing photos without free-price or image substitution', () => {
     const fixture = setup();
     expect(fixture.nativeElement.textContent).toContain('Entry fee not verified');
-    expect(fixture.nativeElement.textContent).toContain('No reviewed photograph available');
+    expect(fixture.nativeElement.textContent).toContain('No source photograph available');
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
   });
   it('offers opt-in checkboxes and preserves parent selections across pagination and filters', () => {

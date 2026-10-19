@@ -1,3 +1,4 @@
+import { PlacePhotoGalleryComponent } from '../../shared/components/place-photo-gallery/place-photo-gallery.component';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +13,7 @@ import { DiscoveryCategory } from '../../core/models/discovery.model';
 @Component({
   standalone: true,
   selector: 'app-india-catalogue',
-  imports: [CommonModule, FormsModule, RouterLink, DestinationOverviewComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DestinationOverviewComponent, PlacePhotoGalleryComponent],
   templateUrl: './india-catalogue.component.html',
   styleUrl: './india-catalogue.component.scss'
 })

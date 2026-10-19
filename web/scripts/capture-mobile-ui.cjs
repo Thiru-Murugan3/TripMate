@@ -26,11 +26,13 @@ const summary={tripId:10,totalTripBudget:25000,totalExpenses:18450,remainingBudg
 const item={id:1,tripId:10,dayId:1,title:'Coaker’s Walk',placeId:1,location:'Kodaikanal',startTime:'10:00',endTime:'11:00',estimatedCost:100,description:'Sightseeing stroll'};
 const days=[{id:1,tripId:10,dayNumber:1,dayDate:trip.startDate,title:'Explore Kodaikanal',items:[item]},{id:2,tripId:10,dayNumber:2,dayDate:'2027-11-14',title:'Lake and gardens',items:[]}];
 const savedPlace={id:1,tripId:10,name:'Coaker’s Walk',category:'ATTRACTION',latitude:10.235,longitude:77.492,estimatedCost:100};
-const discoveryPlace={externalId:'fixture:walk',name:'Coaker’s Walk',category:'VIEWPOINT',saveCategory:'ATTRACTION',latitude:10.235,longitude:77.492,distanceKm:1.2,suggestedVisitMinutes:60,priceStatus:'UNKNOWN',sourceName:'Fixture source',sourceUrl:'https://example.com/place',imageGallery:[{url:'/assets/hero.jpg',sourcePage:'https://example.com/photo',license:'Visual fixture',attribution:'Test photo',exact:true,primary:true}]};
+const discoveryPlace={externalId:'wikidata:Q123',name:'Coaker’s Walk',category:'VIEWPOINT',saveCategory:'ATTRACTION',latitude:10.235,longitude:77.492,distanceKm:1.2,suggestedVisitMinutes:60,priceStatus:'UNKNOWN',sourceName:'Fixture source',sourceUrl:'https://example.com/place',imageGallery:[{url:'/assets/hero.jpg',sourcePage:'https://example.com/photo',license:'Visual fixture',attribution:'Test photo',exact:true,primary:true}]};
 const discoveryResult={query:trip.destination,resolvedDestination:'Kodaikanal',latitude:10.235,longitude:77.492,radiusKm:25,category:'ALL',provider:'Visual fixture',attribution:'Internal review only',resultCount:2,totalPages:1,page:0,places:[discoveryPlace,{...discoveryPlace,externalId:'fixture:lake',name:'Kodaikanal Lake',category:'LAKE',distanceKm:2.4}]};
 const invitation={id:1,tripId:10,tripName:trip.name,inviterId:1,inviterName:user.name,inviteeEmail:'friend@example.com',role:'PLANNER',status:'PENDING',type:'EMAIL',expiresAt:'2027-11-20T12:00:00',createdAt:'2027-11-12T12:00:00'};
+let locationPhotoUrl='';
 function response(url){
   const p=new URL(url).pathname.replace(/^.*\/api\/v1/,'');
+  if(p==='/discovery/place-photos')return {images:[{url:locationPhotoUrl,sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-one.jpg',license:'Visual fixture',attribution:'Test photographer one',exact:true,primary:true},{url:locationPhotoUrl+'?second',sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-two.jpg',license:'Visual fixture',attribution:'Test photographer two',exact:true,primary:false}],message:'Internal visual fixture only',retryable:false};
   if(p==='/users/me')return user;
   if(p==='/discovery/places' || p==='/discovery/top-places')return discoveryResult;
   if(p==='/discovery/tripadvisor/status')return {available:true};
@@ -59,6 +61,7 @@ function response(url){
 (async()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const origin=`http://127.0.0.1:${server.address().port}`;
+  locationPhotoUrl=origin+'/assets/hero.jpg';
   const browser=await chromium.launch({executablePath:process.env.SUTTRU_CHROME || '/usr/bin/google-chrome',args:['--no-sandbox']});
   try {
     const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
@@ -88,6 +91,12 @@ function response(url){
     await page.screenshot({animations:'disabled',path:path.join(output,'itinerary-route-tools.png')});
     await page.goto(origin+'/trips/10?tab=EXPLORE');await page.locator('app-combined-places .card').first().waitFor();
     await page.locator('app-combined-places .card').first().scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:path.join(output,'explore-results.png')});
+    const gallery=page.locator('app-combined-places app-place-photo-gallery').first();
+    await gallery.getByRole('button',{name:'Next photo',exact:true}).waitFor();
+    await gallery.getByRole('button',{name:'Next photo',exact:true}).click();
+    assert.match(await gallery.locator('figcaption').textContent(),/photographer two/);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'photo gallery overflows phone viewport');
+    await page.screenshot({animations:'disabled',path:path.join(output,'explore-second-photo.png')});
     await page.getByRole('button',{name:'Top 10 places to visit',exact:true}).click();await page.locator('app-top-places li').first().waitFor();
     await page.locator('app-top-places input[type=checkbox]').first().check();await page.locator('app-top-places .selection-actions').waitFor();
     await page.screenshot({animations:'disabled',path:path.join(output,'top-places-selected.png')});

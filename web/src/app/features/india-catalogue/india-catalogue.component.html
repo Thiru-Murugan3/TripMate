@@ -56,15 +56,7 @@
     <h3 class="section-title">{{ section.title }}</h3>
     <div class="cards" tabindex="0" [attr.aria-label]="section.title + ' places'">
       <article *ngFor="let place of section.places; trackBy: trackPlace">
-        <figure *ngIf="place.photo as photo">
-          <img *ngIf="!failedImages.has(place.place_id)" [src]="root + photo.local_thumbnail" [alt]="place.name + ' — historical source photograph'" loading="lazy" width="500" height="300" (error)="failedImages.add(place.place_id)" />
-          <p *ngIf="failedImages.has(place.place_id)" class="placeholder">Photograph unavailable</p>
-          <figcaption>
-            {{ photo.creator }} · <a [href]="photo.license_url" target="_blank" rel="noopener noreferrer">{{ photo.license }}</a>
-            · <a [href]="photo.source_page" target="_blank" rel="noopener noreferrer">Photo source</a>
-          </figcaption>
-        </figure>
-        <p *ngIf="!place.photo" class="placeholder">No reviewed photograph available</p>
+        <app-place-photo-gallery [externalId]="place.place_id" [sourceUrl]="place.source_url" [name]="place.name" [cataloguePhoto]="place.photo" [assetRoot]="root" />
         <div class="content">
           <label *ngIf="selectable" class="check place-selection">
             <input type="checkbox" [checked]="selectedIds.has(selectionKey(place))" [disabled]="saving" (change)="togglePlace(place)" [attr.aria-label]="'Select ' + place.name" />

@@ -1,3 +1,4 @@
+import { PlacePhotoGalleryComponent } from '../../shared/components/place-photo-gallery/place-photo-gallery.component';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
@@ -10,7 +11,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
 import { DiscoveryService } from '../../core/services/discovery.service';
 
 @Component({
-  selector:'app-top-places',standalone:true,imports:[CommonModule,FormsModule],
+  selector:'app-top-places',standalone:true,imports:[CommonModule,FormsModule,PlacePhotoGalleryComponent],
   template:`
     <section class="top-places" aria-label="Top 10 places to visit">
       <button type="button" (click)="load()" [disabled]="busy || disabled || isSaving || destination.trim().length<2">{{ busy ? 'Finding highlights…' : 'Top 10 places to visit' }}</button>
@@ -28,6 +29,7 @@ import { DiscoveryService } from '../../core/services/discovery.service';
         <div *ngIf="selectedCount" class="selection-actions"><span>{{ selectedCount }} selected</span><button type="button" (click)="saveSelected(true)" [disabled]="isSaving || disabled || !activeTripId || !effectiveCanEdit">{{ isSaving ? 'Adding…' : 'Add selected to itinerary' }}</button></div>
         <ol>
           <li *ngFor="let place of data.places">
+            <app-place-photo-gallery [externalId]="place.externalId" [sourceUrl]="place.sourceUrl || ''" [name]="place.name" [initialImages]="place.imageGallery!" />
             <div class="place-heading"><label class="place-option"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || disabled || !canSelectPlaces" (change)="toggleSelection(place)" [attr.aria-label]="'Select ' + place.name" /> <strong>{{ place.name }}</strong></label><span class="note">{{ place.category.replaceAll('_',' ').toLowerCase() }} · {{ place.distanceKm }} km</span></div>
             <label class="day-picker" *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving || disabled"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>
             <div class="actions"><a [href]="place.sourceUrl" target="_blank" rel="noopener noreferrer">{{ place.sourceName || 'Source' }} ↗</a><button *ngIf="canFind" type="button" [disabled]="disabled || isSaving" (click)="placeRequested.emit(place.name)">Find in Explore</button></div>
