@@ -22,6 +22,11 @@
     </button>
   </section>
 
+  <nav class="mobile-status-tabs" aria-label="Quick trip filters">
+    @for (status of mobileStatuses; track status) {
+      <button type="button" [class.active]="statusFilter() === status" [attr.aria-pressed]="statusFilter() === status" (click)="updateStatus(status)">{{ status === 'ALL' ? 'All' : status === 'ONGOING' ? 'Active' : formatStatus($any(status)) }}</button>
+    }
+  </nav>
   <section class="toolbar" aria-label="Trip filters">
     <label class="search-field">
       <span>Search</span>
@@ -110,6 +115,7 @@
           </div>
 
           <div class="trip-content">
+            <div class="mobile-trip-title"><div><span class="type-badge">{{formatTripType(trip.tripType)}}</span><span class="mobile-status">{{formatStatus(trip.status)}}</span></div><h3>{{trip.name}}</h3><p>{{trip.destination}}</p></div>
             <div class="meta-row">
               <div>
                 <span class="meta-label">DATES</span>

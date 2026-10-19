@@ -56,10 +56,11 @@ describe('Phone navigation and home layout', () => {
       for (const width of [320, 360, 390, 454, 768]) atWidth([nav.nativeElement, home.nativeElement], width, doc => {
         fits(doc, '.navbar,.brand-logo,.nav-links a,.nav-actions button,.hero-content,.hero-actions a,.hero-actions button', width);
         for (const button of doc.querySelectorAll<HTMLElement>('.nav-actions button,.nav-links a')) {
-          expect(button.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+          if(button.getBoundingClientRect().width) expect(button.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
         }
-        expect(doc.querySelector('.nav-actions')!.getBoundingClientRect().bottom)
+        if(width > 760) expect(doc.querySelector('.nav-actions')!.getBoundingClientRect().bottom)
           .toBeLessThanOrEqual(doc.querySelector('.nav-links')!.getBoundingClientRect().top);
+        else expect(doc.defaultView!.getComputedStyle(doc.querySelector('.nav-links')!).display).toBe('none');
       });
     } finally { nav.destroy(); home.destroy(); }
   });

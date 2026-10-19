@@ -779,6 +779,17 @@ import { NotificationService } from '../../../core/services/notification.service
       .search-chip, .popover-close-btn, .popover-logout-btn { min-height: 44px; }
       .nav-actions > .btn { padding: 0.5rem; min-height: 44px; }
     }
+    @media(max-width:760px) {
+      .navbar { padding:8px 16px; background:#f8fafc; border:0; box-shadow:none; }
+      .nav-links { display:none; }
+      .brand-subtext { display:none; }
+      .logo-icon-badge { width:30px; height:30px; border-radius:9px; box-shadow:none; }
+      .brand-text { font-size:18px; }
+      .icon-btn { background:white; border:1px solid #e2e8f0; border-radius:50%; margin-left:4px; }
+      .nav-actions .icon-btn[aria-label="Open invitations"] { display:none; }
+      .user-profile-btn { margin-left:4px; }
+      .profile-popover { top:64px; }
+    }
   `]
 })
 export class NavbarComponent {

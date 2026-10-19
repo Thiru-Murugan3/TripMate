@@ -2,7 +2,16 @@
 @mixin panels {
   :host { display: block; min-width: 0; max-width: 100%; }
   @media (max-width: 760px) {
-    :host { overflow-wrap: anywhere; }
+    :host { overflow-wrap: anywhere; color:#0f172a; }
+    h2 { font-size:18px; letter-spacing:-.025em; }
+    .eyebrow { font-size:10px; color:#64748b; }
+    .expense-toolbar p,.documents-toolbar p,.places-toolbar p,.planner-toolbar p { font-size:12px; line-height:1.6; }
+    .expense-card,.document-card,.place-card,.state-card,.empty-card,.summary-card,.category-card,.balance-card { border-radius:16px; box-shadow:0 4px 16px #2563eb08; }
+    .budget-summary article,.document-summary article,.places-summary article,.summary-grid article { border:0; border-radius:14px; padding:14px; background:white; }
+    .expense-controls,.document-controls,.places-controls { gap:10px; }
+    .btn.primary,.btn-primary { border-radius:10px; background:#2563eb; }
+    .modal,.modal-content,.modal-card { border-radius:20px; background:#fff; }
+
     button, .btn { min-height: 44px; max-width: 100%; white-space: normal; }
     input:not([type='checkbox']):not([type='radio']), select, textarea {
       min-width: 0; max-width: 100%; min-height: 44px; font-size: 16px;

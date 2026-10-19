@@ -3,12 +3,13 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
+import { MobileNavigationComponent } from './shared/components/mobile-navigation/mobile-navigation.component';
 import { FooterComponent } from './shared/components/footer/footer.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, FooterComponent],
+  imports: [RouterOutlet, NavbarComponent, FooterComponent, MobileNavigationComponent],
   template: `
     <div class="app-layout">
       @if (showAppShell) {
@@ -20,11 +21,17 @@ import { FooterComponent } from './shared/components/footer/footer.component';
       </main>
 
       @if (showAppShell) {
-        <app-footer></app-footer>
+        <app-footer class="desktop-footer"></app-footer>
+        <app-mobile-navigation></app-mobile-navigation>
       }
     </div>
   `,
   styles: [`
+    @media(max-width:760px) {
+      .main-content { padding-bottom:calc(96px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px))); background:#f8fafc; }
+      .desktop-footer { display:none; }
+    }
+
     .app-layout {
       min-height: 100vh;
       display: flex;

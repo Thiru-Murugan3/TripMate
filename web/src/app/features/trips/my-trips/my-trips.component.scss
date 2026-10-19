@@ -433,3 +433,39 @@ select:focus {
  .delete-button, .view-button { min-height:44px; }
  input, select { min-width:0; max-width:100%; font-size:16px; }
 }
+
+.mobile-status-tabs, .mobile-trip-title { display:none; }
+@media(max-width:760px) {
+ .my-trips-page { padding:16px 20px 24px; }
+ .page-hero { flex-direction:row; align-items:center; gap:12px; margin-bottom:16px; }
+ .page-hero h1 { font-size:24px; }
+ .page-hero .eyebrow, .page-hero p { display:none; }
+ .create-button { width:auto; flex:0 0 auto; min-height:44px; padding:0 12px; box-shadow:none; font-size:12px; }
+ .mobile-status-tabs { display:flex; gap:8px; overflow-x:auto; padding:0 0 12px; margin-bottom:4px; }
+ .mobile-status-tabs button { flex-shrink:0; min-height:44px; padding:8px 14px; border-radius:24px; background:white; border:1px solid #e2e8f0; font:inherit; font-size:12px; color:#64748b; cursor:pointer; }
+ .mobile-status-tabs button.active { background:#2563eb; color:white; border-color:#2563eb; }
+ .toolbar { padding:12px; gap:10px; grid-template-columns:minmax(0,1fr) minmax(0,1fr); border-radius:14px; margin-bottom:20px; box-shadow:none; }
+ .search-field { grid-column:1/-1; }
+ .clear-button { grid-column:1/-1; }
+ .trip-grid { gap:12px; }
+ .trip-card { display:grid; grid-template-columns:72px minmax(0,1fr); gap:12px; padding:12px; border:0; border-radius:16px; box-shadow:0 4px 16px #2563eb08; }
+ .trip-image { height:108px; width:72px; padding:0; border-radius:12px; }
+ .image-title, .image-badges { display:none; }
+ .trip-content { min-width:0; padding:0; }
+ .mobile-trip-title { display:block; }
+ .mobile-trip-title>div { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px; align-items:center; }
+ .type-badge { padding:3px 5px; background:#f0fdfa; color:#0f766e; font-size:9px; }
+ .mobile-status { font-size:9px; color:#b45309; font-weight:800; }
+ .mobile-trip-title h3 { font-size:14px; margin:8px 0 3px; line-height:1.4; }
+ .mobile-trip-title p { font-size:11px; color:#64748b; margin:0 0 10px; }
+ .meta-row { gap:8px; }
+ .meta-label { font-size:9px; }
+ .meta-row strong,.meta-row small { font-size:11px; }
+ .description { font-size:11px; margin-top:8px; }
+ .card-footer { margin-top:8px; padding-top:8px; }
+ .role { font-size:9px; }
+ .card-actions { gap:8px; }
+ .view-button, .delete-button { font-size:11px; }
+ .delete-button .material-symbols-outlined { display:none; }
+ .results-header h2 { font-size:16px; }.results-header p { display:none; }
+}

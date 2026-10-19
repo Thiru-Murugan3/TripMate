@@ -705,3 +705,22 @@ form {
  input:not([type=checkbox]), select { min-width:0; max-width:100%; font-size:16px; }
  button { min-height:44px; max-width:100%; }
 }
+
+@media(max-width:760px) {
+ .register-page { background:#f8fafc; color:#0f172a; }
+ .glow-sphere,.hero-badge,.hero-features,.hero-description { display:none; }
+ .register-hero { min-height:230px; padding:24px; justify-content:flex-end; background:linear-gradient(180deg,#0f172a33,#0f172ab3),url('/assets/images/hero.jpg') center/cover; border:0; }
+ .hero-content { margin:0; } .brand { margin-bottom:12px; }
+ .brand__icon { width:30px; height:30px; border-radius:8px; background:#2563eb; }
+ .brand__name { font-size:20px; } .hero-text h1 { font-size:24px; line-height:1.25; letter-spacing:-.035em; margin:0; }
+ .gradient-text { background:none; -webkit-text-fill-color:white; color:white; }
+ .register-panel { padding:24px; background:#f8fafc; align-items:flex-start; }
+ .auth-card,.register-card { width:100%; background:transparent; border:0; padding:0; box-shadow:none; border-radius:0; }
+ .auth-header,.register-header { margin-bottom:24px; }
+ .auth-header h2,.register-header h2 { color:#0f172a; font-size:20px; }
+ .field label { color:#64748b; font-size:12px; }
+ .input-wrapper { background:#fff; border:1px solid #e2e8f0; border-radius:12px; min-height:48px; }
+ .input-wrapper input { color:#0f172a; font-size:16px; }
+ .btn-primary,.submit-btn { background:#2563eb; border-radius:12px; min-height:48px; }
+ .subtitle,.form-footer,.register-footer { color:#64748b; }
+}
