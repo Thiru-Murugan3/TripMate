@@ -422,6 +422,8 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
     </main>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; background:#f8fafc; min-height:100vh; color:#0f172a; }
     .marketplace-page { min-height:100vh; padding:2rem 1rem 4rem; }
     .page-shell { max-width:1260px; margin:0 auto; }
@@ -551,7 +553,18 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
       .journey-line{text-align:left}
       .confirmation-grid{grid-template-columns:1fr}
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .offer-card, .offer-route, .offer-info, .offer-main, .checkout-layout > *, .form-grid > *, .traveler-form-grid > * { min-width:0; }
+ .offer-card, .results-header, .search-summary, .checkout-header { flex-wrap:wrap; }
+ .route-line { grid-template-columns:minmax(0,1fr); }
+ .route-line > div:last-child { text-align:left; }
+ .offer-price { min-width:0; width:100%; align-items:stretch; }
+ .form-grid, .traveler-form-grid, .checkout-layout { grid-template-columns:minmax(0,1fr); }
+}
+`]
 })
 export class BookingMarketplaceComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

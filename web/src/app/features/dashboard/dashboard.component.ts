@@ -239,6 +239,8 @@ interface PopularDestination {
     </div>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     :host {
       display: block;
       background-color: #f8fafc;
@@ -855,7 +857,23 @@ interface PopularDestination {
         font-size: 2.2rem;
       }
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .home-page { width:100%; min-width:0; }
+ .hero-actions { flex-wrap:wrap; }
+ .search-bar-wrapper, .section-container { padding-inline:1rem; }
+ .search-bar-card { flex-direction:column; align-items:stretch; padding:1rem; }
+ .search-field, .search-item { min-width:0; width:100%; }
+ .search-btn { width:100%; }
+ .section-header, .trip-meta { flex-wrap:wrap; }
+ .trip-card, .trip-body, .destination-card { min-width:0; }
+ .trip-name { overflow-wrap:anywhere; }
+ .hero-title { font-size:clamp(1.75rem,7vw,2.2rem); }
+ .modal-card { padding:1rem; }
+}
+`]
 })
 export class DashboardComponent implements OnInit {
   authService = inject(AuthService);

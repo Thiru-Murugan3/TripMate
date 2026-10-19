@@ -31,7 +31,11 @@ import { FooterComponent } from './shared/components/footer/footer.component';
       flex-direction: column;
     }
 
+    :host { display: block; width: 100%; min-width: 0; }
+
     .main-content {
+      min-width: 0;
+      width: 100%;
       flex: 1;
     }
   `]

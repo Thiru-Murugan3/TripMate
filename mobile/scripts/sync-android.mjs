@@ -10,7 +10,7 @@ let xml = readFileSync(manifest, 'utf8').replace(/\sandroid:(?:allowBackup|fullB
 xml = xml.replace('<application', '<application android:allowBackup="false" android:fullBackupContent="false" android:usesCleartextTraffic="false"');
 writeFileSync(manifest, xml);
 const gradle = 'android/app/build.gradle';
-let build = readFileSync(gradle, 'utf8').replace(/versionName ["'][^"']*["']/, 'versionName "0.1.0"');
+let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 2').replace(/versionName ["'][^"']*["']/, 'versionName "0.2.0"');
 if (!build.includes('applicationIdSuffix')) build = build.replace('buildTypes {', 'buildTypes {\n        debug { applicationIdSuffix ".debug" }');
 writeFileSync(gradle, build);
 const resource = 'android/app/src/main/res';

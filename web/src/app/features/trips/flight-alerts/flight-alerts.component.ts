@@ -68,6 +68,8 @@ import { FlightSetup, FlightStatus, FlightTrackingService } from '../../../core/
     </section>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-panels' as mobile;
+
     .flight-panel { background: #fff; border: 1px solid #dce4ed; border-radius: 16px; padding: 20px; margin-bottom: 18px; color: #183044; }
     header { display: flex; justify-content: space-between; align-items: start; gap: 12px; flex-wrap: wrap; }
     h3 { margin: 0; } p { margin: 8px 0; } .help, small { color: #546578; font-size: .85rem; }
@@ -78,7 +80,11 @@ import { FlightSetup, FlightStatus, FlightTrackingService } from '../../../core/
     button:disabled { opacity: .5; cursor: default; } .stale, [role=alert] { color: #9a3f13; }
     form { border-top: 1px solid #dce4ed; margin-top: 16px; padding-top: 12px; }
     @media(max-width:600px) { .details { grid-template-columns: 1fr; } .flight-panel { padding: 14px; } }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) { .details { grid-template-columns:minmax(0,1fr); } header { flex-wrap:wrap; } }
+`]
 })
 export class FlightAlertsComponent implements OnChanges, OnDestroy {
   @Input() tripId = 0;

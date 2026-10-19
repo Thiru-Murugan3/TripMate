@@ -31,11 +31,15 @@ import { session, savePack } from '../../../../../public/offline-store.js';
     </section>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-panels' as mobile;
+
     .offline-card{padding:1rem;margin-bottom:1rem;background:#eef2ff;border:1px solid #c7d2fe;border-radius:14px}
     h3{margin:0 0 .5rem}p{line-height:1.5;font-size:.9rem}label{display:flex;align-items:center;gap:.6rem;padding:.6rem 0;overflow-wrap:anywhere}
     button,a{min-height:44px;padding:.7rem;border-radius:8px;font:inherit}button{border:1px solid #a5b4fc;background:white;cursor:pointer}
     a{color:#3730a3}.actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.7rem}input{min-width:20px;min-height:20px}
-  `]
+
+@include mobile.panels;
+`]
 })
 export class OfflineTripComponent {
   @Input({ required: true }) tripId!: number;

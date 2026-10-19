@@ -1085,6 +1085,8 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
     </main>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-panels' as mobile;
+
     :host {
       display: block;
       background: #f8fafc;
@@ -2689,7 +2691,23 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
         grid-column: 2;
       }
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .bookings-grid { grid-template-columns:minmax(0,1fr); }
+ .trip-header-actions { flex-wrap:wrap; }
+ .booking-header { flex-wrap:wrap; }
+ .booking-amount { width:100%; }
+ .member-name-row { flex-wrap:wrap; }
+ .member-role, .compact-select { min-width:0; max-width:100%; }
+ .member-role select { width:100%; }
+ .route, .times { flex-wrap:wrap; }
+ .dashboard-tabs, .details-tabs { max-width:100%; min-width:0; }
+ .compact-summary-grid, .expenses-summary { grid-template-columns:minmax(0,1fr); }
+ .weather-grid, .weather-forecast { min-width:0; }
+}
+`]
 })
 export class TripDetailsComponent implements OnInit {
   @ViewChild(ReservationEmailImportsComponent)

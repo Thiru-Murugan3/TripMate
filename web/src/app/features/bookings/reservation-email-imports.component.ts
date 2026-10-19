@@ -64,6 +64,8 @@ import { ReservationImportService } from '../../core/services/reservation-import
     </section>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     .email-import-card{margin-bottom:1rem;padding:1rem;border:1px solid #dbeafe;background:linear-gradient(135deg,#eff6ff,#fff)}
     header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.9rem}
     h3{margin:.12rem 0 .2rem;color:#0f172a;font-size:1.05rem} p{margin:0;color:#64748b;font-size:.78rem}
@@ -80,7 +82,11 @@ import { ReservationImportService } from '../../core/services/reservation-import
     .import-icon{display:grid;width:36px;height:36px;place-items:center;border-radius:10px;color:#1d4ed8;background:#dbeafe}.import-copy{display:grid;gap:.1rem;min-width:0}.import-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.import-copy span,.import-copy small{color:#64748b;font-size:.68rem}.import-copy .failed{color:#b91c1c}
     .import-actions{display:flex;gap:.35rem}.review-btn{padding:.42rem .65rem;color:#fff;background:#2563eb}.dismiss-btn{padding:.42rem .6rem;color:#475569;background:#f1f5f9}
     @media(max-width:640px){header,.forwarding-address{align-items:stretch;flex-direction:column}.forwarding-address button,.refresh-btn{justify-content:center}.import-item{grid-template-columns:auto 1fr}.import-actions{grid-column:1/-1}.review-btn,.dismiss-btn{flex:1;justify-content:center}}
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) { .import-item { grid-template-columns:auto minmax(0,1fr); } .import-actions { grid-column:1/-1; flex-wrap:wrap; } }
+`]
 })
 export class ReservationEmailImportsComponent implements OnInit {
   @Input() canEdit = false;

@@ -18,7 +18,7 @@
     "test:flights": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/trips/flight-alerts/flight-alerts.component.spec.ts",
     "test:india-catalogue": "node --test scripts/india-catalogue.test.mjs && ng test --watch=false --browsers=ChromeHeadless --include=src/app/features/india-catalogue/*.spec.ts",
     "test:native": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/core/utils/native-files.spec.ts",
-    "test:mobile-layout": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/shared/components/navbar/navbar.component.spec.ts"
+    "test:mobile-layout": "ng test --watch=false --browsers=ChromeHeadless --include=src/app/shared/components/navbar/navbar.component.spec.ts --include=src/app/shared/testing/mobile-app.spec.ts"
   },
   "private": true,
   "dependencies": {

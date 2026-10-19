@@ -216,6 +216,8 @@ import { TripService } from '../../core/services/trip.service';
     </main>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     :host { display: block; }
     .share-page { min-height: calc(100vh - 72px); background: #f8fafc; padding: 2rem 1.25rem 4rem; }
     .page-shell { width: min(1120px, 100%); margin: 0 auto; }
@@ -275,7 +277,14 @@ import { TripService } from '../../core/services/trip.service';
     @keyframes spin { to { transform: rotate(360deg); } }
     @media (max-width: 850px) { .content-grid { grid-template-columns: 1fr; } }
     @media (max-width: 600px) { .method-grid { grid-template-columns: 1fr; } .copy-row { flex-direction: column; } .copy-row button { min-height: 42px; } }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .section-heading, .invitation-row { flex-wrap:wrap; }
+ .content-grid > *, .invite-main { min-width:0; }
+}
+`]
 })
 export class ShareTripComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

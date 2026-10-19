@@ -533,6 +533,8 @@ interface DayRoutePlan {
     </section>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; }
     .planner { color:#0f172a; }
     .planner-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
@@ -674,7 +676,21 @@ interface DayRoutePlan {
       .form-grid.two { grid-template-columns:1fr; gap:0; }
       .activity-actions { justify-content:flex-end; }
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .time-picker { grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) minmax(0,1fr); }
+ .time-picker select { padding-inline:4px; }
+ .activity-row { grid-template-columns:50px 12px minmax(0,1fr); gap:6px; }
+ .activity-content, .activity-card, .activity-details, .day-route-card { min-width:0; }
+ .route-controls, .route-start-field { min-width:0; max-width:100%; }
+ .day-route-card > header { flex-wrap:wrap; }
+ .route-totals { align-items:flex-start; white-space:normal; }
+ .day-header, .activity-actions, .day-actions { flex-wrap:wrap; }
+ .route-summary, .photo-route { max-width:100%; min-width:0; }
+}
+`]
 })
 export class ItineraryPlannerComponent implements OnInit, OnChanges {
   private readonly fb = inject(FormBuilder);

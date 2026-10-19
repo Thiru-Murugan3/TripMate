@@ -268,6 +268,8 @@ import { PlaceService } from '../../../core/services/place.service';
     </section>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; }
     .places-page { color:#0f172a; }
     .places-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
@@ -353,7 +355,16 @@ import { PlaceService } from '../../../core/services/place.service';
       .places-grid { grid-template-columns:1fr; }
       .form-grid.two { grid-template-columns:1fr; gap:0; }
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .place-card-top { grid-template-columns:auto minmax(0,1fr); }
+ .place-card-top > :last-child { grid-column:2; }
+ .place-actions { flex-wrap:wrap; }
+ .place-card, .place-info { min-width:0; }
+}
+`]
 })
 export class PlaceManagerComponent implements OnInit, OnChanges {
   private readonly fb = inject(FormBuilder);
