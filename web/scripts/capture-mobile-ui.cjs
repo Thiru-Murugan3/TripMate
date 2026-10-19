@@ -32,7 +32,7 @@ const invitation={id:1,tripId:10,tripName:trip.name,inviterId:1,inviterName:user
 let locationPhotoUrl='';
 function response(url){
   const p=new URL(url).pathname.replace(/^.*\/api\/v1/,'');
-  if(p==='/discovery/place-photos')return {images:[{url:locationPhotoUrl,sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-one.jpg',license:'Visual fixture',attribution:'Test photographer one',exact:true,primary:true},{url:locationPhotoUrl+'?second',sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-two.jpg',license:'Visual fixture',attribution:'Test photographer two',exact:true,primary:false}],message:'Internal visual fixture only',retryable:false};
+  if(p==='/discovery/place-photos')return {images:[{url:locationPhotoUrl,sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-one.jpg',license:'Visual fixture',attribution:'Test photographer one',exact:true,primary:true},{url:locationPhotoUrl.replace('hero.jpg','kodaikanal.jpg'),sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-two.jpg',license:'Visual fixture',attribution:'Test photographer two',exact:true,primary:false}],message:'Internal visual fixture only',retryable:false};
   if(p==='/users/me')return user;
   if(p==='/discovery/places' || p==='/discovery/top-places')return discoveryResult;
   if(p==='/discovery/tripadvisor/status')return {available:true};
@@ -61,7 +61,7 @@ function response(url){
 (async()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const origin=`http://127.0.0.1:${server.address().port}`;
-  locationPhotoUrl=origin+'/assets/hero.jpg';
+  locationPhotoUrl=origin+'/assets/images/hero.jpg';
   const browser=await chromium.launch({executablePath:process.env.SUTTRU_CHROME || '/usr/bin/google-chrome',args:['--no-sandbox']});
   try {
     const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
