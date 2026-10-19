@@ -9,6 +9,7 @@ import {
   map,
   of,
   shareReplay,
+  switchMap,
   tap,
   throwError,
   timeout
@@ -23,6 +24,7 @@ import {
   RegisterRequest,
   RegistrationPendingResponse,
   VerifyEmailRequest,
+  VerifyEmailResponse,
   ResendEmailOtpRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest
@@ -57,8 +59,16 @@ export class AuthService {
     return this.http.post<RegistrationPendingResponse>(`${this.apiUrl}/register`, data);
   }
 
-  verifyEmail(data: VerifyEmailRequest): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-email`, data);
+  verifyEmail(data: VerifyEmailRequest): Observable<VerifyEmailResponse> {
+    return this.http.post<VerifyEmailResponse>(`${this.apiUrl}/verify-email`, data).pipe(
+      tap((res) => this.saveSessionTokens(res.session.accessToken, res.session.refreshToken)),
+      switchMap((res) => this.fetchCurrentUser().pipe(
+        map(() => res),
+        catchError(() => throwError(() => new Error(
+          'Your account was created, but automatic sign-in could not finish. Please sign in to continue.'
+        )))
+      ))
+    );
   }
 
   resendEmailOtp(email: string): Observable<{ message: string }> {

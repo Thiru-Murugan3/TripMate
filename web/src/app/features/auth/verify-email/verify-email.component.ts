@@ -108,6 +108,7 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
         </div>
 
         <div class="verify-footer">
+          <a routerLink="/login" class="back-link">Already verified? Sign in</a>
           <a routerLink="/register" class="back-link">
             ← Change email or details
           </a>
@@ -412,7 +413,7 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
 
   onVerifySubmit(event: Event): void {
     event.preventDefault();
-    if (!this.isOtpComplete()) return;
+    if (this.isLoading || !this.isOtpComplete()) return;
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -422,18 +423,16 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
 
     this.authService.verifyEmail({ email: this.email, otp: otpCode }).subscribe({
       next: (res) => {
-        this.isLoading = false;
-        this.successMessage = res.message || 'Email verified successfully! Account created.';
-        setTimeout(() => {
-          void this.router.navigate(['/login'], {
-            queryParams: { verified: 1 }
-          });
-        }, 1200);
+        this.clearTimer();
+        this.successMessage = 'Account created. Opening your home…';
+        void this.router.navigate(['/dashboard'], { replaceUrl: true });
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
         const apiError = error.error as ApiErrorResponse | undefined;
-        this.errorMessage = apiError?.message || 'Invalid or expired OTP code. Please try again.';
+        this.errorMessage = error instanceof HttpErrorResponse
+          ? apiError?.message || 'Invalid or expired OTP code. Please try again.'
+          : (error as Error).message;
       }
     });
   }
