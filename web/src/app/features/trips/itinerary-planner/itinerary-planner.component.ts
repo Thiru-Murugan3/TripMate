@@ -14,7 +14,7 @@ import {
   ViewChild,
   inject
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import * as L from 'leaflet';
 
 import { Trip } from '../../../core/models/trip.model';
@@ -61,7 +61,7 @@ interface DayRoutePlan {
 @Component({
   selector: 'app-itinerary-planner',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DayRouteMapComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, DayRouteMapComponent],
   template: `
     <section class="planner">
       <div class="planner-toolbar">
@@ -135,7 +135,7 @@ interface DayRoutePlan {
           <div class="route-controls">
             <label class="route-start-field">
               <span>Starting / staying location</span>
-              <select [value]="routeStartPlaceId" (change)="selectRouteStart($event)">
+              <select [ngModel]="routeStartPlaceId" (change)="selectRouteStart($event)" [ngModelOptions]="{standalone:true}">
                 <option value="">Select saved stay or place</option>
                 <option *ngFor="let place of mappedPlaces" [value]="place.id">
                   {{ place.name }} · {{ formatCategory(place.category) }}

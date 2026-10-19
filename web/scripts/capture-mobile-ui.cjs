@@ -139,6 +139,8 @@ function response(url){
     assert.deepEqual(await page.locator('.day-route-card').first().locator('.numbered-stops li span').evaluateAll(elements=>elements.map(e=>e.firstChild.textContent.trim())),['Hill View Resort','Kodaikanal Lake','Coaker’s Walk','Hill View Resort']);
     assert.equal(await page.locator('app-day-route-map').first().locator('.sightseeing-number').count(),3);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'route map overflows phone viewport');
+    assert.equal(await page.locator('.route-start-field select').inputValue(),'3','saved hotel is not selected');
+    await page.locator('app-day-route-map').first().scrollIntoViewIfNeeded();
     await page.screenshot({animations:'disabled',path:path.join(output,'itinerary-route-tools.png')});
     await page.goto(origin+'/trips/10?tab=EXPLORE');await page.locator('app-combined-places .card').first().waitFor();
     await page.locator('app-combined-places .card').first().scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:path.join(output,'explore-results.png')});
