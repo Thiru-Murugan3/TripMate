@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { EMPTY, Observable, Subject, Subscriber, catchError, finalize, mergeMap, tap } from 'rxjs';
 import { DiscoveryImage } from '../models/discovery.model';
 import { environment } from '../../../environments/environment';
 export interface PlacePhotoGallery { images:DiscoveryImage[];message:string;retryable:boolean; }
@@ -21,5 +22,17 @@ export function photoSourceId(externalId:string, sourceUrl=''):string|null {
 @Injectable({providedIn:'root'})
 export class PlacePhotosService {
   private http=inject(HttpClient);
-  get(sourceId:string) {return this.http.get<PlacePhotoGallery>(`${environment.apiUrl}/discovery/place-photos`,{params:{sourceId}});}
+  private jobs=new Subject<{sourceId:string; subscriber:Subscriber<PlacePhotoGallery>}>();
+  constructor() {
+    // A screenful of cards shares three slots; cancelled queued cards do no network work.
+    this.jobs.pipe(mergeMap(job=>job.subscriber.closed ? EMPTY :
+      this.http.get<PlacePhotoGallery>(`${environment.apiUrl}/discovery/place-photos`,{params:{sourceId:job.sourceId}}).pipe(
+        tap(result=>job.subscriber.next(result)),
+        catchError(error=>{job.subscriber.error(error);return EMPTY;}),
+        finalize(()=>job.subscriber.complete())
+      ),3)).subscribe();
+  }
+  get(sourceId:string):Observable<PlacePhotoGallery> {
+    return new Observable(subscriber=>this.jobs.next({sourceId,subscriber}));
+  }
 }
