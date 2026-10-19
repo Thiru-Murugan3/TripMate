@@ -1,3 +1,4 @@
+import { DayRouteMapComponent } from './day-route-map.component';
 import { currentPosition } from '../../../core/utils/device-access';
 import { CommonModule } from '@angular/common';
 import {
@@ -6,6 +7,7 @@ import {
   Input,
   OnChanges,
   OnInit,
+  OnDestroy,
   Output,
   SimpleChanges,
   ElementRef,
@@ -44,7 +46,6 @@ interface RouteLeg {
   from: RouteStop;
   to: RouteStop;
   distanceKm: number;
-  estimatedMinutes: number;
 }
 
 interface DayRoutePlan {
@@ -53,14 +54,14 @@ interface DayRoutePlan {
   visitStops: RouteStop[];
   legs: RouteLeg[];
   totalDistanceKm: number;
-  totalTravelMinutes: number;
   googleMapsUrl: string;
+  unmappedItems: ItineraryItem[];
 }
 
 @Component({
   selector: 'app-itinerary-planner',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DayRouteMapComponent],
   template: `
     <section class="planner">
       <div class="planner-toolbar">
@@ -111,13 +112,13 @@ interface DayRoutePlan {
           </article>
         </div>
 
-        <button *ngIf="itinerary?.days?.length && itineraryHasMappedPlaces" type="button" class="mobile-route-toggle" (click)="mobileRouteOpen=!mobileRouteOpen" [attr.aria-expanded]="mobileRouteOpen" aria-controls="trip-route-tools">{{ mobileRouteOpen ? 'Hide route & map' : 'Route & map tools' }}</button>
-        <section *ngIf="itinerary?.days?.length && itineraryHasMappedPlaces" id="trip-route-tools" class="route-planner-card" [class.mobile-route-open]="mobileRouteOpen">
+        <button *ngIf="itinerary?.totalActivities" type="button" class="mobile-route-toggle" (click)="mobileRouteOpen=!mobileRouteOpen" [attr.aria-expanded]="mobileRouteOpen" aria-controls="trip-route-tools">{{ mobileRouteOpen ? 'Hide route & map' : 'Route & map tools' }}</button>
+        <section *ngIf="itinerary?.totalActivities" id="trip-route-tools" class="route-planner-card" [class.mobile-route-open]="mobileRouteOpen">
           <div class="route-planner-heading">
             <div>
               <span class="eyebrow">SMART ROUTE MAP</span>
-              <h3>Nearest place first, planned day by day</h3>
-              <p>Each day starts from your stay and visits the nearest next place to reduce unnecessary travel.</p>
+              <h3>Your daily sightseeing route</h3>
+              <p>Stay → nearby sights → return to stay.</p>
             </div>
             <button
               *ngIf="canEdit"
@@ -127,7 +128,7 @@ interface DayRoutePlan {
               (click)="optimizeAllDayRoutes()"
             >
               <span class="material-symbols-outlined">route</span>
-              {{ isOptimizing ? 'Optimizing...' : 'Optimize all days' }}
+              {{ isOptimizing ? 'Optimizing...' : 'Save sightseeing order' }}
             </button>
           </div>
 
@@ -171,58 +172,27 @@ interface DayRoutePlan {
                 </div>
                 <div class="route-totals">
                   <strong>{{ plan.totalDistanceKm | number:'1.0-1' }} km</strong>
-                  <span>~{{ formatTravelTime(plan.totalTravelMinutes) }}</span>
+                  <span>Direct distance</span>
                 </div>
               </header>
 
-              <div *ngIf="plan.visitStops.length" class="route-infographic" role="img" [attr.aria-label]="'Photo route for Day ' + plan.day.dayNumber">
-                <div class="route-summary">
-                  <strong>ROUTE</strong>
-                  <span>{{ plan.stops[0].name }}</span>
-                  <ng-container *ngFor="let stop of plan.visitStops"><b>→</b><span>{{ stop.name }}</span></ng-container>
-                  <b>→</b><span>{{ plan.stops[0].name }}</span>
-                </div>
-
-                <div class="photo-route">
-                  <div class="photo-stop stay-photo-stop">
-                    <div class="photo-ring"><span class="material-symbols-outlined">hotel</span></div>
-                    <small>START</small><strong>{{ plan.stops[0].name }}</strong>
-                  </div>
-
-                  <ng-container *ngFor="let stop of plan.visitStops; let stopIndex = index">
-                    <div class="photo-leg">
-                      <strong>{{ plan.legs[stopIndex].distanceKm | number:'1.0-1' }} km</strong>
-                      <span class="material-symbols-outlined">arrow_forward</span>
-                      <small>~{{ plan.legs[stopIndex].estimatedMinutes }} min</small>
-                    </div>
-                    <div class="photo-stop">
-                      <div class="photo-ring">
-                        <span class="material-symbols-outlined photo-fallback">landscape</span>
-                        <img *ngIf="stop.imageUrl" [src]="stop.imageUrl" [alt]="stop.name" loading="lazy" (error)="hideBrokenRouteImage($event)" />
-                        <b class="photo-number">{{ stopIndex + 1 }}</b>
-                      </div>
-                      <small>STOP {{ stopIndex + 1 }}</small><strong>{{ stop.name }}</strong>
-                    </div>
-                  </ng-container>
-
-                  <div class="photo-leg return-leg">
-                    <strong>{{ plan.legs[plan.legs.length - 1].distanceKm | number:'1.0-1' }} km</strong>
-                    <span class="material-symbols-outlined">arrow_forward</span>
-                    <small>~{{ plan.legs[plan.legs.length - 1].estimatedMinutes }} min</small>
-                  </div>
-                  <div class="photo-stop stay-photo-stop">
-                    <div class="photo-ring"><span class="material-symbols-outlined">night_shelter</span></div>
-                    <small>RETURN</small><strong>{{ plan.stops[0].name }}</strong>
-                  </div>
-                </div>
-                <div class="map-note"><span class="material-symbols-outlined">info</span>Route is arranged nearest-next-place. Open Google Maps below for live roads and traffic.</div>
-              </div>
+              <ng-container *ngIf="plan.visitStops.length">
+                <app-day-route-map [stops]="plan.stops" [dayNumber]="plan.day.dayNumber" />
+                <p class="route-distance-note">Nearest-next order · straight-line distances</p>
+                <ol class="numbered-stops" aria-label="Sightseeing order">
+                  <li class="stay"><b>H</b><span>{{ plan.stops[0].name }}<small>Start at stay</small></span></li>
+                  <li *ngFor="let stop of plan.visitStops; let index=index"><b>{{ index+1 }}</b><span>{{ stop.name }}<small>{{ plan.legs[index].distanceKm | number:'1.0-1' }} km from {{ index===0 ? 'stay' : 'stop '+index }}</small></span></li>
+                  <li class="stay"><b>H</b><span>{{ plan.stops[0].name }}<small>Return · {{ plan.legs[plan.legs.length-1].distanceKm | number:'1.0-1' }} km</small></span></li>
+                </ol>
+              </ng-container>
+              <div *ngIf="plan.unmappedItems.length" class="unmapped-stops"><strong>Location needed</strong><span *ngFor="let item of plan.unmappedItems">{{ item.title }}</span></div>
 
               <div *ngIf="plan.stops.length <= 1" class="day-route-empty">
                 Add mapped places to Day {{ plan.day.dayNumber }} to generate its route.
               </div>
 
-              <button *ngIf="plan.legs.length && plan.googleMapsUrl" type="button" class="google-route-link" (click)="navigateToGoogleMaps(plan.googleMapsUrl, $event)">
+              <a *ngFor="let leg of plan.legs;let index=index" class="route-leg-link" [href]="legMapsUrl(leg)" target="_blank" rel="noopener noreferrer">{{ index+1 }}. {{ leg.from.name }} → {{ leg.to.name }} ↗</a>
+              <button *ngIf="plan.visitStops.length<=3 && plan.legs.length && plan.googleMapsUrl" type="button" class="google-route-link" (click)="navigateToGoogleMaps(plan.googleMapsUrl, $event)">
                 <span class="material-symbols-outlined">map</span>
                 Open complete Day {{ plan.day.dayNumber }} route in Google Maps
                 <span class="material-symbols-outlined">open_in_new</span>
@@ -715,10 +685,14 @@ interface DayRoutePlan {
  .day-header, .activity-actions, .day-actions { flex-wrap:wrap; }
  .route-summary, .photo-route { max-width:100%; min-width:0; }
 }
+.numbered-stops{list-style:none;padding:0;display:grid;gap:10px;margin:12px 0}.numbered-stops li{display:flex;align-items:center;gap:10px;min-width:0}.numbered-stops b{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;color:white;background:#2563eb}.numbered-stops .stay b{background:#166534}.numbered-stops span{font-size:13px;overflow-wrap:anywhere}.numbered-stops small{display:block;font-size:11px;color:#64748b;margin-top:2px}.route-distance-note{font-size:11px;color:#64748b;margin:8px 0}.unmapped-stops{display:grid;gap:4px;font-size:12px;padding:10px;background:#fffbeb;border-radius:8px}.route-leg-link{display:block;overflow-wrap:anywhere;font-size:12px;padding:10px 0;min-height:44px;box-sizing:border-box}
 `]
 })
-export class ItineraryPlannerComponent implements OnInit, OnChanges {
-  mobileRouteOpen=false;
+export class ItineraryPlannerComponent implements OnInit, OnChanges, OnDestroy {
+  mobileRouteOpen=true;
+  private loadGeneration=0;
+  ngOnDestroy():void {this.loadGeneration++;this.closeMapPicker();}
+
   private readonly fb = inject(FormBuilder);
   private readonly itineraryService = inject(ItineraryService);
   private readonly placeService = inject(PlaceService);
@@ -859,13 +833,20 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
 
     this.isLoading = true;
     this.loadError = '';
+    this.closeMapPicker();
+    this.currentLocation=null;
+    this.mapSelectedLocation=null;
+    this.routeStartPlaceId='';
+    const requestedTripId=this.tripId,generation=++this.loadGeneration;
 
     this.itineraryService.getItinerary(this.tripId).subscribe({
       next: (itinerary) => {
+        if(this.tripId!==requestedTripId||generation!==this.loadGeneration)return;
         this.itinerary = itinerary;
         this.isLoading = false;
       },
       error: (err) => {
+        if(this.tripId!==requestedTripId||generation!==this.loadGeneration)return;
         this.itinerary = null;
         this.loadError = err?.error?.message || 'Please try again.';
         this.isLoading = false;
@@ -874,10 +855,12 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
 
     this.placeService.getPlaces(this.tripId).subscribe({
       next: (places) => {
+        if(this.tripId!==requestedTripId||generation!==this.loadGeneration)return;
         this.places = places ?? [];
         this.restoreRouteStart();
       },
       error: () => {
+        if(this.tripId!==requestedTripId||generation!==this.loadGeneration)return;
         this.places = [];
       }
     });
@@ -1162,9 +1145,6 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
       // The route still works when browser storage is unavailable.
     }
 
-    if (this.canEdit && this.routeStart) {
-      this.optimizeAllDayRoutes();
-    }
   }
 
   useCurrentLocation(): void {
@@ -1184,9 +1164,6 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
           localStorage.setItem(this.routeStartStorageKey, this.routeStartPlaceId);
         } catch {
           // Ignore storage restrictions.
-        }
-        if (this.canEdit) {
-          this.optimizeAllDayRoutes();
         }
       },
       (error) => {
@@ -1228,7 +1205,6 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     this.closeMapPicker();
     this.routeMessage = 'Map location selected as the stay. Every day will start and return here.';
     this.routeMessageIsError = false;
-    if (this.canEdit) this.optimizeAllDayRoutes();
   }
 
   private initializeRoutePickerMap(): void {
@@ -1456,7 +1432,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
       const savedMap = localStorage.getItem(`${this.routeStartStorageKey}:map`);
       if (savedMap) {
         const point = JSON.parse(savedMap) as RouteCoordinate & { name?: string };
-        if (Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) {
+        if (Number.isFinite(point.latitude) && Number.isFinite(point.longitude) && Math.abs(point.latitude)<=90 && Math.abs(point.longitude)<=180) {
           this.mapSelectedLocation = {
             name: point.name || 'Selected stay location',
             latitude: point.latitude,
@@ -1486,7 +1462,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
   private hasCoordinates(place: Place): boolean {
     const latitude = Number(place.latitude);
     const longitude = Number(place.longitude);
-    return Number.isFinite(latitude) && Number.isFinite(longitude)
+    return place.latitude!=null && place.longitude!=null && Number.isFinite(latitude) && Number.isFinite(longitude)
       && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
       && (Math.abs(latitude) > 0.0001 || Math.abs(longitude) > 0.0001);
   }
@@ -1538,18 +1514,18 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
   private buildDayRoutePlan(day: ItineraryDay, start: RouteStop): DayRoutePlan {
     const orderedStops = this.optimizedItemsForDay(day, start)
       .map((item) => this.stopForItem(item))
-      .filter((stop): stop is RouteStop => stop !== null);
+      .filter((stop): stop is RouteStop => stop !== null)
+      .filter(stop=>`place-${stop.item?.placeId}`!==start.id);
     const stops = orderedStops.length ? [start, ...orderedStops, { ...start, id: `${start.id}-return` }] : [start];
     const legs: RouteLeg[] = [];
 
     for (let index = 1; index < stops.length; index++) {
       const directDistance = this.haversineKm(stops[index - 1], stops[index]);
-      const distanceKm = Math.round(directDistance * 1.25 * 10) / 10;
+      const distanceKm = Math.round(directDistance * 10) / 10;
       legs.push({
         from: stops[index - 1],
         to: stops[index],
-        distanceKm,
-        estimatedMinutes: Math.max(3, Math.round((distanceKm / 30) * 60))
+        distanceKm
       });
     }
 
@@ -1559,9 +1535,14 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
       visitStops: orderedStops,
       legs,
       totalDistanceKm: legs.reduce((total, leg) => total + leg.distanceKm, 0),
-      totalTravelMinutes: legs.reduce((total, leg) => total + leg.estimatedMinutes, 0),
-      googleMapsUrl: this.googleMapsDayUrl(start, orderedStops)
+      googleMapsUrl: this.googleMapsDayUrl(start, orderedStops),
+      unmappedItems: this.sortedItems(day).filter(item=>!this.stopForItem(item))
     };
+  }
+
+  legMapsUrl(leg:RouteLeg):string {
+    const params=new URLSearchParams({api:'1',origin:`${leg.from.latitude},${leg.from.longitude}`,destination:`${leg.to.latitude},${leg.to.longitude}`,travelmode:'driving'});
+    return `https://www.google.com/maps/dir/?${params}`;
   }
 
   private googleMapsDayUrl(start: RouteStop, visitStops: RouteStop[]): string {
@@ -1599,7 +1580,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
     const toLatitude = toRadians(to.latitude);
     const calculation = Math.sin(latitudeDelta / 2) ** 2
       + Math.cos(fromLatitude) * Math.cos(toLatitude) * Math.sin(longitudeDelta / 2) ** 2;
-    return earthRadiusKm * 2 * Math.atan2(Math.sqrt(calculation), Math.sqrt(1 - calculation));
+    return earthRadiusKm * 2 * Math.atan2(Math.sqrt(calculation), Math.sqrt(Math.max(0,1 - calculation)));
   }
 
   private reloadAfterChange(): void {

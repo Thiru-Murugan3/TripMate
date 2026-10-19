@@ -24,7 +24,7 @@ const trip={id:10,name:'Kodaikanal Family Trip',destination:'Kodaikanal, Tamil N
 const dashboard={...trip,tripId:10,tripName:trip.name,totalExpenses:18450,remainingBudget:6550,budgetUtilizationPercentage:74,upcomingActivities:[{activity:'Coaker’s Walk',date:'2027-11-13',time:'10:00',location:'Kodaikanal'}],bookings:[],documentCount:2,memberCount:4};
 const summary={tripId:10,totalTripBudget:25000,totalExpenses:18450,remainingBudget:6550,budgetUtilizationPercentage:74,categoryBreakdown:{HOTEL:8000,FOOD:3450,TRANSPORT:5000,ACTIVITIES:2000},memberBalances:[{userId:1,userName:user.name,totalPaid:8000,totalOwed:4000,netBalance:4000},{userId:2,userName:'Trip member',totalPaid:0,totalOwed:4000,netBalance:-4000}],suggestedSettlements:[{fromUserId:2,fromUserName:'Trip member',toUserId:1,toUserName:user.name,amount:4000}]};
 const item={tripadvisorLocationId:'legacy-1',id:1,tripId:10,dayId:1,title:'Coaker’s Walk',placeId:1,location:'Kodaikanal',startTime:'10:00',endTime:'11:00',estimatedCost:100,description:'Sightseeing stroll'};
-const days=[{id:1,tripId:10,dayNumber:1,dayDate:trip.startDate,title:'Explore Kodaikanal',items:[item]},{id:2,tripId:10,dayNumber:2,dayDate:'2027-11-14',title:'Lake and gardens',items:[]}];
+const days=[{id:1,tripId:10,dayNumber:1,dayDate:trip.startDate,title:'Explore Kodaikanal',items:[item,{...item,id:2,placeId:2,title:'Kodaikanal Lake'}]},{id:2,tripId:10,dayNumber:2,dayDate:'2027-11-14',title:'Lake and gardens',items:[]}];
 const savedPlace={id:1,tripId:10,name:'Coaker’s Walk',category:'ATTRACTION',latitude:10.235,longitude:77.492,estimatedCost:100};
 const discoveryPlace={externalId:'wikidata:Q123',name:'Coaker’s Walk',category:'VIEWPOINT',saveCategory:'ATTRACTION',latitude:10.235,longitude:77.492,distanceKm:1.2,suggestedVisitMinutes:60,priceStatus:'UNKNOWN',sourceName:'Fixture source',sourceUrl:'https://example.com/place',imageGallery:[{url:'/assets/hero.jpg',sourcePage:'https://example.com/photo',license:'Visual fixture',attribution:'Test photo',exact:true,primary:true}]};
 const discoveryResult={query:trip.destination,resolvedDestination:'Kodaikanal',latitude:10.235,longitude:77.492,radiusKm:25,category:'ALL',provider:'Visual fixture',attribution:'Internal review only',resultCount:2,totalPages:1,page:0,places:[discoveryPlace,{...discoveryPlace,externalId:'fixture:lake',name:'Kodaikanal Lake',category:'LAKE',distanceKm:2.4}]};
@@ -39,7 +39,7 @@ function response(url){
   if(p==='/notifications')return [{id:1,tripId:10,recipientId:1,title:'Your trip is coming up',message:'Check your itinerary and essential documents before departure.',type:'TRIP_REMINDER',read:false,createdAt:'2027-11-12T10:00:00'}];
   if(p.startsWith('/invitations/token/'))return invitation;
   if(p.endsWith('/invitations') || p==='/invitations/my')return [invitation];
-  if(p.endsWith('/places'))return [savedPlace];
+  if(p.endsWith('/places'))return [savedPlace,{...savedPlace,id:2,name:'Kodaikanal Lake',latitude:10.238,longitude:77.489},{...savedPlace,id:3,name:'Hill View Resort',category:'HOTEL',latitude:10.239,longitude:77.49}];
   if(p.endsWith('/documents'))return [{id:1,tripId:10,fileName:'Hotel confirmation.pdf',documentType:'HOTEL_CONFIRMATION',fileSize:204800,uploadedById:1,uploadedByName:user.name,createdAt:'2027-11-12T10:00:00'}];
   if(p.endsWith('/bookings'))return [{id:1,tripId:10,providerName:'Hill View Resort',bookingType:'HOTEL',startDatetime:'2027-11-13T14:00:00',endDatetime:'2027-11-16T11:00:00',amount:8000,status:'CONFIRMED',currency:'INR',destination:'Kodaikanal'}];
   if(p==='/trips')return [trip,{...trip,id:11,name:'Coorg Adventure',destination:'Coorg',tripType:'FRIENDS'}];
@@ -134,7 +134,11 @@ function response(url){
     await page.locator('.expense-toolbar button').click();await page.locator('.modal').waitFor();
     await page.screenshot({animations:'disabled',path:path.join(output,'expense-entry.png')});
     await page.goto(origin+'/trips/10?tab=ITINERARY');await page.locator('.mobile-route-toggle').waitFor();
-    await page.getByRole('button',{name:'Route & map tools',exact:true}).click();await page.locator('.route-planner-card.mobile-route-open').waitFor();
+    await page.locator('.route-planner-card.mobile-route-open').waitFor();
+    await page.locator('app-day-route-map .sightseeing-number').first().waitFor();
+    assert.deepEqual(await page.locator('.day-route-card').first().locator('.numbered-stops li span').evaluateAll(elements=>elements.map(e=>e.firstChild.textContent.trim())),['Hill View Resort','Kodaikanal Lake','Coaker’s Walk','Hill View Resort']);
+    assert.equal(await page.locator('app-day-route-map').first().locator('.sightseeing-number').count(),3);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'route map overflows phone viewport');
     await page.screenshot({animations:'disabled',path:path.join(output,'itinerary-route-tools.png')});
     await page.goto(origin+'/trips/10?tab=EXPLORE');await page.locator('app-combined-places .card').first().waitFor();
     await page.locator('app-combined-places .card').first().scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:path.join(output,'explore-results.png')});

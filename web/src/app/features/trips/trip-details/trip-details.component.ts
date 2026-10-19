@@ -388,7 +388,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
         </section>
  
         <section *ngIf="activeTab === 'EXPLORE'" class="tab-content">
-          <app-explore (placesChanged)="onPlacesChanged()" [trip]="currentTrip" [canEdit]="canPlanTrip" (itineraryChanged)="onItineraryChanged()"></app-explore>
+          <app-explore (placesChanged)="onPlacesChanged()" [trip]="currentTrip" [canEdit]="canPlanTrip" (itineraryChanged)="onExploreItineraryAdded()"></app-explore>
         </section>
 
         <section *ngIf="activeTab === 'ITINERARY'" class="tab-content">
@@ -3222,6 +3222,8 @@ export class TripDetailsComponent implements OnInit {
 
     this.setActiveTab('MEMBERS');
   }
+
+  onExploreItineraryAdded():void {this.setActiveTab('ITINERARY');this.onItineraryChanged();}
 
   onItineraryChanged(): void {
     this.loadDashboard();
