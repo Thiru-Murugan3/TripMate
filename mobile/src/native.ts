@@ -49,7 +49,11 @@ if (Capacitor.isNativePlatform()) {
     void Browser.close().catch(() => {});
     openInvitation(url);
   });
-  void App.getLaunchUrl().then(result => { if(result?.url) openInvitation(result.url); });
+  // The offline viewer also loads this bridge. Do not replay an old launch URL
+  // there, or overwrite the invitation route used to reopen the main app.
+  if (document.querySelector('app-root') && !window.location.pathname.startsWith('/invite/')) {
+    void App.getLaunchUrl().then(result => { if(result?.url) openInvitation(result.url); }).catch(() => {});
+  }
 
   void App.addListener('backButton', ({ canGoBack }) => {
     if (canGoBack) window.history.back(); else void App.exitApp();
