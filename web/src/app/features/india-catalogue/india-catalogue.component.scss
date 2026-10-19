@@ -54,3 +54,14 @@ nav:not(.interest-chips) button { border-radius:20px; color:#163b2c; border-colo
 button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,.cards:focus-visible { outline:3px solid #61ab85; outline-offset:3px; }
 @media(max-width:1000px) { article { flex-basis:calc((100% - 36px)/3); min-width:225px; } }
 @media(max-width:700px) { article { flex-basis:72%; min-width:220px; max-width:290px; } .cards { gap:14px; } .catalogue { padding:0; } .section-title { font-size:21px; } }
+@media(max-width:760px) {
+ .catalogue { padding:0; color:#0f172a; }
+ .catalogue-heading h2 { font-size:20px; }
+ .catalogue-heading p { font-size:12px; }
+ .interest-chips { gap:6px; padding:4px 0; }
+ .interest-chips button { min-height:44px; border-radius:12px; font-size:12px; }
+ .filters { gap:10px; }
+ .filter-panel { background:white; border:1px solid #e2e8f0; border-radius:14px; padding:12px; }
+ .place-card { border-radius:14px; box-shadow:0 3px 12px #0f172a04; }
+ .selection-bar { border-radius:14px; padding:12px; }
+}

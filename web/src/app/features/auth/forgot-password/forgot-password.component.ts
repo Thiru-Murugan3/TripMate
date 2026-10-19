@@ -117,6 +117,8 @@ import { AuthService } from '../../../core/services/auth.service';
     </main>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-auth' as phone;
+
     :host {
       display: block;
       min-height: 100vh;
@@ -553,6 +555,7 @@ import { AuthService } from '../../../core/services/auth.service';
         transition-duration: 0.01ms !important;
       }
     }
+  @include phone.screen;
   `]
 })
 export class ForgotPasswordComponent {

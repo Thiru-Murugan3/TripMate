@@ -12,7 +12,7 @@ const inviteFilter = `<intent-filter><action android:name="android.intent.action
 if (!xml.includes('android:scheme="suttru"')) xml = xml.replace('</activity>', inviteFilter + '</activity>');
 writeFileSync(manifest, xml);
 const gradle = 'android/app/build.gradle';
-let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 4').replace(/versionName ["'][^"']*["']/, 'versionName "0.3.1"');
+let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 5').replace(/versionName ["'][^"']*["']/, 'versionName "0.4.0"');
 if (!build.includes('applicationIdSuffix')) build = build.replace('buildTypes {', 'buildTypes {\n        debug { applicationIdSuffix ".debug" }');
 writeFileSync(gradle, build);
 const resource = 'android/app/src/main/res';

@@ -118,6 +118,8 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
     </main>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-auth' as phone;
+
     :host {
       display: block;
       min-height: 100vh;
@@ -323,6 +325,7 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+  @include phone.screen;
   `]
 })
 export class VerifyEmailComponent implements OnInit, OnDestroy {

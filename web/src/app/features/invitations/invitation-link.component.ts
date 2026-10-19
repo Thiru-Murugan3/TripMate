@@ -80,6 +80,8 @@ import { InvitationService } from '../../core/services/invitation.service';
     </main>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; }
     .invite-page { min-height:calc(100vh - 72px); display:grid; place-items:center; padding:2rem 1.25rem; background:linear-gradient(135deg,#f8fafc,#eff6ff); }
     .invite-shell { width:min(540px,100%); padding:2rem; border:1px solid #dbeafe; border-radius:22px; background:#fff; box-shadow:0 24px 60px rgba(15,23,42,.1); text-align:center; }
@@ -106,6 +108,8 @@ import { InvitationService } from '../../core/services/invitation.service';
     .spinner { width:32px; height:32px; border:3px solid #dbeafe; border-top-color:#2563eb; border-radius:50%; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     @media (max-width:480px) { .invite-summary { grid-template-columns:1fr; } .invite-shell { padding:1.4rem; } }
+  @include mobile.panels;
+  @media(max-width:760px) { .invite-page { min-height:0; padding:20px 16px; background:#f8fafc; } .invite-shell { padding:20px 16px; border-radius:18px; box-shadow:none; border-color:#e2e8f0; } h1 { font-size:23px; } .description { font-size:13px; } }
   `]
 })
 export class InvitationLinkComponent implements OnInit {

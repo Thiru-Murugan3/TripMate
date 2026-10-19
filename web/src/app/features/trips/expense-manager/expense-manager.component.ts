@@ -102,7 +102,11 @@ interface SplitDraft {
           ></div>
         </div>
 
-        <div class="expense-controls">
+        <nav class="mobile-expense-tabs" aria-label="Expense views">
+          <button type="button" [class.active]="mobileView === 'spending'" [attr.aria-pressed]="mobileView === 'spending'" (click)="mobileView='spending'">Spending</button>
+          <button type="button" [class.active]="mobileView === 'balances'" [attr.aria-pressed]="mobileView === 'balances'" (click)="mobileView='balances'">Balances & settlements</button>
+        </nav>
+        <div class="expense-controls" [class.mobile-hidden]="mobileView === 'balances'">
           <label class="search-box">
             <span class="material-symbols-outlined">search</span>
             <input
@@ -133,7 +137,7 @@ interface SplitDraft {
           </button>
         </div>
 
-        <div class="expense-layout">
+        <div class="expense-layout" [class.mobile-balances]="mobileView === 'balances'">
           <div class="expense-list-column">
             <div *ngIf="expenses.length === 0" class="empty-state">
               <span class="material-symbols-outlined">receipt_long</span>
@@ -676,9 +680,31 @@ interface SplitDraft {
     }
 
 @include mobile.panels;
+.mobile-expense-tabs { display:none; }
+@media(max-width:760px) {
+ .mobile-expense-tabs { display:grid; grid-template-columns:1fr 1fr; padding:4px; background:#eaf0f8; border-radius:12px; gap:4px; margin:16px 0; }
+ .mobile-expense-tabs button { border:0; border-radius:9px; background:transparent; color:#475569; font:inherit; font-size:12px; font-weight:700; padding:8px; }
+ .mobile-expense-tabs button.active { background:white; color:#2563eb; box-shadow:0 2px 6px #0f172a08; }
+ .expense-layout { display:block; }
+ .expense-sidebar { display:none; }
+ .mobile-balances .expense-sidebar { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+ .mobile-balances .expense-list-column,.mobile-hidden { display:none; }
+ .expense-card { padding:14px; }
+ .expense-card-main { display:grid; grid-template-columns:38px minmax(0,1fr); gap:10px; }
+ .expense-amount { grid-column:2; text-align:left; }
+ .expense-amount strong { font-size:19px; }
+ .expense-amount small { display:block; margin-top:4px; font-size:11px; line-height:1.5; }
+ .title-line { display:block; }
+ .title-line h3 { margin:0 0 6px; }
+ .expense-info p { margin-top:6px; font-size:11px; line-height:1.5; }
+ .expense-card-actions { padding-top:10px; margin-top:10px; }
+ .sidebar-card { padding:14px; }
+ .budget-progress { height:6px; margin-top:12px; }
+}
+
 
 @media(max-width:760px) {
- .expense-card-main { grid-template-columns:minmax(0,1fr); }
+ .expense-card-main { grid-template-columns:38px minmax(0,1fr); }
  .expense-amount { text-align:left; }
  .expense-card-main > *, .expense-sidebar, .balance-person { min-width:0; }
  .expense-controls, .expense-toolbar { flex-wrap:wrap; }
@@ -690,6 +716,7 @@ interface SplitDraft {
 `]
 })
 export class ExpenseManagerComponent implements OnInit, OnChanges {
+  mobileView:'spending'|'balances'='spending';
   private readonly fb = inject(FormBuilder);
   private readonly expenseService = inject(ExpenseService);
 

@@ -46,7 +46,7 @@ describe('Mobile Explore layout',()=>{
       });
     } finally {f.destroy();}
   });
-  it('stacks mobile cards and search fields while retaining the desktop card grid',()=>{
+  it('uses compact phone cards and search fields while retaining the desktop card grid',()=>{
     const f=TestBed.createComponent(CombinedPlacesComponent);
     for(const [key,value] of Object.entries({tripId:10,destination:'Ooty'}))f.componentRef.setInput(key,value);
     f.detectChanges();f.componentInstance.result={...result,places:[place,{...place,externalId:'wikidata:Q2'}]};f.detectChanges();
@@ -55,7 +55,8 @@ describe('Mobile Explore layout',()=>{
         const cards=root.querySelectorAll<HTMLElement>('.card');
         const first=cards[0].getBoundingClientRect(),second=cards[1].getBoundingClientRect();
         if(width<=560){
-          expect(second.top).toBeGreaterThan(first.bottom);expect(second.left).toBe(first.left);
+          if(width<360) {expect(second.top).toBeGreaterThan(first.bottom);expect(second.left).toBe(first.left);}
+          else {expect(second.top).toBe(first.top);expect(second.left).toBeGreaterThan(first.right);}
           for(const control of root.querySelectorAll<HTMLElement>('.search-form input,.search-form select,.search-form button,.pagination button')){
             const rect=control.getBoundingClientRect();expect(rect.height).toBeGreaterThanOrEqual(44);expect(rect.right).toBeLessThanOrEqual(width);
           }

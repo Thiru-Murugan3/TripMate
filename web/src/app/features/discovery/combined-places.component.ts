@@ -54,7 +54,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
       </ng-container>
     </section>`,
   styleUrls:['./tripadvisor.component.scss'],
-  styles:[`.search-form label { min-width:140px; }.source-link { display:block; font-size:11px; margin-top:12px; }.source-notes { font-size:12px; margin:12px 0; }.source-notes p { margin:6px 0; }.plan-panel h2 { margin-bottom:12px; }`]
+  styles:[`@media(min-width:761px) { .search-form label { min-width:140px; } }.source-link { display:block; font-size:11px; margin-top:12px; }.source-notes { font-size:12px; margin:12px 0; }.source-notes p { margin:6px 0; }.plan-panel h2 { margin-bottom:12px; }`]
 })
 export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
   constructor() { super(); this.autoAddOnSelect=false; }

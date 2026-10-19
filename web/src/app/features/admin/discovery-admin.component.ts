@@ -144,6 +144,8 @@ type ListingCategory = Exclude<DiscoveryCategory, 'ALL'>;
     </main>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; background:#f6f8fb; min-height:calc(100vh - 72px); color:#172033; }
     .admin-page { max-width:1280px; margin:auto; padding:2.5rem 1.25rem 4rem; }
     .page-header, .editor header, .editor footer { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
@@ -169,6 +171,8 @@ type ListingCategory = Exclude<DiscoveryCategory, 'ALL'>;
     input,select,textarea { border:1px solid #cbd5e1; border-radius:.55rem; padding:.65rem; font:inherit; color:#172033; background:white; }
     textarea { resize:vertical; } .form-note { font-size:.8rem; } .editor footer { justify-content:flex-end; padding-top:1rem; border-top:1px solid #edf0f4; }
     @media (max-width:720px) { .page-header { align-items:flex-start; flex-direction:column; } .summary-grid { grid-template-columns:1fr 1fr; } .form-grid { grid-template-columns:1fr; } .form-grid .wide { grid-column:auto; } }
+  @include mobile.panels;
+  @media(max-width:760px) { .admin-page { padding:16px; } .page-header,.toolbar { flex-wrap:wrap; gap:10px; } .summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .table-wrap { max-width:100%; overflow:auto; border-radius:12px; } .editor { width:100%; max-height:calc(100dvh - 24px); overflow:auto; padding:16px; } }
   `]
 })
 export class DiscoveryAdminComponent implements OnInit {
