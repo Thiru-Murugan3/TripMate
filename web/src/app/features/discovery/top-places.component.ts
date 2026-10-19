@@ -22,14 +22,14 @@ import { DiscoveryService } from '../../core/services/discovery.service';
         <header><h3>{{ data.places.length }} places to visit in {{ data.resolvedDestination }}</h3><button type="button" (click)="close()" [disabled]="isSaving || disabled">Close</button></header>
         <p class="note">Within {{ data.radiusKm }} km. Selected by editorial verification, source coverage and distance; not visitor ratings.</p>
         <p *ngIf="data.places.length<10" class="note">{{ data.places.length ? 'Fewer than ten supported attractions are available for this area.' : 'No supported highlights were returned. Try a wider radius or another destination.' }}</p>
-        <label *ngIf="!embeddedMode">Add to trip<select [ngModel]="activeTripId" (ngModelChange)="selectTrip($event)" [disabled]="isSaving || disabled || tripsLoading"><option [ngValue]="0">Choose a trip</option><option *ngFor="let trip of editableTrips" [ngValue]="trip.id">{{ trip.name }}</option></select></label>
+        <label class="trip-picker" *ngIf="!embeddedMode">Add to trip<select [ngModel]="activeTripId" (ngModelChange)="selectTrip($event)" [disabled]="isSaving || disabled || tripsLoading"><option [ngValue]="0">Choose a trip</option><option *ngFor="let trip of editableTrips" [ngValue]="trip.id">{{ trip.name }}</option></select></label>
         <p *ngIf="tripsLoading" role="status">Loading your trips…</p>
         <p *ngIf="!tripsLoading && !canSelectPlaces" class="note">{{ embeddedMode ? 'This trip is read-only.' : 'An editable trip is needed to add places to an itinerary.' }}</p>
         <div *ngIf="selectedCount" class="selection-actions"><span>{{ selectedCount }} selected</span><button type="button" (click)="saveSelected(true)" [disabled]="isSaving || disabled || !activeTripId || !effectiveCanEdit">{{ isSaving ? 'Adding…' : 'Add selected to itinerary' }}</button></div>
         <ol>
           <li *ngFor="let place of data.places">
-            <div><label><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || disabled || !canSelectPlaces" (change)="toggleSelection(place)" [attr.aria-label]="'Select ' + place.name" /> <strong>{{ place.name }}</strong></label><span class="note">{{ place.category.replaceAll('_',' ').toLowerCase() }} · {{ place.distanceKm }} km</span></div>
-            <label *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving || disabled"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>
+            <div class="place-heading"><label class="place-option"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || disabled || !canSelectPlaces" (change)="toggleSelection(place)" [attr.aria-label]="'Select ' + place.name" /> <strong>{{ place.name }}</strong></label><span class="note">{{ place.category.replaceAll('_',' ').toLowerCase() }} · {{ place.distanceKm }} km</span></div>
+            <label class="day-picker" *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving || disabled"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>
             <div class="actions"><a [href]="place.sourceUrl" target="_blank" rel="noopener noreferrer">{{ place.sourceName || 'Source' }} ↗</a><button *ngIf="canFind" type="button" [disabled]="disabled || isSaving" (click)="placeRequested.emit(place.name)">Find in Explore</button></div>
           </li>
         </ol>
@@ -37,7 +37,7 @@ import { DiscoveryService } from '../../core/services/discovery.service';
         <p class="note">{{ data.attribution }}</p>
       </section>
     </section>`,
-  styles:[`:host{display:block;margin:16px 0}.top-places{border:1px solid #d9e4dc;border-radius:14px;padding:14px;background:white}button{font:inherit;padding:8px 12px;border:1px solid #174a33;border-radius:18px;background:#174a33;color:white;cursor:pointer}button:disabled{opacity:.55;cursor:default}.note{display:block;font-size:12px;color:#55675b;margin:6px 0}header,li,.actions{display:flex;align-items:center;justify-content:space-between;gap:12px}h3{font-size:16px}ol{padding-left:24px;list-style:decimal}li{display:list-item;padding:10px 0;border-bottom:1px solid #edf1ee}li>div{display:inline-block;vertical-align:middle;margin-right:12px}.actions{margin-top:4px}a{color:#174a33;font-size:12px}.actions button{font-size:12px;padding:5px 9px;margin-left:8px}details{font-size:12px;margin-top:12px}.selection-actions{display:flex;align-items:center;gap:12px;margin:12px 0}select{font:inherit;padding:6px;margin-left:8px;border:1px solid #c0d1c5;border-radius:8px}input[type=checkbox]{accent-color:#174a33}`]
+  styleUrl:'./top-places.component.scss'
 })
 export class TopPlacesComponent extends DestinationDiscoveryComponent implements OnChanges {
   @Input() override radiusKm=25; @Input() disabled=false; @Input() canFind=false;

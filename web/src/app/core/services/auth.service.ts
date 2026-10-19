@@ -1,3 +1,4 @@
+import { clearNativeFiles } from '../utils/native-files';
 import { clearOffline } from '../../../../public/offline-store.js';
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -139,6 +140,7 @@ export class AuthService {
   }
 
   clearSession(): void {
+    clearNativeFiles();
     void clearOffline().catch(() => { /* Session epoch already invalidates remaining copies. */ });
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);

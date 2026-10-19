@@ -1,0 +1,9 @@
+{
+  "appId": "in.suttru.app",
+  "appName": "Suttru",
+  "webDir": "www",
+  "backgroundColor": "#f8fafc",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false, "webContentsDebuggingEnabled": false },
+  "plugins": { "SystemBars": { "insetsHandling": "css", "style": "LIGHT" } }
+}

@@ -1,0 +1,38 @@
+:host { display:block; min-width:0; margin:16px 0; color:#17362a; }
+*, *::before, *::after { box-sizing:border-box; }
+.top-places { border:1px solid #d9e4dc; border-radius:14px; padding:14px; background:white; overflow-wrap:anywhere; }
+button { font:inherit; min-height:44px; max-width:100%; padding:8px 12px; border:1px solid #174a33; border-radius:18px; background:#174a33; color:white; cursor:pointer; }
+button:disabled { opacity:.55; cursor:default; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid #34976a; outline-offset:3px; }
+.note { display:block; font-size:12px; color:#55675b; margin:6px 0; line-height:1.5; }
+header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+header button { flex-shrink:0; }
+h3 { font-size:16px; min-width:0; }
+ol { padding-left:24px; list-style:decimal; margin-bottom:0; }
+li { padding:10px 0; border-bottom:1px solid #edf1ee; }
+.place-heading { min-width:0; }
+.place-option { display:flex; align-items:center; gap:10px; min-height:44px; cursor:pointer; }
+.place-option strong { min-width:0; }
+input[type=checkbox] { accent-color:#174a33; width:20px; height:20px; flex:0 0 20px; margin:0; }
+.day-picker, .trip-picker { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:8px 0; }
+select { font:inherit; min-height:44px; min-width:0; max-width:100%; padding:8px; border:1px solid #c0d1c5; border-radius:8px; background:white; color:inherit; }
+.trip-picker select { flex:1; }
+.actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin-top:4px; }
+a { display:inline-flex; align-items:center; min-height:44px; color:#174a33; font-size:12px; }
+.actions button { font-size:12px; }
+details { font-size:12px; margin-top:12px; }
+summary { min-height:44px; padding:12px 0; cursor:pointer; }
+.selection-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:12px 0; padding:12px; border:1px solid #d9e4dc; border-radius:12px; background:#f1f6f2; }
+@media(max-width:560px) {
+  .top-places { padding:12px; }
+  .top-places > button { width:100%; }
+  header { align-items:flex-start; gap:8px; }
+  h3 { margin:12px 0; }
+  ol { padding-left:20px; }
+  .trip-picker { align-items:stretch; flex-direction:column; }
+  .trip-picker select { flex:auto; width:100%; font-size:16px; }
+  .day-picker { display:grid; grid-template-columns:auto minmax(0,1fr); }
+  .day-picker select { width:100%; font-size:16px; }
+  .selection-actions { flex-direction:column; align-items:stretch; }
+  .selection-actions button { width:100%; }
+}

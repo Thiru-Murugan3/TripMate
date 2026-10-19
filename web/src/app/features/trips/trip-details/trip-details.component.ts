@@ -1,3 +1,4 @@
+import { shareNativeFile } from '../../../core/utils/native-files';
 import { FlightAlertsComponent } from '../flight-alerts/flight-alerts.component';
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, ViewChild } from '@angular/core';
@@ -2920,7 +2921,17 @@ export class TripDetailsComponent implements OnInit {
     if (!this.trip || this.isExportingCalendar) return;
     this.isExportingCalendar = true;
     this.tripService.exportCalendar(this.tripId).subscribe({
-      next: (content) => {
+      next: async (content) => {
+        try {
+          if (await shareNativeFile(content, `${this.trip?.name || 'suttru-trip'}.ics`)) {
+            this.isExportingCalendar = false;
+            return;
+          }
+        } catch {
+          this.tripUpdateMessage = 'Unable to export the calendar on this device. Please try again.';
+          this.isExportingCalendar = false;
+          return;
+        }
         const url = URL.createObjectURL(content);
         const anchor = document.createElement('a');
         anchor.href = url;
