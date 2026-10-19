@@ -13,7 +13,8 @@ import { session, savePack } from '../../../../../public/offline-store.js';
   imports: [CommonModule],
   template: `
     <section class="offline-card">
-      <h3>Take this trip offline</h3>
+      <div class="offline-heading"><h3>Offline access</h3><button type="button" class="mobile-offline-toggle" (click)="mobileExpanded=!mobileExpanded" [attr.aria-expanded]="mobileExpanded" aria-controls="offline-access-options">{{mobileExpanded ? 'Close' : 'Open'}}</button></div>
+      <div id="offline-access-options" class="offline-options" [class.mobile-expanded]="mobileExpanded">
       <p>Save the daily timeline and selected documents on this device. Save again after changing your plans. Saving replaces the previous copy and includes only the documents checked below.</p>
       <p>Only use a trusted device. Copies are not separately encrypted and signing out clears offline access.
         Browser storage may be cleared by the device.</p>
@@ -28,6 +29,7 @@ import { session, savePack } from '../../../../../public/offline-store.js';
         <a href="/offline.html">Open saved trips</a>
       </div>
       <p role="status" aria-live="polite">{{ message }}</p>
+      </div>
     </section>
   `,
   styles: [`
@@ -39,9 +41,20 @@ import { session, savePack } from '../../../../../public/offline-store.js';
     a{color:#3730a3}.actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.7rem}input{min-width:20px;min-height:20px}
 
 @include mobile.panels;
+.mobile-offline-toggle { display:none; }
+@media(max-width:760px) {
+ .offline-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+ .offline-heading h3 { margin:0; font-size:15px; }
+ .mobile-offline-toggle { display:inline-flex; align-items:center; padding:8px 12px; background:#eff6ff; color:#2563eb; border-color:#dbeafe; font-size:12px; }
+ .offline-options { display:none; }
+ .offline-options.mobile-expanded { display:block; }
+ .offline-options p { font-size:12px; }
+}
+
 `]
 })
 export class OfflineTripComponent {
+  mobileExpanded=false;
   @Input({ required: true }) tripId!: number;
   private timelineService = inject(TimelineService);
   private documentService = inject(DocumentService);

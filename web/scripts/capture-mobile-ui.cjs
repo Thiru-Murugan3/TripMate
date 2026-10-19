@@ -71,6 +71,9 @@ function response(url){
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${name} overflows phone viewport`);
       await page.screenshot({animations:'disabled',path:path.join(output,name+'.png')});
     }
+    await page.goto(origin+'/trips/10?tab=TIMELINE');await page.locator('.mobile-offline-toggle').waitFor();
+    await page.locator('.mobile-offline-toggle').click();await page.locator('.offline-options.mobile-expanded').waitFor();
+    await page.screenshot({animations:'disabled',path:path.join(output,'offline-access.png')});
     await page.goto(origin+'/trips/10?tab=EXPENSES');await page.locator('.expense-card').waitFor();
     await page.locator('.expense-card').scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:path.join(output,'expense-list.png')});
     await page.getByRole('button',{name:'Balances & settlements',exact:true}).click();

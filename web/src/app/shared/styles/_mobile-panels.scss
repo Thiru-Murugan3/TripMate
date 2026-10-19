@@ -54,9 +54,10 @@
   .subtitle { font-size:13px; line-height:1.6; }
   .card,.panel,.sidebar-card,.state-card,.invite-card,.notification-card { border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 3px 14px #0f172a04; }
   .state-card,.empty-state,.empty-card { min-height:160px; padding:24px 16px; }
-  .expense-toolbar,.documents-toolbar,.places-toolbar,.planner-toolbar { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; margin-bottom:16px; }
+  .expense-toolbar,.documents-toolbar,.places-toolbar,.planner-toolbar { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px; margin-bottom:16px; }
+  .expense-toolbar p,.documents-toolbar p,.places-toolbar p,.planner-toolbar p { display:none; }
   .expense-toolbar h2,.documents-toolbar h2,.places-toolbar h2,.planner-toolbar h2 { margin:0 0 6px; font-size:20px; }
-  .expense-toolbar>.btn,.documents-toolbar>.btn,.places-toolbar>.btn,.planner-toolbar>.btn { justify-self:start; padding:10px 16px; }
+  .expense-toolbar>.btn,.documents-toolbar>.btn,.places-toolbar>.btn,.planner-toolbar>.btn { justify-self:start; padding:10px 12px; width:auto; font-size:12px; }
   .expense-controls,.document-controls,.places-controls { margin:14px 0; }
   .search-box { background:#fff; border:1px solid #e2e8f0; border-radius:12px; }
   .documents-grid,.places-grid { gap:12px; }
@@ -90,9 +91,9 @@
   .invite-card h2 { font-size:16px; }
   .invite-card .actions { gap:8px; }
   .invite-card,.pending-card { padding:14px; }
-  .method-grid { gap:6px; }
-  .method-btn { padding:10px 4px; border-radius:12px; }
-  .method-btn small { font-size:10px; line-height:1.4; }
+  .method-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+  .method-btn { justify-items:center; padding:10px 4px; border-radius:12px; font-size:12px; text-align:center; }
+  .method-btn small { display:none; }
   .created-link { padding:12px; background:#eff6ff; border-color:#bfdbfe; }
   .invite-topline { flex-wrap:wrap; gap:6px; }
   .invitation-row { padding:12px 0; }
