@@ -28,7 +28,9 @@ The generated file is `mobile/dist/Suttru-debug.apk`. On Windows, set `MOBILE_AP
 
 ## Backend activation
 
-The native bundled origin is **https://localhost**. Add that exact origin to the backend's existing comma-separated **APP_CORS_ALLOWED_ORIGINS**, preserving its current web origins. Do not add `*` and do not put an API key into the APK. This backend setting has not been changed by these files; verify login and API calls on a device before distributing the APK.
+The bundled origin is **https://localhost**. Capacitor's built-in **CapacitorHttp** transport is enabled for native `fetch`/`XMLHttpRequest` calls, so Angular requests use the native HTTPS client with the existing authorization headers. Website CORS settings are unchanged. If native HTTP is disabled later, the backend must explicitly allow `https://localhost` in addition to its existing web origins. Never add `*` or put provider keys into the APK.
+
+Device verification must include login/token refresh, multipart document uploads and binary downloads; native HTTP transports can behave differently from the browser, particularly for large files. No authenticated device session has been tested yet.
 
 ## Native integration
 

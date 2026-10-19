@@ -3,7 +3,20 @@
   "appName": "Suttru",
   "webDir": "www",
   "backgroundColor": "#f8fafc",
-  "server": { "androidScheme": "https" },
-  "android": { "allowMixedContent": false, "webContentsDebuggingEnabled": false },
-  "plugins": { "SystemBars": { "insetsHandling": "css", "style": "LIGHT" } }
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "LIGHT"
+    },
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }
