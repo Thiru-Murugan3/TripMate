@@ -33,6 +33,7 @@ let locationPhotoUrl='';
 function response(url){
   const p=new URL(url).pathname.replace(/^.*\/api\/v1/,'');
   if(p==='/discovery/place-photos')return {images:[{url:locationPhotoUrl,sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-one.jpg',license:'Visual fixture',attribution:'Test photographer one',exact:true,primary:true},{url:locationPhotoUrl.replace('hero.jpg','kodaikanal.jpg'),sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-two.jpg',license:'Visual fixture',attribution:'Test photographer two',exact:true,primary:false}],message:'Internal visual fixture only',retryable:false};
+  if(p==='/auth/login')return {accessToken:'visual-review-fixture',refreshToken:'visual-refresh-fixture',tokenType:'Bearer',expiresIn:900};
   if(p==='/users/me')return user;
   if(p==='/discovery/places' || p==='/discovery/top-places')return discoveryResult;
   if(p==='/discovery/tripadvisor/status')return {available:true};
@@ -80,27 +81,34 @@ function response(url){
     }
     // Native camera fixture: selecting a photo must stop at review, without a POST.
     await page.addInitScript(()=>{
+      const read=()=>JSON.parse(localStorage.getItem('fixture-native-grants')||'{"photos":"denied","camera":"denied","location":"denied"}');
       window.SuttruDevice={
-        permissionSetup:async()=>({completed:localStorage.getItem('fixture-permission-setup')==='done',photoSelection:localStorage.getItem('fixture-photo-consent')==='allowed',camera:'prompt',location:'prompt'}),
-        requestPermission:async feature=>{if(feature==='photos')localStorage.setItem('fixture-photo-consent','allowed');return true;},
-        completePermissionSetup:async()=>localStorage.setItem('fixture-permission-setup','done'),
-        resetPhotoSelection:async()=>localStorage.removeItem('fixture-photo-consent'),
+        permissionSetup:async()=>{const state=read();return {completed:localStorage.getItem('fixture-native-setup-v2')==='done',photoSelection:state.photos==='limited',camera:state.camera,location:state.location};},
+        requestPermission:async feature=>{
+          const calls=JSON.parse(localStorage.getItem('fixture-native-requests')||'[]');calls.push(feature);localStorage.setItem('fixture-native-requests',JSON.stringify(calls));
+          window.fixturePermissionActive=(window.fixturePermissionActive||0)+1;window.fixturePermissionMax=Math.max(window.fixturePermissionMax||0,window.fixturePermissionActive);
+          await new Promise(r=>setTimeout(r,25));const state=read();state[feature]=feature==='photos'?'limited':'granted';localStorage.setItem('fixture-native-grants',JSON.stringify(state));window.fixturePermissionActive--;return true;
+        },
+        completePermissionSetup:async()=>localStorage.setItem('fixture-native-setup-v2','done'),
+        openPermissionSettings:async()=>localStorage.setItem('fixture-native-settings','opened'),
         takeDocumentPhoto:async()=>new File(['camera fixture'],'camera-review.jpg',{type:'image/jpeg'}),
         pickDocumentPhoto:async()=>new File(['gallery fixture'],'gallery-review.jpg',{type:'image/jpeg'})
       };
     });
-    await page.goto(origin+'/trips/10?tab=DOCUMENTS');await page.locator('.document-card').waitFor();
-    const accessPanel=page.getByRole('dialog',{name:'Set up app access'});
-    await accessPanel.waitFor();
-    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'permission setup overflows phone viewport');
-    await page.screenshot({animations:'disabled',path:path.join(output,'first-launch-permissions.png')});
-    await accessPanel.getByRole('button',{name:'Allow selected photos',exact:true}).click();
-    await accessPanel.getByText('Photo selection allowed on this phone',{exact:true}).waitFor();
-    await accessPanel.getByRole('button',{name:'Continue',exact:true}).click();await accessPanel.waitFor({state:'hidden'});
+    await page.goto(origin+'/login?returnUrl='+encodeURIComponent('/trips/10?tab=DOCUMENTS'));await page.locator('form').waitFor();
+    assert.equal(await page.evaluate(()=>localStorage.getItem('fixture-native-requests')),null,'permissions started before login');
+    await page.locator('#email').fill('traveller@example.com');await page.locator('#password').fill('fixture-password-only');
+    await page.getByRole('button',{name:'Sign In to Account',exact:true}).click();
+    await page.locator('.document-card').waitFor();
+    await page.waitForFunction(()=>localStorage.getItem('fixture-native-setup-v2')==='done');
+    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('fixture-native-requests'))),['photos','camera','location']);
+    assert.equal(await page.evaluate(()=>window.fixturePermissionMax),1,'permission requests overlapped');
+    assert.equal(await page.locator('dialog[data-device-permissions]').count(),0,'web imitation of permission dialog remains');
+    await page.screenshot({animations:'disabled',path:path.join(output,'post-login-permissions-complete.png')});
     await page.reload();await page.locator('.document-card').waitFor();
-    assert.equal(await accessPanel.isVisible(),false,'first-launch setup repeated after approval');
-    await page.goto(origin+'/account');await page.getByRole('button',{name:/App permissions/}).click();await accessPanel.waitFor();
-    await accessPanel.getByRole('button',{name:'Continue',exact:true}).click();await accessPanel.waitFor({state:'hidden'});
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('fixture-native-requests')).length),3,'setup repeated after restart');
+    await page.goto(origin+'/account');await page.getByRole('button',{name:/App permissions/}).click();
+    await page.waitForFunction(()=>localStorage.getItem('fixture-native-settings')==='opened');
     await page.goto(origin+'/trips/10?tab=DOCUMENTS');await page.locator('.document-card').waitFor();
     let documentUploads=0;const trackUpload=request=>{if(request.method()==='POST' && new URL(request.url()).pathname.endsWith('/documents'))documentUploads++;};
     page.on('request',trackUpload);

@@ -1,52 +1,43 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDeviceAccess} from '../src/device-access.mjs';
-function setup(cameraState='prompt',locationState='prompt') {
-  const calls=[],saved=new Map();
-  const preferences={get:async({key})=>({value:saved.get(key)||null}),set:async({key,value})=>{saved.set(key,value);},remove:async({key})=>{saved.delete(key);}};
-  const camera={checkPermissions:async()=>({camera:cameraState}),requestPermissions:async options=>{calls.push(['camera-permission',options]);return {camera:'granted'};},getPhoto:async options=>{calls.push(['camera',options]);return {webPath:'local-photo'};}};
-  const location={checkPermissions:async()=>({location:locationState,coarseLocation:locationState}),requestPermissions:async options=>{calls.push(['location-permission',options]);return {location:'denied',coarseLocation:'granted'};},getCurrentPosition:async options=>{calls.push(['position',options]);return {coords:{latitude:11,longitude:76}};}};
-  const deps={preferences,camera,location,confirmAction:()=>true,readPhoto:async()=>new Blob(['photo']),makeFile:(blob,name)=>({blob,name})};
-  return {calls,deps,saved,access:()=>createDeviceAccess(deps)};
+function setup(){
+ const calls=[],saved=new Map(),state={photos:'denied',camera:'denied',location:'denied'};
+ const permissions={status:async()=>({...state}),requestPhotos:async()=>{calls.push('photos');state.photos='limited';return {...state};},requestCamera:async()=>{calls.push('camera-permission');state.camera='granted';return {...state};},requestLocation:async()=>{calls.push('location-permission');state.location='granted';return {...state};},openSettings:async()=>{calls.push('settings');}};
+ const camera={getPhoto:async options=>{calls.push(options);return {webPath:'local-photo'};}};
+ const location={getCurrentPosition:async options=>{calls.push(options);return {coords:{latitude:11,longitude:76}};}};
+ const preferences={get:async({key})=>({value:saved.get(key)||null}),set:async({key,value})=>saved.set(key,value)};
+ const deps={permissions,camera,location,preferences,readPhoto:async()=>new Blob(['photo']),makeFile:(blob,name)=>({blob,name})};
+ return {calls,saved,state,deps,access:()=>createDeviceAccess(deps)};
 }
-test('does not ask on startup; camera request precedes capture and never requests library access',async()=>{
-  const s=setup(),access=s.access();assert.equal(s.calls.length,0);
-  const file=await access.takeDocumentPhoto();assert.match(file.name,/\.jpg$/);
-  assert.deepEqual(s.calls[0],['camera-permission',{permissions:['camera']}]);
-  assert.equal(s.calls[1][1].saveToGallery,false);assert.equal(s.calls[1][1].source,'CAMERA');
+test('construction and status checks never request a permission or open a picker',async()=>{
+ const s=setup();await s.access().permissionSetup();assert.equal(s.calls.length,0);
 });
-test('declining the explanation or cancelling the camera preserves user choice',async()=>{
-  const s=setup();s.deps.confirmAction=()=>false;assert.equal(await s.access().takeDocumentPhoto(),null);assert.equal(s.calls.length,0);
-  s.deps.confirmAction=()=>true;s.deps.camera.getPhoto=async()=>{throw new Error('User cancelled photos app');};assert.equal(await s.access().takeDocumentPhoto(),null);
+test('native photo permission must resolve before the gallery picker opens',async()=>{
+ const s=setup();await s.access().pickDocumentPhoto();assert.equal(s.calls[0],'photos');assert.equal(s.calls[1].source,'PHOTOS');
+ assert.equal((await s.access().permissionSetup()).photoAccess,'limited');
+ await s.access().pickDocumentPhoto();assert.equal(s.calls.filter(c=>c==='photos').length,1);
 });
-test('denial does not open the camera and permanent denial gives Settings recovery',async()=>{
-  const s=setup('denied');await assert.rejects(s.access().takeDocumentPhoto(),/Android Settings/);assert.equal(s.calls.length,0);
-  const fresh=setup();fresh.deps.camera.requestPermissions=async()=>({camera:'denied'});await assert.rejects(fresh.access().takeDocumentPhoto(),/Camera access is off/);assert.equal(fresh.calls.length,0);
+test('denying native photo access never opens the gallery',async()=>{
+ const s=setup();s.deps.permissions.requestPhotos=async()=>({...s.state});
+ await assert.rejects(s.access().pickDocumentPhoto(),/Photo access is off/);assert.equal(s.calls.length,0);
 });
-test('granted permission is reused and oversized camera photos are rejected',async()=>{
-  const s=setup('granted');s.deps.readPhoto=async()=>new Blob([new Uint8Array(10*1024*1024+1)]);
-  await assert.rejects(s.access().takeDocumentPhoto(),/under 10 MB/);assert.deepEqual(s.calls.map(c=>c[0]),['camera']);
+test('camera permission precedes capture, without saving to public gallery',async()=>{
+ const s=setup();await s.access().takeDocumentPhoto();assert.equal(s.calls[0],'camera-permission');assert.equal(s.calls[1].source,'CAMERA');assert.equal(s.calls[1].saveToGallery,false);
 });
-test('accepts approximate location and never starts background tracking',async()=>{
-  const s=setup(),result=await s.access().currentPosition();assert.equal(result.coords.latitude,11);
-  assert.deepEqual(s.calls[0],['location-permission',{permissions:['location']}]);assert.equal(s.calls[1][1].enableHighAccuracy,false);
-  const denied=setup('prompt','denied');await assert.rejects(denied.access().currentPosition(),/Location access is off/);assert.equal(denied.calls.length,0);
+test('cancelled capture returns no file; oversized photos are rejected',async()=>{
+ const s=setup();s.deps.camera.getPhoto=async()=>{throw new Error('User cancelled photos app');};assert.equal(await s.access().takeDocumentPhoto(),null);
+ s.deps.camera.getPhoto=async()=>({webPath:'local-photo'});s.deps.readPhoto=async()=>new Blob([new Uint8Array(10*1024*1024+1)]);await assert.rejects(s.access().takeDocumentPhoto(),/under 10 MB/);
 });
-
-test('setup completion survives recreation without requesting hardware access',async()=>{
- const s=setup(),first=s.access();assert.equal((await first.permissionSetup()).completed,false);assert.equal(s.calls.length,0);
- await first.completePermissionSetup();assert.equal((await s.access().permissionSetup()).completed,true);assert.equal(s.calls.length,0);
+test('granted camera and approximate location are reused without another prompt',async()=>{
+ const s=setup();s.state.camera='granted';s.state.location='granted';await s.access().takeDocumentPhoto();await s.access().currentPosition();
+ assert.equal(s.calls.some(c=>typeof c==='string'),false);assert.equal(s.calls[1].enableHighAccuracy,false);
 });
-test('asks before the first gallery selection and remembers consent across restarts',async()=>{
- const s=setup();let prompts=0;s.deps.confirmAction=()=>{prompts++;return true;};
- await s.access().pickDocumentPhoto();await s.access().pickDocumentPhoto();assert.equal(prompts,1);
- assert.deepEqual(s.calls.map(c=>c[1].source),['PHOTOS','PHOTOS']);assert.equal((await s.access().permissionSetup()).photoSelection,true);
- await s.access().resetPhotoSelection();await s.access().pickDocumentPhoto();assert.equal(prompts,2);
+test('completed post-login setup persists and ignores the old pre-login preference',async()=>{
+ const s=setup();s.saved.set('permission-setup-v1','done');assert.equal((await s.access().permissionSetup()).completed,false);
+ await s.access().completePermissionSetup();assert.equal((await s.access().permissionSetup()).completed,true);
 });
-test('declining gallery access never opens the picker or records approval',async()=>{
- const s=setup();s.deps.confirmAction=()=>false;assert.equal(await s.access().pickDocumentPhoto(),null);assert.equal(s.calls.length,0);assert.equal((await s.access().permissionSetup()).photoSelection,false);
-});
-test('startup opt-in remembers selected-photo approval without opening the gallery',async()=>{
- const s=setup();await s.access().requestPermission('photos');await s.access().completePermissionSetup();assert.equal(s.calls.length,0);
- s.deps.confirmAction=()=>{throw new Error('Consent repeated');};await s.access().pickDocumentPhoto();assert.equal(s.calls[0][1].source,'PHOTOS');
+test('revoked grants are checked live and Profile opens genuine Android settings',async()=>{
+ const s=setup();s.state.photos='full';await s.access().completePermissionSetup();s.state.photos='denied';
+ await s.access().pickDocumentPhoto();assert.equal(s.calls[0],'photos');await s.access().openPermissionSettings();assert.equal(s.calls.at(-1),'settings');
 });

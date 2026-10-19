@@ -1,3 +1,4 @@
+import { installNativePermissions } from './native-permissions.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import sharp from 'sharp';
@@ -10,14 +11,15 @@ let xml = readFileSync(manifest, 'utf8').replace(/\sandroid:(?:allowBackup|fullB
 xml = xml.replace('<application', '<application android:allowBackup="false" android:fullBackupContent="false" android:usesCleartextTraffic="false"');
 const inviteFilter = `<intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="suttru" android:host="invite"/></intent-filter>`;
 if (!xml.includes('android:scheme="suttru"')) xml = xml.replace('</activity>', inviteFilter + '</activity>');
-// Camera is optional; prompt only when taking a document photo. Location is foreground only.
+// Camera hardware is optional. Runtime grants are requested after login; location is foreground only.
 for (const permission of ['CAMERA','ACCESS_COARSE_LOCATION','ACCESS_FINE_LOCATION']) {
   if (!xml.includes(`android.permission.${permission}"`)) xml = xml.replace('</manifest>', `<uses-permission android:name="android.permission.${permission}"/></manifest>`);
 }
 if (!xml.includes('android.hardware.camera"')) xml = xml.replace('</manifest>', '<uses-feature android:name="android.hardware.camera" android:required="false"/></manifest>');
 writeFileSync(manifest, xml);
+installNativePermissions("android");
 const gradle = 'android/app/build.gradle';
-let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 7').replace(/versionName ["'][^"']*["']/, 'versionName "0.5.1"');
+let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 8').replace(/versionName ["'][^"']*["']/, 'versionName "0.5.2"');
 if (!build.includes('applicationIdSuffix')) build = build.replace('buildTypes {', 'buildTypes {\n        debug { applicationIdSuffix ".debug" }');
 writeFileSync(gradle, build);
 const resource = 'android/app/src/main/res';
