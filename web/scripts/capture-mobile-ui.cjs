@@ -59,8 +59,10 @@ function response(url){
     await page.goto(origin+'/trips');await page.locator('.trip-card').first().waitFor();
     await page.getByRole('button',{name:'Filters',exact:true}).click();
     await page.locator('.select-field select').nth(1).selectOption('FRIENDS');
+    await page.waitForFunction(()=>document.querySelectorAll('.trip-card').length===1);
     assert.equal(await page.locator('.trip-card').count(),1);
     await page.getByRole('button',{name:'Clear',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('.trip-card').length===2);
     assert.equal(await page.locator('.trip-card').count(),2);
     await page.goto(origin+'/dashboard');await page.locator('.mobile-home').waitFor();
     await page.getByRole('link',{name:'Plan a new trip',exact:true}).click();await page.locator('.modal-content').waitFor();
