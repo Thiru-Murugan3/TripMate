@@ -34,6 +34,15 @@ function withAccessToken(req: HttpRequest<unknown>, token: string | null): HttpR
   });
 }
 
+function redirectToLogin(router: Router): void {
+  const returnUrl = router.url;
+  if (/^\/invite\/[A-Za-z0-9-]{1,200}$/.test(returnUrl)) {
+    void router.navigate(['/login'], {queryParams:{returnUrl}});
+  } else {
+    void router.navigate(['/login']);
+  }
+}
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
@@ -54,7 +63,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       if (!authService.getRefreshToken()) {
         authService.clearSession();
-        void router.navigate(['/login']);
+        redirectToLogin(router);
         return throwError(() => error);
       }
 
@@ -68,7 +77,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }),
         catchError((refreshOrRetryError: unknown) => {
           authService.clearSession();
-          void router.navigate(['/login']);
+          redirectToLogin(router);
           return throwError(() => refreshOrRetryError);
         })
       );
