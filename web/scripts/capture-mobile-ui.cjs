@@ -81,7 +81,7 @@ function response(url){
     assert.equal(await page.locator('.expense-list-column').isVisible(),false);
     await page.screenshot({animations:'disabled',path:path.join(output,'expense-balances.png')});
     await page.getByRole('button',{name:'Spending',exact:true}).click();
-    await page.getByRole('button',{name:'Add Expense',exact:true}).click();await page.locator('.modal').waitFor();
+    await page.locator('.expense-toolbar button').click();await page.locator('.modal').waitFor();
     await page.screenshot({animations:'disabled',path:path.join(output,'expense-entry.png')});
     await page.goto(origin+'/trips/10?tab=ITINERARY');await page.locator('.mobile-route-toggle').waitFor();
     await page.getByRole('button',{name:'Route & map tools',exact:true}).click();await page.locator('.route-planner-card.mobile-route-open').waitFor();
