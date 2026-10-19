@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
@@ -129,7 +130,7 @@ describe('DestinationDiscoveryComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [DestinationDiscoveryComponent],
-      providers: [
+      providers: [provideHttpClient(),
         provideRouter([]),
         { provide: IndiaCatalogueService, useValue: {
           index: () => of({ snapshot: '2026-10-14', total: 1, states: [{name:'Goa',file:'goa.json',count:1}] }),

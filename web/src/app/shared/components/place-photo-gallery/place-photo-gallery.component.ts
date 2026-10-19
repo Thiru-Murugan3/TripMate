@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, OnDestroy, AfterViewInit, ElementRef, NgZone, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, AfterViewInit, NgZone, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { DiscoveryImage } from '../../../core/models/discovery.model';
 import { PlacePhotosService, photoSourceId } from '../../../core/services/place-photos.service';
@@ -23,8 +23,8 @@ import { CataloguePhoto } from '../../../features/india-catalogue/india-catalogu
 export class PlacePhotoGalleryComponent implements OnChanges,AfterViewInit,OnDestroy {
  @Input() externalId='';@Input() sourceUrl='';@Input() name='Place';@Input() initialImages:DiscoveryImage[]=[];
  @Input() cataloguePhoto:CataloguePhoto|null=null;@Input() assetRoot='';
- private zone=inject(NgZone);private api=inject(PlacePhotosService);private host=inject(ElementRef<HTMLElement>);
- private request?:Subscription;private observer?:IntersectionObserver;private ready=false;
+ private zone=inject(NgZone);private api=inject(PlacePhotosService);
+ private request?:Subscription;private ready=false;private destroyed=false;
  images:DiscoveryImage[]=[];index=0;loading=false;retryable=false;requested=false;message='';sourceId:string|null=null;
  get current():DiscoveryImage|undefined{return this.images[this.index];}
  ngOnChanges():void {
@@ -33,15 +33,12 @@ export class PlacePhotoGalleryComponent implements OnChanges,AfterViewInit,OnDes
   const p=this.cataloguePhoto;
   if(p?.local_thumbnail && p.source_page && p.license && p.creator)this.images=this.distinct([...this.images,{url:this.assetRoot+p.local_thumbnail,sourcePage:p.source_page,sourceName:'Catalogue source',author:p.creator,license:p.license,attribution:p.attribution_text||p.creator,exact:true,primary:true}]);
   if(!this.sourceId && this.images.length<2)this.message='Additional photographs need an exact source identity. No name-only or nearby substitutes were used.';
-  if(this.ready)this.observe();
+  if(this.ready)this.loadRenderedPage();
  }
- ngAfterViewInit():void {this.ready=true;this.observe();}
- private observe():void {
-  this.observer?.disconnect();
-  if(this.images.length>=2 || !this.sourceId || this.requested)return;
-  if(typeof IntersectionObserver==='undefined')return;
-  this.observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){this.observer?.disconnect();this.zone.run(()=>this.load());}});
-  this.observer.observe(this.host.nativeElement);
+ ngAfterViewInit():void {this.ready=true;this.loadRenderedPage();}
+ private loadRenderedPage():void {
+  // Load only the rendered result page. The shared service queues three requests at a time.
+  queueMicrotask(()=>{if(!this.destroyed && this.sourceId && this.images.length<2 && !this.requested)this.zone.run(()=>this.load());});
  }
  load():void {
   if(!this.sourceId || this.loading)return;this.loading=true;this.requested=true;this.retryable=false;
@@ -50,5 +47,5 @@ export class PlacePhotoGalleryComponent implements OnChanges,AfterViewInit,OnDes
  previous():void{this.index=(this.index+this.images.length-1)%this.images.length;}next():void{this.index=(this.index+1)%this.images.length;}
  imageFailed(photo:DiscoveryImage):void {this.images=this.images.filter(i=>i!==photo);this.index=0;this.retryable=!!this.sourceId;this.message='A source photo could not load. Retry to check available photographs.';}
  private distinct(images:DiscoveryImage[]):DiscoveryImage[]{const seen=new Set<string>();const urls=new Set<string>();return images.filter(i=>{if(!i.exact || !i.sourcePage || !i.license || !i.attribution || !/^(https?:\/\/|india-catalogue\/)/i.test(i.url))return false;const key=i.sourcePage.split(/[?#]/)[0];if(seen.has(key) || urls.has(i.url))return false;seen.add(key);urls.add(i.url);return true;});}
- ngOnDestroy():void{this.request?.unsubscribe();this.observer?.disconnect();}
+ ngOnDestroy():void{this.destroyed=true;this.request?.unsubscribe();}
 }
