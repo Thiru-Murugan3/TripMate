@@ -1,3 +1,4 @@
+import { PlacePhotoGalleryComponent } from '../../shared/components/place-photo-gallery/place-photo-gallery.component';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +8,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
 
 /** Compact view reusing existing discovery, credited media and itinerary selection/save logic. */
 @Component({
-  selector:'app-combined-places', standalone:true, imports:[CommonModule,FormsModule,RouterLink,TopPlacesComponent],
+  selector:'app-combined-places', standalone:true, imports:[CommonModule,FormsModule,RouterLink,TopPlacesComponent,PlacePhotoGalleryComponent],
   template:`
     <section class="explore">
       <header><h1>Explore places</h1><p>Find places, choose your trip day and build your itinerary.</p></header>
@@ -40,8 +41,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
         </div>
         <div class="cards">
           <article *ngFor="let place of data.places; trackBy:trackPlace" class="card">
-            <figure *ngIf="creditedImages(place)[0] as image; else missingPhoto"><a [href]="image.sourcePage" target="_blank" rel="noopener noreferrer"><img class="place-photo" [src]="image.url" [alt]="place.name" loading="lazy" (error)="handleImageError($event,place)" /></a><figcaption><a [href]="image.sourcePage" target="_blank" rel="noopener noreferrer">{{ image.attribution }} · {{ image.license }}</a></figcaption></figure>
-            <ng-template #missingPhoto><div class="no-photo">No credited photo available</div></ng-template>
+            <app-place-photo-gallery [externalId]="place.externalId" [sourceUrl]="place.sourceUrl || ''" [name]="place.name" [initialImages]="place.imageGallery!" />
             <div class="card-body"><h3>{{ place.name }}</h3><p>{{ formatCategory(place.category) }} · {{ place.distanceKm }} km</p><p>{{ formatPlacePrice(place) }}</p>
               <label class="place-select"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || !canSelectPlaces" (change)="toggleSelection(place)" /> Select place</label>
               <label *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>

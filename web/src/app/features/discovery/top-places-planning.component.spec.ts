@@ -1,3 +1,4 @@
+import { PlacePhotosService } from '../../core/services/place-photos.service';
 import { fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -19,7 +20,7 @@ describe('Top 10 itinerary selection',()=>{
     itinerary.getItinerary.and.returnValue(of(empty));
     itinerary.createDay.and.returnValue(of({id:20,dayNumber:2,tripId:10,items:[]}));
     itinerary.createItem.and.returnValue(of({id:30,dayId:20,tripId:10,title:place.name}));itinerary.reorder.and.returnValue(of(empty));
-    TestBed.configureTestingModule({imports:[TopPlacesComponent],providers:[provideHttpClient(),provideRouter([]),{provide:PlaceService,useValue:places},{provide:ItineraryService,useValue:itinerary}]});
+    TestBed.configureTestingModule({imports:[TopPlacesComponent],providers:[{provide:PlacePhotosService,useValue:{get:()=>of({images:[],message:"",retryable:false})}},provideHttpClient(),provideRouter([]),{provide:PlaceService,useValue:places},{provide:ItineraryService,useValue:itinerary}]});
   });
   function embedded(canEdit=true){
     const f=TestBed.createComponent(TopPlacesComponent);

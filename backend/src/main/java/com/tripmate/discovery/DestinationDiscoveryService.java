@@ -238,6 +238,10 @@ public class DestinationDiscoveryService {
                             .primaryImageUrl(donor.primaryImageUrl()).imageSource(donor.imageSource())
                             .imageAttribution(donor.imageAttribution()).imageLicense(donor.imageLicense()).imageExact(donor.imageExact()).build();
                 }
+                List<DiscoveryImage> gallery=new ArrayList<>();
+                winner.imageGallery().forEach(image -> PlacePhotoService.add(gallery,image));
+                donor.imageGallery().forEach(image -> PlacePhotoService.add(gallery,image));
+                winner=winner.toBuilder().imageGallery(gallery.stream().limit(8).toList()).build();
                 unique.put(nearbyKey, winner);
             }
         }

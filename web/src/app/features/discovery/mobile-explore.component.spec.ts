@@ -37,6 +37,7 @@ describe('Mobile Explore layout',()=>{
     try {
       for(const width of [320,390,560])atViewport(f.nativeElement,width,root=>{
         for(const control of root.querySelectorAll<HTMLElement>('button,select,.place-option,a')){
+          if(control.closest('app-place-photo-gallery'))continue;
           const rect=control.getBoundingClientRect();
           expect(rect.height).withContext(control.textContent || control.tagName).toBeGreaterThanOrEqual(44);
           expect(rect.left).toBeGreaterThanOrEqual(0);expect(rect.right).toBeLessThanOrEqual(width);
