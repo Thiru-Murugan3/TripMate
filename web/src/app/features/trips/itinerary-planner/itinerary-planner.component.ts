@@ -1,3 +1,4 @@
+import { currentPosition } from '../../../core/utils/device-access';
 import { TripadvisorReferenceComponent } from '../../discovery/tripadvisor-reference.component';
 import { CommonModule } from '@angular/common';
 import {
@@ -1169,15 +1170,10 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
   }
 
   useCurrentLocation(): void {
-    if (!navigator.geolocation) {
-      this.routeMessage = 'Location access is not supported by this browser.';
-      this.routeMessageIsError = true;
-      return;
-    }
-
+    if(this.isLocating)return;
     this.isLocating = true;
     this.routeMessage = '';
-    navigator.geolocation.getCurrentPosition(
+    void currentPosition().then(
       (position) => {
         this.currentLocation = {
           name: 'My current location',
@@ -1198,11 +1194,8 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges {
       (error) => {
         this.isLocating = false;
         this.routeMessageIsError = true;
-        this.routeMessage = error.code === error.PERMISSION_DENIED
-          ? 'Location permission was denied. Select your saved hotel or stay instead.'
-          : 'Unable to find your current location. Please try again.';
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+        this.routeMessage = error instanceof Error ? error.message : 'Location is unavailable. Select your saved hotel or stay instead.';
+      }
     );
   }
 

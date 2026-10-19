@@ -39,7 +39,9 @@ Device verification must include login/token refresh, multipart document uploads
 - Documents and calendar exports use the Android share sheet with the actual fetched bytes; the website keeps its existing browser behavior.
 - Temporary shared files stay in private cache, are scheduled for deletion, and are cleared on the next launch and sign-out. A receiver chosen by the user may retain its own copy.
 - Saved offline trips and chosen documents use the existing account-scoped IndexedDB store. Native builds skip browser service-worker setup because the reader is bundled. Save packs online before travelling; offline edits and background flight push alerts are not added.
-- No storage-wide or camera permissions are requested by this code. Native backup and cleartext network traffic are disabled during generation.
+- Camera permission is requested only after tapping Take document photo. The photo is reviewed before Upload; choosing a file uses the Android system picker without storage-wide permission.
+- Current-location actions request foreground location only and accept approximate location. Denied access explains how to recover in Android Settings or continue manually. No permission is requested at startup.
+- No microphone, contacts, background location or notification permissions are requested. Native backup and cleartext network traffic are disabled during generation.
 - The existing Suttru SVG is converted into Android launcher icons; no generated tourist images are introduced.
 
 ## Verification and release

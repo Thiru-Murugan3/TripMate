@@ -1,3 +1,4 @@
+import { currentPosition } from '../../core/utils/device-access';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -749,12 +750,9 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   }
 
   useCurrentLocation(): void {
-    if (!navigator.geolocation) {
-      this.errorMessage = 'Current location is not supported by this browser.';
-      return;
-    }
+    if(this.isLocating)return;
     this.isLocating = true;
-    navigator.geolocation.getCurrentPosition(
+    void currentPosition().then(
       (position) => this.discoveryService.reverseGeocode(position.coords.latitude, position.coords.longitude).subscribe({
         next: (location) => {
           this.isLocating = false;
@@ -766,11 +764,10 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
           this.errorMessage = 'Suttru could not resolve this location inside India.';
         }
       }),
-      () => {
+      (error) => {
         this.isLocating = false;
-        this.errorMessage = 'Location permission was not granted.';
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        this.errorMessage = error instanceof Error ? error.message : 'Location is unavailable. Choose a place manually.';
+      }
     );
   }
 

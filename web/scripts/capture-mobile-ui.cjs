@@ -78,6 +78,18 @@ function response(url){
       }
       await page.screenshot({animations:'disabled',path:path.join(output,name+'.png')});
     }
+    // Native camera fixture: selecting a photo must stop at review, without a POST.
+    await page.addInitScript(()=>{window.SuttruDevice={takeDocumentPhoto:async()=>new File(['camera fixture'],'camera-review.jpg',{type:'image/jpeg'})};});
+    await page.goto(origin+'/trips/10?tab=DOCUMENTS');await page.locator('.document-card').waitFor();
+    let documentUploads=0;const trackUpload=request=>{if(request.method()==='POST' && new URL(request.url()).pathname.endsWith('/documents'))documentUploads++;};
+    page.on('request',trackUpload);
+    await page.getByRole('button',{name:/Upload Document/}).click();
+    await page.getByRole('button',{name:'Take document photo',exact:true}).click();
+    await page.locator('.selected-file strong').filter({hasText:'camera-review.jpg'}).waitFor();
+    assert.equal(documentUploads,0,'camera capture uploaded without review');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'camera review overflows phone viewport');
+    await page.screenshot({animations:'disabled',path:path.join(output,'document-camera-review.png')});
+    page.off('request',trackUpload);
     await page.goto(origin+'/trips/10?tab=TIMELINE');await page.locator('.mobile-offline-toggle').waitFor();
     await page.locator('.mobile-offline-toggle').click();await page.locator('.offline-options.mobile-expanded').waitFor();
     await page.screenshot({animations:'disabled',path:path.join(output,'offline-access.png')});

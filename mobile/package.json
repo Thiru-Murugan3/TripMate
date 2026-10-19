@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "node --test scripts/*.test.mjs",
     "prepare:web": "node scripts/prepare.mjs",
@@ -14,8 +16,10 @@
     "@capacitor/android": "8.0.0",
     "@capacitor/app": "8.0.0",
     "@capacitor/browser": "8.0.0",
+    "@capacitor/camera": "8.0.0",
     "@capacitor/core": "8.0.0",
     "@capacitor/filesystem": "8.0.0",
+    "@capacitor/geolocation": "8.0.0",
     "@capacitor/share": "8.0.0"
   },
   "devDependencies": {
