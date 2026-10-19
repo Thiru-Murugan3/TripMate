@@ -199,4 +199,12 @@ describe('authInterceptor', () => {
     expect(localStorage.getItem('tripmate_refresh_token')).toBeNull();
     expect(localStorage.getItem('tripmate_user')).toBeNull();
   });
+  it('keeps the invitation return path when an expired mobile session requires login', () => {
+    spyOnProperty(router, 'url', 'get').and.returnValue('/invite/abc-123');
+    const navigate=spyOn(router,'navigate').and.resolveTo(true);
+    http.post('/api/v1/invitations/token/abc-123/accept', {}).subscribe({error:()=>{}});
+    httpMock.expectOne('/api/v1/invitations/token/abc-123/accept').flush({}, {status:401,statusText:'Unauthorized'});
+    expect(navigate).toHaveBeenCalledWith(['/login'],{queryParams:{returnUrl:'/invite/abc-123'}});
+  });
+
 });

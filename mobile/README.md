@@ -47,3 +47,7 @@ Device verification must include login/token refresh, multipart document uploads
 Run `npm test --prefix mobile` for packaging checks, the web `test:native` suite for optional native file handling, and the Android workflow for compilation, lint and APK generation. Test login/logout, upload and sharing of a PDF, calendar export, source links, Back navigation, cold start in airplane mode, saved-trip access and the phone keyboard before distribution.
 
 A release requires your persistent signing keystore and device validation; a debug APK is not a Play Store release. Fresh CI debug signing keys can require uninstalling a previous testing build, which removes that app's local offline packs. Keep signing material outside source control.
+
+## Invitation links
+
+Invitation web pages keep the browser sign-in/registration flow available. On Android, the **Open in Suttru Android app** action uses `suttru://invite/<token>`; the APK handles cold and running-app launches and opens the local invitation screen. The user still signs in and accepts explicitly, and server-side recipient/role checks remain in place. This is a custom-scheme handoff, not verified HTTPS App Links; automatic HTTPS-to-app routing would also require a signing-certificate Digital Asset Links configuration. Physical-device link handoff still needs verification after installing the new APK.

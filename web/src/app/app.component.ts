@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, NgZone, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 
@@ -48,7 +48,7 @@ import { FooterComponent } from './shared/components/footer/footer.component';
     }
   `]
 })
-export class AppComponent implements OnDestroy {
+export class AppComponent implements OnDestroy, AfterViewInit {
   get isMobileInnerView():boolean { return this.router.url.split('?')[0] !== '/dashboard'; }
   title = 'Suttru';
   showAppShell = false;
@@ -90,7 +90,7 @@ export class AppComponent implements OnDestroy {
     this.selectionGestureStartedInField = false;
   };
 
-  constructor(private readonly router: Router) {
+  constructor(private readonly router: Router, private readonly zone: NgZone) {
     this.showAppShell = !this.isAuthOnlyRoute(window.location.pathname);
 
     this.routerSubscription = this.router.events
@@ -108,7 +108,22 @@ export class AppComponent implements OnDestroy {
     document.addEventListener('click', this.handleClickCapture, true);
   }
 
+  private readonly openNativeInvitation = (): void => {
+    const nativeWindow = window as Window & { SuttruPendingInvitationPath?: string };
+    const path = nativeWindow.SuttruPendingInvitationPath;
+    if (typeof path !== 'string' || !/^\/invite\/[A-Za-z0-9-]{1,200}$/.test(path)) return;
+    delete nativeWindow.SuttruPendingInvitationPath;
+    this.zone.run(() => { void this.router.navigateByUrl(path); });
+  };
+
+  ngAfterViewInit(): void {
+    window.addEventListener('suttru:invitation-link', this.openNativeInvitation);
+    // Native launch data can arrive before Angular finishes its initial navigation.
+    setTimeout(this.openNativeInvitation, 0);
+  }
+
   ngOnDestroy(): void {
+    window.removeEventListener('suttru:invitation-link', this.openNativeInvitation);
     this.routerSubscription.unsubscribe();
     document.removeEventListener('pointerdown', this.handlePointerDownCapture, true);
     document.removeEventListener('click', this.handleClickCapture, true);

@@ -1,3 +1,4 @@
+import { invitationPath } from './invitation-link.mjs';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
@@ -33,6 +34,27 @@ if (Capacitor.isNativePlatform()) {
     }
   };
   void nativeWindow.SuttruNative.clearTemporaryFiles();
+  const openInvitation = (raw:string) => {
+    const path = invitationPath(raw);
+    if (path && window.location.pathname !== path) {
+      if (!document.querySelector('app-root')) {
+        window.location.assign(new URL(path, window.location.origin).href);
+        return;
+      }
+      (window as any).SuttruPendingInvitationPath = path;
+      window.dispatchEvent(new Event('suttru:invitation-link'));
+    }
+  };
+  void App.addListener('appUrlOpen', ({url}) => {
+    void Browser.close().catch(() => {});
+    openInvitation(url);
+  });
+  // The offline viewer also loads this bridge. Do not replay an old launch URL
+  // there, or overwrite the invitation route used to reopen the main app.
+  if (document.querySelector('app-root') && !window.location.pathname.startsWith('/invite/')) {
+    void App.getLaunchUrl().then(result => { if(result?.url) openInvitation(result.url); }).catch(() => {});
+  }
+
   void App.addListener('backButton', ({ canGoBack }) => {
     if (canGoBack) window.history.back(); else void App.exitApp();
   });
