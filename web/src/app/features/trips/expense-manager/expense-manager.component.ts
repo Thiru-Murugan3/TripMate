@@ -688,6 +688,7 @@ interface SplitDraft {
  .expense-toolbar>.btn { width:auto; padding:10px 12px; font-size:12px; }
  .expense-controls { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,130px); gap:8px; }
  .expense-controls input { width:100%; }
+ .expense-controls select { min-width:0; width:100%; }
  .expense-controls .clear-filter { grid-column:1/-1; }
  .mobile-expense-tabs { display:grid; grid-template-columns:1fr 1fr; padding:4px; background:#eaf0f8; border-radius:12px; gap:4px; margin:16px 0; }
  .mobile-expense-tabs button { border:0; border-radius:9px; background:transparent; color:#475569; font:inherit; font-size:12px; font-weight:700; padding:8px; }
