@@ -269,6 +269,8 @@ import { DocumentService } from '../../../core/services/document.service';
     </section>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; }
     .documents-page { color:#0f172a; }
     .documents-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
@@ -355,7 +357,17 @@ import { DocumentService } from '../../../core/services/document.service';
       .document-summary { grid-template-columns:1fr; }
       .documents-grid { grid-template-columns:1fr; }
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .document-card, .document-info { min-width:0; }
+ .document-actions { flex-wrap:wrap; }
+ .selected-file { grid-template-columns:auto minmax(0,1fr); }
+ .selected-file > button { grid-column:1/-1; }
+ .upload-zone, .drop-zone { overflow-wrap:anywhere; }
+}
+`]
 })
 export class DocumentManagerComponent implements OnInit, OnChanges {
   private readonly documentService = inject(DocumentService);

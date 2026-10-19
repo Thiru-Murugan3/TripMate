@@ -229,3 +229,11 @@
     .result-toolbar h3 { font-size:1rem; }
     .results-container > h2 { font-size:1.1rem; }
     @media(max-width:480px) { .places-grid { grid-template-columns:1fr; } .discover-hero { flex-wrap:wrap; } }
+
+@media(max-width:760px) {
+ :host { min-width:0; max-width:100%; }
+ .selection-bar { flex-wrap:wrap; max-width:100%; }
+ .selection-trip-picker, .selection-bar > div:first-child { min-width:0; max-width:100%; }
+ .selection-bar button, .card-action, .provider-action { min-height:44px; white-space:normal; }
+ .detail-content { overflow-wrap:anywhere; }
+}

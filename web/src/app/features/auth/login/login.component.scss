@@ -578,3 +578,12 @@ form {
   }
 }
 
+
+@media(max-width:760px) {
+ :host { min-width:0; max-width:100%; }
+ .auth-panel, .register-panel { padding:1.5rem 1rem; min-width:0; }
+ .hero-content, .auth-card, .form-container, .register-card { min-width:0; width:100%; }
+ .form-row, .social-buttons { flex-wrap:wrap; }
+ input:not([type=checkbox]), select { min-width:0; max-width:100%; font-size:16px; }
+ button { min-height:44px; max-width:100%; }
+}

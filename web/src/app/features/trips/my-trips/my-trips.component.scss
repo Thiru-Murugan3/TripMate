@@ -423,3 +423,13 @@ select:focus {
     height: 195px;
   }
 }
+
+@media(max-width:760px) {
+ :host { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+ .toolbar, .trip-grid { grid-template-columns:minmax(0,1fr); }
+ .card-footer, .card-actions, .image-badges { flex-wrap:wrap; gap:8px; }
+ .meta-row { grid-template-columns:minmax(0,1fr); }
+ .meta-right { text-align:left; }
+ .delete-button, .view-button { min-height:44px; }
+ input, select { min-width:0; max-width:100%; font-size:16px; }
+}

@@ -511,6 +511,8 @@ interface SplitDraft {
     </section>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; }
     .expense-page { color:#0f172a; }
     .expense-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
@@ -672,7 +674,20 @@ interface SplitDraft {
       .split-edit-row { grid-template-columns:1fr; }
       .equal-share { text-align:left; padding-left:2.2rem; }
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .expense-card-main { grid-template-columns:minmax(0,1fr); }
+ .expense-amount { text-align:left; }
+ .expense-card-main > *, .expense-sidebar, .balance-person { min-width:0; }
+ .expense-controls, .expense-toolbar { flex-wrap:wrap; }
+ .split-row { grid-template-columns:minmax(0,1fr); }
+ .split-row > * { text-align:left; }
+ .balance-row, .suggested-row { flex-wrap:wrap; }
+ .net-value { white-space:normal; }
+}
+`]
 })
 export class ExpenseManagerComponent implements OnInit, OnChanges {
   private readonly fb = inject(FormBuilder);

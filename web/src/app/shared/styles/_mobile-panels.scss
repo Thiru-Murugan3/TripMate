@@ -1,0 +1,29 @@
+// Included after each panel's own styles so mobile constraints stay component-scoped.
+@mixin panels {
+  :host { display: block; min-width: 0; max-width: 100%; }
+  @media (max-width: 760px) {
+    :host { overflow-wrap: anywhere; }
+    button, .btn { min-height: 44px; max-width: 100%; white-space: normal; }
+    input:not([type='checkbox']):not([type='radio']), select, textarea {
+      min-width: 0; max-width: 100%; min-height: 44px; font-size: 16px;
+    }
+    .field, .form-group, .half { min-width: 0; max-width: 100%; }
+    .form-row { flex-direction: column; }
+    .form-grid.two { grid-template-columns: minmax(0, 1fr); }
+    .modal-backdrop {
+      padding: max(12px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))
+        max(12px, var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))
+        max(12px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))
+        max(12px, var(--safe-area-inset-left, env(safe-area-inset-left, 0px)));
+      overflow-y: auto;
+    }
+    .modal, .modal-content, .modal-card {
+      min-width: 0; max-width: 100%; padding: 1rem;
+      max-height: calc(100dvh - 24px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+      overflow-y: auto;
+    }
+    .modal-header > div { min-width: 0; }
+    .modal-actions { flex-wrap: wrap; }
+    .modal-actions > button { flex: 1 1 120px; }
+  }
+}

@@ -262,6 +262,8 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
     </section>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-panels' as mobile;
+
     .timeline-container { display: flex; flex-direction: column; gap: 1.25rem; }
     .card { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
     
@@ -392,7 +394,22 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
       .event-title { font-size: 0.88rem; }
       .timeline-headline { flex-direction: column; }
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .timeline-header { padding:1rem; }
+ .timeline-card-wrapper { grid-template-columns:48px 12px minmax(0,1fr); gap:5px; }
+ .timeline-event-card, .event-title-area { min-width:0; }
+ .timeline-event-card { padding:10px; }
+ .spine-node { width:12px; height:12px; }
+ .spine-node span { display:none; }
+ .event-header-row, .day-header, .day-banner { flex-wrap:wrap; }
+ .event-actions, .event-meta-row { flex-wrap:wrap; }
+ .event-status-pill { white-space:normal; }
+ .day-jump-scroll { min-width:0; max-width:100%; }
+}
+`]
 })
 export class TripTimelineComponent implements OnChanges, OnDestroy {
   @Input() tripId!: number;

@@ -144,6 +144,8 @@ type NotificationFilter = 'all' | 'unread';
     </section>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     .notifications-page {
       min-height: calc(100vh - 140px);
       padding: 2.25rem 1.25rem 4rem;
@@ -415,7 +417,13 @@ type NotificationFilter = 'all' | 'unread';
         padding: 0 1rem 0.9rem;
       }
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .notification-actions, .header-actions, .tabs { flex-wrap:wrap; }
+}
+`]
 })
 export class NotificationsComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
