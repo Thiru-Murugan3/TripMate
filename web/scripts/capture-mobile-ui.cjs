@@ -54,15 +54,21 @@ function response(url){
     for(const [name,url,selector] of screens){
       await page.goto(origin+url);await page.locator(selector).first().waitFor();await page.waitForTimeout(300);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${name} overflows phone viewport`);
-      await page.screenshot({path:path.join(output,name+'.png')});
+      await page.screenshot({animations:'disabled',path:path.join(output,name+'.png')});
     }
+    await page.goto(origin+'/trips');await page.locator('.trip-card').first().waitFor();
+    await page.getByRole('button',{name:'Filters',exact:true}).click();
+    await page.locator('.select-field select').nth(1).selectOption('FRIENDS');
+    assert.equal(await page.locator('.trip-card').count(),1);
+    await page.getByRole('button',{name:'Clear',exact:true}).click();
+    assert.equal(await page.locator('.trip-card').count(),2);
     await page.goto(origin+'/dashboard');await page.locator('.mobile-home').waitFor();
     await page.getByRole('link',{name:'Plan a new trip',exact:true}).click();await page.locator('.modal-content').waitFor();
-    await page.screenshot({path:path.join(output,'create-trip.png')});
+    await page.screenshot({animations:'disabled',path:path.join(output,'create-trip.png')});
     await page.setViewportSize({width:1280,height:900});await page.goto(origin+'/dashboard');await page.locator('.hero-section').waitFor();
     assert.equal(await page.locator('.mobile-navigation').isVisible(),false);
-    await page.screenshot({path:path.join(output,'desktop-home.png')});
-    await page.setViewportSize({width:390,height:844});await page.goto(origin+'/login');await page.locator('form').waitFor();await page.screenshot({path:path.join(output,'login.png')});
+    await page.screenshot({animations:'disabled',path:path.join(output,'desktop-home.png')});
+    await page.setViewportSize({width:390,height:844});await page.goto(origin+'/login');await page.locator('form').waitFor();await page.screenshot({animations:'disabled',path:path.join(output,'login.png')});
     assert.deepEqual(errors,[],'App errors during UI review');
     console.log('Mobile UI review passed; screenshots saved in '+output);
     await context.close();

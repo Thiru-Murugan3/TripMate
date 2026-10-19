@@ -485,3 +485,6 @@ select:focus {
  .meta-right { text-align:right; }
  .meta-label { display:none; }
 }
+
+.mobile-trip-dates { display:none; }
+@media(max-width:760px) { .desktop-trip-dates { display:none; } .mobile-trip-dates { display:block; font-size:10px; font-weight:500; color:#64748b; } }
