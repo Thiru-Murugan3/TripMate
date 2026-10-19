@@ -1,3 +1,4 @@
+import { hasNativeCamera, takeDocumentPhoto } from '../../../core/utils/device-access';
 import { hasNativeFiles, shareNativeFile } from '../../../core/utils/native-files';
 import { CommonModule } from '@angular/common';
 import {
@@ -217,9 +218,15 @@ import { DocumentService } from '../../../core/services/document.service';
             </select>
           </label>
 
+          <p class="permission-note">Choose a file to allow access to that file only. Suttru uploads it only after you tap Upload.</p>
+          <div *ngIf="nativeCamera" class="camera-option">
+            <button type="button" class="btn secondary" (click)="captureDocument(fileInput)" [disabled]="isCapturing || isUploading">{{isCapturing ? 'Opening camera…' : 'Take document photo'}}</button>
+            <small>Camera access is requested when needed. You can choose a file instead.</small>
+          </div>
           <label class="file-drop">
             <input
               #fileInput
+              [disabled]="isCapturing || isUploading"
               type="file"
               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt"
               (change)="onFileSelected($event)"
@@ -257,7 +264,7 @@ import { DocumentService } from '../../../core/services/document.service';
             <button
               type="button"
               class="btn primary"
-              [disabled]="!selectedFile || isUploading"
+              [disabled]="!selectedFile || isUploading || isCapturing"
               (click)="uploadDocument()"
             >
               <span class="material-symbols-outlined">upload</span>
@@ -268,7 +275,8 @@ import { DocumentService } from '../../../core/services/document.service';
       </div>
     </section>
   `,
-  styles: [`
+  styles: [`.permission-note,.camera-option small{font-size:12px;color:#64748b;line-height:1.5}.camera-option{display:grid;gap:8px;margin:12px 0}.camera-option button{min-height:44px}
+
 @use '../../../shared/styles/mobile-panels' as mobile;
 
     :host { display:block; }
@@ -388,6 +396,8 @@ export class DocumentManagerComponent implements OnInit, OnChanges {
   selectedDocumentType: DocumentType = 'OTHER';
   uploadError = '';
   isUploading = false;
+  isCapturing = false;
+  readonly nativeCamera = hasNativeCamera();
   deletingDocumentId: number | null = null;
   viewingDocumentId: number | null = null;
 
@@ -481,14 +491,28 @@ export class DocumentManagerComponent implements OnInit, OnChanges {
     this.selectedDocumentType = 'OTHER';
     this.uploadError = '';
     this.showUploadModal = true;
+    if((window as any).SuttruCameraInterrupted){this.uploadError="Camera capture was interrupted. Take the photo again or choose a file.";delete (window as any).SuttruCameraInterrupted;}
   }
 
   closeUploadModal(): void {
-    if (this.isUploading) return;
+    if (this.isUploading || this.isCapturing) return;
 
     this.showUploadModal = false;
     this.selectedFile = null;
     this.uploadError = '';
+  }
+
+  async captureDocument(input?:HTMLInputElement):Promise<void> {
+    if(!this.canEdit || this.isCapturing || this.isUploading)return;
+    const tripId=this.tripId;this.isCapturing=true;this.uploadError='';
+    try {
+      const photo=await takeDocumentPhoto();
+      if(photo && this.showUploadModal && this.tripId===tripId && this.canEdit) {
+        if(photo.size>this.maxFileSize)this.uploadError='File is larger than the 10 MB maximum.';
+        else {this.selectedFile=photo;if(input)input.value="";}
+      }
+    }catch(error){if(this.tripId===tripId && this.showUploadModal)this.uploadError=error instanceof Error?error.message:'Unable to take a photo. Choose a file instead.';}
+    finally{this.isCapturing=false;}
   }
 
   onFileSelected(event: Event): void {
@@ -526,7 +550,7 @@ export class DocumentManagerComponent implements OnInit, OnChanges {
   }
 
   uploadDocument(): void {
-    if (!this.canEdit || !this.selectedFile || this.isUploading) return;
+    if (!this.canEdit || !this.selectedFile || this.isUploading || this.isCapturing) return;
 
     this.isUploading = true;
     this.uploadError = '';
