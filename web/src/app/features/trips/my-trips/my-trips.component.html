@@ -119,7 +119,7 @@
             <div class="meta-row">
               <div>
                 <span class="meta-label">DATES</span>
-                <strong>{{ trip.startDate }} → {{ trip.endDate }}</strong>
+                <strong class="desktop-trip-dates">{{ trip.startDate }} → {{ trip.endDate }}</strong><strong class="mobile-trip-dates">{{ trip.startDate | date:'d MMM' }} – {{ trip.endDate | date:'d MMM yyyy' }}</strong>
                 <small>{{ tripDuration(trip) }}</small>
               </div>
               <div class="meta-right">
