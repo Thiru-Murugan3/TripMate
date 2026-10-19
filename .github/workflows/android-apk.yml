@@ -36,6 +36,8 @@ jobs:
         working-directory: mobile
       - run: npm test
         working-directory: mobile
+      - run: npm run test:mobile-layout
+        working-directory: web
       - run: npm run test:native
         working-directory: web
       - run: npm run build

@@ -32,6 +32,7 @@ jobs:
       - run: npm run test:expenses
       - run: npm run test:auth
       - run: npm run test:discovery
+      - run: npm run test:mobile-layout
       - run: npm run test:explore
       - run: npm run test:discovery-admin
       - run: npm run build
