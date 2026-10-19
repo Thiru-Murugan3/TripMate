@@ -15,7 +15,7 @@ describe('Free Top 10 places',()=>{
     const f=TestBed.createComponent(TopPlacesComponent);f.componentRef.setInput('destination','Ooty');f.detectChanges();http.expectNone(r=>r.url.includes('top-places'));
     (f.nativeElement.querySelector('button') as HTMLButtonElement).click();
     const req=http.expectOne(r=>r.url.endsWith('/discovery/top-places'));expect(req.request.method).toBe('GET');expect(req.request.params.get('destination')).toBe('Ooty');expect(req.request.params.get('radiusKm')).toBe('25');req.flush(response);f.detectChanges();
-    expect(f.nativeElement.textContent).toContain('Ooty Lake');expect(f.nativeElement.textContent).toContain('Fewer than ten');
+    expect(f.nativeElement.textContent).toContain('Ooty Lake');expect(f.nativeElement.textContent).not.toContain('Free, source-based');
     expect(f.nativeElement.querySelector('a').getAttribute('href')).toBe(place.sourceUrl);
     expect(f.nativeElement.querySelectorAll('li').length).toBe(1);expect(f.nativeElement.textContent).not.toContain('AI assistance');f.destroy();
   });
@@ -25,10 +25,10 @@ describe('Free Top 10 places',()=>{
     f.componentInstance.load();const newer=http.expectOne(r=>r.params.get('radiusKm')==='50');newer.flush({...response,radiusKm:50});
     f.componentRef.setInput('destination','Chennai');f.detectChanges();expect(f.componentInstance.result).toBeNull();f.destroy();
   });
-  it('preserves source warnings and does not fabricate ten places when the provider is empty',()=>{
+  it('shows a concise empty state without provider diagnostics or fabricated places',()=>{
     const f=TestBed.createComponent(TopPlacesComponent);f.componentRef.setInput('destination','Ooty');f.detectChanges();f.componentInstance.load();
     http.expectOne(r=>r.url.endsWith('/discovery/top-places')).flush({...response,places:[],resultCount:0,warnings:['Source unavailable']});f.detectChanges();
-    expect(f.nativeElement.textContent).toContain('No supported highlights');expect(f.nativeElement.textContent).toContain('Source unavailable');expect(f.nativeElement.querySelectorAll('li').length).toBe(0);f.destroy();
+    expect(f.nativeElement.textContent).toContain('No places found');expect(f.nativeElement.textContent).not.toContain('Source unavailable');expect(f.nativeElement.querySelectorAll('li').length).toBe(0);f.destroy();
   });
   it('allows retry after failure while preventing duplicate requests and requests during saving',()=>{
     const f=TestBed.createComponent(TopPlacesComponent);f.componentRef.setInput('destination','Ooty');f.detectChanges();f.componentInstance.load();f.componentInstance.load();

@@ -7,7 +7,7 @@ describe('DestinationOverviewComponent',()=>{
     const fixture=TestBed.createComponent(DestinationOverviewComponent); const c=fixture.componentInstance;
     c.title='Ooty'; c.photos=destinationPhotography('Ooty (Udhagamandalam), Tamil Nadu'); fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Jaseem Hamza');
-    expect(fixture.nativeElement.textContent).toContain('Not live');
+    expect(fixture.nativeElement.textContent).not.toContain('Not live');
     expect(fixture.nativeElement.querySelector('a[href="https://creativecommons.org/licenses/by/3.0/"]')).not.toBeNull();
     c.photos=[...c.photos,{...c.photos[0],url:'second-photo.jpg'}]; fixture.detectChanges();
     fixture.nativeElement.querySelector('button[aria-label="Next destination photograph"]').click(); fixture.detectChanges();
