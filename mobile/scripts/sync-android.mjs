@@ -11,7 +11,7 @@ let xml = readFileSync(manifest, 'utf8').replace(/\sandroid:(?:allowBackup|fullB
 xml = xml.replace('<application', '<application android:allowBackup="false" android:fullBackupContent="false" android:usesCleartextTraffic="false"');
 const inviteFilter = `<intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="suttru" android:host="invite"/></intent-filter>`;
 if (!xml.includes('android:scheme="suttru"')) xml = xml.replace('</activity>', inviteFilter + '</activity>');
-// Camera is optional; prompt only when taking a document photo. Location is foreground only.
+// Camera hardware is optional. Runtime grants are requested after login; location is foreground only.
 for (const permission of ['CAMERA','ACCESS_COARSE_LOCATION','ACCESS_FINE_LOCATION']) {
   if (!xml.includes(`android.permission.${permission}"`)) xml = xml.replace('</manifest>', `<uses-permission android:name="android.permission.${permission}"/></manifest>`);
 }

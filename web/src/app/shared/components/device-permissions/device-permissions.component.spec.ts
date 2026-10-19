@@ -1,4 +1,4 @@
-import {TestBed} from '@angular/core/testing';
+import {TestBed,fakeAsync,flushMicrotasks} from '@angular/core/testing';
 import {signal} from '@angular/core';
 import {provideHttpClient} from '@angular/common/http';
 import {HttpTestingController,provideHttpClientTesting} from '@angular/common/http/testing';
@@ -18,13 +18,13 @@ describe('Native permission prompts after login',()=>{
   TestBed.configureTestingModule({providers:[provideHttpClient(),provideHttpClientTesting(),{provide:AuthService,useValue:auth},{provide:Router,useValue:{url:path,events}}]});
   const f=TestBed.createComponent(DevicePermissionsComponent);f.detectChanges();return {f,auth,api,events,order,state,http:TestBed.inject(HttpTestingController)};
  }
- it('never prompts on login; verifies the signed-in session before requesting one permission at a time',async()=>{
-  const s=setup();await s.f.whenStable();expect(s.api.permissionSetup).not.toHaveBeenCalled();s.http.expectNone(()=>true);
-  s.auth.token='token-1';s.auth.currentUser.set({id:1});s.auth.isAuthenticated.set(true);s.f.detectChanges();await s.f.whenStable();expect(s.api.requestPermission).not.toHaveBeenCalled();
-  s.events.next(new NavigationEnd(1,'/dashboard','/dashboard'));s.f.detectChanges();await s.f.whenStable();
-  const request=s.http.expectOne(r=>r.url.endsWith('/users/me'));expect(s.order).toEqual([]);request.flush({id:1});await s.f.whenStable();
+ it('never prompts on login; verifies the signed-in session before requesting one permission at a time',fakeAsync(()=>{
+  const s=setup();flushMicrotasks();expect(s.api.permissionSetup).not.toHaveBeenCalled();s.http.expectNone(()=>true);
+  s.auth.token='token-1';s.auth.currentUser.set({id:1});s.auth.isAuthenticated.set(true);s.f.detectChanges();flushMicrotasks();expect(s.api.requestPermission).not.toHaveBeenCalled();
+  s.events.next(new NavigationEnd(1,'/dashboard','/dashboard'));s.f.detectChanges();flushMicrotasks();
+  const request=s.http.expectOne(r=>r.url.endsWith('/users/me'));expect(s.order).toEqual([]);request.flush({id:1});flushMicrotasks();
   expect(s.order).toEqual(['photos','camera','location']);expect(s.api.completePermissionSetup).toHaveBeenCalledTimes(1);s.f.destroy();
- });
+ }));
  it('reuses completed setup and opens Android settings from Profile',async()=>{
   const s=setup(true,'/account',true);await s.f.whenStable();s.http.expectNone(()=>true);expect(s.api.requestPermission).not.toHaveBeenCalled();
   window.dispatchEvent(new Event('suttru:open-permissions'));expect(s.api.openPermissionSettings).toHaveBeenCalledTimes(1);s.f.destroy();
