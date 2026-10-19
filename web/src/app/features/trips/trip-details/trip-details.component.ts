@@ -27,7 +27,6 @@ import { BookingService } from '../../../core/services/booking.service';
 import { TripService } from '../../../core/services/trip.service';
 import { TripMemberService } from '../../../core/services/trip-member.service';
 import { ItineraryPlannerComponent } from '../itinerary-planner/itinerary-planner.component';
-import { PlaceManagerComponent } from '../place-manager/place-manager.component';
 import { ExpenseManagerComponent } from '../expense-manager/expense-manager.component';
 import { DocumentManagerComponent } from '../document-manager/document-manager.component';
 import { ExploreComponent } from '../../discovery/explore.component';
@@ -38,7 +37,7 @@ import { TripTimelineComponent } from '../trip-timeline/trip-timeline.component'
 
 import { OfflineTripComponent } from '../offline-trip/offline-trip.component';
 
-type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACES' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
+type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
 @Component({
   selector: 'app-trip-details',
@@ -50,7 +49,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
     ReactiveFormsModule,
     ItineraryPlannerComponent,
     ExploreComponent,
-    PlaceManagerComponent,
     ExpenseManagerComponent,
     DocumentManagerComponent,
     ReservationEmailImportsComponent,
@@ -164,9 +162,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
           </button>
           <button type="button" class="tab-btn" [class.active]="activeTab === 'ITINERARY'" (click)="setActiveTab('ITINERARY')">
             Itinerary
-          </button>
-          <button type="button" class="tab-btn" [class.active]="activeTab === 'PLACES'" (click)="setActiveTab('PLACES')">
-            Places
           </button>
           <button type="button" class="tab-btn" [class.active]="activeTab === 'EXPENSES'" (click)="setActiveTab('EXPENSES')">
             Expenses
@@ -403,14 +398,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'PLACE
             [canEdit]="canPlanTrip"
             (itineraryChanged)="onItineraryChanged()"
           ></app-itinerary-planner>
-        </section>
-
-        <section *ngIf="activeTab === 'PLACES'" class="tab-content">
-          <app-place-manager
-            [tripId]="tripId"
-            [canEdit]="canPlanTrip"
-            (placesChanged)="onPlacesChanged()"
-          ></app-place-manager>
         </section>
 
         <section *ngIf="activeTab === 'EXPENSES'" class="tab-content">
@@ -2894,8 +2881,10 @@ export class TripDetailsComponent implements OnInit {
     }
 
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      const tab = params.get('tab');
-      if(tab && ['OVERVIEW','TIMELINE','EXPLORE','ITINERARY','PLACES','EXPENSES','BOOKINGS','DOCUMENTS','MEMBERS'].includes(tab)) this.activeTab = tab as TripDetailsTab;
+      const requestedTab = params.get('tab');
+      const tab = requestedTab === 'PLACES' ? 'EXPLORE' : requestedTab;
+      if(tab && ['OVERVIEW','TIMELINE','EXPLORE','ITINERARY','EXPENSES','BOOKINGS','DOCUMENTS','MEMBERS'].includes(tab)) this.activeTab = tab as TripDetailsTab;
+      if(requestedTab === 'PLACES') void this.router.navigate([], {relativeTo:this.route, queryParams:{tab:'EXPLORE'}, queryParamsHandling:'merge', replaceUrl:true});
     });
     this.loadTripDetails();
     this.loadDashboard();
@@ -3059,8 +3048,7 @@ export class TripDetailsComponent implements OnInit {
       tab === 'EXPLORE' ||
       tab === 'ITINERARY' ||
       tab === 'EXPENSES' ||
-      tab === 'DOCUMENTS' ||
-      tab === 'PLACES'
+      tab === 'DOCUMENTS'
     ) {
       this.loadDashboard();
     }
