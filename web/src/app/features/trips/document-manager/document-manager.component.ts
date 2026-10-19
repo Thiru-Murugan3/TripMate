@@ -275,9 +275,10 @@ import { DocumentService } from '../../../core/services/document.service';
       </div>
     </section>
   `,
-  styles: [`.permission-note,.camera-option small{font-size:12px;color:#64748b;line-height:1.5}.camera-option{display:grid;gap:8px;margin:12px 0}.camera-option button{min-height:44px}
+  styles: [`
 
 @use '../../../shared/styles/mobile-panels' as mobile;
+.permission-note,.camera-option small{font-size:12px;color:#64748b;line-height:1.5}.camera-option{display:grid;gap:8px;margin:12px 0}.camera-option button{min-height:44px}
 
     :host { display:block; }
     .documents-page { color:#0f172a; }
