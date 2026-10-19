@@ -1,3 +1,4 @@
+import { installNativePermissions } from './native-permissions.mjs';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import sharp from 'sharp';
@@ -16,8 +17,9 @@ for (const permission of ['CAMERA','ACCESS_COARSE_LOCATION','ACCESS_FINE_LOCATIO
 }
 if (!xml.includes('android.hardware.camera"')) xml = xml.replace('</manifest>', '<uses-feature android:name="android.hardware.camera" android:required="false"/></manifest>');
 writeFileSync(manifest, xml);
+installNativePermissions("android");
 const gradle = 'android/app/build.gradle';
-let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 7').replace(/versionName ["'][^"']*["']/, 'versionName "0.5.1"');
+let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 8').replace(/versionName ["'][^"']*["']/, 'versionName "0.5.2"');
 if (!build.includes('applicationIdSuffix')) build = build.replace('buildTypes {', 'buildTypes {\n        debug { applicationIdSuffix ".debug" }');
 writeFileSync(gradle, build);
 const resource = 'android/app/src/main/res';

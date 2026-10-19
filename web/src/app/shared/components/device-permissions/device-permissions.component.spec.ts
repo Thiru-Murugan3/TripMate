@@ -1,26 +1,56 @@
 import {TestBed} from '@angular/core/testing';
-import {DevicePermissionsComponent} from './device-permissions.component';
-describe('First-launch permission setup',()=>{
+import {signal} from '@angular/core';
+import {provideHttpClient} from '@angular/common/http';
+import {HttpTestingController,provideHttpClientTesting} from '@angular/common/http/testing';
+import {NavigationEnd,Router} from '@angular/router';
+import {Subject} from 'rxjs';
+import {AuthService} from '../../../core/services/auth.service';
+import {DevicePermissionsComponent,requestPendingPermissions} from './device-permissions.component';
+const initial=()=>({completed:false,photoSelection:false,camera:'denied',location:'denied'});
+describe('Native permission prompts after login',()=>{
  const target=window as any;
- afterEach(()=>{delete target.SuttruDevice;});
- function setup(completed=false){
-  const state={completed,photoSelection:false,camera:'prompt',location:'prompt'};
-  const api={permissionSetup:jasmine.createSpy().and.callFake(async()=>({...state})),requestPermission:jasmine.createSpy().and.callFake(async(feature:string)=>{if(feature==='photos')state.photoSelection=true;return true;}),completePermissionSetup:jasmine.createSpy().and.callFake(async()=>{state.completed=true;}),resetPhotoSelection:jasmine.createSpy().and.callFake(async()=>{state.photoSelection=false;})};
-  target.SuttruDevice=api;const f=TestBed.createComponent(DevicePermissionsComponent);f.detectChanges();return {f,state,api};
+ afterEach(()=>{TestBed.inject(HttpTestingController).verify();delete target.SuttruDevice;});
+ function setup(authenticated=false,path='/login',completed=false){
+  const state={...initial(),completed},events=new Subject<any>(),order:string[]=[];
+  const auth={isAuthenticated:signal(authenticated),currentUser:signal<any>(authenticated?{id:1}:null),token:authenticated?'token-1':null as string|null,getToken:()=>auth.token};
+  const api={permissionSetup:jasmine.createSpy().and.callFake(async()=>({...state})),requestPermission:jasmine.createSpy().and.callFake(async(feature:string)=>{order.push(feature);return false;}),completePermissionSetup:jasmine.createSpy().and.callFake(async()=>{state.completed=true;}),openPermissionSettings:jasmine.createSpy().and.resolveTo()};
+  target.SuttruDevice=api;
+  TestBed.configureTestingModule({providers:[provideHttpClient(),provideHttpClientTesting(),{provide:AuthService,useValue:auth},{provide:Router,useValue:{url:path,events}}]});
+  const f=TestBed.createComponent(DevicePermissionsComponent);f.detectChanges();return {f,auth,api,events,order,state,http:TestBed.inject(HttpTestingController)};
  }
- it('shows setup once without requesting access automatically and remembers skip',async()=>{
-  const {f,api,state}=setup();await f.whenStable();expect(f.componentInstance.panel.nativeElement.open).toBeTrue();expect(api.requestPermission).not.toHaveBeenCalled();
-  await f.componentInstance.finish();expect(state.completed).toBeTrue();expect(f.componentInstance.panel.nativeElement.open).toBeFalse();f.destroy();
-  const next=setup(true);await next.f.whenStable();expect(next.f.componentInstance.panel.nativeElement.open).toBeFalse();next.f.destroy();
+ it('never prompts on login; verifies the signed-in session before requesting one permission at a time',async()=>{
+  const s=setup();await s.f.whenStable();expect(s.api.permissionSetup).not.toHaveBeenCalled();s.http.expectNone(()=>true);
+  s.auth.token='token-1';s.auth.currentUser.set({id:1});s.auth.isAuthenticated.set(true);s.f.detectChanges();await s.f.whenStable();expect(s.api.requestPermission).not.toHaveBeenCalled();
+  s.events.next(new NavigationEnd(1,'/dashboard','/dashboard'));s.f.detectChanges();await s.f.whenStable();
+  const request=s.http.expectOne(r=>r.url.endsWith('/users/me'));expect(s.order).toEqual([]);request.flush({id:1});await s.f.whenStable();
+  expect(s.order).toEqual(['photos','camera','location']);expect(s.api.completePermissionSetup).toHaveBeenCalledTimes(1);s.f.destroy();
  });
- it('allows a specific choice, resets photo consent, and can reopen from Profile',async()=>{
-  const {f,api}=setup(true);await f.whenStable();window.dispatchEvent(new Event('suttru:open-permissions'));await f.whenStable();expect(f.componentInstance.panel.nativeElement.open).toBeTrue();
-  await f.componentInstance.allow('photos');expect(api.requestPermission).toHaveBeenCalledOnceWith('photos');expect(f.componentInstance.state?.photoSelection).toBeTrue();
-  await f.componentInstance.resetPhotos();expect(f.componentInstance.state?.photoSelection).toBeFalse();f.destroy();
+ it('reuses completed setup and opens Android settings from Profile',async()=>{
+  const s=setup(true,'/account',true);await s.f.whenStable();s.http.expectNone(()=>true);expect(s.api.requestPermission).not.toHaveBeenCalled();
+  window.dispatchEvent(new Event('suttru:open-permissions'));expect(s.api.openPermissionSettings).toHaveBeenCalledTimes(1);s.f.destroy();
  });
- it('shows recovery after denial and stays open if saving the one-time choice fails',async()=>{
-  const {f,api}=setup();await f.whenStable();api.requestPermission.and.rejectWith(new Error('Open Android Settings'));
-  await f.componentInstance.allow('camera');expect(f.componentInstance.error).toContain('Android Settings');expect(f.componentInstance.busy).toBeFalse();
-  api.completePermissionSetup.and.rejectWith(new Error('storage unavailable'));await f.componentInstance.finish();expect(f.componentInstance.panel.nativeElement.open).toBeTrue();expect(f.componentInstance.error).toContain('Unable to remember');f.destroy();
+ it('does not start prompts when logout happens during session verification',async()=>{
+  const s=setup(true,'/dashboard');await s.f.whenStable();const request=s.http.expectOne(r=>r.url.endsWith('/users/me'));
+  s.auth.token=null;s.auth.isAuthenticated.set(false);s.auth.currentUser.set(null);s.f.detectChanges();request.flush({id:1});await s.f.whenStable();
+  expect(s.api.requestPermission).not.toHaveBeenCalled();expect(s.api.completePermissionSetup).not.toHaveBeenCalled();s.f.destroy();
+ });
+ it('never prompts for a mismatched cached user',async()=>{
+  const s=setup(true,'/dashboard');await s.f.whenStable();s.http.expectOne(r=>r.url.endsWith('/users/me')).flush({id:2});await s.f.whenStable();
+  expect(s.api.requestPermission).not.toHaveBeenCalled();s.f.destroy();
+ });
+});
+describe('Sequential native permission requests',()=>{
+ it('awaits the current native dialog, continues after denial, and skips existing grants',async()=>{
+  const order:string[]=[];let finish!:(allowed:boolean)=>void,complete=false;
+  const api:any={requestPermission:async(feature:string)=>{order.push(feature);if(feature==='photos')return new Promise<boolean>(r=>finish=r);return false;},completePermissionSetup:async()=>{complete=true;}};
+  const pending=requestPendingPermissions(api,initial(),()=>true);expect(order).toEqual(['photos']);finish(false);await pending;
+  expect(order).toEqual(['photos','camera','location']);expect(complete).toBeTrue();order.length=0;
+  await requestPendingPermissions(api,{...initial(),photoSelection:true,camera:'granted',location:'granted'},()=>true);expect(order).toEqual([]);
+ });
+ it('stops queued prompts if sign-in ends while a dialog is open',async()=>{
+  const order:string[]=[];let active=true,finish!:(value:boolean)=>void;const complete=jasmine.createSpy().and.resolveTo();
+  const api:any={requestPermission:(feature:string)=>{order.push(feature);return new Promise<boolean>(r=>finish=r);},completePermissionSetup:complete};
+  const pending=requestPendingPermissions(api,initial(),()=>active);active=false;finish(true);await pending;
+  expect(order).toEqual(['photos']);expect(complete).not.toHaveBeenCalled();
  });
 });

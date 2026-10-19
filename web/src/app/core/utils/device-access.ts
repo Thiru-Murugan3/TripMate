@@ -1,9 +1,9 @@
-export interface PermissionSetup {completed:boolean;photoSelection:boolean;camera:string;location:string;}
+export interface PermissionSetup {completed:boolean;photoSelection:boolean;photoAccess?:string;camera:string;location:string;}
 export interface DeviceAccess {
   permissionSetup?():Promise<PermissionSetup>;
   requestPermission?(feature:"photos"|"camera"|"location"):Promise<boolean>;
   completePermissionSetup?():Promise<void>;
-  resetPhotoSelection?():Promise<void>;
+  openPermissionSettings?():Promise<void>;
   pickDocumentPhoto?():Promise<File|null>;
   takeDocumentPhoto():Promise<File|null>;
   currentPosition():Promise<{coords:{latitude:number;longitude:number}}>;

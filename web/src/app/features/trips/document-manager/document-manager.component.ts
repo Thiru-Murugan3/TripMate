@@ -222,7 +222,7 @@ import { DocumentService } from '../../../core/services/document.service';
           <div *ngIf="nativeCamera" class="camera-option">
             <button type="button" class="btn secondary" (click)="captureDocument(fileInput)" [disabled]="isCapturing || isUploading">{{isCapturing && captureSource==='camera' ? 'Opening camera…' : 'Take document photo'}}</button>
             <button type="button" class="btn secondary" (click)="captureDocument(fileInput,'gallery')" [disabled]="isCapturing || isUploading">{{isCapturing && captureSource==='gallery' ? 'Opening photos…' : 'Choose photos'}}</button>
-            <small>Photo selection asks for approval once. Only selected photos are added for review.</small>
+            <small>Android controls photo access. Your chosen photo is reviewed before upload.</small>
           </div>
           <label class="file-drop">
             <input
@@ -494,7 +494,7 @@ export class DocumentManagerComponent implements OnInit, OnChanges {
     this.selectedDocumentType = 'OTHER';
     this.uploadError = '';
     this.showUploadModal = true;
-    if((window as any).SuttruCameraInterrupted){this.uploadError="Camera capture was interrupted. Take the photo again or choose a file.";delete (window as any).SuttruCameraInterrupted;}
+    if((window as any).SuttruCameraInterrupted){this.uploadError="Photo selection was interrupted. Choose or take the photo again.";delete (window as any).SuttruCameraInterrupted;}
   }
 
   closeUploadModal(): void {

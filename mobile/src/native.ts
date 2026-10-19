@@ -3,14 +3,15 @@ import { Camera } from '@capacitor/camera';
 import { Geolocation } from '@capacitor/geolocation';
 import { createDeviceAccess } from './device-access.mjs';
 import { invitationPath } from './invitation-link.mjs';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 
 if (Capacitor.isNativePlatform()) {
-  const access = createDeviceAccess({preferences:Preferences,camera:Camera,location:Geolocation,confirmAction:(message:string)=>window.confirm(message),
+  const permissions=registerPlugin<any>("SuttruPermissions");
+  const access = createDeviceAccess({permissions,preferences:Preferences,camera:Camera,location:Geolocation,
     readPhoto:async (photo:{webPath?:string})=>{if(!photo.webPath)throw new Error("No camera photo was returned. Please try again.");const response=await fetch(photo.webPath);if(!response.ok)throw new Error("Unable to read the camera photo. Please try again.");return response.blob();},
     makeFile:(blob:Blob,name:string)=>new File([blob],name,{type:"image/jpeg"})});
   (window as any).SuttruDevice = access;
@@ -65,8 +66,7 @@ if (Capacitor.isNativePlatform()) {
   }
 
   void App.addListener('backButton', ({ canGoBack }) => {
-    const setup=document.querySelector('dialog[data-device-permissions][open]');
-    if(setup){setup.dispatchEvent(new Event('cancel',{cancelable:true}));return;}
+
     if (canGoBack) window.history.back(); else void App.exitApp();
   });
   document.addEventListener('click', event => {
