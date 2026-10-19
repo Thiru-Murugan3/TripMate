@@ -36,3 +36,18 @@ summary { min-height:44px; padding:12px 0; cursor:pointer; }
   .selection-actions { flex-direction:column; align-items:stretch; }
   .selection-actions button { width:100%; }
 }
+@media(max-width:760px) {
+ :host { color:#0f172a; margin:12px 0; }
+ .top-places { padding:12px; border-color:#dbeafe; border-radius:14px; background:#f8fbff; }
+ .top-places>button { background:#eff6ff; color:#2563eb; border-color:#bfdbfe; border-radius:10px; width:100%; font-weight:750; }
+ .note { font-size:11px; color:#64748b; }
+ h3 { font-size:15px; }
+ li { padding:10px 0; }
+ .place-option { font-size:13px; }
+ .place-option strong { line-height:1.4; }
+ .actions { gap:6px; }
+ button { background:#2563eb; border-color:#2563eb; border-radius:10px; }
+ a { color:#2563eb; }
+ input[type=checkbox] { accent-color:#2563eb; }
+ .selection-actions { background:#eff6ff; border-color:#bfdbfe; padding:10px; border-radius:12px; }
+}

@@ -1,0 +1,28 @@
+@mixin screen {
+ @media(max-width:760px) {
+  :host { background:#f8fafc; color:#0f172a; }
+  .verify-page,.forgot-page,.auth-container { min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px 16px; background:#f8fafc; }
+  .glow,.glow-sphere { display:none; }
+  .verify-card,.recovery-card,.auth-card { width:100%; max-width:460px; padding:24px 20px; background:white; border:1px solid #e2e8f0; border-radius:20px; box-shadow:0 8px 30px #0f172a06; backdrop-filter:none; }
+  .verify-header h2,.card-header h1,.auth-header h2 { color:#0f172a; font-size:24px; letter-spacing:-.035em; }
+  .subtitle,.field-help,.security-note,.card-footer,.auth-footer,.verify-footer,.resend-block,.back-link { color:#64748b; font-size:12px; line-height:1.6; }
+  .email-highlight,.brand-text,.brand { color:#2563eb; }
+  .logo-icon,.brand-badge { background:#eff6ff; color:#2563eb; }
+  .mail-icon-circle,.icon-shell { background:#eff6ff; color:#2563eb; border-color:#dbeafe; }
+  .otp-boxes-container { gap:6px; }
+  .otp-box { min-width:0; width:calc((100% - 30px)/6); height:50px; background:#f8fafc; color:#0f172a; border:1px solid #cbd5e1; border-radius:10px; }
+  .otp-box:focus,.otp-box.has-value { border-color:#2563eb; background:#eff6ff; box-shadow:0 0 0 2px #2563eb18; }
+  .submit-btn,.btn-primary { min-height:48px; background:#2563eb; color:white; border:0; border-radius:12px; box-shadow:none; }
+  .form-control,.input-wrapper input { min-height:48px; font-size:16px; background:#fff; color:#0f172a; border-color:#cbd5e1; border-radius:12px; }
+  .auth-card .form-group { display:grid; gap:6px; margin-bottom:16px; }
+  .auth-card .form-control { display:block; width:100%; padding:12px; font:inherit; font-size:16px; border:1px solid #cbd5e1; }
+  .auth-card .btn-block { width:100%; font:inherit; font-weight:700; padding:12px; }
+  .timer-text { color:#475569; }
+
+  .form-label,.field label { color:#475569; font-size:12px; }
+  .verify-footer { display:grid; gap:12px; }
+  .back-link,.auth-footer a,.card-footer a,.resend-btn { color:#2563eb; min-height:44px; display:inline-flex; align-items:center; justify-content:center; }
+  .alert--error,.alert-danger { color:#991b1b; background:#fef2f2; border:1px solid #fecaca; }
+  .alert--success,.alert-success { color:#166534; background:#f0fdf4; border:1px solid #bbf7d0; }
+ }
+}

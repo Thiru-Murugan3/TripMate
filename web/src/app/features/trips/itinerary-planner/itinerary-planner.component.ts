@@ -111,7 +111,8 @@ interface DayRoutePlan {
           </article>
         </div>
 
-        <section *ngIf="itinerary?.days?.length && itineraryHasMappedPlaces" class="route-planner-card">
+        <button *ngIf="itinerary?.days?.length && itineraryHasMappedPlaces" type="button" class="mobile-route-toggle" (click)="mobileRouteOpen=!mobileRouteOpen" [attr.aria-expanded]="mobileRouteOpen" aria-controls="trip-route-tools">{{ mobileRouteOpen ? 'Hide route & map' : 'Route & map tools' }}</button>
+        <section *ngIf="itinerary?.days?.length && itineraryHasMappedPlaces" id="trip-route-tools" class="route-planner-card" [class.mobile-route-open]="mobileRouteOpen">
           <div class="route-planner-heading">
             <div>
               <span class="eyebrow">SMART ROUTE MAP</span>
@@ -679,6 +680,20 @@ interface DayRoutePlan {
     }
 
 @include mobile.panels;
+.mobile-route-toggle { display:none; }
+@media(max-width:760px) {
+ .mobile-route-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; padding:12px 14px; border:1px solid #dbeafe; border-radius:12px; background:#eff6ff; color:#2563eb; font:inherit; font-weight:700; margin:14px 0; }
+ .route-planner-card { display:none; }
+ .route-planner-card.mobile-route-open { display:block; }
+ .day-card { padding:14px; border-radius:16px; }
+ .day-header { gap:8px; }
+ .day-title h3 { font-size:16px; }
+ .activity-row { gap:8px; }
+ .activity-title-row h4 { font-size:14px; }
+ .activity-meta { font-size:11px; }
+ .description { font-size:12px; line-height:1.6; }
+}
+
 .mobile-day-strip { display:none; }
 @media(max-width:760px) {
  .mobile-day-strip { display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px; }
@@ -704,6 +719,7 @@ interface DayRoutePlan {
 `]
 })
 export class ItineraryPlannerComponent implements OnInit, OnChanges {
+  mobileRouteOpen=false;
   private readonly fb = inject(FormBuilder);
   private readonly itineraryService = inject(ItineraryService);
   private readonly placeService = inject(PlaceService);

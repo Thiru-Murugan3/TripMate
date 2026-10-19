@@ -11,10 +11,11 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
   template:`
     <section class="explore">
       <header><h1>Explore places</h1><p>Find places, choose your trip day and build your itinerary.</p></header>
-      <form class="search-form" (ngSubmit)="discover()">
+      <form class="search-form city-search" [class.mobile-filter-open]="mobileFiltersOpen" (ngSubmit)="discover()">
         <label>City or area<input name="destination" [(ngModel)]="searchDestination" (ngModelChange)="cityChanged()" [disabled]="isSaving" maxlength="180" placeholder="Ooty, Tamil Nadu" required /></label>
-        <label>Show<select name="category" [(ngModel)]="category" [disabled]="isSaving"><option value="ALL">Places & activities</option><option value="FOOD">Restaurants</option><option value="STAY">Hotels</option></select></label>
-        <label>Within<select name="radius" [(ngModel)]="radiusKm" [disabled]="isSaving"><option [ngValue]="10">10 km</option><option [ngValue]="25">25 km</option><option [ngValue]="50">50 km</option><option [ngValue]="100">100 km · wider region</option></select></label>
+        <label class="advanced-filter">Show<select name="category" [(ngModel)]="category" [disabled]="isSaving"><option value="ALL">Places & activities</option><option value="FOOD">Restaurants</option><option value="STAY">Hotels</option></select></label>
+        <label class="advanced-filter">Within<select name="radius" [(ngModel)]="radiusKm" [disabled]="isSaving"><option [ngValue]="10">10 km</option><option [ngValue]="25">25 km</option><option [ngValue]="50">50 km</option><option [ngValue]="100">100 km · wider region</option></select></label>
+        <button class="phone-filter-button" type="button" (click)="mobileFiltersOpen=!mobileFiltersOpen" [attr.aria-expanded]="mobileFiltersOpen">{{mobileFiltersOpen ? 'Hide filters' : 'Filters'}}</button>
         <button [disabled]="isLoading || isSaving || searchDestination.trim().length < 2">Search</button>
       </form>
       <p *ngIf="isLoading" role="status">Finding places from configured sources…</p>
@@ -54,9 +55,10 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
       </ng-container>
     </section>`,
   styleUrls:['./tripadvisor.component.scss'],
-  styles:[`.search-form label { min-width:140px; }.source-link { display:block; font-size:11px; margin-top:12px; }.source-notes { font-size:12px; margin:12px 0; }.source-notes p { margin:6px 0; }.plan-panel h2 { margin-bottom:12px; }`]
+  styles:[`.phone-filter-button { display:none; } @media(max-width:760px) { .city-search .advanced-filter { display:none; } .city-search.mobile-filter-open .advanced-filter { display:grid; } .city-search .phone-filter-button { display:block; background:#eff6ff; color:#2563eb; border-color:#dbeafe; } .city-search>button { grid-column:auto; } } @media(min-width:761px) { .search-form label { min-width:140px; } }.source-link { display:block; font-size:11px; margin-top:12px; }.source-notes { font-size:12px; margin:12px 0; }.source-notes p { margin:6px 0; }.plan-panel h2 { margin-bottom:12px; }`]
 })
 export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
+  mobileFiltersOpen=false;
   constructor() { super(); this.autoAddOnSelect=false; }
   cityChanged(): void { this.cancelDiscoverySearch(); this.filterText=''; this.clearSelection(); this.errorMessage=''; this.successMessage=''; }
 }

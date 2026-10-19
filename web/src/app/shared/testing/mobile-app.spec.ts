@@ -1,3 +1,9 @@
+import { NotificationsComponent } from '../../features/notifications/notifications.component';
+import { MyInvitationsComponent } from '../../features/invitations/my-invitations.component';
+import { ShareTripComponent } from '../../features/invitations/share-trip.component';
+import { VerifyEmailComponent } from '../../features/auth/verify-email/verify-email.component';
+import { ForgotPasswordComponent } from '../../features/auth/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from '../../features/auth/reset-password/reset-password.component';
 import { Type, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -94,6 +100,25 @@ describe('App-wide mobile layouts', () => {
           itemType: 'TRANSPORT_DEPARTURE', category: 'TRANSPORT', title: longName, subtitle: longName, location: longName,
           timeFormatted: '09:00 AM', endTimeFormatted: '11:00 AM', status: 'CONFIRMED', icon: 'flight', badgeColor: 'blue', conflict: false }] }] }
     }, { tripId: 10 }); widths(f);
+  });
+
+  it('fits notifications, invitations and account recovery screens', () => {
+    widths(mount(NotificationsComponent, {isLoading:false}));
+    widths(mount(MyInvitationsComponent, {loading:false}));
+    widths(mount(ShareTripComponent, {loadingTrip:false,trip}));
+    widths(mount(VerifyEmailComponent, {email:'traveller@example.com',maskedEmail:'tra***@example.com'}));
+    widths(mount(ForgotPasswordComponent, {}));
+    widths(mount(ResetPasswordComponent, {}));
+  });
+
+  it('keeps spending and balances accessible through the mobile expense switcher', () => {
+    const f=mount(ExpenseManagerComponent, {isLoading:false}, {trip,tripId:10,canEdit:true});
+    const buttons=f.nativeElement.querySelectorAll('.mobile-expense-tabs button');
+    buttons[1].click();f.detectChanges();
+    expect(f.componentInstance.mobileView).toBe('balances');widths(f);
+    expect(f.nativeElement.querySelector('.expense-layout').classList.contains('mobile-balances')).toBeTrue();
+    buttons[0].click();f.detectChanges();
+    expect(f.componentInstance.mobileView).toBe('spending');widths(f);
   });
 
   it('fits expense currency entry, place entry, document upload and booking search', () => {
