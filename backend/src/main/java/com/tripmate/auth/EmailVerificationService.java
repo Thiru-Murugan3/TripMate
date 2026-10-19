@@ -29,6 +29,7 @@ public class EmailVerificationService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final AuditLogService auditLogService;
+    private final AuthService authService;
     private final SecureRandom random = new SecureRandom();
 
     @Transactional
@@ -79,8 +80,8 @@ public class EmailVerificationService {
         );
     }
 
-    @Transactional
-    public void verifyRegistration(VerifyEmailRequest request) {
+    @Transactional(noRollbackFor = ResponseStatusException.class)
+    public LoginResponse verifyRegistration(VerifyEmailRequest request) {
         String email = request.email().trim().toLowerCase();
         String inputOtp = request.otp().trim();
 
@@ -147,6 +148,8 @@ public class EmailVerificationService {
 
         // Audit Log
         auditLogService.log(savedUser.getId(), null, AuditAction.USER_REGISTERED, "USER", savedUser.getId(), "User email verified & account created: " + savedUser.getEmail());
+
+        return authService.createSession(savedUser);
     }
 
     @Transactional

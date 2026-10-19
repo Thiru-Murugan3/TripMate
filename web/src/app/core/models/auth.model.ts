@@ -71,3 +71,8 @@ export interface ApiErrorResponse {
   path: string;
   fieldErrors?: Record<string, string>;
 }
+
+export interface VerifyEmailResponse {
+  message: string;
+  session: LoginResponse;
+}

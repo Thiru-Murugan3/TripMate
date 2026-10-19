@@ -110,6 +110,11 @@ public class AuthService {
                     "Invalid email or password");
         }
 
+        return createSession(user);
+    }
+
+    LoginResponse createSession(User user) {
+        String email = user.getEmail();
         String accessToken = jwtService.generateAccessToken(user);
 
         String refreshToken = refreshTokenService

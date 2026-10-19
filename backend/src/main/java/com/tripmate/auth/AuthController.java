@@ -28,14 +28,12 @@ public class AuthController {
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<Map<String, String>> verifyEmail(
+    public ResponseEntity<VerifyEmailResponse> verifyEmail(
             @Valid @RequestBody VerifyEmailRequest request) {
 
-        emailVerificationService.verifyRegistration(request);
-
-        return ResponseEntity.ok(
-                Map.of("message", "Email verified successfully. Account created.")
-        );
+        LoginResponse session = emailVerificationService.verifyRegistration(request);
+        return ResponseEntity.ok(new VerifyEmailResponse(
+                "Email verified successfully. Account created.", session));
     }
 
     @PostMapping("/resend-email-otp")
