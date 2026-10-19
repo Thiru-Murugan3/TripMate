@@ -58,9 +58,13 @@ describe('Mobile Explore layout',()=>{
           if(width<360) {expect(second.top).toBeGreaterThan(first.bottom);expect(second.left).toBe(first.left);}
           else {expect(second.top).toBe(first.top);expect(second.left).toBeGreaterThan(first.right);}
           for(const control of root.querySelectorAll<HTMLElement>('.search-form input,.search-form select,.search-form button,.pagination button')){
-            const rect=control.getBoundingClientRect();expect(rect.height).toBeGreaterThanOrEqual(44);expect(rect.right).toBeLessThanOrEqual(width);
+            const rect=control.getBoundingClientRect();if(!rect.width || !rect.height)continue;expect(rect.height).toBeGreaterThanOrEqual(44);expect(rect.right).toBeLessThanOrEqual(width);
           }
         }else{expect(second.top).toBe(first.top);expect(second.left).toBeGreaterThan(first.right);}
+      });
+      f.componentInstance.mobileFiltersOpen=true;f.detectChanges();
+      atViewport(f.nativeElement,320,root=>{
+        for(const control of root.querySelectorAll<HTMLElement>('.advanced-filter select'))expect(control.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
       });
     } finally {f.destroy();}
   });

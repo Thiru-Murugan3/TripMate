@@ -48,7 +48,7 @@ interface SplitDraft {
       <div class="expense-toolbar">
         <div>
           <span class="eyebrow">EXPENSES</span>
-          <h2>Trip Expenses & Splitting</h2>
+          <h2>Trip expenses</h2>
           <p>Track spending, split costs with members and settle pending shares.</p>
         </div>
 
@@ -682,6 +682,13 @@ interface SplitDraft {
 @include mobile.panels;
 .mobile-expense-tabs { display:none; }
 @media(max-width:760px) {
+ .expense-toolbar { grid-template-columns:minmax(0,1fr) auto; align-items:center; }
+ .expense-toolbar p { display:none; }
+ .expense-toolbar h2 { margin:2px 0 0; font-size:20px; }
+ .expense-toolbar>.btn { width:auto; padding:10px 12px; font-size:12px; }
+ .expense-controls { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,130px); gap:8px; }
+ .expense-controls input { width:100%; }
+ .expense-controls .clear-filter { grid-column:1/-1; }
  .mobile-expense-tabs { display:grid; grid-template-columns:1fr 1fr; padding:4px; background:#eaf0f8; border-radius:12px; gap:4px; margin:16px 0; }
  .mobile-expense-tabs button { border:0; border-radius:9px; background:transparent; color:#475569; font:inherit; font-size:12px; font-weight:700; padding:8px; }
  .mobile-expense-tabs button.active { background:white; color:#2563eb; box-shadow:0 2px 6px #0f172a08; }

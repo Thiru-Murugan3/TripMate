@@ -72,6 +72,7 @@ function response(url){
       await page.screenshot({animations:'disabled',path:path.join(output,name+'.png')});
     }
     await page.goto(origin+'/trips/10?tab=EXPENSES');await page.locator('.expense-card').waitFor();
+    await page.locator('.expense-card').scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:path.join(output,'expense-list.png')});
     await page.getByRole('button',{name:'Balances & settlements',exact:true}).click();
     await page.locator('.mobile-balances .expense-sidebar').waitFor();
     assert.equal(await page.locator('.expense-list-column').isVisible(),false);
@@ -83,6 +84,7 @@ function response(url){
     await page.getByRole('button',{name:'Route & map tools',exact:true}).click();await page.locator('.route-planner-card.mobile-route-open').waitFor();
     await page.screenshot({animations:'disabled',path:path.join(output,'itinerary-route-tools.png')});
     await page.goto(origin+'/trips/10?tab=EXPLORE');await page.locator('app-combined-places .card').first().waitFor();
+    await page.locator('app-combined-places .card').first().scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:path.join(output,'explore-results.png')});
     await page.getByRole('button',{name:'Top 10 places to visit',exact:true}).click();await page.locator('app-top-places li').first().waitFor();
     await page.locator('app-top-places input[type=checkbox]').first().check();await page.locator('app-top-places .selection-actions').waitFor();
     await page.screenshot({animations:'disabled',path:path.join(output,'top-places-selected.png')});
