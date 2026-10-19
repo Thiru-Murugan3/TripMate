@@ -79,7 +79,28 @@ function response(url){
       await page.screenshot({animations:'disabled',path:path.join(output,name+'.png')});
     }
     // Native camera fixture: selecting a photo must stop at review, without a POST.
-    await page.addInitScript(()=>{window.SuttruDevice={takeDocumentPhoto:async()=>new File(['camera fixture'],'camera-review.jpg',{type:'image/jpeg'})};});
+    await page.addInitScript(()=>{
+      window.SuttruDevice={
+        permissionSetup:async()=>({completed:localStorage.getItem('fixture-permission-setup')==='done',photoSelection:localStorage.getItem('fixture-photo-consent')==='allowed',camera:'prompt',location:'prompt'}),
+        requestPermission:async feature=>{if(feature==='photos')localStorage.setItem('fixture-photo-consent','allowed');return true;},
+        completePermissionSetup:async()=>localStorage.setItem('fixture-permission-setup','done'),
+        resetPhotoSelection:async()=>localStorage.removeItem('fixture-photo-consent'),
+        takeDocumentPhoto:async()=>new File(['camera fixture'],'camera-review.jpg',{type:'image/jpeg'}),
+        pickDocumentPhoto:async()=>new File(['gallery fixture'],'gallery-review.jpg',{type:'image/jpeg'})
+      };
+    });
+    await page.goto(origin+'/trips/10?tab=DOCUMENTS');await page.locator('.document-card').waitFor();
+    const accessPanel=page.getByRole('dialog',{name:'Set up app access'});
+    await accessPanel.waitFor();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'permission setup overflows phone viewport');
+    await page.screenshot({animations:'disabled',path:path.join(output,'first-launch-permissions.png')});
+    await accessPanel.getByRole('button',{name:'Allow selected photos',exact:true}).click();
+    await accessPanel.getByText('Photo selection allowed on this phone',{exact:true}).waitFor();
+    await accessPanel.getByRole('button',{name:'Continue',exact:true}).click();await accessPanel.waitFor({state:'hidden'});
+    await page.reload();await page.locator('.document-card').waitFor();
+    assert.equal(await accessPanel.isVisible(),false,'first-launch setup repeated after approval');
+    await page.goto(origin+'/account');await page.getByRole('button',{name:/App permissions/}).click();await accessPanel.waitFor();
+    await accessPanel.getByRole('button',{name:'Continue',exact:true}).click();await accessPanel.waitFor({state:'hidden'});
     await page.goto(origin+'/trips/10?tab=DOCUMENTS');await page.locator('.document-card').waitFor();
     let documentUploads=0;const trackUpload=request=>{if(request.method()==='POST' && new URL(request.url()).pathname.endsWith('/documents'))documentUploads++;};
     page.on('request',trackUpload);
@@ -89,6 +110,11 @@ function response(url){
     assert.equal(documentUploads,0,'camera capture uploaded without review');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'camera review overflows phone viewport');
     await page.screenshot({animations:'disabled',path:path.join(output,'document-camera-review.png')});
+    await page.getByRole('button',{name:'Choose photos',exact:true}).click();
+    await page.locator('.selected-file strong').filter({hasText:'gallery-review.jpg'}).waitFor();
+    assert.equal(documentUploads,0,'gallery photo uploaded without review');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'gallery review overflows phone viewport');
+    await page.screenshot({animations:'disabled',path:path.join(output,'document-gallery-review.png')});
     page.off('request',trackUpload);
     await page.goto(origin+'/trips/10?tab=TIMELINE');await page.locator('.mobile-offline-toggle').waitFor();
     await page.locator('.mobile-offline-toggle').click();await page.locator('.offline-options.mobile-expanded').waitFor();

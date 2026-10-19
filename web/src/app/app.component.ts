@@ -1,3 +1,4 @@
+import { DevicePermissionsComponent } from './shared/components/device-permissions/device-permissions.component';
 import { AfterViewInit, Component, NgZone, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
@@ -9,8 +10,9 @@ import { FooterComponent } from './shared/components/footer/footer.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, FooterComponent, MobileNavigationComponent],
+  imports: [DevicePermissionsComponent,RouterOutlet, NavbarComponent, FooterComponent, MobileNavigationComponent],
   template: `
+    <app-device-permissions></app-device-permissions>
     <div class="app-layout" [class.mobile-inner-view]="isMobileInnerView" [class.has-app-shell]="showAppShell">
       @if (showAppShell) {
         <app-navbar></app-navbar>

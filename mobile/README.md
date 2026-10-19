@@ -40,7 +40,7 @@ Device verification must include login/token refresh, multipart document uploads
 - Temporary shared files stay in private cache, are scheduled for deletion, and are cleared on the next launch and sign-out. A receiver chosen by the user may retain its own copy.
 - Saved offline trips and chosen documents use the existing account-scoped IndexedDB store. Native builds skip browser service-worker setup because the reader is bundled. Save packs online before travelling; offline edits and background flight push alerts are not added.
 - Camera permission is requested only after tapping Take document photo. The photo is reviewed before Upload; choosing a file uses the Android system picker without storage-wide permission.
-- Current-location actions request foreground location only and accept approximate location. Denied access explains how to recover in Android Settings or continue manually. No permission is requested at startup.
+- Current-location actions request foreground location only and accept approximate location. Denied access explains how to recover in Android Settings or continue manually. First launch shows a one-time optional setup for camera, foreground location and selected-photo consent. Choices can be revisited from Profile → App permissions. Photo consent is saved in native Preferences across restarts and logout; every photo selection still uses the Android picker. Android controls camera/location grant lifetime, including revocation and Only this time.
 - No microphone, contacts, background location or notification permissions are requested. Native backup and cleartext network traffic are disabled during generation.
 - The existing Suttru SVG is converted into Android launcher icons; no generated tourist images are introduced.
 

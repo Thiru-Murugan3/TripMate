@@ -17,7 +17,7 @@ for (const permission of ['CAMERA','ACCESS_COARSE_LOCATION','ACCESS_FINE_LOCATIO
 if (!xml.includes('android.hardware.camera"')) xml = xml.replace('</manifest>', '<uses-feature android:name="android.hardware.camera" android:required="false"/></manifest>');
 writeFileSync(manifest, xml);
 const gradle = 'android/app/build.gradle';
-let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 6').replace(/versionName ["'][^"']*["']/, 'versionName "0.5.0"');
+let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 7').replace(/versionName ["'][^"']*["']/, 'versionName "0.5.1"');
 if (!build.includes('applicationIdSuffix')) build = build.replace('buildTypes {', 'buildTypes {\n        debug { applicationIdSuffix ".debug" }');
 writeFileSync(gradle, build);
 const resource = 'android/app/src/main/res';

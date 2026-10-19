@@ -12,6 +12,10 @@ describe('Document camera review',()=>{
   const photo=new File(['photo'],'document.jpg',{type:'image/jpeg'}),f=setup(async()=>photo);await f.componentInstance.captureDocument();
   expect(f.componentInstance.selectedFile).toBe(photo);expect(service.uploadDocument).not.toHaveBeenCalled();f.destroy();
  });
+ it('uses the gallery action without opening the camera or uploading',async()=>{
+  const camera=jasmine.createSpy().and.resolveTo(null),f=setup(camera),photo=new File(['photo'],'gallery.jpg',{type:'image/jpeg'});target.SuttruDevice.pickDocumentPhoto=jasmine.createSpy().and.resolveTo(photo);
+  await f.componentInstance.captureDocument(undefined,'gallery');expect(f.componentInstance.selectedFile).toBe(photo);expect(camera).not.toHaveBeenCalled();expect(service.uploadDocument).not.toHaveBeenCalled();f.destroy();
+ });
  it('keeps a previously selected file on cancellation or denial and explains recovery',async()=>{
   const f=setup(async()=>null),previous=new File(['ticket'],'ticket.pdf');f.componentInstance.selectedFile=previous;
   await f.componentInstance.captureDocument();expect(f.componentInstance.selectedFile).toBe(previous);
