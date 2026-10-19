@@ -6,7 +6,7 @@ Packages the existing Angular application into a Capacitor 8 Android app. The AP
 
 The **Android APK** workflow builds pull requests and pushes to `development`. After a successful run, download the **Suttru-Android-debug** artifact and unzip **Suttru-debug.apk**. This is a debug-signed testing app, with application ID `in.suttru.app.debug`, separate from a future release app. Enable installation from your chosen file manager when installing on an Android device.
 
-No APK is checked into source control. The workflow must actually pass before claiming an APK exists. The initial native dependency installation creates a lockfile; its artifact is retained for review and should be committed after the first successful build. Exact top-level package versions are pinned now.
+No APK is checked into source control. The workflow must actually pass before claiming an APK exists. Native dependencies are locked to the package-lock.json captured from the successful first Android build; both local and CI builds use npm ci. A copy of the lockfile is retained with each successful APK build.
 
 ## Local build
 
@@ -14,7 +14,7 @@ Install Node 22+, Java 21, Android SDK platform 36/build tools 36.0.0 and Androi
 
 ```sh
 npm ci --prefix web
-npm install --prefix mobile
+npm ci --prefix mobile
 npm run build --prefix web
 cd mobile
 MOBILE_API_BASE=https://tripmate-api-thiru-murugan3.onrender.com npm run prepare:web
