@@ -4,6 +4,8 @@ import { By } from '@angular/platform-browser';
 import { TopPlacesComponent } from './top-places.component';
 import { provideRouter } from '@angular/router';
 import { of, Subject } from 'rxjs';
+import { ExploreComponent } from './explore.component';
+import { routes } from '../../app.routes';
 import { CombinedPlacesComponent } from './combined-places.component';
 import { DiscoveryService } from '../../core/services/discovery.service';
 import { TripService } from '../../core/services/trip.service';
@@ -21,7 +23,7 @@ describe('Combined compact Explore', () => {
     itinerary=jasmine.createSpyObj('ItineraryService',['getItinerary','createDay','createItem']);itinerary.getItinerary.and.returnValue(of({days:[]} as any));itinerary.createDay.and.returnValue(of({id:100,items:[]} as any));itinerary.createItem.and.returnValue(of({id:501} as any));
     TestBed.configureTestingModule({imports:[CombinedPlacesComponent],providers:[provideHttpClient(),provideRouter([]),{provide:DiscoveryService,useValue:discovery},{provide:PlaceService,useValue:places},{provide:ItineraryService,useValue:itinerary},{provide:TripService,useValue:{getMyTrips:()=>of([trip,{...trip,id:20,userRole:'VIEWER'}])}}]});
   });
-  it('shows a compact single result grid with sources and unknown prices', () => {
+  it('shows a compact single result grid without provider explanations and preserves unknown prices', () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
     expect(fixture.nativeElement.textContent).toContain('100 km');
     expect(discovery.discoverPlaces).not.toHaveBeenCalled();c.searchDestination='Ooty';c.discover();fixture.detectChanges();
@@ -29,7 +31,7 @@ describe('Combined compact Explore', () => {
     const open=spyOn(window,'open');
     const mapButton=[...fixture.nativeElement.querySelectorAll('button')].find((button:any)=>button.textContent.includes('View map')) as HTMLButtonElement;
     mapButton.click();expect(open).toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('Geoapify + OpenTripMap');expect(fixture.nativeElement.textContent).toContain('Price not verified');
+    expect(fixture.nativeElement.textContent).not.toContain('Geoapify + OpenTripMap');expect(fixture.nativeElement.querySelector('.source-notes')).toBeNull();expect(fixture.nativeElement.textContent).toContain('Price not verified');
     c.filterText='Garden';c.discover();expect(discovery.discoverPlaces.calls.mostRecent().args[3]?.name).toBe('Garden');fixture.destroy();
   });
   it('keeps selections across pages and saves only after trip/day confirmation', async () => {
@@ -56,6 +58,19 @@ describe('Combined compact Explore', () => {
     expect(top.activeTripId).toBe(10);expect(top.canEdit).toBeTrue();expect(top.availableDayNumbers).toEqual([1,2,3]);
     top.load();await top.toggleSelection(place as any);top.setDayAssignment(place as any,2);await top.saveSelected(true);
     expect(itinerary.createItem).toHaveBeenCalledWith(10,100,jasmine.objectContaining({placeId:500}));expect(changed).toHaveBeenCalled();expect(c.isSaving).toBeFalse();fixture.destroy();
+  });
+
+  it('offers one Explore view, forwards trip changes and retains the existing route', async () => {
+    const fixture=TestBed.createComponent(ExploreComponent);
+    fixture.componentRef.setInput('trip',trip);fixture.componentRef.setInput('canEdit',true);fixture.detectChanges();
+    const child=fixture.debugElement.query(By.directive(CombinedPlacesComponent)).componentInstance as CombinedPlacesComponent;
+    expect(child.activeTripId).toBe(10);expect(child.destination).toBe('Ooty');expect(child.canEdit).toBeTrue();
+    expect(fixture.nativeElement.querySelectorAll('app-combined-places').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('nav.sources')).toBeNull();expect(fixture.nativeElement.textContent).not.toContain('Tripadvisor');
+    const itineraryChanged=spyOn(fixture.componentInstance.itineraryChanged,'emit'),placesChanged=spyOn(fixture.componentInstance.placesChanged,'emit');
+    child.itineraryChanged.emit();child.placesChanged.emit();expect(itineraryChanged).toHaveBeenCalled();expect(placesChanged).toHaveBeenCalled();
+    expect(await routes.find(r=>r.path==='explore')!.loadComponent!()).toBe(ExploreComponent);
+    expect(routes.find(r=>r.path==='explore/india')?.redirectTo).toBe('/explore');fixture.destroy();
   });
 
 });

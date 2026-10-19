@@ -29,7 +29,7 @@ figcaption { font-size: 10px; padding: 5px 12px; line-height: 1.4; }figcaption a
 .plan-panel .footnote { margin:12px 0; }.place-select { display:flex; align-items:center; gap:8px; margin:0 0 12px; cursor:pointer; }.place-select input { width:18px; height:18px; }
 .search-form { flex-wrap:wrap; }
 
-/* Shared mobile layout for Combined places and Tripadvisor. */
+/* Responsive places layout. */
 :host, .explore, .search-form > *, header > *, .plan-fields > * { min-width:0; }
 .explore { box-sizing:border-box; overflow-wrap:anywhere; }
 button, input:not([type=checkbox]), select { min-height:44px; }

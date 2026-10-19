@@ -2,16 +2,15 @@ import { PlacePhotoGalleryComponent } from '../../shared/components/place-photo-
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { TopPlacesComponent } from './top-places.component';
 import { DestinationDiscoveryComponent } from './destination-discovery.component';
 
 /** Compact view reusing existing discovery, credited media and itinerary selection/save logic. */
 @Component({
-  selector:'app-combined-places', standalone:true, imports:[CommonModule,FormsModule,RouterLink,TopPlacesComponent,PlacePhotoGalleryComponent],
+  selector:'app-combined-places', standalone:true, imports:[CommonModule,FormsModule,TopPlacesComponent,PlacePhotoGalleryComponent],
   template:`
     <section class="explore">
-      <header><h1>Explore places</h1><p>Find places, choose your trip day and build your itinerary.</p></header>
+      <header><h1>Explore places</h1></header>
       <form class="search-form city-search" [class.mobile-filter-open]="mobileFiltersOpen" (ngSubmit)="discover()">
         <label>City or area<input name="destination" [(ngModel)]="searchDestination" (ngModelChange)="cityChanged()" [disabled]="isSaving" maxlength="180" placeholder="Ooty, Tamil Nadu" required /></label>
         <label class="advanced-filter">Show<select name="category" [(ngModel)]="category" [disabled]="isSaving"><option value="ALL">Places & activities</option><option value="FOOD">Restaurants</option><option value="STAY">Hotels</option></select></label>
@@ -19,7 +18,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
         <button class="phone-filter-button" type="button" (click)="mobileFiltersOpen=!mobileFiltersOpen" [attr.aria-expanded]="mobileFiltersOpen">{{mobileFiltersOpen ? 'Hide filters' : 'Filters'}}</button>
         <button [disabled]="isLoading || isSaving || searchDestination.trim().length < 2">Search</button>
       </form>
-      <p *ngIf="isLoading" role="status">Finding places from configured sources…</p>
+      <p *ngIf="isLoading" role="status">Finding places…</p>
       <p *ngIf="errorMessage" role="alert" class="notice">{{ errorMessage }}</p>
       <p *ngIf="successMessage && !selectedCount" role="status" class="notice">{{ successMessage }}</p>
       <ng-container *ngIf="result as data">
@@ -29,9 +28,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
           <label>Find a particular place here<input name="placeName" [(ngModel)]="filterText" [disabled]="isSaving" maxlength="180" placeholder="e.g. Botanical Garden" /></label>
           <button [disabled]="isSaving || isLoading">Find place</button><button *ngIf="filterText" type="button" [disabled]="isSaving || isLoading" (click)="filterText=''; discover()">All places</button>
         </form>
-        <p class="footnote">Sources: {{ data.provider }}. Search covers places returned by configured providers within {{ data.radiusKm }} km; coverage varies.</p>
-        <details *ngIf="data.warnings?.length" class="source-notes"><summary>Source availability and coverage</summary><p *ngFor="let warning of data.warnings">{{ warning }}</p></details>
-        <p *ngIf="!data.places.length">No places found. Try another name, a wider radius or check source configuration.</p>
+        <p *ngIf="!data.places.length">No places found. Try another name or a wider radius.</p>
         <div *ngIf="selectedCount" class="plan-panel">
           <h2>{{ selectedCount }} selected</h2>
           <label *ngIf="!embeddedMode">Add to trip<select [ngModel]="activeTripId" (ngModelChange)="selectTrip($event)" [disabled]="isSaving"><option [ngValue]="0">Choose a trip</option><option *ngFor="let trip of editableTrips" [ngValue]="trip.id">{{ trip.name }}</option></select></label>
@@ -51,11 +48,11 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
           </article>
         </div>
         <nav *ngIf="(data.totalPages || 0) > 1" class="pagination" aria-label="Combined places pages"><button [disabled]="isLoading || isSaving || !data.page" (click)="changePage((data.page || 0)-1)">Previous</button><span>Page {{ (data.page || 0)+1 }} of {{ data.totalPages }}</span><button [disabled]="isLoading || isSaving || (data.page || 0)+1 >= (data.totalPages || 0)" (click)="changePage((data.page || 0)+1)">Next</button></nav>
-        <p class="footnote"><a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Powered by Geoapify</a> when configured. {{ data.attribution }}</p>
+        <p class="footnote"><a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify</a> · {{ data.attribution }}</p>
       </ng-container>
     </section>`,
-  styleUrls:['./tripadvisor.component.scss'],
-  styles:[`.phone-filter-button { display:none; } @media(max-width:760px) { .city-search .advanced-filter { display:none; } .city-search.mobile-filter-open .advanced-filter { display:grid; } .city-search .phone-filter-button { display:block; background:#eff6ff; color:#2563eb; border-color:#dbeafe; } .city-search>button { grid-column:auto; } } @media(min-width:761px) { .search-form label { min-width:140px; } }.source-link { display:block; font-size:11px; margin-top:12px; }.source-notes { font-size:12px; margin:12px 0; }.source-notes p { margin:6px 0; }.plan-panel h2 { margin-bottom:12px; }`]
+  styleUrls:['./combined-places.component.scss'],
+  styles:[`.phone-filter-button { display:none; } @media(max-width:760px) { .city-search .advanced-filter { display:none; } .city-search.mobile-filter-open .advanced-filter { display:grid; } .city-search .phone-filter-button { display:block; background:#eff6ff; color:#2563eb; border-color:#dbeafe; } .city-search>button { grid-column:auto; } } @media(min-width:761px) { .search-form label { min-width:140px; } }.source-link { display:block; font-size:11px; margin-top:12px; }.plan-panel h2 { margin-bottom:12px; }`]
 })
 export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
   mobileFiltersOpen=false;

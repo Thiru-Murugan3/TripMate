@@ -12,7 +12,7 @@ export interface DestinationPhoto {
     <section class="destination-overview" aria-label="Destination overview">
       <figure *ngIf="activePhoto as photo" class="destination-photo">
         <img [src]="photo.url" [alt]="photo.name" (error)="failed.add(photo.url)" fetchpriority="high" />
-        <figcaption><span>Source photograph · Not live</span>
+        <figcaption>
           <a [href]="photo.sourcePage" target="_blank" rel="noopener noreferrer">{{ photo.attribution }}</a>
           <a *ngIf="photo.licenseUrl; else licenseText" [href]="photo.licenseUrl" target="_blank" rel="noopener noreferrer">{{ photo.license }}</a>
           <ng-template #licenseText><span>{{ photo.license }}</span></ng-template>
@@ -24,9 +24,9 @@ export interface DestinationPhoto {
         </div>
       </figure>
       <div class="destination-intro" [class.without-photo]="!activePhoto">
-        <p class="eyebrow">YOUR NEXT CHAPTER</p>
+
         <h1>{{ title || 'Explore India' }}</h1>
-        <p class="intro-copy">{{ description }}</p>
+        <p *ngIf="description" class="intro-copy">{{ description }}</p>
       </div>
     </section>
   `,
@@ -49,7 +49,7 @@ export interface DestinationPhoto {
 })
 export class DestinationOverviewComponent {
   @Input() title = '';
-  @Input() description = 'Find things to do, discover places to stay and make room for local experiences. Choose your favourites and build a trip that feels like yours.';
+  @Input() description = '';
   @Input() photos: DestinationPhoto[] = [];
   readonly failed = new Set<string>();
   photoIndex = 0;

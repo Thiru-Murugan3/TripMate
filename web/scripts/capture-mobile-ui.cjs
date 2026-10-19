@@ -23,7 +23,7 @@ const user={id:1,name:'Demo Traveller',email:'traveller@example.com',systemRole:
 const trip={id:10,name:'Kodaikanal Family Trip',destination:'Kodaikanal, Tamil Nadu',tripType:'FAMILY',startDate:'2027-11-13',endDate:'2027-11-16',travelerCount:4,budget:25000,status:'UPCOMING',ownerId:1,ownerName:user.name,userRole:'OWNER'};
 const dashboard={...trip,tripId:10,tripName:trip.name,totalExpenses:18450,remainingBudget:6550,budgetUtilizationPercentage:74,upcomingActivities:[{activity:'Coaker’s Walk',date:'2027-11-13',time:'10:00',location:'Kodaikanal'}],bookings:[],documentCount:2,memberCount:4};
 const summary={tripId:10,totalTripBudget:25000,totalExpenses:18450,remainingBudget:6550,budgetUtilizationPercentage:74,categoryBreakdown:{HOTEL:8000,FOOD:3450,TRANSPORT:5000,ACTIVITIES:2000},memberBalances:[{userId:1,userName:user.name,totalPaid:8000,totalOwed:4000,netBalance:4000},{userId:2,userName:'Trip member',totalPaid:0,totalOwed:4000,netBalance:-4000}],suggestedSettlements:[{fromUserId:2,fromUserName:'Trip member',toUserId:1,toUserName:user.name,amount:4000}]};
-const item={id:1,tripId:10,dayId:1,title:'Coaker’s Walk',placeId:1,location:'Kodaikanal',startTime:'10:00',endTime:'11:00',estimatedCost:100,description:'Sightseeing stroll'};
+const item={tripadvisorLocationId:'legacy-1',id:1,tripId:10,dayId:1,title:'Coaker’s Walk',placeId:1,location:'Kodaikanal',startTime:'10:00',endTime:'11:00',estimatedCost:100,description:'Sightseeing stroll'};
 const days=[{id:1,tripId:10,dayNumber:1,dayDate:trip.startDate,title:'Explore Kodaikanal',items:[item]},{id:2,tripId:10,dayNumber:2,dayDate:'2027-11-14',title:'Lake and gardens',items:[]}];
 const savedPlace={id:1,tripId:10,name:'Coaker’s Walk',category:'ATTRACTION',latitude:10.235,longitude:77.492,estimatedCost:100};
 const discoveryPlace={externalId:'wikidata:Q123',name:'Coaker’s Walk',category:'VIEWPOINT',saveCategory:'ATTRACTION',latitude:10.235,longitude:77.492,distanceKm:1.2,suggestedVisitMinutes:60,priceStatus:'UNKNOWN',sourceName:'Fixture source',sourceUrl:'https://example.com/place',imageGallery:[{url:'/assets/hero.jpg',sourcePage:'https://example.com/photo',license:'Visual fixture',attribution:'Test photo',exact:true,primary:true}]};
@@ -36,10 +36,6 @@ function response(url){
   if(p==='/auth/login')return {accessToken:'visual-review-fixture',refreshToken:'visual-refresh-fixture',tokenType:'Bearer',expiresIn:900};
   if(p==='/users/me')return user;
   if(p==='/discovery/places' || p==='/discovery/top-places')return discoveryResult;
-  if(p==='/discovery/tripadvisor/status')return {available:true};
-  if(p==='/discovery/tripadvisor/search-page')return {places:[{id:'fixture-1',name:'Coaker’s Walk',address:'Kodaikanal',webUrl:'https://www.tripadvisor.com/'}],page:1,totalElements:1,totalPages:1,hasNext:false};
-  if(p.endsWith('/photos'))return [{url:'/assets/hero.jpg',author:'Visual fixture',caption:'Test photo',sourceUrl:'https://www.tripadvisor.com/'}];
-  if(p.startsWith('/discovery/tripadvisor/locations/'))return {id:'fixture-1',name:'Coaker’s Walk',description:'Internal visual fixture',address:'Kodaikanal',webUrl:'https://www.tripadvisor.com/'};
   if(p==='/notifications')return [{id:1,tripId:10,recipientId:1,title:'Your trip is coming up',message:'Check your itinerary and essential documents before departure.',type:'TRIP_REMINDER',read:false,createdAt:'2027-11-12T10:00:00'}];
   if(p.startsWith('/invitations/token/'))return invitation;
   if(p.endsWith('/invitations') || p==='/invitations/my')return [invitation];
@@ -67,6 +63,7 @@ function response(url){
   try {
     const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
     await context.addInitScript(user=>{if(['/register','/verify-email','/forgot-password','/reset-password','/login'].includes(location.pathname)){localStorage.removeItem('tripmate_access_token');localStorage.removeItem('tripmate_user');}else{localStorage.setItem('tripmate_access_token','visual-review-fixture');localStorage.setItem('tripmate_user',JSON.stringify(user));}},user);
+    const providerRequests=[];context.on('request',request=>{if(request.url().includes('/discovery/tripadvisor'))providerRequests.push(request.url());});
     await context.route('**/api/v1/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response(route.request().url()))}));
     const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
     const screens=[['home','/dashboard','.mobile-home'],['trips','/trips','.trip-card'],['expenses','/expenses','.trip-option'],['profile','/account','.account-menu'],['trip','/trips/10?tab=OVERVIEW','.trip-header'],['itinerary','/trips/10?tab=ITINERARY','.day-card'],['trip-expenses','/trips/10?tab=EXPENSES','.expense-card'],['documents','/trips/10?tab=DOCUMENTS','.document-card'],['timeline','/trips/10?tab=TIMELINE','.timeline-event-card'],['explore','/trips/10?tab=EXPLORE','app-combined-places .card'],['legacy-places-link','/trips/10?tab=PLACES','app-combined-places .card'],['bookings','/trips/10?tab=BOOKINGS','.booking-card'],['members','/trips/10?tab=MEMBERS','.member-card'],['booking-search','/trips/10/bookings/new','.booking-type-grid'],['notifications','/notifications','.notification-card'],['invitations','/invitations','.invite-card'],['share','/trips/10/share','.invite-card'],['invitation-link','/invite/fixture-token','.invite-summary'],['register','/register','form'],['verify-email','/verify-email?email=traveller%40example.com','.otp-boxes-container'],['forgot-password','/forgot-password','form'],['reset-password','/reset-password?token=fixture','form']];
@@ -141,6 +138,10 @@ function response(url){
     await page.screenshot({animations:'disabled',path:path.join(output,'itinerary-route-tools.png')});
     await page.goto(origin+'/trips/10?tab=EXPLORE');await page.locator('app-combined-places .card').first().waitFor();
     await page.locator('app-combined-places .card').first().scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:path.join(output,'explore-results.png')});
+    assert.equal(await page.getByRole('button',{name:'Tripadvisor',exact:true}).count(),0);
+    assert.equal(await page.locator('app-combined-places .source-notes').count(),0);
+    assert.equal(await page.getByText('Free, source-based highlights',{exact:false}).count(),0);
+    assert.equal(providerRequests.length,0,'removed provider still receives requests');
     const gallery=page.locator('app-combined-places app-place-photo-gallery').first();
     await gallery.getByRole('button',{name:'Next photo',exact:true}).waitFor();
     await gallery.getByRole('button',{name:'Next photo',exact:true}).click();
@@ -150,8 +151,6 @@ function response(url){
     await page.getByRole('button',{name:'Top 10 places to visit',exact:true}).click();await page.locator('app-top-places li').first().waitFor();
     await page.locator('app-top-places input[type=checkbox]').first().check();await page.locator('app-top-places .selection-actions').waitFor();
     await page.screenshot({animations:'disabled',path:path.join(output,'top-places-selected.png')});
-    await page.getByRole('button',{name:'Tripadvisor',exact:true}).click();await page.locator('app-tripadvisor').getByRole('button',{name:'Search',exact:true}).click();await page.locator('app-tripadvisor .card').first().waitFor();
-    await page.screenshot({animations:'disabled',path:path.join(output,'tripadvisor.png')});
     await page.goto(origin+'/trips');await page.locator('.trip-card').first().waitFor();
     await page.getByRole('button',{name:'Filters',exact:true}).click();
     await page.locator('.select-field select').nth(1).selectOption('FRIENDS');

@@ -19,7 +19,7 @@ if (!xml.includes('android.hardware.camera"')) xml = xml.replace('</manifest>', 
 writeFileSync(manifest, xml);
 installNativePermissions("android");
 const gradle = 'android/app/build.gradle';
-let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 8').replace(/versionName ["'][^"']*["']/, 'versionName "0.5.2"');
+let build = readFileSync(gradle, 'utf8').replace(/versionCode \d+/, 'versionCode 9').replace(/versionName ["'][^"']*["']/, 'versionName "0.5.3"');
 if (!build.includes('applicationIdSuffix')) build = build.replace('buildTypes {', 'buildTypes {\n        debug { applicationIdSuffix ".debug" }');
 writeFileSync(gradle, build);
 const resource = 'android/app/src/main/res';

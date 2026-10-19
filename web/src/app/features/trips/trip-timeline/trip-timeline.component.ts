@@ -1,4 +1,3 @@
-import { TripadvisorReferenceComponent } from '../../discovery/tripadvisor-reference.component';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, inject } from '@angular/core';
 import { TimelineDay, TimelineItem, TripTimeline } from '../../../core/models/timeline.model';
@@ -11,7 +10,7 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
 @Component({
   selector: 'app-trip-timeline',
   standalone: true,
-  imports: [CommonModule, TripadvisorReferenceComponent],
+  imports: [CommonModule],
   template: `
     <section class="timeline-container">
       <!-- Loading State -->
@@ -199,7 +198,6 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
                         <span class="event-category" [attr.data-color]="item.badgeColor">{{ item.category }}</span>
                         <span class="event-category">{{ item.sourceType === 'BOOKING' ? 'Booking' : 'Planned activity' }}</span>
                         <h4 class="event-title">{{ item.title }}</h4>
-                        <app-tripadvisor-reference *ngIf="item.tripadvisorLocationId" [locationId]="item.tripadvisorLocationId"></app-tripadvisor-reference>
                       </div>
                       <span *ngIf="item.status" class="event-status-pill" [attr.data-status]="item.status">
                         {{ item.status }}

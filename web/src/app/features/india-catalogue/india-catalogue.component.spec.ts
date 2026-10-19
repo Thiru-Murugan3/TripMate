@@ -29,7 +29,7 @@ describe('IndiaCatalogueComponent', () => {
   it('labels unknown fees and missing photos without free-price or image substitution', () => {
     const fixture = setup();
     expect(fixture.nativeElement.textContent).toContain('Entry fee not verified');
-    expect(fixture.nativeElement.textContent).toContain('No source photograph available');
+    expect(fixture.nativeElement.textContent).toContain('Photo unavailable');
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
   });
   it('offers opt-in checkboxes and preserves parent selections across pagination and filters', () => {
@@ -128,9 +128,9 @@ describe('IndiaCatalogueComponent', () => {
     fixture.detectChanges();
     expect(c.filtered.map(p=>p.place_id)).toEqual(['candidate']);
     expect(fixture.nativeElement.textContent).toContain('Community candidate');
-    expect(fixture.nativeElement.textContent).toContain('visitor access have not been independently confirmed');
+    expect(fixture.nativeElement.textContent).not.toContain('visitor access have not been independently confirmed');
     c.category=''; c.sourceKind=''; c.query=''; fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Current district boundaries have not been verified');
+    expect(fixture.nativeElement.textContent).not.toContain('Current district boundaries have not been verified');
     c.category='temple'; c.sourceKind='COMMUNITY_STRUCTURED_DATA'; c.page=4;
     c.selectState('Kerala');
     expect(c.category).toBe(''); expect(c.sourceKind).toBe(''); expect(c.page).toBe(0);
@@ -143,7 +143,7 @@ describe('IndiaCatalogueComponent', () => {
     c.selectState('State not assigned'); fixture.detectChanges();
     expect(service.state).toHaveBeenCalledWith({name:'State not assigned',file:'state-unassigned.json',count:1});
     expect(c.places[0].state_ut).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('source records');
+    expect(fixture.nativeElement.textContent).toContain('places');
   });
 
 });

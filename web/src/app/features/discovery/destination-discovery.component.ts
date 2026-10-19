@@ -151,15 +151,11 @@ import { TripService } from '../../core/services/trip.service';
         (selectionChange)="selectCataloguePlace($event)" (dayChange)="setCatalogueDay($event)" (scopeChange)="changeCatalogueScope($event)" />
 
       <div *ngIf="displayedResult as data" class="results-container">
-        <div class="essential-heading"><h2>Essential {{ guideTitle }}</h2><p>Find your kind of adventure.</p></div>
+        <div class="essential-heading"><h2>Essential {{ guideTitle }}</h2></div>
         <nav class="interest-chips" aria-label="Explore interests">
           <button *ngFor="let interest of guideInterests" type="button" [class.active]="category === interest.value" [attr.aria-pressed]="category === interest.value"
             (click)="chooseInterest(interest.value)">{{ interest.label }}</button>
         </nav>
-        <details *ngIf="data.warnings?.length" class="source-notes">
-          <summary>Availability notes</summary>
-          <p *ngFor="let warning of data.warnings">{{ warning }}</p>
-        </details>
 
         <div class="result-toolbar">
           <div>

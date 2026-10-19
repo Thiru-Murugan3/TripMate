@@ -1,11 +1,8 @@
 <section class="catalogue">
   <a *ngIf="!embedded" routerLink="/explore">← Back to destination discovery</a>
-  <app-destination-overview [title]="guideTitle" [photos]="guidePhotos" description="Find your next stop, from local landmarks to outdoor escapes. Select the places you would like to visit and make them part of your trip." />
+  <app-destination-overview [title]="guideTitle" [photos]="guidePhotos" />
   <header class="catalogue-heading">
-    <div><h2>Essential {{ guideTitle }}</h2><p>Discover places at your own pace.</p></div>
-    <details class="about"><summary>About these places</summary>
-      <p>Source snapshot {{ index?.snapshot || '2026-10-15' }}. Coverage is incomplete and records may overlap. Community candidates and heritage entries need review for tourist relevance and public access. District assignments may be historical. Confirm access and fees before visiting. Photos are historical, not live.</p>
-    </details>
+    <div><h2>Essential {{ guideTitle }}</h2></div>
   </header>
   <nav class="interest-chips" aria-label="Catalogue interests">
     <button *ngFor="let item of interests" type="button" [class.active]="interest === item.value" [attr.aria-pressed]="interest === item.value" (click)="chooseInterest(item.value)">{{ item.label }}</button>
@@ -44,14 +41,14 @@
     <label>Place or destination
       <input [(ngModel)]="query" (ngModelChange)="page = 0" placeholder="Search within this state" maxlength="180" />
     </label>
-    <label class="check"><input type="checkbox" [(ngModel)]="photoOnly" (ngModelChange)="page = 0" /> With screened photos</label>
+    <label class="check"><input type="checkbox" [(ngModel)]="photoOnly" (ngModelChange)="page = 0" /> With photos</label>
   </div>
   </details>
   <p *ngIf="loading" role="status">Loading catalogue…</p>
   <p *ngIf="error" role="alert">{{ error }} <button type="button" (click)="retry()">Retry</button></p>
   <ng-container *ngIf="!loading && !error && selectedState">
-    <p role="status">{{ filtered.length }} source records <span *ngIf="pageCount">· Page {{ page + 1 }} of {{ pageCount }}</span></p>
-    <p *ngIf="!filtered.length">No matching records. Try another district or clear your search, category, source and photo filters.</p>
+    <p role="status">{{ filtered.length }} places <span *ngIf="pageCount">· Page {{ page + 1 }} of {{ pageCount }}</span></p>
+    <p *ngIf="!filtered.length">No places found. Try another district or clear your search, category, source and photo filters.</p>
     <section *ngFor="let section of catalogueSections; trackBy: trackSection" class="guide-section" [attr.aria-label]="section.title">
     <h3 class="section-title">{{ section.title }}</h3>
     <div class="cards" tabindex="0" [attr.aria-label]="section.title + ' places'">
@@ -75,17 +72,12 @@
           <details class="place-details">
             <summary>Details</summary>
             <small>Review required<span *ngIf="place.possible_duplicate_group"> · Possible duplicate listing</span></small>
-            <p *ngIf="place.publication_status === 'CANDIDATE_REVIEW_REQUIRED'">Tourist relevance and visitor access have not been independently confirmed. Check the source before travelling.</p>
-            <p *ngIf="place.district_status === 'ASI_PUBLISHED_DISTRICT_CURRENT_BOUNDARY_NOT_VERIFIED'">District as published: {{ place.district_as_published || place.district }}. Current district boundaries have not been verified.</p>
             <p *ngIf="place.categories?.length">Categories: <span *ngFor="let item of place.categories; let last = last">{{ categoryLabel(item) }}{{ last ? '' : ', ' }}</span></p>
-            <p *ngIf="!place.fees.length">Unknown does not mean free.</p>
             <div *ngIf="place.photo as photo" class="photo-details">
-            <span>Capture date reported: {{ photo.capture_date_as_reported || 'Unknown' }} · Not live</span>
             <details><summary>Full photo credit</summary>{{ photo.attribution_text }}<br />{{ photo.credit }}<br />{{ photo.restrictions }}<br />Provider thumbnail; no additional edits.</details>
             </div>
           <details *ngIf="place.fees.length">
             <summary>Published entry-fee options ({{ place.fees.length }})</summary>
-            <p>Historical source check; confirm the current total with the operator. Supplements and visitor categories differ.</p>
             <ul><li *ngFor="let fee of place.fees">
               <strong>{{ fee.amount_inr | currency:'INR':'symbol':'1.0-2' }}</strong> · {{ fee.visitor_category }} · {{ fee.scope }}
               <span>{{ fee.condition }} · Payment: {{ fee.payment_channel }}</span>

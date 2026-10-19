@@ -15,14 +15,12 @@ import { DiscoveryService } from '../../core/services/discovery.service';
   template:`
     <section class="top-places" aria-label="Top 10 places to visit">
       <button type="button" (click)="load()" [disabled]="busy || disabled || isSaving || destination.trim().length<2">{{ busy ? 'Finding highlights…' : 'Top 10 places to visit' }}</button>
-      <p class="note">Free, source-based highlights from OpenStreetMap, Wikidata and the verified catalogue.</p>
       <p *ngIf="busy" role="status">Finding places in {{ destination }}…</p>
       <p *ngIf="error" role="alert">{{ error }}</p>
       <p *ngIf="successMessage" role="status">{{ successMessage }}</p>
       <section *ngIf="result as data" aria-live="polite">
         <header><h3>{{ data.places.length }} places to visit in {{ data.resolvedDestination }}</h3><button type="button" (click)="close()" [disabled]="isSaving || disabled">Close</button></header>
-        <p class="note">Within {{ data.radiusKm }} km. Selected by editorial verification, source coverage and distance; not visitor ratings.</p>
-        <p *ngIf="data.places.length<10" class="note">{{ data.places.length ? 'Fewer than ten supported attractions are available for this area.' : 'No supported highlights were returned. Try a wider radius or another destination.' }}</p>
+        <p *ngIf="!data.places.length">No places found. Try a wider radius or another destination.</p>
         <label class="trip-picker" *ngIf="!embeddedMode">Add to trip<select [ngModel]="activeTripId" (ngModelChange)="selectTrip($event)" [disabled]="isSaving || disabled || tripsLoading"><option [ngValue]="0">Choose a trip</option><option *ngFor="let trip of editableTrips" [ngValue]="trip.id">{{ trip.name }}</option></select></label>
         <p *ngIf="tripsLoading" role="status">Loading your trips…</p>
         <p *ngIf="!tripsLoading && !canSelectPlaces" class="note">{{ embeddedMode ? 'This trip is read-only.' : 'An editable trip is needed to add places to an itinerary.' }}</p>
@@ -35,7 +33,6 @@ import { DiscoveryService } from '../../core/services/discovery.service';
             <div class="actions"><a [href]="place.sourceUrl" target="_blank" rel="noopener noreferrer">{{ place.sourceName || 'Source' }} ↗</a><button *ngIf="canFind" type="button" [disabled]="disabled || isSaving" (click)="placeRequested.emit(place.name)">Find in Explore</button></div>
           </li>
         </ol>
-        <details *ngIf="data.warnings?.length"><summary>Source availability</summary><p *ngFor="let warning of data.warnings">{{ warning }}</p></details>
         <p class="note">{{ data.attribution }}</p>
       </section>
     </section>`,

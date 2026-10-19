@@ -9,7 +9,7 @@ describe('Credited place photo gallery',()=>{
   TestBed.configureTestingModule({providers:[{provide:PlacePhotosService,useValue:{get}}]});
   const f=TestBed.createComponent(PlacePhotoGalleryComponent);f.componentRef.setInput('externalId','wikidata:Q123');f.componentRef.setInput('name','Edakkal Caves');f.componentRef.setInput('initialImages',[photo('One')]);f.detectChanges();
   f.componentInstance.load();response.next({images:[photo('One'),photo('Two')],message:'Two photos',retryable:false});f.detectChanges();
-  expect(f.componentInstance.images.length).toBe(2);f.componentInstance.next();f.detectChanges();
+  expect(f.componentInstance.images.length).toBe(2);expect(f.nativeElement.querySelector('details')).toBeNull();expect(f.nativeElement.textContent).not.toContain('source photos available');f.componentInstance.next();f.detectChanges();
   expect(f.nativeElement.querySelector('img').src).toContain('Two.jpg');expect(f.nativeElement.querySelector('figcaption a').href).toContain('Two.jpg');
   f.componentInstance.load();response.error(new Error('offline'));f.detectChanges();expect(f.componentInstance.images.length).toBe(2);expect(f.nativeElement.textContent).toContain('Retry photos');f.destroy();
  });
