@@ -1,4 +1,4 @@
-import { hasNativeCamera, takeDocumentPhoto } from '../../../core/utils/device-access';
+import { hasNativeCamera, takeDocumentPhoto, pickDocumentPhoto } from '../../../core/utils/device-access';
 import { hasNativeFiles, shareNativeFile } from '../../../core/utils/native-files';
 import { CommonModule } from '@angular/common';
 import {
@@ -220,20 +220,21 @@ import { DocumentService } from '../../../core/services/document.service';
 
           <p class="permission-note">Choose a file to allow access to that file only. Suttru uploads it only after you tap Upload.</p>
           <div *ngIf="nativeCamera" class="camera-option">
-            <button type="button" class="btn secondary" (click)="captureDocument(fileInput)" [disabled]="isCapturing || isUploading">{{isCapturing ? 'Opening camera…' : 'Take document photo'}}</button>
-            <small>Camera access is requested when needed. You can choose a file instead.</small>
+            <button type="button" class="btn secondary" (click)="captureDocument(fileInput)" [disabled]="isCapturing || isUploading">{{isCapturing && captureSource==='camera' ? 'Opening camera…' : 'Take document photo'}}</button>
+            <button type="button" class="btn secondary" (click)="captureDocument(fileInput,'gallery')" [disabled]="isCapturing || isUploading">{{isCapturing && captureSource==='gallery' ? 'Opening photos…' : 'Choose photos'}}</button>
+            <small>Photo selection asks for approval once. Only selected photos are added for review.</small>
           </div>
           <label class="file-drop">
             <input
               #fileInput
               [disabled]="isCapturing || isUploading"
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt"
+              [attr.accept]="nativeCamera ? '.pdf,.doc,.docx,.txt' : '.pdf,.jpg,.jpeg,.png,.doc,.docx,.txt'"
               (change)="onFileSelected($event)"
             />
             <span class="material-symbols-outlined">cloud_upload</span>
-            <strong>{{ selectedFile ? 'Change File' : 'Choose File' }}</strong>
-            <small>PDF, JPG, PNG, DOC, DOCX or TXT · Maximum 10 MB</small>
+            <strong>{{ selectedFile ? 'Change File' : 'Choose document file' }}</strong>
+            <small>{{nativeCamera ? 'PDF, DOC, DOCX or TXT · Use Choose photos for images' : 'PDF, JPG, PNG, DOC, DOCX or TXT'}} · Maximum 10 MB</small>
           </label>
 
           <div *ngIf="selectedFile" class="selected-file">
@@ -398,6 +399,7 @@ export class DocumentManagerComponent implements OnInit, OnChanges {
   uploadError = '';
   isUploading = false;
   isCapturing = false;
+  captureSource:'camera'|'gallery'|null=null;
   readonly nativeCamera = hasNativeCamera();
   deletingDocumentId: number | null = null;
   viewingDocumentId: number | null = null;
@@ -503,17 +505,17 @@ export class DocumentManagerComponent implements OnInit, OnChanges {
     this.uploadError = '';
   }
 
-  async captureDocument(input?:HTMLInputElement):Promise<void> {
+  async captureDocument(input?:HTMLInputElement,source:'camera'|'gallery'='camera'):Promise<void> {
     if(!this.canEdit || this.isCapturing || this.isUploading)return;
-    const tripId=this.tripId;this.isCapturing=true;this.uploadError='';
+    const tripId=this.tripId;this.isCapturing=true;this.captureSource=source;this.uploadError='';
     try {
-      const photo=await takeDocumentPhoto();
+      const photo=await(source==='gallery'?pickDocumentPhoto():takeDocumentPhoto());
       if(photo && this.showUploadModal && this.tripId===tripId && this.canEdit) {
         if(photo.size>this.maxFileSize)this.uploadError='File is larger than the 10 MB maximum.';
         else {this.selectedFile=photo;if(input)input.value="";}
       }
     }catch(error){if(this.tripId===tripId && this.showUploadModal)this.uploadError=error instanceof Error?error.message:'Unable to take a photo. Choose a file instead.';}
-    finally{this.isCapturing=false;}
+    finally{this.isCapturing=false;this.captureSource=null;}
   }
 
   onFileSelected(event: Event): void {
@@ -527,6 +529,9 @@ export class DocumentManagerComponent implements OnInit, OnChanges {
     }
 
     const extension = this.fileExtension(file.name);
+    if(this.nativeCamera && ['jpg','jpeg','png'].includes(extension)){
+      this.selectedFile=null;input.value='';this.uploadError='Use Choose photos to select a gallery image with your approval.';return;
+    }
     if (!this.allowedExtensions.includes(extension)) {
       this.selectedFile = null;
       input.value = '';
