@@ -1,10 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { authReturnUrl } from '../../../core/utils/auth-return-url';
-import { environment } from '../../../../environments/environment';
+import {Subscription,finalize} from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -13,7 +13,12 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements OnDestroy {
+  private request?:Subscription;
+  private slowTimer?:ReturnType<typeof setTimeout>;
+  slowLogin=false;
+  ngOnDestroy():void {this.request?.unsubscribe();clearTimeout(this.slowTimer);}
+  cancelLogin():void {this.request?.unsubscribe();this.errorMessage='Sign-in cancelled. You can try again.';}
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -41,23 +46,26 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
-    if (this.loginForm.invalid) return;
+    if (this.loginForm.invalid||this.isLoading) return;
 
     this.isLoading = true;
     this.errorMessage = '';
+    this.slowLogin=false;
+    this.slowTimer=setTimeout(()=>this.slowLogin=true,8000);
 
     const credentials = this.loginForm.value as { email: string; password: string };
 
-    this.authService.login(credentials).subscribe({
+    this.request=this.authService.login(credentials).pipe(finalize(()=>{this.isLoading=false;this.slowLogin=false;clearTimeout(this.slowTimer);})).subscribe({
       next: () => {
-        void this.router.navigateByUrl(this.returnUrl);
+        void this.router.navigateByUrl(this.returnUrl).then(ok=>{if(!ok)this.errorMessage='Unable to open your trips. Please try again.';}).catch(()=>this.errorMessage='Unable to open your trips. Please try again.');
       },
       error: (err) => {
         this.isLoading = false;
 
+        if(err?.name==='TimeoutError'){this.errorMessage='Sign-in timed out. Check your connection and try again.';return;}
         if (err.status === 0) {
           this.errorMessage =
-            `Backend is unreachable from this device. Check that Spring Boot is running and accessible at ${environment.apiUrl}.`;
+            'Unable to reach Suttru. Check your connection and try again.';
           return;
         }
 
@@ -74,7 +82,9 @@ export class LoginComponent {
           serverMessage.toLowerCase().includes('cors')
         ) {
           this.errorMessage =
-            'This device is not allowed by the backend CORS configuration. Restart the backend after updating the latest Suttru code.';
+            'This device could not connect to Suttru. Please try again shortly.';
+        } else if([502,503,504].includes(err.status)){
+          this.errorMessage='Suttru is temporarily unavailable. Please try again shortly.';
         } else if (serverMessage) {
           this.errorMessage = serverMessage;
         } else {

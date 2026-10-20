@@ -1,9 +1,10 @@
 import { clearNativeFiles } from '../utils/native-files';
 import { clearOffline } from '../../../../public/offline-store.js';
 import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
   Observable,
+  defer,
   catchError,
   finalize,
   map,
@@ -30,6 +31,10 @@ import {
   ResetPasswordRequest
 } from '../models/auth.model';
 
+export const AUTH_TIMEOUT_MS=45000;
+export const PROFILE_TIMEOUT_MS=20000;
+export const REFRESH_TIMEOUT_MS=20000;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -39,6 +44,9 @@ export class AuthService {
   private readonly REFRESH_TOKEN_KEY = 'tripmate_refresh_token';
   private readonly USER_KEY = 'tripmate_user';
 
+  private sessionGeneration=0;
+  getSessionGeneration():number {return this.sessionGeneration;}
+
   private refreshRequest$: Observable<RefreshResponse> | null = null;
 
   public currentUser = signal<User | null>(this.getStoredUser());
@@ -47,12 +55,24 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
-      tap((res) => {
-        this.saveSessionTokens(res.accessToken, res.refreshToken);
-        this.fetchCurrentUser().subscribe();
-      })
-    );
+    return this.authenticate(this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials),res=>res);
+  }
+
+  private authenticate<T>(request:Observable<T>,session:(value:T)=>LoginResponse):Observable<T> {
+    return defer(()=>{
+      const generation=++this.sessionGeneration;this.refreshRequest$=null;let saved=false,complete=false;
+      return request.pipe(
+        timeout(AUTH_TIMEOUT_MS),
+        tap(value=>{
+          if(generation!==this.sessionGeneration)throw new Error('Sign-in was cancelled. Please try again.');
+          const tokens=session(value);this.currentUser.set(null);
+          this.saveSessionTokens(tokens.accessToken,tokens.refreshToken);saved=true;
+        }),
+        switchMap(value=>this.fetchCurrentUser().pipe(map(()=>value))),
+        tap(()=>complete=true),
+        finalize(()=>{if(saved&&!complete&&generation===this.sessionGeneration)this.clearSession();})
+      );
+    });
   }
 
   register(data: RegisterRequest): Observable<RegistrationPendingResponse> {
@@ -60,15 +80,12 @@ export class AuthService {
   }
 
   verifyEmail(data: VerifyEmailRequest): Observable<VerifyEmailResponse> {
-    return this.http.post<VerifyEmailResponse>(`${this.apiUrl}/verify-email`, data).pipe(
-      tap((res) => this.saveSessionTokens(res.session.accessToken, res.session.refreshToken)),
-      switchMap((res) => this.fetchCurrentUser().pipe(
-        map(() => res),
-        catchError(() => throwError(() => new Error(
-          'Your account was created, but automatic sign-in could not finish. Please sign in to continue.'
-        )))
-      ))
-    );
+    return defer(()=>{
+      let verified=false;
+      return this.authenticate(this.http.post<VerifyEmailResponse>(`${this.apiUrl}/verify-email`,data).pipe(tap(()=>verified=true)),res=>res.session).pipe(
+        catchError(error=>verified?throwError(()=>new Error('Your account was created, but automatic sign-in could not finish. Please sign in to continue.')):throwError(()=>error))
+      );
+    });
   }
 
   resendEmailOtp(email: string): Observable<{ message: string }> {
@@ -76,17 +93,20 @@ export class AuthService {
   }
 
   fetchCurrentUser(): Observable<User> {
-    return this.http.get<User>(`${environment.apiUrl}/users/me`).pipe(
-      tap((user) => {
-        this.saveUser(user);
-        this.currentUser.set(user);
-        this.isAuthenticated.set(true);
-      }),
-      catchError((err) => {
-        this.clearSession();
-        return throwError(() => err);
-      })
-    );
+    return defer(()=>{
+      const generation=this.sessionGeneration;
+      return this.http.get<User>(`${environment.apiUrl}/users/me`).pipe(
+        timeout(PROFILE_TIMEOUT_MS),
+        tap(user=>{
+          if(generation!==this.sessionGeneration)throw new Error('Session changed. Please sign in again.');
+          this.saveUser(user);this.currentUser.set(user);this.isAuthenticated.set(true);
+        }),
+        catchError(error=>{
+          if(generation===this.sessionGeneration&&error instanceof HttpErrorResponse&&[401,403].includes(error.status))this.clearSession();
+          return throwError(()=>error);
+        })
+      );
+    });
   }
 
   forgotPassword(email: string): Observable<{ message: string }> {
@@ -112,19 +132,18 @@ export class AuthService {
       return throwError(() => new Error('Refresh token is not available'));
     }
 
-    this.refreshRequest$ = this.http
-      .post<RefreshResponse>(`${this.apiUrl}/refresh`, { refreshToken })
-      .pipe(
-        tap((response) => {
-          this.saveSessionTokens(response.accessToken, response.refreshToken);
-        }),
-        finalize(() => {
-          this.refreshRequest$ = null;
-        }),
-        shareReplay({ bufferSize: 1, refCount: false })
-      );
-
-    return this.refreshRequest$;
+    const generation=this.sessionGeneration;
+    const shared=this.http.post<RefreshResponse>(`${this.apiUrl}/refresh`,{refreshToken}).pipe(
+      timeout(REFRESH_TIMEOUT_MS),
+      tap(response=>{
+        if(generation!==this.sessionGeneration||this.getRefreshToken()!==refreshToken)throw new Error('Session changed.');
+        this.saveSessionTokens(response.accessToken,response.refreshToken);
+      }),
+      finalize(()=>{if(this.refreshRequest$===shared)this.refreshRequest$=null;}),
+      shareReplay({bufferSize:1,refCount:false})
+    );
+    this.refreshRequest$=shared;
+    return shared;
   }
 
   /**
@@ -139,17 +158,20 @@ export class AuthService {
       return of(void 0);
     }
 
+    const generation=this.sessionGeneration;
     return this.http
       .post<LogoutResponse>(`${this.apiUrl}/logout`, { refreshToken })
       .pipe(
         timeout(5000),
         catchError(() => of({ message: 'Local logout completed' })),
-        tap(() => this.clearSession()),
+        tap(() => {if(generation===this.sessionGeneration)this.clearSession();}),
         map(() => void 0)
       );
   }
 
   clearSession(): void {
+    this.sessionGeneration++;
+    this.refreshRequest$=null;
     clearNativeFiles();
     void clearOffline().catch(() => { /* Session epoch already invalidates remaining copies. */ });
     localStorage.removeItem(this.TOKEN_KEY);
