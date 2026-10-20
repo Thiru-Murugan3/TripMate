@@ -161,6 +161,12 @@
             </svg>
           }
         </button>
+        @if (isLoading && slowLogin) {
+          <div class="connection-recovery" role="status">
+            <p>Still connecting. You can cancel and try again.</p>
+            <button type="button" (click)="cancelLogin()">Cancel sign-in</button>
+          </div>
+        }
       </form>
 
       <!-- Footer Link -->

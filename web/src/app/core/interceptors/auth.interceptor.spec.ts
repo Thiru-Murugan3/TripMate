@@ -207,4 +207,30 @@ describe('authInterceptor', () => {
     expect(navigate).toHaveBeenCalledWith(['/login'],{queryParams:{returnUrl:'/invite/abc-123'}});
   });
 
+  it('keeps the valid session if a retried API request returns a server error',()=>{
+    localStorage.setItem('tripmate_access_token','old');localStorage.setItem('tripmate_refresh_token','refresh');const navigate=spyOn(router,'navigate').and.resolveTo(true);
+    http.get('/api/v1/trips').subscribe({error:()=>{}});httpMock.expectOne('/api/v1/trips').flush({}, {status:401,statusText:'Unauthorized'});
+    httpMock.expectOne(refreshUrl).flush({accessToken:'new',refreshToken:'new-refresh'});httpMock.expectOne('/api/v1/trips').flush({}, {status:503,statusText:'Unavailable'});
+    expect(authService.getToken()).toBe('new');expect(navigate).not.toHaveBeenCalled();
+  });
+  it('does not log out on a temporary refresh service error',()=>{
+    localStorage.setItem('tripmate_access_token','old');localStorage.setItem('tripmate_refresh_token','refresh');const navigate=spyOn(router,'navigate').and.resolveTo(true);
+    http.get('/api/v1/trips').subscribe({error:()=>{}});httpMock.expectOne('/api/v1/trips').flush({}, {status:401,statusText:'Unauthorized'});
+    httpMock.expectOne(refreshUrl).flush({}, {status:503,statusText:'Unavailable'});expect(authService.getRefreshToken()).toBe('refresh');expect(navigate).not.toHaveBeenCalled();
+  });
+  it('reuses a rotated token for a late old-token 401 without rotating twice',()=>{
+    localStorage.setItem('tripmate_access_token','old');localStorage.setItem('tripmate_refresh_token','refresh');
+    http.get('/api/v1/trips').subscribe();http.get('/api/v1/notifications').subscribe();const first=httpMock.expectOne('/api/v1/trips'),late=httpMock.expectOne('/api/v1/notifications');
+    first.flush({}, {status:401,statusText:'Unauthorized'});httpMock.expectOne(refreshUrl).flush({accessToken:'new',refreshToken:'new-refresh'});httpMock.expectOne('/api/v1/trips').flush([]);
+    late.flush({}, {status:401,statusText:'Unauthorized'});const retry=httpMock.expectOne('/api/v1/notifications');expect(retry.request.headers.get('Authorization')).toBe('Bearer new');retry.flush([]);
+    httpMock.expectNone(refreshUrl);
+  });
+  it('does not attach tokens or react to 401s from static files or another origin',()=>{
+    localStorage.setItem('tripmate_access_token','private');const navigate=spyOn(router,'navigate').and.resolveTo(true);
+    for(const url of ['/india-catalogue/index.json','https://example.com/api/v1/trips']){
+      http.get(url).subscribe({error:()=>{}});const request=httpMock.expectOne(url);expect(request.request.headers.has('Authorization')).toBeFalse();request.flush({}, {status:401,statusText:'Unauthorized'});
+    }
+    expect(authService.getToken()).toBe('private');expect(navigate).not.toHaveBeenCalled();httpMock.expectNone(refreshUrl);
+  });
+
 });

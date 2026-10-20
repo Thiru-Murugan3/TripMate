@@ -179,6 +179,19 @@ function response(url){
         assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${url} overflows ${width}px`);
       }
     }
+    // A failed profile after valid credentials must release loading and support retry.
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(origin+'/login?returnUrl=%2Ftrips%2F10%3Ftab%3DDOCUMENTS');
+    await page.locator('#email').fill(user.email);await page.locator('#password').fill('fixture-password');
+    const profileFailure=route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Unavailable'})});
+    await page.route('**/api/v1/users/me',profileFailure);
+    await page.getByRole('button',{name:'Sign In to Account',exact:true}).click();
+    await page.getByText('Suttru is temporarily unavailable. Please try again shortly.',{exact:true}).waitFor();
+    assert.equal(await page.locator('.submit-btn').isEnabled(),true,'failed login left spinner active');
+    assert.equal(await page.evaluate(()=>localStorage.getItem('tripmate_access_token')),null,'partial session survived failed profile');
+    await page.screenshot({animations:'disabled',path:path.join(output,'login-recovery.png')});
+    await page.unroute('**/api/v1/users/me',profileFailure);
+    await page.getByRole('button',{name:'Sign In to Account',exact:true}).click();await page.locator('.document-card').first().waitFor();
     assert.deepEqual(errors,[],'App errors during UI review');
     console.log('Mobile UI review passed; screenshots saved in '+output);
     await context.close();
