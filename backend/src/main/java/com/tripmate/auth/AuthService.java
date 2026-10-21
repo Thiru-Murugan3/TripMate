@@ -130,7 +130,8 @@ public class AuthService {
                 accessToken,
                 refreshToken,
                 "Bearer",
-                900);
+                900,
+                SessionUser.from(user));
     }
 
     @Transactional
@@ -156,7 +157,8 @@ public class AuthService {
                 newAccessToken,
                 newRefreshToken,
                 "Bearer",
-                900);
+                900,
+                SessionUser.from(user));
     }
 
     @Transactional

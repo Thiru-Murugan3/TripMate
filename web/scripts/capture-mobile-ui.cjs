@@ -192,6 +192,19 @@ function response(url){
     await page.screenshot({animations:'disabled',path:path.join(output,'login-recovery.png')});
     await page.unroute('**/api/v1/users/me',profileFailure);
     await page.getByRole('button',{name:'Sign In to Account',exact:true}).click();await page.locator('.document-card').first().waitFor();
+    // New backend contract: one login request is enough, even for permission setup.
+    await page.goto(origin+'/login?returnUrl=%2Ftrips%2F10%3Ftab%3DDOCUMENTS');
+    await page.evaluate(()=>{localStorage.removeItem('fixture-native-setup-v2');localStorage.removeItem('fixture-native-grants');localStorage.removeItem('fixture-native-requests');});
+    let redundantProfiles=0;
+    const noProfile=route=>{redundantProfiles++;return route.abort();};
+    const directLogin=route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({accessToken:'direct-access',refreshToken:'direct-refresh',user})});
+    await page.route('**/api/v1/users/me',noProfile);await page.route('**/api/v1/auth/login',directLogin);
+    await page.locator('#email').fill(user.email);await page.locator('#password').fill('fixture-password');
+    await page.getByRole('button',{name:'Sign In to Account',exact:true}).click();await page.locator('.document-card').first().waitFor();
+    await page.waitForFunction(()=>localStorage.getItem('fixture-native-setup-v2')==='done');
+    assert.equal(redundantProfiles,0,'sign-in or permission setup fetched a redundant profile');
+    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('fixture-native-requests'))),['photos','camera','location']);
+    await page.unroute('**/api/v1/users/me',noProfile);await page.unroute('**/api/v1/auth/login',directLogin);
     assert.deepEqual(errors,[],'App errors during UI review');
     console.log('Mobile UI review passed; screenshots saved in '+output);
     await context.close();

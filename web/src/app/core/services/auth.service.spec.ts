@@ -28,6 +28,12 @@ describe('Registration automatic sign-in', () => {
     expect(auth.currentUser()?.email).toBe('new@example.com');
     expect(auth.isAuthenticated()).toBeTrue();expect(completed).toBeTrue();
   });
+  it('completes OTP sign-in directly when the verified response supplies the user',()=>{
+    const user={id:10,name:'New Traveller',email:'new@example.com',systemRole:'USER',status:'ACTIVE'};
+    let done=false;auth.verifyEmail({email:user.email,otp:'123456'}).subscribe(()=>done=true);
+    http.expectOne(`${environment.apiUrl}/auth/verify-email`).flush({message:'Verified',session:{...session,user}});
+    http.expectNone(`${environment.apiUrl}/users/me`);expect(done).toBeTrue();expect(auth.isSessionVerified()).toBeTrue();
+  });
   it('does not establish a session for an invalid OTP', () => {
     auth.verifyEmail({email:'new@example.com',otp:'000000'}).subscribe({error:()=>{}});
     http.expectOne(`${environment.apiUrl}/auth/verify-email`).flush({message:'Invalid OTP'},{status:400,statusText:'Bad Request'});
@@ -91,5 +97,19 @@ describe('Login and session recovery',()=>{
   const pending=http.expectOne(`${environment.apiUrl}/auth/refresh`);tick(REFRESH_TIMEOUT_MS);expect(errors).toBe(2);expect(pending.cancelled).toBeTrue();expect(auth.getRefreshToken()).toBe('old');
   auth.refreshSession().subscribe();http.expectOne(`${environment.apiUrl}/auth/refresh`).flush(session);expect(auth.getToken()).toBe('new-access');
  }));
+
+ it('completes sign-in directly from the authenticated response without an extra profile request',()=>{
+  let done=false;auth.login({email:profile.email,password:'password'}).subscribe(()=>done=true);
+  http.expectOne(`${environment.apiUrl}/auth/login`).flush({...session,user:profile});
+  http.expectNone(`${environment.apiUrl}/users/me`);expect(done).toBeTrue();expect(auth.currentUser()?.id).toBe(10);expect(auth.isSessionVerified()).toBeTrue();
+  auth.clearSession();expect(auth.isSessionVerified()).toBeFalse();
+ });
+ it('does not treat a cached user as a freshly verified session',()=>{
+  localStorage.setItem('tripmate_access_token','cached');auth.currentUser.set(profile as any);expect(auth.isSessionVerified()).toBeFalse();
+ });
+ it('falls back to profile verification when the new session identity is incomplete',()=>{
+  auth.login({email:profile.email,password:'password'}).subscribe();http.expectOne(`${environment.apiUrl}/auth/login`).flush({...session,user:{id:10,name:'Incomplete'}});
+  http.expectOne(`${environment.apiUrl}/users/me`).flush(profile);expect(auth.isSessionVerified()).toBeTrue();
+ });
 
 });
