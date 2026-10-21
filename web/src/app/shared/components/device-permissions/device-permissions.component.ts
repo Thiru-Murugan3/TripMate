@@ -46,8 +46,11 @@ export class DevicePermissionsComponent implements OnDestroy {
   try{
    const state=await api.permissionSetup();if(state.completed||!active())return;
    // A cached token/user alone must never trigger permission prompts before session verification.
-   const user=await firstValueFrom(this.http.get<{id:number}>(`${environment.apiUrl}/users/me`));
-   if(!active()||user.id!==id)return;
+   if(!this.auth.isSessionVerified?.()){
+    const user=await firstValueFrom(this.http.get<{id:number}>(`${environment.apiUrl}/users/me`));
+    if(!active()||user.id!==id)return;
+   }
+   if(!active())return;
    await requestPendingPermissions(api,state,active);
   }catch{if(active())this.error='Permission setup could not finish. You can change access in Profile → App permissions.';}
   finally{this.running=false;if(!this.destroyed&&(this.auth.getToken()!==token||this.auth.currentUser()?.id!==id||this.epoch!==epoch))queueMicrotask(()=>{if(this.auth.isAuthenticated()&&this.eligible()){this.attempted='';void this.start();}});}

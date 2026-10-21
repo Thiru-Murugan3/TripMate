@@ -47,6 +47,9 @@ export class AuthService {
   private sessionGeneration=0;
   getSessionGeneration():number {return this.sessionGeneration;}
 
+  private verifiedGeneration=-1;
+  isSessionVerified():boolean {return this.verifiedGeneration===this.sessionGeneration&&!!this.currentUser()&&!!this.getToken();}
+
   private refreshRequest$: Observable<RefreshResponse> | null = null;
 
   public currentUser = signal<User | null>(this.getStoredUser());
@@ -68,11 +71,27 @@ export class AuthService {
           const tokens=session(value);this.currentUser.set(null);
           this.saveSessionTokens(tokens.accessToken,tokens.refreshToken);saved=true;
         }),
-        switchMap(value=>this.fetchCurrentUser().pipe(map(()=>value))),
+        switchMap(value=>{
+          const user=session(value).user;
+          if(this.isValidSessionUser(user)){
+            this.acceptUser(user);return of(value);
+          }
+          // Compatibility with older backend versions during a rolling deployment.
+          return this.fetchCurrentUser().pipe(map(()=>value));
+        }),
         tap(()=>complete=true),
         finalize(()=>{if(saved&&!complete&&generation===this.sessionGeneration)this.clearSession();})
       );
     });
+  }
+
+  private isValidSessionUser(user:User|undefined):user is User {
+    return !!user&&Number.isSafeInteger(user.id)&&user.id>0&&typeof user.name==='string'&&typeof user.email==='string'
+      &&['USER','ADMIN'].includes(user.systemRole)&&user.status==='ACTIVE';
+  }
+
+  private acceptUser(user:User):void {
+    this.saveUser(user);this.currentUser.set(user);this.isAuthenticated.set(true);this.verifiedGeneration=this.sessionGeneration;
   }
 
   register(data: RegisterRequest): Observable<RegistrationPendingResponse> {
@@ -99,7 +118,7 @@ export class AuthService {
         timeout(PROFILE_TIMEOUT_MS),
         tap(user=>{
           if(generation!==this.sessionGeneration)throw new Error('Session changed. Please sign in again.');
-          this.saveUser(user);this.currentUser.set(user);this.isAuthenticated.set(true);
+          this.acceptUser(user);
         }),
         catchError(error=>{
           if(generation===this.sessionGeneration&&error instanceof HttpErrorResponse&&[401,403].includes(error.status))this.clearSession();
@@ -171,6 +190,7 @@ export class AuthService {
 
   clearSession(): void {
     this.sessionGeneration++;
+    this.verifiedGeneration=-1;
     this.refreshRequest$=null;
     clearNativeFiles();
     void clearOffline().catch(() => { /* Session epoch already invalidates remaining copies. */ });

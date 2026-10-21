@@ -10,9 +10,9 @@ const initial=()=>({completed:false,photoSelection:false,camera:'denied',locatio
 describe('Native permission prompts after login',()=>{
  const target=window as any;
  afterEach(()=>{TestBed.inject(HttpTestingController).verify();delete target.SuttruDevice;});
- function setup(authenticated=false,path='/login',completed=false){
+ function setup(authenticated=false,path='/login',completed=false,verified=false){
   const state={...initial(),completed},events=new Subject<any>(),order:string[]=[];
-  const auth={isAuthenticated:signal(authenticated),currentUser:signal<any>(authenticated?{id:1}:null),token:authenticated?'token-1':null as string|null,getToken:()=>auth.token};
+  const auth={isSessionVerified:()=>verified,isAuthenticated:signal(authenticated),currentUser:signal<any>(authenticated?{id:1}:null),token:authenticated?'token-1':null as string|null,getToken:()=>auth.token};
   const api={permissionSetup:jasmine.createSpy().and.callFake(async()=>({...state})),requestPermission:jasmine.createSpy().and.callFake(async(feature:string)=>{order.push(feature);return false;}),completePermissionSetup:jasmine.createSpy().and.callFake(async()=>{state.completed=true;}),openPermissionSettings:jasmine.createSpy().and.resolveTo()};
   target.SuttruDevice=api;
   TestBed.configureTestingModule({providers:[provideHttpClient(),provideHttpClientTesting(),{provide:AuthService,useValue:auth},{provide:Router,useValue:{url:path,events}}]});
@@ -24,6 +24,9 @@ describe('Native permission prompts after login',()=>{
   s.events.next(new NavigationEnd(1,'/dashboard','/dashboard'));s.f.detectChanges();flushMicrotasks();
   const request=s.http.expectOne(r=>r.url.endsWith('/users/me'));expect(s.order).toEqual([]);request.flush({id:1});flushMicrotasks();
   expect(s.order).toEqual(['photos','camera','location']);expect(s.api.completePermissionSetup).toHaveBeenCalledTimes(1);s.f.destroy();
+ }));
+ it('reuses a profile verified by this sign-in without a second server request',fakeAsync(()=>{
+  const s=setup(true,'/dashboard',false,true);flushMicrotasks();s.http.expectNone(()=>true);expect(s.order).toEqual(['photos','camera','location']);expect(s.api.completePermissionSetup).toHaveBeenCalled();s.f.destroy();
  }));
  it('reuses completed setup and opens Android settings from Profile',async()=>{
   const s=setup(true,'/account',true);await s.f.whenStable();s.http.expectNone(()=>true);expect(s.api.requestPermission).not.toHaveBeenCalled();
