@@ -52,7 +52,7 @@ public class OpenTripMapDiscoveryProvider implements DiscoveryProvider {
             double distance=distance(destination.latitude().doubleValue(),destination.longitude().doubleValue(),lat,lon);
             if(distance>request.radiusKm()+0.2) continue;
             DiscoveryCategory category=classify(node.path("kinds").asText(""));
-            if(request.category()!=null && category!=request.category()) continue;
+            if(!DiscoveryCategoryMatching.matches(request.category(), category)) continue;
             var extra=WikimediaEnrichmentService.Enrichment.empty();
             String wikidata=node.path("wikidata").asText("");
             if(wikidata.matches("Q[0-9]+") && enrichmentBudget-- > 0) {

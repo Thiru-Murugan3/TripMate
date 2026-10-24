@@ -50,6 +50,16 @@ describe('Combined compact Explore', () => {
     expect(fixture.nativeElement.textContent).toContain('1h 30m visit');expect(fixture.nativeElement.querySelector('.booking-link').textContent).toContain('Book with provider');
     expect(fixture.nativeElement.querySelector('.place-select input')).not.toBeNull();expect(c.safeBookingUrl('javascript:alert(1)')).toBeNull();expect(c.safeBookingUrl('invalid')).toBeNull();fixture.destroy();
   });
+  it('separates destination from an interest and clears incompatible experience tabs', () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
+    c.searchDestination='Rishikesh adventure';c.itemTypeFilter='PLACE';c.discover();
+    expect(discovery.discoverPlaces.calls.mostRecent().args[0]).toBe('Rishikesh');
+    expect(discovery.discoverPlaces.calls.mostRecent().args[2]).toBe('ADVENTURE');
+    expect(discovery.discoverPlaces.calls.mostRecent().args[3]?.itemType).toBe('ALL');
+    c.itemTypeFilter='TOUR_SERVICE';c.category='FAMILY';c.categoryChanged();c.discover();
+    expect(discovery.discoverPlaces.calls.mostRecent().args[3]?.itemType).toBe('ALL');
+    c.searchDestination='Adventure Island';c.discover();expect(discovery.discoverPlaces.calls.mostRecent().args[0]).toBe('Adventure Island');fixture.destroy();
+  });
   it('keeps selections across pages and saves only after trip/day confirmation', async () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
     c.searchDestination='Ooty';c.discover();await c.toggleSelection(place as any);

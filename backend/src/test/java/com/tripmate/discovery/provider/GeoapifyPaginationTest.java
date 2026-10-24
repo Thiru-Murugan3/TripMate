@@ -19,6 +19,15 @@ class GeoapifyPaginationTest {
         String features=java.util.stream.IntStream.range(start,start+count).mapToObj(i -> "{\"properties\":{\"name\":\"Place "+i+"\",\"place_id\":\""+i+"\",\"categories\":[\"tourism.attraction\"]},\"geometry\":{\"coordinates\":[80,13]}}").collect(java.util.stream.Collectors.joining(","));
         return "{\"features\":["+features+"]}";
     }
+    @Test void mapsAdventureInterestFromProviderEvidence() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var factory=mock(ProviderHttpClientFactory.class);when(factory.create(anyInt())).thenReturn(builder.build());
+        server.expect(queryParam("categories","sport,entertainment,leisure,tourism")).andRespond(withSuccess("""
+            {"features":[{"properties":{"name":"Dive Centre","place_id":"climb","categories":["sport.dive_centre"]},"geometry":{"coordinates":[80,13]}}]}
+            """,MediaType.APPLICATION_JSON));
+        var base=request();var provider=new GeoapifyDiscoveryProvider(factory,"test-secret","https://geo.example");
+        var results=provider.discover(new DiscoveryProviderRequest(base.query(),base.destination(),25,com.tripmate.discovery.DiscoveryCategory.ADVENTURE)).places();
+        assertEquals(1,results.size());assertEquals(com.tripmate.discovery.DiscoveryItemType.ACTIVITY,results.getFirst().itemType());server.verify();
+    }
     @Test void fetchesLaterPagesAndStopsWhenTheProviderReturnsAShortPage() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var factory=mock(ProviderHttpClientFactory.class);when(factory.create(anyInt())).thenReturn(builder.build());
         server.expect(queryParam("offset","0")).andExpect(queryParam("limit","100")).andRespond(withSuccess(page(100,0),MediaType.APPLICATION_JSON));

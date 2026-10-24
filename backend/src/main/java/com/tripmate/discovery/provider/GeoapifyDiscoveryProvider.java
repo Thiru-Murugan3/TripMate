@@ -72,8 +72,8 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
             BigDecimal longitude = decimal(coordinates.get(0).asText());
             BigDecimal latitude = decimal(coordinates.get(1).asText());
             if (latitude == null || longitude == null) continue;
-            DiscoveryCategory category = classify(properties.path("categories"));
-            if (request.category() != null && request.category() != category) continue;
+            DiscoveryCategory category = classify(properties.path("categories"), name);
+            if (!DiscoveryCategoryMatching.matches(request.category(), category)) continue;
             String placeId = properties.path("place_id").asText();
             double distance = haversine(lat, lon, latitude.doubleValue(), longitude.doubleValue());
             String website = properties.path("website").asText(null);
@@ -97,27 +97,43 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
     }
 
     private String categories(DiscoveryCategory category) {
+        if (category == DiscoveryCategory.ADVENTURE) return "sport,entertainment,leisure,tourism";
+        if (category == DiscoveryCategory.FAMILY) return "leisure,entertainment,tourism";
         if (category == DiscoveryCategory.FOOD) return "catering";
         if (category == DiscoveryCategory.STAY) return "accommodation";
         if (category == DiscoveryCategory.SHOPPING) return "commercial";
         if (category == DiscoveryCategory.ENTERTAINMENT || category == DiscoveryCategory.NIGHTLIFE) return "entertainment";
-        return "tourism,entertainment,leisure,catering,accommodation,commercial";
+        return "tourism,entertainment,leisure,sport,catering,accommodation,commercial";
     }
-    private DiscoveryCategory classify(JsonNode categories) {
+    private DiscoveryCategory classify(JsonNode categories, String name) {
         String joined = categories.toString().toLowerCase(Locale.ROOT);
         if (joined.contains("catering")) return DiscoveryCategory.FOOD;
         if (joined.contains("accommodation")) return DiscoveryCategory.STAY;
         if (joined.contains("commercial")) return DiscoveryCategory.SHOPPING;
         if (joined.contains("nightclub")) return DiscoveryCategory.NIGHTLIFE;
-        if (joined.contains("entertainment")) return DiscoveryCategory.ENTERTAINMENT;
+        if ((joined.contains("tourism") || joined.contains("sport") || joined.contains("entertainment"))
+                && name.toLowerCase(Locale.ROOT).matches(".*\\b(rafting|bungee|zip.?line|paragliding|adventure|trekking)\\b.*")) return DiscoveryCategory.ADVENTURE;
+        if (joined.matches(".*(rafting|canoe|kayak|climbing|paragliding|bungee|zipline|dive_centre|horse_riding|adventure).*")) return DiscoveryCategory.ADVENTURE;
         if (joined.contains("museum")) return DiscoveryCategory.MUSEUM;
+        if (joined.contains("playground") || joined.contains("zoo") || joined.contains("aquarium")) return DiscoveryCategory.FAMILY;
+        if (joined.contains("theme_park") || joined.contains("water_park")) return DiscoveryCategory.ENTERTAINMENT;
+        if (joined.contains("park") || joined.contains("garden")) return DiscoveryCategory.PARK;
+        if (joined.contains("entertainment")) return DiscoveryCategory.ENTERTAINMENT;
+        if (joined.contains("waterfall")) return DiscoveryCategory.WATERFALL;
+        if (joined.contains("beach")) return DiscoveryCategory.BEACH;
+        if (joined.contains("lake")) return DiscoveryCategory.LAKE;
+        if (joined.contains("river")) return DiscoveryCategory.RIVER;
+        if (joined.contains("viewpoint")) return DiscoveryCategory.VIEWPOINT;
+        if (joined.contains("natural")) return DiscoveryCategory.NATURE;
+        if (joined.contains("church")) return DiscoveryCategory.CHURCH;
+        if (joined.contains("place_of_worship")) return DiscoveryCategory.TEMPLE;
         return DiscoveryCategory.ATTRACTION;
     }
     private DiscoveryItemType itemType(DiscoveryCategory category) {
         return switch (category) {
             case FOOD -> DiscoveryItemType.FOOD;
             case STAY -> DiscoveryItemType.STAY;
-            case ENTERTAINMENT, NIGHTLIFE -> DiscoveryItemType.ACTIVITY;
+            case ADVENTURE, FAMILY, ENTERTAINMENT, NIGHTLIFE -> DiscoveryItemType.ACTIVITY;
             default -> DiscoveryItemType.PLACE;
         };
     }
@@ -126,7 +142,7 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
             case FOOD -> PlaceCategory.RESTAURANT;
             case STAY -> PlaceCategory.HOTEL;
             case SHOPPING -> PlaceCategory.SHOPPING;
-            case ENTERTAINMENT, NIGHTLIFE -> PlaceCategory.ACTIVITY;
+            case ADVENTURE, FAMILY, ENTERTAINMENT, NIGHTLIFE -> PlaceCategory.ACTIVITY;
             default -> PlaceCategory.ATTRACTION;
         };
     }

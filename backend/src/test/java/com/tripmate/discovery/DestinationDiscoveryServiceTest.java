@@ -34,6 +34,30 @@ class DestinationDiscoveryServiceTest {
     }
 
     @Test
+    void adventureQueryIsFocusedAndExplicitActivitiesWinOverGenericTags() throws Exception {
+        String query=provider.buildQuery(30.1,78.3,25000,DiscoveryCategory.ADVENTURE);
+        assertTrue(query.contains("bungee_jumping"));assertTrue(query.contains("rafting"));
+        assertFalse(query.contains("restaurant|cafe"));
+        assertEquals(DiscoveryCategory.ADVENTURE,provider.classify(objectMapper.readTree("{\"tourism\":\"camp_site\",\"sport\":\"rafting\"}"),"River Camp"));
+        assertEquals(DiscoveryCategory.ADVENTURE,provider.classify(objectMapper.readTree("{\"office\":\"travel_agent\"}"),"Rishikesh Rafting Centre"));
+        assertEquals(DiscoveryCategory.STAY,provider.classify(tags("tourism","camp_site"),"River Camp"));
+    }
+
+    @Test
+    void familyIncludesRelevantSourceCategoriesWithoutReclassifyingOrInventingSafety() throws Exception {
+        var family=new DiscoveryProviderRequest("Chennai",chennai.destination(),10,DiscoveryCategory.FAMILY);
+        var results=provider.map(response("""
+            {"type":"node","id":201,"lat":13.083,"lon":80.271,"tags":{"name":"City Park","leisure":"park"}},
+            {"type":"node","id":202,"lat":13.083,"lon":80.271,"tags":{"name":"Museum","tourism":"museum"}},
+            {"type":"node","id":203,"lat":13.083,"lon":80.271,"tags":{"name":"Night Club","amenity":"nightclub"}}
+            """),family);
+        assertEquals(2,results.size());
+        assertTrue(results.stream().anyMatch(p->p.category()==DiscoveryCategory.PARK));
+        assertTrue(results.stream().anyMatch(p->p.category()==DiscoveryCategory.MUSEUM));
+        assertTrue(provider.buildQuery(30.1,78.3,25000,DiscoveryCategory.FAMILY).contains("playground"));
+    }
+
+    @Test
     void classifiesCompleteCatalogueCategories() throws Exception {
         assertEquals(DiscoveryCategory.BEACH, provider.classify(tags("natural", "beach"), "Marina Beach"));
         assertEquals(DiscoveryCategory.RIVER, provider.classify(tags("waterway", "river"), "Adyar River"));

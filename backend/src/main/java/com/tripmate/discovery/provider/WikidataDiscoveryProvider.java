@@ -38,7 +38,7 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
     WikidataDiscoveryProvider(RestClient client, WikimediaEnrichmentService enrichment) { this.client=client; this.enrichment=enrichment; }
     @Override public String name() { return "Wikidata"; }
     @Override public DiscoveryProviderResult discover(DiscoveryProviderRequest request) {
-        var kinds=KINDS.entrySet().stream().filter(e -> request.category()==null || e.getValue()==request.category())
+        var kinds=KINDS.entrySet().stream().filter(e -> DiscoveryCategoryMatching.matches(request.category(), e.getValue()))
                 .map(e -> "wd:"+e.getKey()).sorted().toList();
         if(kinds.isEmpty() || !request.destination().isIndia()) return new DiscoveryProviderResult(name(),"",List.of(),List.of());
         String nameClause = request.placeName() == null || request.placeName().isBlank() ? ""

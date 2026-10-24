@@ -103,7 +103,8 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             if (distance > request.radiusKm() + 0.2) continue;
 
             DiscoveryCategory category = classify(tags, name);
-            if (request.category() != null && category != request.category()) continue;
+            if (!DiscoveryCategoryMatching.matches(request.category(), category)
+                    && !(request.category() == DiscoveryCategory.FAMILY && familyFriendly(tags, category))) continue;
             String type = element.path("type").asText("node");
             String id = element.path("id").asText();
             if (id.isBlank()) continue;
@@ -165,7 +166,18 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
     public String buildQuery(double lat, double lon, int radiusMeters, DiscoveryCategory category) {
         String around = "(around:" + radiusMeters + "," + lat + "," + lon + ")";
         List<String> selectors = new ArrayList<>();
-        if (category == DiscoveryCategory.FOOD) {
+        if (category == DiscoveryCategory.ADVENTURE) {
+            selectors.add("nwr" + around + "[\"sport\"~\"rafting|canoe|kayak|climbing|paragliding|bungee_jumping|zipline|scuba_diving|surfing|horse_riding\"];");
+            selectors.add("nwr" + around + "[\"leisure\"=\"adventure_park\"];");
+            selectors.add("nwr" + around + "[\"tourism\"=\"adventure_park\"];");
+            selectors.add("nwr" + around + "[\"name\"~\"rafting|bungee|zip.?line|paragliding|adventure|trekking\",i][\"tourism\"];");
+            selectors.add("nwr" + around + "[\"name\"~\"rafting|bungee|zip.?line|paragliding|adventure|trekking\",i][\"office\"=\"travel_agent\"];");
+        } else if (category == DiscoveryCategory.FAMILY) {
+            selectors.add("nwr" + around + "[\"leisure\"~\"park|garden|playground|water_park|theme_park\"];");
+            selectors.add("nwr" + around + "[\"tourism\"~\"museum|zoo|aquarium\"];");
+            selectors.add("nwr" + around + "[\"family\"=\"yes\"];");
+            selectors.add("nwr" + around + "[\"kids_area\"=\"yes\"];");
+        } else if (category == DiscoveryCategory.FOOD) {
             selectors.add("nwr" + around + "[\"amenity\"~\"restaurant|cafe|fast_food|food_court\"];");
         } else if (category == DiscoveryCategory.STAY) {
             selectors.add("nwr" + around + "[\"tourism\"~\"hotel|guest_house|hostel|motel|camp_site|apartment|chalet|homestay\"];");
@@ -187,7 +199,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             selectors.add("nwr" + around + "[\"natural\"~\"waterfall|peak|beach|cave_entrance|spring|water\"];");
             selectors.add("nwr" + around + "[\"water\"~\"lake|reservoir|river\"];");
             selectors.add("nwr" + around + "[\"waterway\"=\"river\"];");
-            selectors.add("nwr" + around + "[\"leisure\"~\"park|garden|nature_reserve|water_park|theme_park|adventure_park|spa\"];");
+            selectors.add("nwr" + around + "[\"leisure\"~\"park|garden|playground|nature_reserve|water_park|theme_park|adventure_park|spa\"];");
             selectors.add("nwr" + around + "[\"amenity\"~\"place_of_worship|restaurant|cafe|fast_food|food_court|marketplace|bar|pub|nightclub|events_venue|arts_centre|theatre|bus_station|taxi|car_rental|bicycle_rental\"];");
             selectors.add("nwr" + around + "[\"shop\"~\"mall|gift|art|craft|souvenir\"];");
             selectors.add("nwr" + around + "[\"sport\"~\"climbing|surfing|scuba_diving|canoe|kayak|rafting|paragliding|horse_racing\"];");
@@ -203,6 +215,12 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
         String amenity = value(tags, "amenity"), shop = value(tags, "shop"), sport = value(tags, "sport");
         String religion = value(tags, "religion"), event = value(tags, "event"), office = value(tags, "office");
         String lower = name.toLowerCase(Locale.ROOT);
+        // Classify explicit activity evidence before generic camp/site/river tags.
+        if (sport.matches("rafting|canoe|kayak|climbing|paragliding|bungee_jumping|zipline|scuba_diving|surfing|horse_riding")
+                || leisure.equals("adventure_park") || tourism.equals("adventure_park")
+                || ((!tourism.isBlank() || office.equals("travel_agent"))
+                    && lower.matches(".*\\b(rafting|bungee|zip.?line|paragliding|adventure|trekking)\\b.*"))) return DiscoveryCategory.ADVENTURE;
+        if (tourism.matches("zoo|aquarium")) return DiscoveryCategory.FAMILY;
         if (!event.isBlank() || "events_venue".equals(amenity)) return DiscoveryCategory.EVENT;
         if (amenity.matches("arts_centre|theatre")) return DiscoveryCategory.CULTURAL;
         if (amenity.matches("bar|pub|nightclub")) return DiscoveryCategory.NIGHTLIFE;
