@@ -123,3 +123,7 @@ button, input:not([type=checkbox]), select { min-height:44px; }
  .experience-tabs button { color:#1d4ed8; }
  .card-body .price { color:#0f172a; }
 }
+
+.coverage-status { border:1px solid #d6e1d9; border-radius:12px; padding:0 12px; margin:12px 0; font-size:12px; color:#475569; }
+.coverage-status summary { cursor:pointer; min-height:44px; display:flex; align-items:center; font-weight:600; }
+.coverage-status p { margin:0 0 12px; }

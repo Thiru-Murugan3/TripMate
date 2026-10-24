@@ -35,6 +35,20 @@ class DestinationDiscoveryOrchestrationTest {
     }
 
     @Test
+    void incompleteInventoriesRefreshSoonerWithoutExtendingPriceOrOpeningFreshness() {
+        var now=java.time.Instant.parse("2026-10-24T08:00:00Z");
+        var unknown=place("Garden",1,null,DiscoveryCategory.PARK);
+        assertEquals(now.plusSeconds(21600),service.searchExpiry(now,List.of(unknown),List.of()));
+        for(String warning:List.of("Interest lookup is a limited name search, not a complete destination inventory.",
+                "Provider reached its 100-place limit.","Provider was unavailable; partial results are shown.")) {
+            assertEquals(now.plusSeconds(120),service.searchExpiry(now,List.of(unknown),List.of(warning)));
+        }
+        assertEquals(now.plusSeconds(60),service.searchExpiry(now,List.of(unknown.toBuilder().openNow(true).build()),List.of("Provider limit reached")));
+        var priced=unknown.toBuilder().priceStatus(PriceStatus.VERIFIED).verificationExpiresAt(now.plusSeconds(30)).build();
+        assertEquals(now.plusSeconds(30),service.searchExpiry(now,List.of(priced),List.of("Provider limit reached")));
+    }
+
+    @Test
     void providerFailureReturnsVerifiedPartialResultsWithWarning() {
         when(primary.discover(any())).thenThrow(new RuntimeException("provider down"));
         when(fallback.discover(any())).thenReturn(result("Fallback", place("Marina Beach", 3, null, DiscoveryCategory.BEACH)));
