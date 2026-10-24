@@ -19,6 +19,16 @@ class GeoapifyPaginationTest {
         String features=java.util.stream.IntStream.range(start,start+count).mapToObj(i -> "{\"properties\":{\"name\":\"Place "+i+"\",\"place_id\":\""+i+"\",\"categories\":[\"tourism.attraction\"]},\"geometry\":{\"coordinates\":[80,13]}}").collect(java.util.stream.Collectors.joining(","));
         return "{\"features\":["+features+"]}";
     }
+    @Test void preservesNestedSourceHoursAndUnambiguousDuration() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var factory=mock(ProviderHttpClientFactory.class);when(factory.create(anyInt())).thenReturn(builder.build());
+        server.expect(anything()).andRespond(withSuccess("""
+            {"features":[{"properties":{"name":"Museum","place_id":"museum","categories":["entertainment.museum"],"datasource":{"raw":{"opening_hours":"Mo-Fr 09:00-17:00","duration":"00:45"}}},"geometry":{"coordinates":[80,13]}}]}
+            """,MediaType.APPLICATION_JSON));
+        var place=new GeoapifyDiscoveryProvider(factory,"test-secret","https://geo.example").discover(request()).places().getFirst();
+        assertEquals("Mo-Fr 09:00-17:00",place.openingHours());assertEquals(45,place.suggestedVisitMinutes());
+        assertEquals(45,SourceDuration.minutes("00:45"));assertEquals(91,SourceDuration.minutes("01:30:01"));
+        assertNull(SourceDuration.minutes("90"));assertNull(SourceDuration.minutes("unknown"));assertNull(SourceDuration.minutes("01:99"));server.verify();
+    }
     @Test void mapsAdventureInterestFromProviderEvidence() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var factory=mock(ProviderHttpClientFactory.class);when(factory.create(anyInt())).thenReturn(builder.build());
         server.expect(queryParam("categories","sport,entertainment,leisure,tourism")).andRespond(withSuccess("""

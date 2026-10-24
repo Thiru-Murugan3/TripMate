@@ -79,7 +79,7 @@ describe('Combined compact Explore', () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
     expect(c.visitTime({...place,suggestedVisitMinutes:90} as any)).toBe('Suggested visit: 1h 30m');
     expect(c.visitTime({...place,suggestedVisitMinutes:NaN} as any)).toBe('Visit duration not listed');
-    expect(c.openingSchedule(undefined)).toContain('Not listed');expect(c.openingSchedule('Mo-Fr 09:00-17:00')).toBe('Mo-Fr 09:00-17:00');
+    expect(c.openingSchedule(undefined)).toContain('Not listed');expect(c.openingSchedule('Mo-Fr 09:00-17:00')).toBe('Mon–Fri 09:00–17:00');
     expect(c.formatPlacePrice({...place,priceStatus:'FREE',verificationExpiresAt:'2020-01-01'} as any)).toContain('Previously free');
     expect(c.sourceDate('invalid')).toBeNull();
     discovery.discoverPlaces.and.returnValue(of({...response,places:[{...place,openingHours:'24/7',priceOptions:[{label:'Adult',amount:100,currency:'INR',priceType:'PER_PERSON',sourceUrl:'https://venue.example/fees',lastVerifiedAt:'2026-10-01'}]}]} as any));

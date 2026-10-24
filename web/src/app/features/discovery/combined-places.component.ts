@@ -94,7 +94,12 @@ export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
   openingSchedule(hours?:string):string {
     const value=hours?.trim();
     if(!value) return 'Not listed — confirm with the venue';
-    return value==='24/7' ? '24 hours daily (source schedule)' : value;
+    if(value==='24/7') return '24 hours daily (source schedule)';
+    const days:Record<string,string>={Mo:'Mon',Tu:'Tue',We:'Wed',Th:'Thu',Fr:'Fri',Sa:'Sat',Su:'Sun'};
+    if(value.split(';').every(part=>/^\s*(?:(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:[-,](?:Mo|Tu|We|Th|Fr|Sa|Su))*\s+)?(?:(?:[01]\d|2[0-3]):[0-5]\d-(?:[01]\d|2[0-3]):[0-5]\d(?:,(?:[01]\d|2[0-3]):[0-5]\d-(?:[01]\d|2[0-3]):[0-5]\d)*|off)\s*$/.test(part))) {
+      return value.replace(/Mo|Tu|We|Th|Fr|Sa|Su/g,day=>days[day]).replace(/off/g,'Closed').replace(/-/g,'–').replace(/;/g,'; ');
+    }
+    return 'Source schedule: '+value;
   }
   sourceDate(value?:string):string|null {
     if(!value) return null;

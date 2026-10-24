@@ -133,7 +133,8 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             String address = address(tags, request.query());
             String subcategory = subcategory(tags, category);
             DiscoveryItemType itemType = itemType(tags, category);
-            Integer duration = suggestedMinutes(category);
+            Integer sourceDuration = SourceDuration.minutes(tags.path("duration").asText(null));
+            Integer duration = sourceDuration == null ? suggestedMinutes(category) : sourceDuration;
             boolean family = familyFriendly(tags, category);
             Double rating = decimalDouble(first(tags.path("rating").asText(null), tags.path("stars").asText(null)));
 
