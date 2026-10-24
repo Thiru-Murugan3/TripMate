@@ -10,6 +10,29 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 class PlacePhotoServiceTest {
+ @Test void resolvesRegionalArticleOnlyFromAnExactOsmObject(){
+  var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var commons=mock(CommonsImageService.class);
+  server.expect(requestTo("https://api.openstreetmap.org/api/0.6/node/123.json")).andRespond(withSuccess("""
+   {"elements":[{"type":"node","id":123,"tags":{"wikipedia":"ta:அருங்காட்சியகம்"}}]}
+   """,MediaType.APPLICATION_JSON));
+  server.expect(requestTo(org.hamcrest.Matchers.startsWith("https://ta.wikipedia.org/w/api.php"))).andRespond(withSuccess("""
+   {"query":{"pages":{"1":{"pageprops":{"wikibase_item":"Q123"},"original":{"source":"https://upload.wikimedia.org/One.jpg"}}}}}
+   """,MediaType.APPLICATION_JSON));
+  server.expect(requestTo("https://www.wikidata.org/wiki/Special:EntityData/Q123.json")).andRespond(withSuccess("{\"entities\":{\"Q123\":{\"claims\":{}}}}",MediaType.APPLICATION_JSON));
+  when(commons.resolveUrl("https://upload.wikimedia.org/One.jpg")).thenReturn(photo("One.jpg"));
+  when(commons.depicting("Q123")).thenReturn(List.of(photo("Two.jpg")));
+  var result=new PlacePhotoService(builder.build(),commons).photos("osm:node:123");assertEquals(2,result.images().size());server.verify();
+ }
+ @Test void rejectsAnOsmResponseForAnotherObject(){
+  var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var commons=mock(CommonsImageService.class);
+  server.expect(anything()).andRespond(withSuccess("{\"elements\":[{\"type\":\"way\",\"id\":123,\"tags\":{\"wikidata\":\"Q123\"}}]}",MediaType.APPLICATION_JSON));
+  var result=new PlacePhotoService(builder.build(),commons).photos("osm:node:123");assertTrue(result.images().isEmpty());assertTrue(result.retryable());verifyNoInteractions(commons);server.verify();
+ }
+ @Test void resolvesCommonsFilePageLinksWithTheFilesOwnCredit(){
+  var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+  server.expect(queryParam("titles","File:Real_place.jpg")).andRespond(withSuccess("{\"query\":{\"pages\":{}}}",MediaType.APPLICATION_JSON));
+  new CommonsImageService(builder.build()).resolveUrl("https://commons.wikimedia.org/wiki/File:Real_place.jpg");server.verify();
+ }
  static DiscoveryImage photo(String file){return new DiscoveryImage("https://upload.wikimedia.org/"+file,"https://commons.wikimedia.org/wiki/File:"+file,"Wikimedia Commons","Photographer","CC BY-SA 4.0","Photographer",true,true);}
  @Test void returnsTwoDistinctEntityPhotosAndCachesWithoutNameSearch(){
   var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var commons=mock(CommonsImageService.class);

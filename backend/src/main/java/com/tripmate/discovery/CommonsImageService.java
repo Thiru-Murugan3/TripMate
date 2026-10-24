@@ -47,6 +47,8 @@ public class CommonsImageService {
         if (url == null) return null;
         try {
             URI uri = URI.create(url);
+            if (trusted(url,"commons.wikimedia.org") && uri.getRawPath().startsWith("/wiki/File:"))
+                return resolve(URLDecoder.decode(uri.getRawPath().substring(6).replace("+","%2B"),StandardCharsets.UTF_8));
             if (!"upload.wikimedia.org".equalsIgnoreCase(uri.getHost())) return null;
             String path = uri.getRawPath();
             if (!path.startsWith("/wikipedia/commons/")) return null;
