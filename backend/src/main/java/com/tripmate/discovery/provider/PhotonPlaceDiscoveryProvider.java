@@ -35,16 +35,26 @@ public class PhotonPlaceDiscoveryProvider implements DiscoveryProvider {
     @Override public String name() { return "OpenStreetMap name search"; }
     @Override public DiscoveryProviderResult discover(DiscoveryProviderRequest request) {
         if (!request.destination().isIndia()) return new DiscoveryProviderResult(name(), "", List.of(), List.of());
-        var detailBudget=new java.util.concurrent.atomic.AtomicInteger(2);
+        var detailBudget=new java.util.concurrent.atomic.AtomicInteger(request.fast()?0:2);
         if (request.placeName() != null && !request.placeName().isBlank()) return lookup(request,request.placeName().trim(),client,detailBudget);
         var terms = fallbackTerms(request.category());
         var places = new LinkedHashMap<String,DiscoveredPlace>();
         var warnings = new ArrayList<String>();
-        for (String term : terms) {
+        if(request.fast()) {
+            var sources=terms.stream().map(term->new DiscoveryProvider(){
+                public String name(){return "OpenStreetMap interest lookup";}
+                public DiscoveryProviderResult discover(DiscoveryProviderRequest ignored){return lookup(request,term,fallbackClient,detailBudget);}
+            }).map(provider->(DiscoveryProvider)provider).toList();
+            for(var outcome:DiscoveryBatch.fetch(sources,request,java.time.Duration.ofSeconds(6))) {
+                var result=outcome.value();result.places().forEach(place->places.putIfAbsent(place.externalId(),place));warnings.addAll(result.warnings());
+            }
+        }
+        for (String term : request.fast() ? List.<String>of() : terms) {
             try {
                 var result=lookup(request,term,fallbackClient,detailBudget);
                 result.places().forEach(place->places.putIfAbsent(place.externalId(),place));
                 warnings.addAll(result.warnings());
+
             } catch (RuntimeException ex) {
                 warnings.add("OpenStreetMap interest lookup was unavailable for part of this search.");
             }

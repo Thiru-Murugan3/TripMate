@@ -53,6 +53,9 @@ export class DiscoveryService {
     return this.http.get<DestinationDiscoveryResponse>(`${environment.apiUrl}/discovery/top-places`,{params});
   }
 
+  getDetails(externalId:string):Observable<DiscoveredPlace> {
+    return this.http.get<DiscoveredPlace>(`${environment.apiUrl}/discovery/place-details`,{params:{externalId}});
+  }
   getPlace(externalId: string): Observable<DiscoveredPlace> {
     return this.http.get<DiscoveredPlace>(`${this.apiUrl}/${encodeURIComponent(externalId)}`);
   }

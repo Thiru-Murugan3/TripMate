@@ -14,6 +14,7 @@ import {
   UpdateItineraryItemRequest
 } from '../models/itinerary.model';
 
+export interface RoadEstimate {available:boolean;distanceKm:number|null;durationMinutes:number|null;legs:{distanceKm:number;durationMinutes:number}[];path:number[][];message:string;}
 @Injectable({
   providedIn: 'root'
 })
@@ -22,6 +23,9 @@ export class ItineraryService {
 
   constructor(private http: HttpClient) {}
 
+  estimateDrive(points:{latitude:number;longitude:number}[]):Observable<RoadEstimate> {
+    return this.http.post<RoadEstimate>(`${environment.apiUrl}/routing/drive`,{points});
+  }
   getItinerary(tripId: number): Observable<TripItinerary> {
     return this.http.get<TripItinerary>(
       `${this.baseUrl}/${tripId}/itinerary`

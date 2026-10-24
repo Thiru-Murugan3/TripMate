@@ -40,7 +40,7 @@ class OpenTripMapDiscoveryProviderTest {
         assertEquals(1,result.places().size());var p=result.places().get(0);
         assertEquals("opentripmap:Q123",p.externalId());assertEquals(DiscoveryCategory.PARK,p.category());
         assertEquals(PriceStatus.UNKNOWN,p.priceStatus());assertNull(p.estimatedCostPerPerson());assertNull(p.rating());
-        assertEquals(image,p.imageGallery().get(0));assertTrue(p.imageExact());assertTrue(p.sourceName().contains("ODbL"));server.verify();
+        assertEquals("https://www.wikidata.org/wiki/Q123",p.sourceUrl());assertEquals(image,p.imageGallery().get(0));assertTrue(p.imageExact());assertTrue(p.sourceName().contains("ODbL"));server.verify();
     }
     @Test void campsiteAndZooSubtypesDoNotBecomeMuseumsOrFamilyCamping() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();

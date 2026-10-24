@@ -63,7 +63,7 @@ public class PlacePhotoService {
                 if(images.size()<2)for(DiscoveryImage photo:commons.depicting(id)) {add(images,photo);if(images.size()>=2)break;}
             }
             Gallery gallery=new Gallery(List.copyOf(images),images.size()>=2?"Two source-linked photographs":"Only "+images.size()+" source-linked photograph(s) available. No substitute images were added.",false);
-            cache.put(sourceId,gallery,Instant.now().plus(images.size()>=2?7:1,ChronoUnit.DAYS));return gallery;
+            cache.put(sourceId,gallery,images.isEmpty()?Instant.now().plusSeconds(300):Instant.now().plus(images.size()>=2?7:1,ChronoUnit.DAYS));return gallery;
         } catch(RuntimeException ex) { return new Gallery(List.copyOf(images),"Photo sources are temporarily unavailable. Please try again.",true); }
         finally {requests.release();}
     }

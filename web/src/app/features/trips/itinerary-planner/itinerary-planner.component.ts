@@ -1,3 +1,4 @@
+import { Subscription } from 'rxjs';
 import { DayRouteMapComponent } from './day-route-map.component';
 import { currentPosition } from '../../../core/utils/device-access';
 import { CommonModule } from '@angular/common';
@@ -26,7 +27,7 @@ import {
   UpdateItineraryItemRequest
 } from '../../../core/models/itinerary.model';
 import { Place } from '../../../core/models/place.model';
-import { ItineraryService } from '../../../core/services/itinerary.service';
+import { RoadEstimate, ItineraryService } from '../../../core/services/itinerary.service';
 import { PlaceService } from '../../../core/services/place.service';
 
 interface RouteCoordinate {
@@ -82,6 +83,7 @@ interface DayRoutePlan {
         </button>
       </div>
 
+      <label *ngIf="itinerary?.days?.length" class="day-focus">View day<select [(ngModel)]="selectedPlanningDayId" (ngModelChange)="mobileDayId=$event"><option [ngValue]="0">All days</option><option *ngFor="let day of itinerary?.days" [ngValue]="day.id">Day {{day.dayNumber}} · {{day.title || 'Sightseeing'}}</option></select></label>
       <div *ngIf="isLoading" class="state-card">
         <div class="spinner"></div>
         <span>Loading itinerary...</span>
@@ -177,8 +179,16 @@ interface DayRoutePlan {
               </header>
 
               <ng-container *ngIf="plan.visitStops.length">
-                <app-day-route-map [stops]="plan.stops" [dayNumber]="plan.day.dayNumber" />
+                <app-day-route-map [stops]="plan.stops" [dayNumber]="plan.day.dayNumber" [roadPath]="roadEstimate(plan)?.path || []" />
                 <p class="route-distance-note">Nearest-next order · straight-line distances</p>
+                <button type="button" class="btn secondary" [disabled]="loadingRoad[plan.day.id] || plan.stops.length>25" (click)="estimateDayDrive(plan)">{{loadingRoad[plan.day.id] ? 'Estimating drive…' : 'Get driving estimate'}}</button>
+                <p class="route-distance-note">Uses Geoapify to calculate this route. No live traffic; stop order is unchanged.</p>
+                <p *ngIf="plan.stops.length>25" class="route-distance-note">Use Maps for routes with more than 25 stops.</p>
+                <div *ngIf="roadEstimate(plan) as road" class="road-summary" role="status">
+                  <strong *ngIf="road.available">{{road.distanceKm | number:'1.0-1'}} km by road · {{road.durationMinutes | number:'1.0-0'}} min driving</strong>
+                  <p>{{road.message}}</p>
+                  <ol *ngIf="road.available"><li *ngFor="let leg of road.legs;let i=index">{{plan.stops[i].name}} → {{plan.stops[i+1].name}}: {{leg.distanceKm | number:'1.0-1'}} km · {{leg.durationMinutes | number:'1.0-0'}} min</li></ol>
+                </div>
                 <ol class="numbered-stops" aria-label="Sightseeing order">
                   <li class="stay"><b>H</b><span>{{ plan.stops[0].name }}<small>Start at stay</small></span></li>
                   <li *ngFor="let stop of plan.visitStops; let index=index"><b>{{ index+1 }}</b><span>{{ stop.name }}<small>{{ plan.legs[index].distanceKm | number:'1.0-1' }} km from {{ index===0 ? 'stay' : 'stop '+index }}</small></span></li>
@@ -212,7 +222,7 @@ interface DayRoutePlan {
 
         <nav class="mobile-day-strip" *ngIf="itinerary?.days?.length" aria-label="Itinerary days"><button *ngFor="let day of itinerary?.days" type="button" [class.active]="mobileDayId === day.id" (click)="jumpToDay(day.id)">Day {{day.dayNumber}}<small>{{day.dayDate ? formatDate(day.dayDate) : 'Flexible'}}</small></button></nav>
         <div *ngIf="itinerary?.days?.length" class="days-list">
-          <article *ngFor="let day of itinerary?.days" class="day-card" [id]="'itinerary-day-'+day.id">
+          <article *ngFor="let day of planningDays" class="day-card" [id]="'itinerary-day-'+day.id">
             <header class="day-header">
               <div class="day-title">
                 <div class="day-number">Day {{ day.dayNumber }}</div>
@@ -685,13 +695,30 @@ interface DayRoutePlan {
  .day-header, .activity-actions, .day-actions { flex-wrap:wrap; }
  .route-summary, .photo-route { max-width:100%; min-width:0; }
 }
-.numbered-stops{list-style:none;padding:0;display:grid;gap:10px;margin:12px 0}.numbered-stops li{display:flex;align-items:center;gap:10px;min-width:0}.numbered-stops b{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;color:white;background:#2563eb}.numbered-stops .stay b{background:#166534}.numbered-stops span{font-size:13px;overflow-wrap:anywhere}.numbered-stops small{display:block;font-size:11px;color:#64748b;margin-top:2px}.route-distance-note{font-size:11px;color:#64748b;margin:8px 0}.unmapped-stops{display:grid;gap:4px;font-size:12px;padding:10px;background:#fffbeb;border-radius:8px}.route-leg-link{display:block;overflow-wrap:anywhere;font-size:12px;padding:10px 0;min-height:44px;box-sizing:border-box}
+.day-focus{display:grid;gap:6px;max-width:440px;margin:12px 0}.day-focus select{min-height:44px;max-width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:10px}.road-summary{padding:12px;background:#eff6ff;border-radius:10px;font-size:12px}.road-summary p{font-size:11px}.road-summary li{margin-bottom:8px}.numbered-stops{list-style:none;padding:0;display:grid;gap:10px;margin:12px 0}.numbered-stops li{display:flex;align-items:center;gap:10px;min-width:0}.numbered-stops b{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;color:white;background:#2563eb}.numbered-stops .stay b{background:#166534}.numbered-stops span{font-size:13px;overflow-wrap:anywhere}.numbered-stops small{display:block;font-size:11px;color:#64748b;margin-top:2px}.route-distance-note{font-size:11px;color:#64748b;margin:8px 0}.unmapped-stops{display:grid;gap:4px;font-size:12px;padding:10px;background:#fffbeb;border-radius:8px}.route-leg-link{display:block;overflow-wrap:anywhere;font-size:12px;padding:10px 0;min-height:44px;box-sizing:border-box}
 `]
 })
 export class ItineraryPlannerComponent implements OnInit, OnChanges, OnDestroy {
   mobileRouteOpen=true;
+  selectedPlanningDayId=0;
+  private roadRequests=new Subscription();
+  loadingRoad:Record<number,boolean>={};
+  private roadResults:Record<number,{signature:string;value:RoadEstimate}>={};
+  get planningDays():ItineraryDay[] {const days=this.itinerary?.days || [];return this.selectedPlanningDayId?days.filter(d=>d.id===this.selectedPlanningDayId):days;}
+  private roadSignature(plan:DayRoutePlan):string {return JSON.stringify(plan.stops.map(p=>[p.latitude,p.longitude]));}
+  roadEstimate(plan:DayRoutePlan):RoadEstimate|null {const stored=this.roadResults[plan.day.id];return stored?.signature===this.roadSignature(plan)?stored.value:null;}
+  estimateDayDrive(plan:DayRoutePlan):void {
+    if(this.loadingRoad[plan.day.id]||plan.stops.length<2||plan.stops.length>25)return;
+    const signature=this.roadSignature(plan),generation=this.loadGeneration;this.loadingRoad[plan.day.id]=true;
+    this.roadRequests.add(this.itineraryService.estimateDrive(plan.stops.map(p=>({latitude:p.latitude,longitude:p.longitude}))).subscribe({
+      next:value=>{if(generation!==this.loadGeneration)return;this.loadingRoad[plan.day.id]=false;
+        const current=this.dayRoutePlans.find(p=>p.day.id===plan.day.id);
+        if(current&&this.roadSignature(current)===signature)this.roadResults[plan.day.id]={signature,value};},
+      error:()=>{if(generation!==this.loadGeneration)return;this.loadingRoad[plan.day.id]=false;this.roadResults[plan.day.id]={signature,value:{available:false,distanceKm:null,durationMinutes:null,legs:[],path:[],message:'Driving estimate unavailable. Open the route in Maps.'}};}
+    }));
+  }
   private loadGeneration=0;
-  ngOnDestroy():void {this.loadGeneration++;this.closeMapPicker();}
+  ngOnDestroy():void {this.roadRequests.unsubscribe();this.loadGeneration++;this.closeMapPicker();}
 
   private readonly fb = inject(FormBuilder);
   private readonly itineraryService = inject(ItineraryService);
@@ -704,7 +731,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('routeMapPicker') routeMapPickerElement?: ElementRef<HTMLDivElement>;
 
   mobileDayId = 0;
-  jumpToDay(id:number):void { this.mobileDayId=id; document.getElementById('itinerary-day-'+id)?.scrollIntoView({behavior:'smooth',block:'start'}); }
+  jumpToDay(id:number):void { this.selectedPlanningDayId=id;this.mobileDayId=id; document.getElementById('itinerary-day-'+id)?.scrollIntoView({behavior:'smooth',block:'start'}); }
   itinerary: TripItinerary | null = null;
   places: Place[] = [];
 
@@ -823,7 +850,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges, OnDestroy {
   get dayRoutePlans(): DayRoutePlan[] {
     const start = this.routeStart;
     if (!start) return [];
-    return [...(this.itinerary?.days ?? [])]
+    return [...this.planningDays]
       .sort((left, right) => left.dayNumber - right.dayNumber)
       .map((day) => this.buildDayRoutePlan(day, start));
   }
@@ -831,6 +858,7 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges, OnDestroy {
   loadAll(): void {
     if (!this.tripId) return;
 
+    this.roadRequests.unsubscribe();this.roadRequests=new Subscription();this.roadResults={};this.loadingRoad={};this.selectedPlanningDayId=0;
     this.isLoading = true;
     this.loadError = '';
     this.closeMapPicker();

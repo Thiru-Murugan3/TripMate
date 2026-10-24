@@ -158,33 +158,23 @@ public class DestinationDiscoveryService {
 
     private CachedSearch fetch(String query, int radiusKm, DiscoveryCategory category, String placeName, boolean freeOnly) {
         GeocodedDestination destination = geocodingService.geocode(query);
-        DiscoveryProviderRequest request = new DiscoveryProviderRequest(query, destination, radiusKm, category, placeName);
+        DiscoveryProviderRequest request = new DiscoveryProviderRequest(query, destination, radiusKm, category, placeName, true);
         Map<String, DiscoveredPlace> unique = new LinkedHashMap<>();
         List<String> usedProviders = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
         List<String> attributions = new ArrayList<>();
 
-        for (DiscoveryProvider provider : providers) {
-            // Interest name lookup is a bounded fallback, not another broad inventory request.
-            if (provider instanceof PhotonPlaceDiscoveryProvider && placeName.isBlank() && !unique.isEmpty()
-                    && !(category==DiscoveryCategory.NATURE && unique.values().stream().noneMatch(p ->
-                        java.util.EnumSet.of(DiscoveryCategory.WATERFALL,DiscoveryCategory.LAKE,DiscoveryCategory.PARK,DiscoveryCategory.WILDLIFE,DiscoveryCategory.BEACH).contains(p.category())))) continue;
-            if (freeOnly && !(provider instanceof CuratedDiscoveryProvider || provider instanceof OverpassDiscoveryProvider
-                    || provider instanceof WikidataDiscoveryProvider)) continue;
-            try {
-                DiscoveryProviderResult result = provider.discover(request);
-                warnings.addAll(result.warnings());
-                List<DiscoveredPlace> matches = result.places().stream()
-                        .filter(place -> placeNameMatches(place.name(), placeName)).toList();
-                if (!matches.isEmpty()) {
-                    usedProviders.add(result.provider());
-                    if (result.attribution() != null && !result.attribution().isBlank()) attributions.add(result.attribution());
-                }
-                merge(unique, freeOnly ? matches.stream().filter(this::highlight).toList() : matches);
-            } catch (RuntimeException ex) {
-                log.warn("Discovery provider failed: provider={} error={}", provider.name(), ex.getClass().getSimpleName());
-                warnings.add(provider.name() + " was unavailable; partial results are shown.");
-            }
+        var eligible=providers.stream().filter(provider->!freeOnly || provider instanceof CuratedDiscoveryProvider
+                || provider instanceof OverpassDiscoveryProvider || provider instanceof WikidataDiscoveryProvider).toList();
+        var primary=eligible.stream().filter(provider->!(provider instanceof PhotonPlaceDiscoveryProvider) || !placeName.isBlank()).toList();
+        var batches=new ArrayList<DiscoveryBatch.Result>(DiscoveryBatch.fetch(primary,request,Duration.ofSeconds(8)));
+        for(var outcome:batches) addProviderResult(outcome.value(),placeName,freeOnly,unique,usedProviders,warnings,attributions);
+        boolean supplement=unique.isEmpty() || category==DiscoveryCategory.NATURE && unique.values().stream().noneMatch(p ->
+                EnumSet.of(DiscoveryCategory.WATERFALL,DiscoveryCategory.LAKE,DiscoveryCategory.PARK,DiscoveryCategory.WILDLIFE,DiscoveryCategory.BEACH).contains(p.category()));
+        if(placeName.isBlank() && supplement) {
+            var fallback=eligible.stream().filter(provider->provider instanceof PhotonPlaceDiscoveryProvider).toList();
+            for(var outcome:DiscoveryBatch.fallback(fallback,request,Duration.ofSeconds(8)))
+                addProviderResult(outcome.value(),placeName,freeOnly,unique,usedProviders,warnings,attributions);
         }
         if (unique.isEmpty()) warnings.add("No source-backed listings were returned. Suttru did not generate placeholder activities.");
         warnings.add("Prices and opening hours may change. Confirm with the linked official provider before travelling.");
@@ -193,6 +183,15 @@ public class DestinationDiscoveryService {
                 .thenComparingDouble(DiscoveredPlace::distanceKm)).limit(maxResults).toList();
         return new CachedSearch(Instant.now(), destination, places, List.copyOf(usedProviders),
                 List.copyOf(new LinkedHashSet<>(warnings)), List.copyOf(new LinkedHashSet<>(attributions)));
+    }
+
+    private void addProviderResult(DiscoveryProviderResult result,String placeName,boolean freeOnly,
+            Map<String,DiscoveredPlace> unique,List<String> used,List<String> warnings,List<String> attributions) {
+        if(result==null)return;
+        warnings.addAll(result.warnings());
+        var matches=result.places().stream().filter(place->placeNameMatches(place.name(),placeName)).toList();
+        if(!matches.isEmpty()) {used.add(result.provider());if(result.attribution()!=null&&!result.attribution().isBlank())attributions.add(result.attribution());}
+        merge(unique,freeOnly?matches.stream().filter(this::highlight).toList():matches);
     }
 
     Instant searchExpiry(Instant createdAt, List<DiscoveredPlace> places, List<String> warnings) {

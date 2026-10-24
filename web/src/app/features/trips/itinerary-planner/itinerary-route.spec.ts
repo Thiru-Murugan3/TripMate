@@ -17,6 +17,19 @@ describe('Hotel-based daily sightseeing routes',()=>{
  });
  afterEach(()=>{localStorage.removeItem('tripmate-route-start-10');localStorage.removeItem('tripmate-route-start-10:map');});
  function setup(){const f=TestBed.createComponent(ItineraryPlannerComponent),c=f.componentInstance;c.tripId=10;c.canEdit=true;c.loadAll();return {f,c};}
+ it('requests ordered road legs explicitly and discards estimates when stops change',()=>{
+  const {f,c}=setup();const result=new Subject<any>();api.estimateDrive=jasmine.createSpy().and.returnValue(result);
+  expect(api.estimateDrive).not.toHaveBeenCalled();const plan=c.dayRoutePlans[0];c.estimateDayDrive(plan);
+  expect(api.estimateDrive.calls.mostRecent().args[0].length).toBe(plan.stops.length);
+  result.next({available:true,distanceKm:20,durationMinutes:45,legs:[],path:[],message:'estimate'});
+  expect(c.roadEstimate(plan)?.durationMinutes).toBe(45);
+  c.currentLocation={name:'Changed stay',latitude:12,longitude:78};c.routeStartPlaceId='CURRENT_LOCATION';
+  expect(c.roadEstimate(c.dayRoutePlans[0])).toBeNull();f.destroy();
+ });
+ it('focuses a selected day without changing the saved itinerary',()=>{
+  const {f,c}=setup();c.itinerary={...c.itinerary!,days:[day,{...day,id:2,dayNumber:2}]};c.selectedPlanningDayId=2;
+  expect(c.planningDays.length).toBe(1);expect(c.dayRoutePlans[0].day.id).toBe(2);expect(c.itinerary.days.length).toBe(2);f.destroy();
+ });
  it('starts at a saved hotel, numbers the nearest next stop and returns to the stay without dropping unmapped activities',()=>{
   const {f,c}=setup(),plan=c.dayRoutePlans[0];
   expect(c.routeStart?.name).toBe('Stay');expect(plan.visitStops.map(p=>p.name)).toEqual(['Near','Same position','Far']);
