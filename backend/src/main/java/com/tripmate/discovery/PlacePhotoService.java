@@ -34,18 +34,28 @@ public class PlacePhotoService {
             else {
                 String[] parts=sourceId.split(":");
                 JsonNode osm=client.get().uri(URI.create("https://api.openstreetmap.org/api/0.6/"+parts[1]+"/"+parts[2]+".json")).retrieve().body(JsonNode.class);
-                JsonNode tags=osm==null?null:osm.path("elements").path(0).path("tags");
+                JsonNode element=osm==null?null:osm.path("elements").path(0);
+                if(element==null || !parts[1].equals(element.path("type").asText()) || !parts[2].equals(element.path("id").asText()))
+                    return new Gallery(List.of(),"Photo source identity could not be verified.",true);
+                JsonNode tags=element.path("tags");
                 if(tags!=null) {
                     add(images,commons.resolve(tags.path("wikimedia_commons").asText(null)));
                     add(images,commons.resolveUrl(tags.path("image").asText(null)));
                     id=tags.path("wikidata").asText(null);
-                    if(id==null && tags.path("wikipedia").asText("").startsWith("en:")) {
-                        String title=tags.path("wikipedia").asText().substring(3);
-                        if(title.length()<=240) {
-                            String encoded=java.net.URLEncoder.encode(title.replace(' ','_'),java.nio.charset.StandardCharsets.UTF_8).replace("+","%20");
-                            JsonNode summary=client.get().uri(URI.create("https://en.wikipedia.org/api/rest_v1/page/summary/"+encoded)).retrieve().body(JsonNode.class);
-                            if(summary!=null)id=summary.path("wikibase_item").asText(null);
-                        }
+                    String article=tags.path("wikipedia").asText("");
+                    if(images.size()<2 && article.matches("[a-z]{2,3}(?:-[a-z]+)?:.{1,240}")) {
+                        String language=article.substring(0,article.indexOf(':')),title=article.substring(article.indexOf(':')+1);
+                        URI uri=org.springframework.web.util.UriComponentsBuilder.fromUriString("https://"+language+".wikipedia.org/w/api.php")
+                            .queryParam("action","query").queryParam("format","json").queryParam("redirects",1)
+                            .queryParam("titles",title).queryParam("prop","pageprops|pageimages").queryParam("piprop","original")
+                            .build().encode().toUri();
+                        try {
+                            JsonNode pageData=client.get().uri(uri).retrieve().body(JsonNode.class);
+                            if(pageData!=null)for(JsonNode page:pageData.path("query").path("pages")) {
+                                add(images,commons.resolveUrl(page.path("original").path("source").asText(null)));
+                                if(id==null || id.isBlank())id=page.path("pageprops").path("wikibase_item").asText(null);
+                            }
+                        } catch(RuntimeException ignored) { /* Keep independent OSM and Wikidata evidence. */ }
                     }
                 }
             }

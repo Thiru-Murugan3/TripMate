@@ -12,6 +12,21 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 class GeoapifyPaginationTest {
+    @Test void generalSearchExcludesIncidentalSportsButKeepsTouristDesignationsAndExactSearch(){
+        String response="""
+          {"features":[
+          {"properties":{"name":"School Ground","place_id":"1","categories":["leisure","sport.pitch"],"datasource":{"raw":{"leisure":"pitch"}}},"geometry":{"coordinates":[80,13]}},
+          {"properties":{"name":"Heritage Ground","place_id":"2","categories":["tourism.attraction","sport.pitch"],"datasource":{"raw":{"leisure":"pitch"}}},"geometry":{"coordinates":[80,13]}}
+          ]}
+          """;
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var factory=mock(ProviderHttpClientFactory.class);when(factory.create(anyInt())).thenReturn(builder.build());
+        server.expect(queryParam("categories","tourism,entertainment,leisure")).andRespond(withSuccess(response,MediaType.APPLICATION_JSON));
+        server.expect(anything()).andRespond(withSuccess(response,MediaType.APPLICATION_JSON));
+        var provider=new GeoapifyDiscoveryProvider(factory,"test-secret","https://geo.example");
+        assertEquals(java.util.List.of("Heritage Ground"),provider.discover(request()).places().stream().map(p->p.name()).toList());
+        var named=new DiscoveryProviderRequest("Chennai",request().destination(),25,null,"School Ground");
+        assertEquals(2,provider.discover(named).places().size());server.verify();
+    }
     private DiscoveryProviderRequest request() {
         return new DiscoveryProviderRequest("Chennai",new GeocodedDestination(new BigDecimal("13"),new BigDecimal("80"),"Chennai, India","Chennai",null,null,"IN","Test"),25,null);
     }
