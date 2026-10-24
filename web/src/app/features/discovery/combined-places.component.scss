@@ -127,3 +127,7 @@ button, input:not([type=checkbox]), select { min-height:44px; }
 .coverage-status { border:1px solid #d6e1d9; border-radius:12px; padding:0 12px; margin:12px 0; font-size:12px; color:#475569; }
 .coverage-status summary { cursor:pointer; min-height:44px; display:flex; align-items:center; font-weight:600; }
 .coverage-status p { margin:0 0 12px; }
+
+.card-body .hours-status { min-height:0; font-size:11px; margin-bottom:8px; }
+.price-evidence { border-top:1px solid #e2e8f0; padding-top:10px; margin-top:10px; }
+.price-evidence a { display:flex; align-items:center; min-height:44px; font-size:12px; }

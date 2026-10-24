@@ -77,16 +77,21 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
             String placeId = properties.path("place_id").asText();
             double distance = haversine(lat, lon, latitude.doubleValue(), longitude.doubleValue());
             String website = properties.path("website").asText(null);
+            JsonNode raw=properties.path("datasource").path("raw");
+            String hours=properties.path("opening_hours").asText("").trim();
+            if(hours.isEmpty()) hours=raw.path("opening_hours").asText("").trim();
+            Integer sourceDuration=SourceDuration.minutes(raw.path("duration").asText(null));
+            int duration=sourceDuration==null ? 90 : sourceDuration;
             Double rating = properties.path("rating").isNumber() ? properties.path("rating").asDouble() : null;
             places.add(new DiscoveredPlace(
                     "geoapify:" + placeId, name, category, latitude, longitude, Math.round(distance * 10) / 10.0,
-                    90, properties.path("description").asText(null), null, properties.path("opening_hours").asText(null),
+                    duration, properties.path("description").asText(null), null, hours.isEmpty() ? null : hours,
                     website, saveCategory(category), null, null, slug(name), itemType(category), null,
                     properties.path("city").asText(null), properties.path("district").asText(null),
                     properties.path("state").asText(null), properties.path("formatted").asText(null),
                     properties.path("formatted").asText(null), properties.path("description").asText(null),
                     properties.path("description").asText(null), null, List.of(), null, null, null, false,
-                    null, 90, null, null, null, null, null, null, List.of(), List.of(), List.of(),
+                    null, duration, null, null, null, null, null, null, List.of(), List.of(), List.of(),
                     properties.path("wheelchair").asText(null), properties.path("contact").path("phone").asText(null),
                     website, null, null, "https://www.google.com/maps/dir/?api=1&destination=" + latitude + "," + longitude,
                     PriceStatus.UNKNOWN, PriceType.UNKNOWN, "INR", List.of(), name(),

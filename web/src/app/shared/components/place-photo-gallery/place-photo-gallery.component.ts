@@ -44,6 +44,6 @@ export class PlacePhotoGalleryComponent implements OnChanges,AfterViewInit,OnDes
  }
  previous():void{this.index=(this.index+this.images.length-1)%this.images.length;}next():void{this.index=(this.index+1)%this.images.length;}
  imageFailed(photo:DiscoveryImage):void {this.images=this.images.filter(i=>i!==photo);this.index=0;this.retryable=!!this.sourceId;this.message='A source photo could not load. Retry to check available photographs.';}
- private distinct(images:DiscoveryImage[]):DiscoveryImage[]{const seen=new Set<string>();const urls=new Set<string>();return images.filter(i=>{if(!i.exact || !i.sourcePage || !i.license || !i.attribution || !/^(https?:\/\/|india-catalogue\/)/i.test(i.url))return false;const key=i.sourcePage.split(/[?#]/)[0];if(seen.has(key) || urls.has(i.url))return false;seen.add(key);urls.add(i.url);return true;});}
+ private distinct(images:DiscoveryImage[]):DiscoveryImage[]{const seen=new Set<string>();const urls=new Set<string>();return images.filter(i=>{if(!i.exact || !i.sourcePage || !/^https?:\/\//i.test(i.sourcePage) || !i.license || !i.attribution || !/^(https?:\/\/|india-catalogue\/)/i.test(i.url))return false;const key=i.sourcePage.split(/[?#]/)[0];if(seen.has(key) || urls.has(i.url))return false;seen.add(key);urls.add(i.url);return true;});}
  ngOnDestroy():void{this.destroyed=true;this.request?.unsubscribe();}
 }
