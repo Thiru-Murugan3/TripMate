@@ -152,7 +152,7 @@
         <button type="submit" class="submit-btn" [disabled]="loginForm.invalid || isLoading">
           @if (isLoading) {
             <span class="spinner"></span>
-            <span>Signing In...</span>
+            <span>{{ readiness.connecting() ? 'Connecting to Suttru…' : 'Signing In...' }}</span>
           } @else {
             <span>Sign In to Account</span>
             <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -163,7 +163,7 @@
         </button>
         @if (isLoading && slowLogin) {
           <div class="connection-recovery" role="status">
-            <p>Still connecting. You can cancel and try again.</p>
+            <p>{{ readiness.connecting() ? 'Suttru is starting up. Sign-in will continue automatically when it is ready.' : 'Still connecting. You can cancel and try again.' }}</p>
             <button type="button" (click)="cancelLogin()">Cancel sign-in</button>
           </div>
         }

@@ -21,4 +21,6 @@ USER tripmate
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/tripmate.jar"]
+# Favor startup on the small CPU allocation used by the sleeping free service.
+# Remove this flag to restore the default full-tier throughput optimization.
+ENTRYPOINT ["java", "-XX:TieredStopAtLevel=1", "-jar", "/app/tripmate.jar"]
