@@ -86,7 +86,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
         if (elements == null || !elements.isArray()) return List.of();
         Map<String, DiscoveredPlace> unique = new LinkedHashMap<>();
         Instant checkedAt = Instant.now();
-        int enrichmentBudget = 6;
+        int enrichmentBudget = request.fast() ? 0 : 6;
         for (JsonNode element : elements) {
             JsonNode tags = element.path("tags");
             String name = first(tags.path("name").asText(null), tags.path("name:en").asText(null));
@@ -111,7 +111,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             String externalId = "osm:" + type + ":" + id;
             String sourceUrl = "https://www.openstreetmap.org/" + type + "/" + id;
             PriceVerificationService.VerifiedPrice price = priceVerification.fromOpenStreetMap(tags, sourceUrl, checkedAt);
-            ImageResolverService.ResolvedImages resolvedImages = imageResolver.fromOpenStreetMap(tags, sourceUrl);
+            ImageResolverService.ResolvedImages resolvedImages = request.fast() ? new ImageResolverService.ResolvedImages(null,List.of()) : imageResolver.fromOpenStreetMap(tags, sourceUrl);
             DiscoveryImage primary = resolvedImages.primary();
             List<DiscoveryImage> gallery = resolvedImages.gallery();
             String website = first(tags.path("website").asText(null), tags.path("contact:website").asText(null));

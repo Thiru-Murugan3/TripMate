@@ -41,7 +41,7 @@ public class OpenTripMapDiscoveryProvider implements DiscoveryProvider {
                 .queryParam("kinds",kinds(request.category())).queryParam("apikey",key).build().encode().toUri();
         JsonNode response=client.get().uri(uri).retrieve().body(JsonNode.class);
         if(response==null || !response.isArray()) throw new IllegalStateException("Unsupported OpenTripMap response");
-        List<DiscoveredPlace> places=new ArrayList<>(); int enrichmentBudget=4;
+        List<DiscoveredPlace> places=new ArrayList<>(); int enrichmentBudget=request.fast()?0:4;
         for(JsonNode node:response) {
             String xid=node.path("xid").asText(""), name=node.path("name").asText("").trim();
             if(!xid.matches("[A-Za-z0-9_-]{1,100}") || name.isBlank()) continue;
@@ -67,7 +67,7 @@ public class OpenTripMapDiscoveryProvider implements DiscoveryProvider {
                     .primaryImageUrl(image==null?null:image.url()).imageSource(image==null?null:image.sourceName())
                     .imageAttribution(image==null?null:image.attribution()).imageLicense(image==null?null:image.license())
                     .imageExact(image!=null && image.exact()).sourceName("OpenTripMap · OpenStreetMap/Wikidata · ODbL")
-                    .sourceUrl("https://opentripmap.com/en/card/"+xid).sourceLastCheckedAt(Instant.now()).confidenceScore(.70)
+                    .sourceUrl(wikidata.matches("Q[1-9][0-9]{0,14}") ? "https://www.wikidata.org/wiki/"+wikidata : "https://opentripmap.com/en/card/"+xid).sourceLastCheckedAt(Instant.now()).confidenceScore(.70)
                     .priceStatus(PriceStatus.UNKNOWN).priceType(PriceType.UNKNOWN).currency("INR")
                     .mapUrl("https://www.google.com/maps/dir/?api=1&destination="+lat+","+lon).build());
             if(places.size()==100)break;

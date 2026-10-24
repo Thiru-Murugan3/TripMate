@@ -33,7 +33,7 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
     private final WikimediaEnrichmentService enrichment;
     @org.springframework.beans.factory.annotation.Autowired
     public WikidataDiscoveryProvider(ProviderHttpClientFactory factory, WikimediaEnrichmentService enrichment) {
-        this(factory.create(12000),enrichment);
+        this(factory.create(5000),enrichment);
     }
     WikidataDiscoveryProvider(RestClient client, WikimediaEnrichmentService enrichment) { this.client=client; this.enrichment=enrichment; }
     @Override public String name() { return "Wikidata"; }
@@ -63,7 +63,7 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
         JsonNode response=client.get().uri(uri).header("Accept","application/sparql-results+json").retrieve().body(JsonNode.class);
         JsonNode rows=response==null?null:response.path("results").path("bindings");
         if(rows==null || !rows.isArray()) throw new IllegalStateException("Unsupported Wikidata response");
-        Map<String,DiscoveredPlace> places=new LinkedHashMap<>();int imageBudget=4;
+        Map<String,DiscoveredPlace> places=new LinkedHashMap<>();int imageBudget=request.fast()?0:4;
         for(JsonNode row:rows) {
             var entity=ENTITY.matcher(value(row,"item"));var point=POINT.matcher(value(row,"location"));
             var kind=ENTITY.matcher(value(row,"kind"));String label=value(row,"itemLabel").trim();

@@ -1,6 +1,8 @@
+import { Subscription } from 'rxjs';
+import { DiscoveryService } from '../../core/services/discovery.service';
 import { PlacePhotoGalleryComponent } from '../../shared/components/place-photo-gallery/place-photo-gallery.component';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TopPlacesComponent } from './top-places.component';
 import { DiscoveredPlace, DiscoveryPriceOption, DiscoveryCategory } from '../../core/models/discovery.model';
@@ -49,7 +51,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
             <div class="card-body"><h3>{{ place.name }}</h3><p>{{ formatCategory(place.category) }} · {{ place.distanceKm }} km</p><p class="duration">{{ visitTime(place) }}</p><p class="hours-status">{{ place.openingHours?.trim() ? 'Opening hours in details' : 'Opening hours not listed' }}</p><p class="price">{{ formatPlacePrice(place) }}</p>
               <label class="place-select"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || !canSelectPlaces" (change)="toggleSelection(place)" /> Select place</label>
               <label *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>
-              <details class="place-details"><summary>View details</summary>
+              <details class="place-details" (toggle)="loadListingDetails(place,$event)"><summary>View details</summary><p *ngIf="loadingDetails.has(place.externalId)" role="status">Checking source details…</p>
                 <p *ngIf="place.shortDescription || place.description">{{ place.shortDescription || place.description }}</p>
                 <p><strong>Opening hours:</strong> {{ openingSchedule(place.openingHours) }}</p>
                 <p *ngIf="place.openingHours">Source schedule; holiday and seasonal changes may apply.</p>
@@ -87,6 +89,18 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
 })
 export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
   mobileFiltersOpen=false;
+  private readonly listingApi=inject(DiscoveryService);
+  private readonly detailRequests=new Subscription();
+  readonly loadingDetails=new Set<string>();private readonly checkedDetails=new Set<string>();
+  loadListingDetails(place:DiscoveredPlace,event:Event):void {
+    if(!(event.target instanceof HTMLDetailsElement)||!event.target.open||this.loadingDetails.has(place.externalId)||this.checkedDetails.has(place.externalId))return;
+    this.loadingDetails.add(place.externalId);
+    this.detailRequests.add(this.listingApi.getDetails(place.externalId).subscribe({
+      next:detail=>{if(detail.externalId===place.externalId)Object.assign(place,detail);this.loadingDetails.delete(place.externalId);this.checkedDetails.add(place.externalId);},
+      error:()=>this.loadingDetails.delete(place.externalId)
+    }));
+  }
+  override ngOnDestroy():void {this.detailRequests.unsubscribe();super.ngOnDestroy();}
   visitTime(place:DiscoveredPlace):string {
     const activity=place.activityDuration;
     const minutes=activity!=null&&Number.isFinite(activity)&&activity>0 ? activity : place.suggestedVisitMinutes;

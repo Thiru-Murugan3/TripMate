@@ -7,9 +7,13 @@ public record DiscoveryProviderRequest(
         GeocodedDestination destination,
         int radiusKm,
         DiscoveryCategory category,
-        String placeName
+        String placeName,
+        boolean fast
 ) {
+    public DiscoveryProviderRequest(String query, GeocodedDestination destination, int radiusKm, DiscoveryCategory category, String placeName) {
+        this(query,destination,radiusKm,category,placeName,false);
+    }
     public DiscoveryProviderRequest(String query, GeocodedDestination destination, int radiusKm, DiscoveryCategory category) {
-        this(query, destination, radiusKm, category, null);
+        this(query, destination, radiusKm, category, null, false);
     }
 }

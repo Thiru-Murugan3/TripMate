@@ -29,7 +29,7 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
             @Value("${discovery.geoapify.api-key:}") String apiKey,
             @Value("${discovery.geoapify.url:https://api.geoapify.com}") String baseUrl
     ) {
-        this.client = factory.create(12000);
+        this.client = factory.create(3500);
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.baseUrl = baseUrl.replaceAll("/$", "");
     }
@@ -43,7 +43,11 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
         double lon = request.destination().longitude().doubleValue();
         var features = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.arrayNode();
         List<String> warnings = new ArrayList<>();
+        long deadline=System.nanoTime()+java.util.concurrent.TimeUnit.SECONDS.toNanos(7);
         for (int offset = 0; offset < 300; offset += 100) {
+            if(request.fast() && offset>0 && System.nanoTime()+java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(3500)>deadline) {
+                warnings.add("Geoapify search time limit reached; earlier pages are retained.");break;
+            }
             URI uri = UriComponentsBuilder.fromUri(URI.create(baseUrl + "/v2/places"))
                     .queryParam("categories", categories(request.category()))
                     .queryParam("filter", "circle:" + lon + "," + lat + "," + request.radiusKm() * 1000)
@@ -95,12 +99,17 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
                     properties.path("wheelchair").asText(null), properties.path("contact").path("phone").asText(null),
                     website, null, null, "https://www.google.com/maps/dir/?api=1&destination=" + latitude + "," + longitude,
                     PriceStatus.UNKNOWN, PriceType.UNKNOWN, "INR", List.of(), name(),
-                    "https://www.geoapify.com/places-api/", checked, null, false, .75, rating, null, 0, null, null, false
+                    sourcePage(raw), checked, null, false, .75, rating, null, 0, null, null, false
             ));
         }
         return new DiscoveryProviderResult(name(), "Places data © Geoapify and its data providers", places, warnings);
     }
 
+    private String sourcePage(JsonNode raw) {
+        String id=raw.path("osm_id").asText("");String type=raw.path("osm_type").asText("").toLowerCase(Locale.ROOT);
+        type=switch(type){case "n","node"->"node";case "w","way"->"way";case "r","relation"->"relation";default->"";};
+        return !type.isEmpty()&&id.matches("[1-9][0-9]{0,18}") ? "https://www.openstreetmap.org/"+type+"/"+id : "https://www.geoapify.com/places-api/";
+    }
     private String categories(DiscoveryCategory category) {
         if (category == DiscoveryCategory.ADVENTURE) return "sport,entertainment,leisure,tourism";
         if (category == DiscoveryCategory.FAMILY) return "leisure,entertainment,tourism";

@@ -18,7 +18,7 @@ describe('Combined compact Explore', () => {
   const response={query:'Ooty',resolvedDestination:'Ooty, India',places:[place],provider:'Geoapify + OpenTripMap',providersUsed:['Geoapify','OpenTripMap'],attribution:'ODbL',resultCount:25,page:0,size:24,totalPages:2,radiusKm:25};
   let discovery:jasmine.SpyObj<DiscoveryService>, places:jasmine.SpyObj<PlaceService>, itinerary:jasmine.SpyObj<ItineraryService>;
   beforeEach(() => {
-    discovery=jasmine.createSpyObj('DiscoveryService',['discoverPlaces','getSuggestions','getTopPlaces']);discovery.discoverPlaces.and.returnValue(of(response as any));discovery.getTopPlaces.and.returnValue(of(response as any));
+    discovery=jasmine.createSpyObj('DiscoveryService',['discoverPlaces','getSuggestions','getTopPlaces','getDetails']);discovery.getDetails.and.returnValue(of(place as any));discovery.discoverPlaces.and.returnValue(of(response as any));discovery.getTopPlaces.and.returnValue(of(response as any));
     places=jasmine.createSpyObj('PlaceService',['getPlaces','createPlace']);places.getPlaces.and.returnValue(of([]));places.createPlace.and.returnValue(of({id:500,name:'Garden',latitude:11.4,longitude:76.7} as any));
     itinerary=jasmine.createSpyObj('ItineraryService',['getItinerary','createDay','createItem']);itinerary.getItinerary.and.returnValue(of({days:[]} as any));itinerary.createDay.and.returnValue(of({id:100,items:[]} as any));itinerary.createItem.and.returnValue(of({id:501} as any));
     TestBed.configureTestingModule({imports:[CombinedPlacesComponent],providers:[provideHttpClient(),provideRouter([]),{provide:DiscoveryService,useValue:discovery},{provide:PlaceService,useValue:places},{provide:ItineraryService,useValue:itinerary},{provide:TripService,useValue:{getMyTrips:()=>of([trip,{...trip,id:20,userRole:'VIEWER'}])}}]});
@@ -86,6 +86,14 @@ describe('Combined compact Explore', () => {
     c.searchDestination='Ooty';c.discover();fixture.detectChanges();
     const details=fixture.nativeElement.querySelector('.place-details');expect(details.open).toBeFalse();expect(details.textContent).toContain('24 hours daily');
     expect(details.textContent).toContain('Price checked:');expect(details.querySelector('a').href).toBe('https://venue.example/fees');fixture.destroy();
+  });
+  it('loads richer exact-object details only after expansion', () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
+    c.searchDestination='Ooty';c.discover();fixture.detectChanges();expect(discovery.getDetails).not.toHaveBeenCalled();
+    discovery.getDetails.and.returnValue(of({...place,openingHours:'09:00-17:00'} as any));
+    const target=document.createElement('details');target.open=true;const event=new Event('toggle');Object.defineProperty(event,'target',{value:target});
+    c.loadListingDetails(place as any,event);expect(discovery.getDetails).toHaveBeenCalledWith(place.externalId);expect((place as any).openingHours).toBe('09:00-17:00');
+    delete (place as any).openingHours;fixture.destroy();
   });
   it('keeps selections across pages and saves only after trip/day confirmation', async () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
