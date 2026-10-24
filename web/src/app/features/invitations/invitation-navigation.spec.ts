@@ -1,5 +1,6 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { NgZone } from '@angular/core';
+import { NgZone, signal } from '@angular/core';
+import { BackendReadinessService } from '../../core/services/backend-readiness.service';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { AppComponent } from '../../app.component';
@@ -35,6 +36,7 @@ describe('Mobile invitation navigation',()=>{
   fixture.destroy();
  });
  it('returns an existing user to the invitation after login',()=>{
+  TestBed.configureTestingModule({providers:[{provide:BackendReadinessService,useValue:{ready:()=>of(void 0),connecting:signal(false)}}]});
   TestBed.configureTestingModule({providers:[provideRouter([]),{provide:ActivatedRoute,useValue:{snapshot:{queryParams:{returnUrl:'/invite/abc-123'}}}},{provide:AuthService,useValue:{login:()=>of({})}}]});
   const fixture=TestBed.createComponent(LoginComponent);
   const navigate=spyOn(TestBed.inject(Router),'navigateByUrl').and.resolveTo(true);
