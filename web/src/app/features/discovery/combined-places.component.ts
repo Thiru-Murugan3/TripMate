@@ -32,7 +32,9 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
           <label>Find a particular place here<input name="placeName" [(ngModel)]="filterText" [disabled]="isSaving" maxlength="180" placeholder="e.g. Botanical Garden" /></label>
           <button [disabled]="isSaving || isLoading">Find place</button><button *ngIf="filterText" type="button" [disabled]="isSaving || isLoading" (click)="filterText=''; discover()">All places</button>
         </form>
-        <p *ngIf="!data.places.length">No matching places returned. Try All categories, remove price or duration filters, or widen the radius.</p>
+        <div *ngIf="!data.places.length" class="notice" role="status"><p>No matching places could be loaded from the available sources.</p><p>Try All categories, a wider radius or a particular place name.</p>
+          <details *ngIf="data.warnings?.length"><summary>Source status</summary><p *ngFor="let warning of data.warnings">{{ warning }}</p></details>
+        </div>
         <div *ngIf="selectedCount" class="plan-panel">
           <h2>{{ selectedCount }} selected</h2>
           <label *ngIf="!embeddedMode">Add to trip<select [ngModel]="activeTripId" (ngModelChange)="selectTrip($event)" [disabled]="isSaving"><option [ngValue]="0">Choose a trip</option><option *ngFor="let trip of editableTrips" [ngValue]="trip.id">{{ trip.name }}</option></select></label>

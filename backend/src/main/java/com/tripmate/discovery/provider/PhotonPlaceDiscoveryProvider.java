@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import com.tripmate.discovery.*;
 import java.util.Locale;
 
 /** User-submitted name lookup, independent of broad inventory caps and Wikidata classes. */
@@ -17,26 +20,55 @@ import java.util.Locale;
 public class PhotonPlaceDiscoveryProvider implements DiscoveryProvider {
     private final RestClient client;
     private final String baseUrl;
+    private final RestClient fallbackClient;
     private final OverpassDiscoveryProvider mapper;
 
     public PhotonPlaceDiscoveryProvider(ProviderHttpClientFactory factory, OverpassDiscoveryProvider mapper,
             @Value("${discovery.photon-url:https://photon.komoot.io}") String baseUrl) {
         this.client = factory.create(12000);
+        this.fallbackClient = factory.create(4000);
         this.mapper = mapper;
         this.baseUrl = baseUrl.replaceAll("/$", "");
     }
     @Override public String name() { return "OpenStreetMap name search"; }
     @Override public DiscoveryProviderResult discover(DiscoveryProviderRequest request) {
-        if (request.placeName() == null || request.placeName().isBlank() || !request.destination().isIndia())
-            return new DiscoveryProviderResult(name(), "", List.of(), List.of());
+        if (!request.destination().isIndia()) return new DiscoveryProviderResult(name(), "", List.of(), List.of());
+        if (request.placeName() != null && !request.placeName().isBlank()) return lookup(request,request.placeName().trim(),client);
+        var terms = fallbackTerms(request.category());
+        var places = new LinkedHashMap<String,DiscoveredPlace>();
+        var warnings = new ArrayList<String>();
+        for (String term : terms) {
+            try {
+                var result=lookup(request,term,fallbackClient);
+                result.places().forEach(place->places.putIfAbsent(place.externalId(),place));
+                warnings.addAll(result.warnings());
+            } catch (RuntimeException ex) {
+                warnings.add("OpenStreetMap interest lookup was unavailable for part of this search.");
+            }
+        }
+        if (!terms.isEmpty()) warnings.add("Interest lookup is a limited name search, not a complete destination inventory.");
+        return new DiscoveryProviderResult(name(),"© OpenStreetMap contributors · Photon name lookup",List.copyOf(places.values()),warnings.stream().distinct().toList());
+    }
+    private List<String> fallbackTerms(DiscoveryCategory category) {
+        if(category==null) return List.of();
+        return switch(category) {
+            case ADVENTURE -> List.of("rafting","bungee","adventure");
+            case FAMILY -> List.of("park","museum","zoo");
+            case NATURE -> List.of("waterfall","lake","viewpoint");
+            case TEMPLE -> List.of("temple");
+            case MUSEUM -> List.of("museum");
+            default -> List.of();
+        };
+    }
+    private DiscoveryProviderResult lookup(DiscoveryProviderRequest request,String term,RestClient searchClient) {
         double lat = request.destination().latitude().doubleValue(), lon = request.destination().longitude().doubleValue();
         double dy = request.radiusKm()/110.5, dx = request.radiusKm()/(110.5*Math.cos(Math.toRadians(lat)));
         String box = String.format(Locale.ROOT,"%.6f,%.6f,%.6f,%.6f",lon-dx,lat-dy,lon+dx,lat+dy);
         var uri = UriComponentsBuilder.fromUri(ProviderUrlSupport.uri(baseUrl,"/api"))
-                .queryParam("q",request.placeName().trim()).queryParam("lat",lat).queryParam("lon",lon)
+                .queryParam("q",term).queryParam("lat",lat).queryParam("lon",lon)
                 .queryParam("bbox",box).queryParam("countrycode","IN").queryParam("lang","en")
                 .queryParam("limit",20).build().encode().toUri();
-        JsonNode response = client.get().uri(uri).retrieve().body(JsonNode.class);
+        JsonNode response = searchClient.get().uri(uri).retrieve().body(JsonNode.class);
         JsonNode features = response == null ? null : response.path("features");
         if (features == null || !features.isArray()) throw new IllegalStateException("Unsupported Photon response");
         var elements = JsonNodeFactory.instance.arrayNode();
@@ -63,6 +95,7 @@ public class PhotonPlaceDiscoveryProvider implements DiscoveryProvider {
     }
     private boolean isRelevantPlace(String key, String value, com.tripmate.discovery.DiscoveryCategory category) {
         if (key.matches("tourism|historic|natural|leisure|sport")) return !value.isBlank();
+        if (key.equals("office") && value.matches("travel_agent|tourism")) return true;
         if (key.equals("waterway")) return value.equals("river");
         if (key.equals("man_made")) return value.matches("lighthouse|tower|dam");
         if (key.equals("shop")) return category == com.tripmate.discovery.DiscoveryCategory.SHOPPING;
