@@ -33,7 +33,8 @@ public class CuratedDiscoveryProvider implements DiscoveryProvider {
             double distance = haversine(request.destination().latitude().doubleValue(),
                     request.destination().longitude().doubleValue(), item.getLatitude().doubleValue(), item.getLongitude().doubleValue());
             if (distance > request.radiusKm() + 0.2) continue;
-            if (request.category() != null && item.getCategory() != request.category()) continue;
+            if (!com.tripmate.discovery.DiscoveryCategoryMatching.matches(request.category(), item.getCategory())
+                    && !(request.category() == com.tripmate.discovery.DiscoveryCategory.FAMILY && Boolean.TRUE.equals(item.getFamilyFriendly()))) continue;
             places.add(mapper.toDiscoveredPlace(item, distance, openNow(item.getOpeningHours())));
         }
         return new DiscoveryProviderResult(name(), "Sources are attached to every curated listing.", places, List.of());

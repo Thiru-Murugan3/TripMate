@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TopPlacesComponent } from './top-places.component';
+import { DiscoveryCategory } from '../../core/models/discovery.model';
 import { DestinationDiscoveryComponent } from './destination-discovery.component';
 
 /** Compact view reusing existing discovery, credited media and itinerary selection/save logic. */
@@ -13,7 +14,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
       <header><h1>Explore</h1></header>
       <form class="search-form city-search" [class.mobile-filter-open]="mobileFiltersOpen" (ngSubmit)="discover()">
         <label>City or area<input name="destination" [(ngModel)]="searchDestination" (ngModelChange)="cityChanged()" [disabled]="isSaving" maxlength="180" placeholder="Ooty, Tamil Nadu" required /></label>
-        <label class="advanced-filter">Category<select name="category" [(ngModel)]="category" [disabled]="isSaving"><option value="ALL">All categories</option><option *ngFor="let value of exploreCategories" [value]="value">{{ formatCategory(value) }}</option></select></label>
+        <label class="advanced-filter">Category<select name="category" [(ngModel)]="category" (ngModelChange)="categoryChanged()" [disabled]="isSaving"><option value="ALL">All categories</option><option *ngFor="let value of exploreCategories" [value]="value">{{ formatCategory(value) }}</option></select></label>
         <label class="advanced-filter">Price<select name="price" [(ngModel)]="priceStatusFilter" [disabled]="isSaving"><option value="ALL">Any price</option><option value="FREE">Free entry</option><option value="VERIFIED">Verified price</option></select></label>
         <label class="advanced-filter">Visit duration<select name="duration" [(ngModel)]="maxDurationFilter" [disabled]="isSaving"><option [ngValue]="undefined">Any duration</option><option [ngValue]="60">Up to 1 hour</option><option [ngValue]="180">Up to 3 hours</option><option [ngValue]="480">Up to 8 hours</option></select></label>
         <label class="advanced-filter">Within<select name="radius" [(ngModel)]="radiusKm" [disabled]="isSaving"><option [ngValue]="10">10 km</option><option [ngValue]="25">25 km</option><option [ngValue]="50">50 km</option><option [ngValue]="100">100 km · wider region</option></select></label>
@@ -31,7 +32,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
           <label>Find a particular place here<input name="placeName" [(ngModel)]="filterText" [disabled]="isSaving" maxlength="180" placeholder="e.g. Botanical Garden" /></label>
           <button [disabled]="isSaving || isLoading">Find place</button><button *ngIf="filterText" type="button" [disabled]="isSaving || isLoading" (click)="filterText=''; discover()">All places</button>
         </form>
-        <p *ngIf="!data.places.length">No places found. Try another name or a wider radius.</p>
+        <p *ngIf="!data.places.length">No matching places returned. Try All categories, remove price or duration filters, or widen the radius.</p>
         <div *ngIf="selectedCount" class="plan-panel">
           <h2>{{ selectedCount }} selected</h2>
           <label *ngIf="!embeddedMode">Add to trip<select [ngModel]="activeTripId" (ngModelChange)="selectTrip($event)" [disabled]="isSaving"><option [ngValue]="0">Choose a trip</option><option *ngFor="let trip of editableTrips" [ngValue]="trip.id">{{ trip.name }}</option></select></label>
@@ -76,6 +77,16 @@ export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
     {value:'ALL',label:'All'}, {value:'PLACE',label:'Places to visit'},
     {value:'ACTIVITY',label:'Activities'}, {value:'TOUR_SERVICE',label:'Tours'}
   ] as const;
+  categoryChanged():void { this.itemTypeFilter='ALL'; }
+  override discover(page=0):void {
+    const query=this.searchDestination.trim();
+    const match=query.match(/^(.+?)\s+(adventure|family|nature|temple|museum|food)(?:\s+(?:activities|places))?$/i);
+    if(match && match[1].trim().length>=2) {
+      this.searchDestination=match[1].trim();this.category=match[2].toUpperCase() as DiscoveryCategory;
+      this.itemTypeFilter='ALL';
+    }
+    super.discover(page);
+  }
   safeBookingUrl(value?:string):string|null {
     if(!value) return null;
     try { const url=new URL(value); return ['https:','http:'].includes(url.protocol) ? url.href : null; } catch { return null; }
