@@ -91,7 +91,7 @@ public class DestinationDiscoveryService {
         if (cached == null) {
             cached = fetch(query, radiusKm, category, placeName, freeOnly);
             if (!cached.places().isEmpty()) {
-                Instant expiresAt = expiry(cached);
+                Instant expiresAt = searchExpiry(cached.createdAt(), cached.places(), cached.warnings());
                 generation.searches.put(cacheKey, cached, expiresAt);
                 cached.places().stream().filter(place -> !place.curated())
                         .forEach(place -> generation.details.put(place.externalId(), place, expiresAt));
@@ -193,20 +193,22 @@ public class DestinationDiscoveryService {
                 List.copyOf(new LinkedHashSet<>(warnings)), List.copyOf(new LinkedHashSet<>(attributions)));
     }
 
-    private Instant expiry(CachedSearch cached) {
-        boolean priced = cached.places().stream().anyMatch(place -> place.priceStatus() != PriceStatus.UNKNOWN);
-        Instant expiry = cached.createdAt().plus(priced ? pricingCacheDuration : staticCacheDuration);
+    Instant searchExpiry(Instant createdAt, List<DiscoveredPlace> places, List<String> warnings) {
+        boolean priced = places.stream().anyMatch(place -> place.priceStatus() != PriceStatus.UNKNOWN);
+        Instant expiry = createdAt.plus(priced ? pricingCacheDuration : staticCacheDuration);
         // Open/closed state is time-sensitive even when the underlying catalogue is static.
-        if (cached.places().stream().anyMatch(place -> place.openNow() != null)) {
-            expiry = earlier(expiry, cached.createdAt().plusSeconds(60));
+        if (places.stream().anyMatch(place -> place.openNow() != null)) {
+            expiry = earlier(expiry, createdAt.plusSeconds(60));
         }
-        if (cached.warnings().stream().anyMatch(w -> w.contains("unavailable")))
-            expiry = earlier(expiry, cached.createdAt().plusSeconds(120));
-        for (DiscoveredPlace place : cached.places()) {
-            if (place.verificationExpiresAt() != null && place.verificationExpiresAt().isAfter(cached.createdAt()))
+        if (warnings.stream().map(w -> w.toLowerCase(Locale.ROOT)).anyMatch(w ->
+                w.contains("unavailable") || w.contains("limited name search") || w.contains("limit")
+                || w.contains("not an exhaustive") || w.contains("inventory limit")))
+            expiry = earlier(expiry, createdAt.plusSeconds(120));
+        for (DiscoveredPlace place : places) {
+            if (place.verificationExpiresAt() != null && place.verificationExpiresAt().isAfter(createdAt))
                 expiry = earlier(expiry, place.verificationExpiresAt());
             for (DiscoveryPriceOption price : place.priceOptions()) {
-                if (price.expiresAt() != null && price.expiresAt().isAfter(cached.createdAt()))
+                if (price.expiresAt() != null && price.expiresAt().isAfter(createdAt))
                     expiry = earlier(expiry, price.expiresAt());
             }
         }

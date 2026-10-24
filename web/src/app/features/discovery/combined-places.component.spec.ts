@@ -65,7 +65,15 @@ describe('Combined compact Explore', () => {
     discovery.discoverPlaces.and.returnValue(of({...response,places:[],warnings:['OpenStreetMap discovery is temporarily unavailable.']} as any));
     c.searchDestination='Rishikesh';c.discover();fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('No matching places could be loaded');
-    expect(fixture.nativeElement.textContent).toContain('Source status');expect(fixture.nativeElement.textContent).toContain('OpenStreetMap discovery is temporarily unavailable.');fixture.destroy();
+    expect(fixture.nativeElement.textContent).toContain('Coverage and source status');expect(fixture.nativeElement.textContent).toContain('OpenStreetMap discovery is temporarily unavailable.');fixture.destroy();
+  });
+  it('keeps partial-result coverage visible without expanding details or losing selectable places', () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
+    discovery.discoverPlaces.and.returnValue(of({...response,warnings:['OpenStreetMap was unavailable; partial results are shown.','Prices and opening hours may change.']} as any));
+    c.searchDestination='Rishikesh';c.discover();fixture.detectChanges();
+    const status=fixture.nativeElement.querySelector('.coverage-status');expect(status).not.toBeNull();expect(status.open).toBeFalse();
+    expect(status.textContent).toContain('OpenStreetMap was unavailable');expect(status.textContent).not.toContain('Prices and opening');
+    expect(fixture.nativeElement.querySelector('.place-select input')).not.toBeNull();expect(fixture.nativeElement.querySelectorAll('.coverage-status').length).toBe(1);fixture.destroy();
   });
   it('keeps selections across pages and saves only after trip/day confirmation', async () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;

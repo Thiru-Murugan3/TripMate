@@ -27,13 +27,14 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
       <p *ngIf="successMessage && !selectedCount" role="status" class="notice">{{ successMessage }}</p>
       <ng-container *ngIf="result as data">
         <app-top-places *ngIf="!isLoading && itemTypeFilter === 'ALL'" [destination]="data.query" [radiusKm]="radiusKm" [tripId]="activeTripId" [startDate]="activeStartDate" [endDate]="activeEndDate" [canEdit]="effectiveCanEdit" [disabled]="isSaving" (savingChanged)="isSaving=$event" (placesChanged)="loadSavedPlaces(); placesChanged.emit()" (itineraryChanged)="itineraryChanged.emit()" [canFind]="true" (placeRequested)="filterText=$event; discover()" />
-        <div class="result-heading"><h2>{{ data.resolvedDestination }}</h2><span>{{ data.resultCount }} available matches</span></div>
+        <div class="result-heading"><h2>{{ data.resolvedDestination }}</h2><span>{{ data.resultCount }} matches from available sources</span></div>
+        <details *ngIf="coverageWarnings.length" class="coverage-status"><summary>Coverage and source status</summary><p *ngFor="let warning of coverageWarnings">{{ warning }}</p></details>
         <form class="search-form" (ngSubmit)="discover()">
           <label>Find a particular place here<input name="placeName" [(ngModel)]="filterText" [disabled]="isSaving" maxlength="180" placeholder="e.g. Botanical Garden" /></label>
           <button [disabled]="isSaving || isLoading">Find place</button><button *ngIf="filterText" type="button" [disabled]="isSaving || isLoading" (click)="filterText=''; discover()">All places</button>
         </form>
         <div *ngIf="!data.places.length" class="notice" role="status"><p>No matching places could be loaded from the available sources.</p><p>Try All categories, a wider radius or a particular place name.</p>
-          <details *ngIf="data.warnings?.length"><summary>Source status</summary><p *ngFor="let warning of data.warnings">{{ warning }}</p></details>
+
         </div>
         <div *ngIf="selectedCount" class="plan-panel">
           <h2>{{ selectedCount }} selected</h2>
@@ -66,7 +67,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
           </article>
         </div>
         <nav *ngIf="(data.totalPages || 0) > 1" class="pagination" aria-label="Combined places pages"><button [disabled]="isLoading || isSaving || !data.page" (click)="changePage((data.page || 0)-1)">Previous</button><span>Page {{ (data.page || 0)+1 }} of {{ data.totalPages }}</span><button [disabled]="isLoading || isSaving || (data.page || 0)+1 >= (data.totalPages || 0)" (click)="changePage((data.page || 0)+1)">Next</button></nav>
-        <p class="footnote"><a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify</a> · {{ data.attribution }}</p>
+        <p *ngIf="data.attribution" class="footnote"><a *ngIf="data.providersUsed?.includes('Geoapify')" href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer">Geoapify · </a>{{ data.attribution }}</p>
       </ng-container>
     </section>`,
   styleUrls:['./combined-places.component.scss'],
@@ -74,6 +75,10 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
 })
 export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
   mobileFiltersOpen=false;
+  get coverageWarnings():string[] {
+    return this.result?.warnings?.filter(warning=>!warning.startsWith('Prices and opening hours')
+      && !warning.startsWith('No source-backed listings')) || [];
+  }
   readonly exploreCategories = ['NATURE','TEMPLE','MUSEUM','ADVENTURE','FAMILY','FOOD','STAY'] as const;
   readonly exploreTabs = [
     {value:'ALL',label:'All'}, {value:'PLACE',label:'Places to visit'},
