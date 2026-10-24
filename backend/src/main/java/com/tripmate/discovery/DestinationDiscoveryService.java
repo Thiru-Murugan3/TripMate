@@ -165,6 +165,8 @@ public class DestinationDiscoveryService {
         List<String> attributions = new ArrayList<>();
 
         for (DiscoveryProvider provider : providers) {
+            // Interest name lookup is a bounded fallback, not another broad inventory request.
+            if (provider instanceof PhotonPlaceDiscoveryProvider && placeName.isBlank() && !unique.isEmpty()) continue;
             if (freeOnly && !(provider instanceof CuratedDiscoveryProvider || provider instanceof OverpassDiscoveryProvider
                     || provider instanceof WikidataDiscoveryProvider)) continue;
             try {

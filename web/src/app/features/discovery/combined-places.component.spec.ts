@@ -60,6 +60,13 @@ describe('Combined compact Explore', () => {
     expect(discovery.discoverPlaces.calls.mostRecent().args[3]?.itemType).toBe('ALL');
     c.searchDestination='Adventure Island';c.discover();expect(discovery.discoverPlaces.calls.mostRecent().args[0]).toBe('Adventure Island');fixture.destroy();
   });
+  it('shows source failures for empty results instead of claiming the location does not exist', () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
+    discovery.discoverPlaces.and.returnValue(of({...response,places:[],warnings:['OpenStreetMap discovery is temporarily unavailable.']} as any));
+    c.searchDestination='Rishikesh';c.discover();fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No matching places could be loaded');
+    expect(fixture.nativeElement.textContent).toContain('Source status');expect(fixture.nativeElement.textContent).toContain('OpenStreetMap discovery is temporarily unavailable.');fixture.destroy();
+  });
   it('keeps selections across pages and saves only after trip/day confirmation', async () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
     c.searchDestination='Ooty';c.discover();await c.toggleSelection(place as any);

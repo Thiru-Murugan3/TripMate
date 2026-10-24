@@ -39,6 +39,21 @@ class PhotonPlaceDiscoveryProviderTest {
         assertEquals(PriceStatus.UNKNOWN,place.priceStatus());assertNull(place.estimatedCostPerPerson());assertNull(place.primaryImageUrl());
         assertTrue(result.attribution().contains("OpenStreetMap"));server.verify();
     }
+    @Test void adventureFallbackKeepsRealNearbyResultsWhenAnotherLookupFails() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+        var factory=mock(ProviderHttpClientFactory.class);when(factory.create(anyInt())).thenReturn(builder.build());
+        server.expect(queryParam("q","rafting")).andExpect(queryParam("bbox",org.hamcrest.Matchers.containsString("78.")))
+          .andRespond(withSuccess("""
+            {"features":[{"properties":{"name":"Heval River Cottage and Rafting Camp","countrycode":"IN","osm_type":"N","osm_id":13454788338,"osm_key":"tourism","osm_value":"camp_site"},"geometry":{"coordinates":[78.3802223,30.1088417]}}]}
+            """,MediaType.APPLICATION_JSON));
+        server.expect(queryParam("q","bungee")).andRespond(withStatus(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
+        server.expect(queryParam("q","adventure")).andRespond(withSuccess("{\"features\":[]}",MediaType.APPLICATION_JSON));
+        var request=new DiscoveryProviderRequest("Rishikesh",new GeocodedDestination(new BigDecimal("30.108"),new BigDecimal("78.29"),"Rishikesh, India","Rishikesh",null,"Uttarakhand","IN","Test"),25,DiscoveryCategory.ADVENTURE);
+        var result=new PhotonPlaceDiscoveryProvider(factory,mapper(factory),"https://photon.example").discover(request);
+        assertEquals(1,result.places().size());var place=result.places().getFirst();
+        assertEquals("osm:node:13454788338",place.externalId());assertEquals(DiscoveryCategory.ADVENTURE,place.category());
+        assertEquals(PriceStatus.UNKNOWN,place.priceStatus());assertNull(place.primaryImageUrl());assertTrue(result.warnings().stream().anyMatch(w->w.contains("unavailable")));server.verify();
+    }
     @Test void cityBrowsingDoesNotCallTheNamedLookup() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
         var factory=mock(ProviderHttpClientFactory.class);when(factory.create(anyInt())).thenReturn(builder.build());
