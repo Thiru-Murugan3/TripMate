@@ -21,6 +21,6 @@ class OverpassRecoveryTest {
         var provider=new OverpassDiscoveryProvider(factory,mock(PriceVerificationService.class),mock(ImageResolverService.class),mock(WikimediaEnrichmentService.class),
                 "https://primary.example/api/interpreter,https://fallback.example/api/interpreter",500);
         var request=new DiscoveryProviderRequest("Chennai",new GeocodedDestination(new BigDecimal("13"),new BigDecimal("80"),"Chennai, India","Chennai",null,null,"IN","Test"),25,null);
-        provider.discover(request);provider.discover(request);server.verify();
+        provider.discover(request);provider.discover(request);verify(factory).create(3000);server.verify();
     }
 }

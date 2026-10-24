@@ -34,6 +34,14 @@ class DestinationDiscoveryOrchestrationTest {
                 mock(CuratedDiscoveryRepository.class), mock(CuratedDiscoveryMapper.class), 6, 60, 200);
     }
 
+    @Test void defaultRelevancePromotesVisitDestinationsAheadOfMinorWaterways() {
+        var river=place("Minor stream",1,null,DiscoveryCategory.RIVER).toBuilder().confidenceScore(.99).build();
+        var falls=place("Named Waterfall",7,null,DiscoveryCategory.WATERFALL).toBuilder().confidenceScore(.6).build();
+        when(primary.discover(any())).thenReturn(result("Primary",river,falls));when(fallback.discover(any())).thenReturn(result("Fallback"));
+        assertEquals("Named Waterfall",service.search("Chennai",25,"NATURE").places().getFirst().name());
+        var filters=new DiscoverySearchFilters("NATURE",null,null,null,null,null,null,null,null,null,null,null,"DISTANCE",0,24);
+        assertEquals("Minor stream",service.search("Chennai",25,filters).places().getFirst().name());
+    }
     @Test
     void incompleteInventoriesRefreshSoonerWithoutExtendingPriceOrOpeningFreshness() {
         var now=java.time.Instant.parse("2026-10-24T08:00:00Z");

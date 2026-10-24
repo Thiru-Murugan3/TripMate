@@ -45,7 +45,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
         </div>
         <div class="cards">
           <article *ngFor="let place of data.places; trackBy:trackPlace" class="card">
-            <app-place-photo-gallery [externalId]="place.externalId" [sourceUrl]="place.sourceUrl || ''" [name]="place.name" [initialImages]="place.imageGallery!" />
+            <app-place-photo-gallery [externalId]="place.externalId" [sourceUrl]="place.sourceUrl || ''" [name]="place.name" [initialImages]="place.imageGallery!" [officialWebsite]="place.officialWebsite || place.website || ''" />
             <div class="card-body"><h3>{{ place.name }}</h3><p>{{ formatCategory(place.category) }} · {{ place.distanceKm }} km</p><p class="duration">{{ visitTime(place) }}</p><p class="hours-status">{{ place.openingHours?.trim() ? 'Opening hours in details' : 'Opening hours not listed' }}</p><p class="price">{{ formatPlacePrice(place) }}</p>
               <label class="place-select"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || !canSelectPlaces" (change)="toggleSelection(place)" /> Select place</label>
               <label *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>
@@ -64,6 +64,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
                   <p *ngIf="sourceDate(place.sourceLastCheckedAt) as checked">Listing retrieved: {{ checked }}</p>
                 </div>
                 <p *ngIf="place.fullAddress || place.address">{{ place.fullAddress || place.address }}</p>
+                <p *ngIf="place.bestTimeToVisit">{{ place.bestTimeToVisit }}</p>
                 <p *ngIf="place.accessibilityInformation">{{ place.accessibilityInformation }}</p>
                 <p *ngIf="place.inclusions?.length"><strong>Includes:</strong> {{ place.inclusions?.join(', ') }}</p>
                 <p *ngIf="place.exclusions?.length"><strong>Excludes:</strong> {{ place.exclusions?.join(', ') }}</p>
@@ -117,6 +118,7 @@ export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
   }
   override formatPlacePrice(place:DiscoveredPlace):string {
     if(this.priceNeedsReview(place)) return place.priceStatus==='FREE' ? 'Previously free — confirm current fee' : 'Previous price — confirm current fee';
+    if(place.estimatedCostPerPerson==null && place.priceOptions?.some(option=>this.safeBookingUrl(option.sourceUrl)&&Number.isFinite(option.amount))) return 'See sourced prices in details';
     return super.formatPlacePrice(place);
   }
   get coverageWarnings():string[] {

@@ -42,6 +42,18 @@ class OpenTripMapDiscoveryProviderTest {
         assertEquals(PriceStatus.UNKNOWN,p.priceStatus());assertNull(p.estimatedCostPerPerson());assertNull(p.rating());
         assertEquals(image,p.imageGallery().get(0));assertTrue(p.imageExact());assertTrue(p.sourceName().contains("ODbL"));server.verify();
     }
+    @Test void campsiteAndZooSubtypesDoNotBecomeMuseumsOrFamilyCamping() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+        server.expect(anything()).andRespond(withSuccess("""
+            [{"xid":"N1","name":"Elephant campsite","kinds":"museums,other_museums","point":{"lat":13.083,"lon":80.271}},
+             {"xid":"N2","name":"Zoo","kinds":"zoos,museums","point":{"lat":13.083,"lon":80.271}},
+             {"xid":"N3","name":"History Museum","kinds":"museums","point":{"lat":13.083,"lon":80.271}}]
+            """,MediaType.APPLICATION_JSON));
+        var r=request();var family=new DiscoveryProviderRequest(r.query(),r.destination(),25,DiscoveryCategory.FAMILY);
+        var result=new OpenTripMapDiscoveryProvider(builder.build(),mock(WikimediaEnrichmentService.class),true,"secret").discover(family);
+        assertEquals(2,result.places().size());assertFalse(result.places().stream().anyMatch(p->p.name().contains("campsite")));
+        assertEquals(DiscoveryCategory.FAMILY,result.places().getFirst().category());server.verify();
+    }
     @Test void optionalEnrichmentFailureKeepsThePlaceWithoutInventingAnImage() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var enrichment=mock(WikimediaEnrichmentService.class);
         when(enrichment.resolve(any())).thenThrow(new IllegalStateException("offline"));

@@ -21,25 +21,28 @@ public class PhotonPlaceDiscoveryProvider implements DiscoveryProvider {
     private final RestClient client;
     private final String baseUrl;
     private final RestClient fallbackClient;
+    private final RestClient detailClient;
     private final OverpassDiscoveryProvider mapper;
 
     public PhotonPlaceDiscoveryProvider(ProviderHttpClientFactory factory, OverpassDiscoveryProvider mapper,
             @Value("${discovery.photon-url:https://photon.komoot.io}") String baseUrl) {
         this.client = factory.create(12000);
         this.fallbackClient = factory.create(4000);
+        this.detailClient = factory.create(3000);
         this.mapper = mapper;
         this.baseUrl = baseUrl.replaceAll("/$", "");
     }
     @Override public String name() { return "OpenStreetMap name search"; }
     @Override public DiscoveryProviderResult discover(DiscoveryProviderRequest request) {
         if (!request.destination().isIndia()) return new DiscoveryProviderResult(name(), "", List.of(), List.of());
-        if (request.placeName() != null && !request.placeName().isBlank()) return lookup(request,request.placeName().trim(),client);
+        var detailBudget=new java.util.concurrent.atomic.AtomicInteger(2);
+        if (request.placeName() != null && !request.placeName().isBlank()) return lookup(request,request.placeName().trim(),client,detailBudget);
         var terms = fallbackTerms(request.category());
         var places = new LinkedHashMap<String,DiscoveredPlace>();
         var warnings = new ArrayList<String>();
         for (String term : terms) {
             try {
-                var result=lookup(request,term,fallbackClient);
+                var result=lookup(request,term,fallbackClient,detailBudget);
                 result.places().forEach(place->places.putIfAbsent(place.externalId(),place));
                 warnings.addAll(result.warnings());
             } catch (RuntimeException ex) {
@@ -60,7 +63,7 @@ public class PhotonPlaceDiscoveryProvider implements DiscoveryProvider {
             default -> List.of();
         };
     }
-    private DiscoveryProviderResult lookup(DiscoveryProviderRequest request,String term,RestClient searchClient) {
+    private DiscoveryProviderResult lookup(DiscoveryProviderRequest request,String term,RestClient searchClient,java.util.concurrent.atomic.AtomicInteger detailBudget) {
         double lat = request.destination().latitude().doubleValue(), lon = request.destination().longitude().doubleValue();
         double dy = request.radiusKm()/110.5, dx = request.radiusKm()/(110.5*Math.cos(Math.toRadians(lat)));
         String box = String.format(Locale.ROOT,"%.6f,%.6f,%.6f,%.6f",lon-dx,lat-dy,lon+dx,lat+dy);
@@ -90,6 +93,29 @@ public class PhotonPlaceDiscoveryProvider implements DiscoveryProvider {
         ObjectNode osm=JsonNodeFactory.instance.objectNode();osm.set("elements",elements);
         // The existing OSM mapper independently verifies the circular radius, category, fees and image credits.
         var places=mapper.map(osm,request);
+        // Enrich a few matched identities, never an arbitrary name or URL.
+        var enriched=new ArrayList<DiscoveredPlace>();
+        for(var place:places) {
+            var value=place;
+            if(detailBudget.getAndDecrement() > 0) {
+                try {
+                    String[] identity=place.externalId().split(":");
+                    var detail=detailClient.get().uri(java.net.URI.create("https://api.openstreetmap.org/api/0.6/"+identity[1]+"/"+identity[2]+".json")).retrieve().body(JsonNode.class);
+                    if(detail!=null && detail.path("elements").isArray()) {
+                        var exact=JsonNodeFactory.instance.arrayNode();
+                        for(var element:detail.path("elements")) if(element.path("id").asText().equals(identity[2]) && element.path("type").asText().equals(identity[1])) {
+                            var record=element.deepCopy();
+                            if(record instanceof ObjectNode object && !object.has("lat") && !object.has("center")) object.put("lat",place.latitude()).put("lon",place.longitude());
+                            exact.add(record);
+                        }
+                        var records=mapper.map(JsonNodeFactory.instance.objectNode().set("elements",exact),request);
+                        if(!records.isEmpty())value=records.getFirst();
+                    }
+                } catch(RuntimeException ignored) { /* Keep the independently sourced basic record. */ }
+            }
+            enriched.add(ReviewedAdventureFacts.apply(value));
+        }
+        places=List.copyOf(enriched);
         return new DiscoveryProviderResult(name(),"© OpenStreetMap contributors · Photon name lookup",places,
                 features.size()>=20 ? List.of("OpenStreetMap name search returned its 20-match limit; refine the place name.") : List.of());
     }
