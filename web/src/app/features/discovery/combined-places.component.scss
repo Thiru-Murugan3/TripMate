@@ -106,3 +106,20 @@ button, input:not([type=checkbox]), select { min-height:44px; }
  .place-photo,.no-photo { height:100px; }
  .card-body { min-width:0; }
 }
+
+.experience-tabs { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+.experience-tabs button { background:white; color:#174a33; border-color:#d6e1d9; }
+.experience-tabs button.active { background:#174a33; color:white; border-color:#174a33; }
+.card-body .duration { min-height:0; margin-bottom:8px; }
+.card-body .price { font-weight:700; color:#17362a; min-height:0; }
+.place-details { border-top:1px solid #e2e8f0; margin-top:8px; }
+.place-details summary { cursor:pointer; min-height:44px; display:flex; align-items:center; font-size:12px; font-weight:600; }
+.place-details p { margin-bottom:10px; }
+.booking-link { display:flex; align-items:center; min-height:44px; font-size:12px; font-weight:600; }
+@media(max-width:760px) {
+ .experience-tabs { gap:6px; }
+ .experience-tabs button { padding:9px 12px; font-size:12px; }
+ .experience-tabs button.active { background:#2563eb; border-color:#2563eb; }
+ .experience-tabs button { color:#1d4ed8; }
+ .card-body .price { color:#0f172a; }
+}

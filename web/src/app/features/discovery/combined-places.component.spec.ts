@@ -34,6 +34,22 @@ describe('Combined compact Explore', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Geoapify + OpenTripMap');expect(fixture.nativeElement.querySelector('.source-notes')).toBeNull();expect(fixture.nativeElement.textContent).toContain('Price not verified');
     c.filterText='Garden';c.discover();expect(discovery.discoverPlaces.calls.mostRecent().args[3]?.name).toBe('Garden');fixture.destroy();
   });
+  it('sends experience and practical filters without dropping a selection', async () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
+    c.searchDestination='Ooty';c.discover();await c.toggleSelection(place as any);
+    c.priceStatusFilter='FREE';c.maxDurationFilter=180;c.category='NATURE';c.selectItemType('ACTIVITY');
+    expect(discovery.discoverPlaces.calls.mostRecent().args).toEqual(['Ooty',25,'NATURE',jasmine.objectContaining({itemType:'ACTIVITY',priceStatus:'FREE',maxDuration:180,page:0})]);
+    expect(c.isSelected(place as any)).toBeTrue();fixture.detectChanges();expect(fixture.nativeElement.querySelector('app-top-places')).toBeNull();
+    c.selectItemType('TOUR_SERVICE');expect(discovery.discoverPlaces.calls.mostRecent().args[3]?.itemType).toBe('TOUR_SERVICE');fixture.destroy();
+  });
+  it('keeps visitor details collapsed and booking separate from planning', () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
+    discovery.discoverPlaces.and.returnValue(of({...response,places:[{...place,suggestedVisitMinutes:90,description:'Garden visitor details',bookingUrl:'https://example.com/tickets'}]} as any));
+    c.searchDestination='Ooty';c.discover();fixture.detectChanges();
+    const details=fixture.nativeElement.querySelector('.place-details');expect(details.open).toBeFalse();expect(details.textContent).toContain('Garden visitor details');
+    expect(fixture.nativeElement.textContent).toContain('1h 30m visit');expect(fixture.nativeElement.querySelector('.booking-link').textContent).toContain('Book with provider');
+    expect(fixture.nativeElement.querySelector('.place-select input')).not.toBeNull();expect(c.safeBookingUrl('javascript:alert(1)')).toBeNull();expect(c.safeBookingUrl('invalid')).toBeNull();fixture.destroy();
+  });
   it('keeps selections across pages and saves only after trip/day confirmation', async () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
     c.searchDestination='Ooty';c.discover();await c.toggleSelection(place as any);
