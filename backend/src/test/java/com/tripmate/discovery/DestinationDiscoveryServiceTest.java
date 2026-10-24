@@ -55,6 +55,9 @@ class DestinationDiscoveryServiceTest {
         assertTrue(results.stream().anyMatch(p->p.category()==DiscoveryCategory.PARK));
         assertTrue(results.stream().anyMatch(p->p.category()==DiscoveryCategory.MUSEUM));
         assertTrue(provider.buildQuery(30.1,78.3,25000,DiscoveryCategory.FAMILY).contains("playground"));
+        assertTrue(DiscoveryCategoryMatching.matches(DiscoveryCategory.NATURE, DiscoveryCategory.WATERFALL));
+        assertTrue(DiscoveryCategoryMatching.matches(DiscoveryCategory.NATURE, DiscoveryCategory.VIEWPOINT));
+        assertFalse(DiscoveryCategoryMatching.matches(DiscoveryCategory.NATURE, DiscoveryCategory.FOOD));
     }
 
     @Test
