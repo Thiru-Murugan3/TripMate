@@ -227,7 +227,8 @@ public class DestinationDiscoveryService {
     }
 
     private void merge(Map<String, DiscoveredPlace> unique, List<DiscoveredPlace> places) {
-        for (DiscoveredPlace candidate : places) {
+        for (DiscoveredPlace rawCandidate : places) {
+            DiscoveredPlace candidate = ReviewedAdventureFacts.apply(rawCandidate);
             String providerKey = candidate.externalId();
             if (unique.containsKey(providerKey)) continue;
             String nearbyKey = unique.entrySet().stream()
