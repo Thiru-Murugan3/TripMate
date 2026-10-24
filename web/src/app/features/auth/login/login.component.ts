@@ -1,10 +1,11 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { authReturnUrl } from '../../../core/utils/auth-return-url';
-import {Subscription,finalize} from 'rxjs';
+import {Subscription,finalize,switchMap} from 'rxjs';
+import {BackendReadinessService} from '../../../core/services/backend-readiness.service';
 
 @Component({
   selector: 'app-login',
@@ -13,12 +14,15 @@ import {Subscription,finalize} from 'rxjs';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent implements OnDestroy {
+export class LoginComponent implements OnDestroy, OnInit {
+  readonly readiness=inject(BackendReadinessService);
+  private warmup?:Subscription;
+  ngOnInit():void {this.warmup=this.readiness.ready().subscribe({error:()=>{}});}
   private request?:Subscription;
   private slowTimer?:ReturnType<typeof setTimeout>;
   slowLogin=false;
-  ngOnDestroy():void {this.request?.unsubscribe();clearTimeout(this.slowTimer);}
-  cancelLogin():void {this.request?.unsubscribe();this.errorMessage='Sign-in cancelled. You can try again.';}
+  ngOnDestroy():void {this.request?.unsubscribe();this.warmup?.unsubscribe();clearTimeout(this.slowTimer);}
+  cancelLogin():void {this.request?.unsubscribe();this.warmup?.unsubscribe();this.errorMessage='Sign-in cancelled. You can try again.';}
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -55,7 +59,7 @@ export class LoginComponent implements OnDestroy {
 
     const credentials = this.loginForm.value as { email: string; password: string };
 
-    this.request=this.authService.login(credentials).pipe(finalize(()=>{this.isLoading=false;this.slowLogin=false;clearTimeout(this.slowTimer);})).subscribe({
+    this.request=this.readiness.ready().pipe(switchMap(()=>this.authService.login(credentials)),finalize(()=>{this.isLoading=false;this.slowLogin=false;clearTimeout(this.slowTimer);})).subscribe({
       next: () => {
         void this.router.navigateByUrl(this.returnUrl).then(ok=>{if(!ok)this.errorMessage='Unable to open your trips. Please try again.';}).catch(()=>this.errorMessage='Unable to open your trips. Please try again.');
       },

@@ -32,6 +32,7 @@ const invitation={id:1,tripId:10,tripName:trip.name,inviterId:1,inviterName:user
 let locationPhotoUrl='';
 function response(url){
   const p=new URL(url).pathname.replace(/^.*\/api\/v1/,'');
+  if(p==='/health')return {status:'UP'};
   if(p==='/discovery/place-photos')return {images:[{url:locationPhotoUrl,sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-one.jpg',license:'Visual fixture',attribution:'Test photographer one',exact:true,primary:true},{url:locationPhotoUrl.replace('hero.jpg','kodaikanal.jpg'),sourcePage:'https://commons.wikimedia.org/wiki/File:Fixture-two.jpg',license:'Visual fixture',attribution:'Test photographer two',exact:true,primary:false}],message:'Internal visual fixture only',retryable:false};
   if(p==='/auth/login')return {accessToken:'visual-review-fixture',refreshToken:'visual-refresh-fixture',tokenType:'Bearer',expiresIn:900};
   if(p==='/users/me')return user;
