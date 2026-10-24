@@ -13,6 +13,12 @@ describe('Credited place photo gallery',()=>{
   expect(f.nativeElement.querySelector('img').src).toContain('Two.jpg');expect(f.nativeElement.querySelector('figcaption a').href).toContain('Two.jpg');
   f.componentInstance.load();response.error(new Error('offline'));f.detectChanges();expect(f.componentInstance.images.length).toBe(2);expect(f.nativeElement.textContent).toContain('Retry photos');f.destroy();
  });
+ it('rejects regional substitutes, missing credits and unsafe source links',()=>{
+  TestBed.configureTestingModule({providers:[{provide:PlacePhotosService,useValue:{get:jasmine.createSpy()}}]});
+  const f=TestBed.createComponent(PlacePhotoGalleryComponent);
+  f.componentRef.setInput('initialImages',[{...photo('Region'),exact:false},{...photo('Unsafe'),sourcePage:'javascript:alert(1)'},{...photo('NoCredit'),attribution:''},photo('Exact')]);f.detectChanges();
+  expect(f.componentInstance.images.length).toBe(1);expect(f.nativeElement.querySelector('img').src).toContain('Exact.jpg');f.destroy();
+ });
  it('keeps the gallery and touch controls inside a narrow mobile card',()=>{
   TestBed.configureTestingModule({providers:[{provide:PlacePhotosService,useValue:{get:jasmine.createSpy()}}]});
   const f=TestBed.createComponent(PlacePhotoGalleryComponent);f.componentRef.setInput('initialImages',[photo('One'),photo('Two')]);f.detectChanges();

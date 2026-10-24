@@ -47,7 +47,7 @@ describe('Combined compact Explore', () => {
     discovery.discoverPlaces.and.returnValue(of({...response,places:[{...place,suggestedVisitMinutes:90,description:'Garden visitor details',bookingUrl:'https://example.com/tickets'}]} as any));
     c.searchDestination='Ooty';c.discover();fixture.detectChanges();
     const details=fixture.nativeElement.querySelector('.place-details');expect(details.open).toBeFalse();expect(details.textContent).toContain('Garden visitor details');
-    expect(fixture.nativeElement.textContent).toContain('1h 30m visit');expect(fixture.nativeElement.querySelector('.booking-link').textContent).toContain('Book with provider');
+    expect(fixture.nativeElement.textContent).toContain('Suggested visit: 1h 30m');expect(fixture.nativeElement.querySelector('.booking-link').textContent).toContain('Book with provider');
     expect(fixture.nativeElement.querySelector('.place-select input')).not.toBeNull();expect(c.safeBookingUrl('javascript:alert(1)')).toBeNull();expect(c.safeBookingUrl('invalid')).toBeNull();fixture.destroy();
   });
   it('separates destination from an interest and clears incompatible experience tabs', () => {
@@ -74,6 +74,18 @@ describe('Combined compact Explore', () => {
     const status=fixture.nativeElement.querySelector('.coverage-status');expect(status).not.toBeNull();expect(status.open).toBeFalse();
     expect(status.textContent).toContain('OpenStreetMap was unavailable');expect(status.textContent).not.toContain('Prices and opening');
     expect(fixture.nativeElement.querySelector('.place-select input')).not.toBeNull();expect(fixture.nativeElement.querySelectorAll('.coverage-status').length).toBe(1);fixture.destroy();
+  });
+  it('labels suggested times, missing hours and expired free-entry claims honestly', () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
+    expect(c.visitTime({...place,suggestedVisitMinutes:90} as any)).toBe('Suggested visit: 1h 30m');
+    expect(c.visitTime({...place,suggestedVisitMinutes:NaN} as any)).toBe('Visit duration not listed');
+    expect(c.openingSchedule(undefined)).toContain('Not listed');expect(c.openingSchedule('Mo-Fr 09:00-17:00')).toBe('Mo-Fr 09:00-17:00');
+    expect(c.formatPlacePrice({...place,priceStatus:'FREE',verificationExpiresAt:'2020-01-01'} as any)).toContain('Previously free');
+    expect(c.sourceDate('invalid')).toBeNull();
+    discovery.discoverPlaces.and.returnValue(of({...response,places:[{...place,openingHours:'24/7',priceOptions:[{label:'Adult',amount:100,currency:'INR',priceType:'PER_PERSON',sourceUrl:'https://venue.example/fees',lastVerifiedAt:'2026-10-01'}]}]} as any));
+    c.searchDestination='Ooty';c.discover();fixture.detectChanges();
+    const details=fixture.nativeElement.querySelector('.place-details');expect(details.open).toBeFalse();expect(details.textContent).toContain('24 hours daily');
+    expect(details.textContent).toContain('Price checked:');expect(details.querySelector('a').href).toBe('https://venue.example/fees');fixture.destroy();
   });
   it('keeps selections across pages and saves only after trip/day confirmation', async () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
