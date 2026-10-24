@@ -32,6 +32,7 @@ class PhotonPlaceDiscoveryProviderTest {
                     {"properties":{"name":"Bad ID","countrycode":"IN","osm_type":"N","osm_id":"../bad"},"geometry":{"coordinates":[77.491,10.239]}}
                   ]}
                   """,MediaType.APPLICATION_JSON));
+        server.expect(requestTo("https://api.openstreetmap.org/api/0.6/way/101.json")).andRespond(withStatus(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
         var result=new PhotonPlaceDiscoveryProvider(factory,mapper(factory),"https://photon.example").discover(request("Kodaikanal","Coakers Walk"));
         assertEquals(1,result.places().size());var place=result.places().getFirst();
         assertEquals("osm:way:101",place.externalId());assertEquals(DiscoveryCategory.VIEWPOINT,place.category());
@@ -46,13 +47,16 @@ class PhotonPlaceDiscoveryProviderTest {
           .andRespond(withSuccess("""
             {"features":[{"properties":{"name":"Heval River Cottage and Rafting Camp","countrycode":"IN","osm_type":"N","osm_id":13454788338,"osm_key":"tourism","osm_value":"camp_site"},"geometry":{"coordinates":[78.3802223,30.1088417]}}]}
             """,MediaType.APPLICATION_JSON));
+        server.expect(requestTo("https://api.openstreetmap.org/api/0.6/node/13454788338.json")).andRespond(withSuccess("""
+            {"elements":[{"type":"node","id":13454788338,"lat":30.1088417,"lon":78.3802223,"tags":{"name":"Heval River Cottage and Rafting Camp","tourism":"camp_site","opening_hours":"24/7","website":"https://hevalrivercottage.in/"}}]}
+            """,MediaType.APPLICATION_JSON));
         server.expect(queryParam("q","bungee")).andRespond(withStatus(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
         server.expect(queryParam("q","adventure")).andRespond(withSuccess("{\"features\":[]}",MediaType.APPLICATION_JSON));
         var request=new DiscoveryProviderRequest("Rishikesh",new GeocodedDestination(new BigDecimal("30.108"),new BigDecimal("78.29"),"Rishikesh, India","Rishikesh",null,"Uttarakhand","IN","Test"),25,DiscoveryCategory.ADVENTURE);
         var result=new PhotonPlaceDiscoveryProvider(factory,mapper(factory),"https://photon.example").discover(request);
         assertEquals(1,result.places().size());var place=result.places().getFirst();
         assertEquals("osm:node:13454788338",place.externalId());assertEquals(DiscoveryCategory.ADVENTURE,place.category());
-        assertEquals(PriceStatus.UNKNOWN,place.priceStatus());assertNull(place.primaryImageUrl());assertTrue(result.warnings().stream().anyMatch(w->w.contains("unavailable")));server.verify();
+        assertEquals("24/7",place.openingHours());assertNotNull(place.officialWebsite());assertNull(place.openNow());assertEquals(PriceStatus.UNKNOWN,place.priceStatus());assertNull(place.primaryImageUrl());assertTrue(result.warnings().stream().anyMatch(w->w.contains("unavailable")));server.verify();
     }
     @Test void cityBrowsingDoesNotCallTheNamedLookup() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();

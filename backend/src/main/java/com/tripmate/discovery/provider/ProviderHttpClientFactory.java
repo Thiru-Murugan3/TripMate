@@ -22,7 +22,7 @@ public class ProviderHttpClientFactory {
 
     public RestClient create(int maximumReadTimeoutMs) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(Math.max(1000, connectTimeoutMs));
+        factory.setConnectTimeout(Math.max(1000, Math.min(connectTimeoutMs, maximumReadTimeoutMs)));
         factory.setReadTimeout(Math.max(3000, Math.min(readTimeoutMs, maximumReadTimeoutMs)));
         return RestClient.builder()
                 .requestFactory(factory)

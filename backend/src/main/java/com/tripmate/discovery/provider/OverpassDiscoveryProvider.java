@@ -40,7 +40,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             @Value("${discovery.overpass-urls:${discovery.overpass-url:}}") String urls,
             @Value("${discovery.max-results:500}") int maxResults
     ) {
-        this.client = factory.create(Integer.MAX_VALUE);
+        this.client = factory.create(3000);
         this.priceVerification = priceVerification;
         this.imageResolver = imageResolver;
         this.wikimediaEnrichment = wikimediaEnrichment;
@@ -207,7 +207,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             selectors.add("nwr" + around + "[\"event\"];");
             selectors.add("nwr" + around + "[\"office\"~\"travel_agent|tourism\"];");
         }
-        return "[out:json][timeout:25];(" + String.join("", selectors) + ");out center tags;";
+        return "[out:json][timeout:5];(" + String.join("", selectors) + ");out center tags;";
     }
 
     public DiscoveryCategory classify(JsonNode tags, String name) {

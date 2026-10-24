@@ -51,7 +51,7 @@ public class OpenTripMapDiscoveryProvider implements DiscoveryProvider {
             if(!Double.isFinite(lat) || !Double.isFinite(lon) || lat<6 || lat>38 || lon<68 || lon>98) continue;
             double distance=distance(destination.latitude().doubleValue(),destination.longitude().doubleValue(),lat,lon);
             if(distance>request.radiusKm()+0.2) continue;
-            DiscoveryCategory category=classify(node.path("kinds").asText(""));
+            DiscoveryCategory category=classify(node.path("kinds").asText(""), name);
             if(!DiscoveryCategoryMatching.matches(request.category(), category)) continue;
             var extra=WikimediaEnrichmentService.Enrichment.empty();
             String wikidata=node.path("wikidata").asText("");
@@ -81,11 +81,14 @@ public class OpenTripMapDiscoveryProvider implements DiscoveryProvider {
         if(category==DiscoveryCategory.SHOPPING)return "shops";
         return "interesting_places";
     }
-    private DiscoveryCategory classify(String kinds) {
+    private DiscoveryCategory classify(String kinds, String name) {
         Set<String> tags=new HashSet<>(Arrays.asList(kinds.split(",")));
+        String lower=name.toLowerCase(Locale.ROOT);
+        if(tags.contains("campings") || tags.contains("campsites") || lower.matches(".*\\b(campsite|campground)\\b.*") && !lower.contains("museum")) return DiscoveryCategory.STAY;
+        if(tags.contains("zoos") || tags.contains("aquariums")) return DiscoveryCategory.FAMILY;
+        if(tags.contains("nature_reserves")) return DiscoveryCategory.WILDLIFE;
         if(tags.contains("amusements"))return DiscoveryCategory.ENTERTAINMENT;
         if(tags.contains("sport"))return DiscoveryCategory.ADVENTURE;
-        if(tags.contains("museums"))return DiscoveryCategory.MUSEUM;
         if(tags.contains("waterfalls"))return DiscoveryCategory.WATERFALL;
         if(tags.contains("beaches"))return DiscoveryCategory.BEACH;
         if(tags.contains("lakes"))return DiscoveryCategory.LAKE;
@@ -93,6 +96,7 @@ public class OpenTripMapDiscoveryProvider implements DiscoveryProvider {
         if(tags.contains("hindu_temples") || tags.contains("buddhist_temples"))return DiscoveryCategory.TEMPLE;
         if(tags.contains("churches"))return DiscoveryCategory.CHURCH;
         if(tags.contains("gardens_and_parks"))return DiscoveryCategory.PARK;
+        if(tags.contains("museums"))return DiscoveryCategory.MUSEUM;
         if(tags.contains("natural"))return DiscoveryCategory.NATURE;
         if(tags.contains("historic"))return DiscoveryCategory.HISTORICAL;
         if(tags.contains("foods"))return DiscoveryCategory.FOOD;
@@ -101,7 +105,7 @@ public class OpenTripMapDiscoveryProvider implements DiscoveryProvider {
         return DiscoveryCategory.ATTRACTION;
     }
     private PlaceCategory saveCategory(DiscoveryCategory category) {
-        return category==DiscoveryCategory.ADVENTURE || category==DiscoveryCategory.ENTERTAINMENT ? PlaceCategory.ACTIVITY:
+        return category==DiscoveryCategory.ADVENTURE || category==DiscoveryCategory.ENTERTAINMENT || category==DiscoveryCategory.FAMILY ? PlaceCategory.ACTIVITY:
                 category==DiscoveryCategory.FOOD?PlaceCategory.RESTAURANT:category==DiscoveryCategory.STAY?PlaceCategory.HOTEL:
                 category==DiscoveryCategory.SHOPPING?PlaceCategory.SHOPPING:PlaceCategory.ATTRACTION;
     }

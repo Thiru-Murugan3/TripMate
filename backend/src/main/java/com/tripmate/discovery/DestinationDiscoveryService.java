@@ -166,7 +166,9 @@ public class DestinationDiscoveryService {
 
         for (DiscoveryProvider provider : providers) {
             // Interest name lookup is a bounded fallback, not another broad inventory request.
-            if (provider instanceof PhotonPlaceDiscoveryProvider && placeName.isBlank() && !unique.isEmpty()) continue;
+            if (provider instanceof PhotonPlaceDiscoveryProvider && placeName.isBlank() && !unique.isEmpty()
+                    && !(category==DiscoveryCategory.NATURE && unique.values().stream().noneMatch(p ->
+                        java.util.EnumSet.of(DiscoveryCategory.WATERFALL,DiscoveryCategory.LAKE,DiscoveryCategory.PARK,DiscoveryCategory.WILDLIFE,DiscoveryCategory.BEACH).contains(p.category())))) continue;
             if (freeOnly && !(provider instanceof CuratedDiscoveryProvider || provider instanceof OverpassDiscoveryProvider
                     || provider instanceof WikidataDiscoveryProvider)) continue;
             try {
@@ -290,6 +292,7 @@ public class DestinationDiscoveryService {
                     Comparator.nullsLast(Comparator.reverseOrder()));
             case "NAME" -> Comparator.comparing(DiscoveredPlace::name, String.CASE_INSENSITIVE_ORDER);
             default -> Comparator.comparing((DiscoveredPlace place) -> !place.curated())
+                    .thenComparingInt(TouristPlacePriority::rank)
                     .thenComparing(Comparator.comparingDouble(DiscoveredPlace::confidenceScore).reversed())
                     .thenComparing(Comparator.comparingInt((DiscoveredPlace place) -> value(place.popularityScore())).reversed())
                     .thenComparingDouble(DiscoveredPlace::distanceKm);
