@@ -296,8 +296,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
               </div>
 
               <aside class="dashboard-sidebar">
-
-<article class="sidebar-members-card card">
+                <article class="sidebar-members-card card">
                   <div class="sidebar-heading">
                     <h3>Trip Members ({{ overview.memberCount }})</h3>
                     <button type="button" class="text-link" (click)="setActiveTab('MEMBERS')">
@@ -3147,20 +3146,9 @@ export class TripDetailsComponent implements OnInit {
     this.loadDashboard();
   }
 
-  openExpenseQuickAdd(): void {
-    if (!this.canManageExpenses) return;
-    this.activeTab = 'EXPENSES';
-    this.expenseOpenRequest += 1;
-  }
-
   onExpensesChanged(): void {
     this.loadDashboard();
     this.tripUpdateMessage = 'Expenses updated successfully.';
-  }
-
-  openDocumentQuickUpload(): void {
-    this.activeTab = 'DOCUMENTS';
-    this.documentOpenRequest += 1;
   }
 
   onDocumentsChanged(): void {

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 
 import { TripDetailsComponent } from './trip-details.component';
 import { Trip, TripDashboard, TripMember } from '../../../core/models/trip.model';
@@ -93,8 +94,9 @@ describe('TripDetailsComponent overview (TRIP-201)', () => {
           useValue: {
             snapshot: {
               paramMap: convertToParamMap({ id: '42' }),
-              queryParamMap: convertToParamMap({})
-            }
+              queryParamMap: convertToParamMap({ tab: 'OVERVIEW' })
+            },
+            queryParamMap: of(convertToParamMap({ tab: 'OVERVIEW' }))
           }
         }
       ]
