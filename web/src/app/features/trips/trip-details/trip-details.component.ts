@@ -296,59 +296,8 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
               </div>
 
               <aside class="dashboard-sidebar">
-                <article class="quick-actions-card card">
-                  <h3>Quick Actions</h3>
 
-                  <button type="button" class="quick-action-row" (click)="setActiveTab('EXPLORE')">
-                    <span class="quick-action-icon blue">
-                      <span class="material-symbols-outlined">travel_explore</span>
-                    </span>
-                    <span>Explore {{ currentTrip.destination }}</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" (click)="setActiveTab('TIMELINE')">
-                    <span class="quick-action-icon blue">
-                      <span class="material-symbols-outlined">timeline</span>
-                    </span>
-                    <span>View Itinerary Timeline</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" (click)="setActiveTab('ITINERARY')">
-                    <span class="quick-action-icon green">
-                      <span class="material-symbols-outlined">add</span>
-                    </span>
-                    <span>{{ canPlanTrip ? 'Add Itinerary' : 'View Itinerary' }}</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" *ngIf="canManageExpenses" (click)="openExpenseQuickAdd()">
-                    <span class="quick-action-icon green">
-                      <span class="material-symbols-outlined">currency_rupee</span>
-                    </span>
-                    <span>Add Expense</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" *ngIf="canEditTrip" (click)="openBookNow()">
-                    <span class="quick-action-icon orange">
-                      <span class="material-symbols-outlined">confirmation_number</span>
-                    </span>
-                    <span>Add Booking</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" *ngIf="canEditTrip" (click)="openDocumentQuickUpload()">
-                    <span class="quick-action-icon violet">
-                      <span class="material-symbols-outlined">upload</span>
-                    </span>
-                    <span>Upload Document</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-                </article>
-
-                <article class="sidebar-members-card card">
+<article class="sidebar-members-card card">
                   <div class="sidebar-heading">
                     <h3>Trip Members ({{ overview.memberCount }})</h3>
                     <button type="button" class="text-link" (click)="setActiveTab('MEMBERS')">
@@ -2404,61 +2353,15 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
       gap: 0.9rem;
     }
 
-    .quick-actions-card,
     .sidebar-members-card {
       padding: 1rem;
       border-radius: 12px;
     }
 
-    .quick-actions-card h3,
     .sidebar-members-card h3 {
       margin: 0 0 0.8rem;
       color: #0f172a;
       font-size: 0.86rem;
-    }
-
-    .quick-action-row {
-      display: grid;
-      grid-template-columns: 30px minmax(0, 1fr) 20px;
-      align-items: center;
-      gap: 0.65rem;
-      width: 100%;
-      padding: 0.65rem 0.55rem;
-      margin-bottom: 0.45rem;
-      border: 0;
-      border-radius: 9px;
-      color: #334155;
-      background: #f8fafc;
-      font-size: 0.72rem;
-      font-weight: 750;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .quick-action-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .quick-action-icon {
-      display: grid;
-      place-items: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-    }
-
-    .quick-action-icon .material-symbols-outlined {
-      font-size: 1rem;
-    }
-
-    .quick-action-icon.blue { color: #2563eb; background: #eff6ff; }
-    .quick-action-icon.green { color: #16a34a; background: #ecfdf5; }
-    .quick-action-icon.orange { color: #d97706; background: #fff7ed; }
-    .quick-action-icon.violet { color: #7c3aed; background: #f5f3ff; }
-
-    .quick-action-row .arrow {
-      color: #94a3b8;
-      font-size: 1rem;
     }
 
     .sidebar-heading {
