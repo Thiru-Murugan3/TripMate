@@ -24,7 +24,7 @@ interface ApiErrorResponse {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './register.component.html',
-  styleUrl: './register.component.scss'
+  styleUrls: ['./register.component.scss', '../auth-premium.scss']
 })
 export class RegisterComponent {
   private readonly fb = inject(FormBuilder);

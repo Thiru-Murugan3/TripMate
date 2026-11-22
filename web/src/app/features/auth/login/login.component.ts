@@ -12,7 +12,7 @@ import {BackendReadinessService} from '../../../core/services/backend-readiness.
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrls: ['./login.component.scss', '../auth-premium.scss']
 })
 export class LoginComponent implements OnDestroy, OnInit {
   readonly readiness=inject(BackendReadinessService);
