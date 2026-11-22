@@ -73,6 +73,8 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
             String name = properties.path("name").asText(null);
             JsonNode coordinates = feature.path("geometry").path("coordinates");
             if (name == null || !coordinates.isArray() || coordinates.size() < 2) continue;
+            JsonNode raw=properties.path("datasource").path("raw");
+            if ((request.placeName()==null || request.placeName().isBlank()) && incidental(properties.path("categories"),raw)) continue;
             BigDecimal longitude = decimal(coordinates.get(0).asText());
             BigDecimal latitude = decimal(coordinates.get(1).asText());
             if (latitude == null || longitude == null) continue;
@@ -81,7 +83,6 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
             String placeId = properties.path("place_id").asText();
             double distance = haversine(lat, lon, latitude.doubleValue(), longitude.doubleValue());
             String website = properties.path("website").asText(null);
-            JsonNode raw=properties.path("datasource").path("raw");
             String hours=properties.path("opening_hours").asText("").trim();
             if(hours.isEmpty()) hours=raw.path("opening_hours").asText("").trim();
             Integer sourceDuration=SourceDuration.minutes(raw.path("duration").asText(null));
@@ -120,6 +121,14 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
         // Sights only: hotels, restaurants and shops filled most of the 300 slots in busy towns
         // (e.g. 205 of 245 in Rishikesh). They remain available via the Stay/Food/Shopping categories.
         return "tourism,entertainment,leisure,sport,heritage,religion,natural,national_park,beach";
+    }
+    private boolean incidental(JsonNode categories,JsonNode raw) {
+        String tags=categories.toString().toLowerCase(Locale.ROOT);
+        // A positive visitor designation wins over a secondary sports tag.
+        if(tags.contains("tourism") || tags.contains("museum") || tags.contains("theme_park") || tags.contains("water_park"))return false;
+        String leisure=raw.path("leisure").asText("");
+        return List.of("pitch","sports_centre","fitness_station","track").contains(leisure)
+                || tags.contains("sport.pitch") || tags.contains("sport.sports_centre");
     }
     private DiscoveryCategory classify(JsonNode categories, String name) {
         String joined = categories.toString().toLowerCase(Locale.ROOT);

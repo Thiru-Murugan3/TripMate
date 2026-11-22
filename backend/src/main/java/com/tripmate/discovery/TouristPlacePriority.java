@@ -26,6 +26,8 @@ public final class TouristPlacePriority {
 
     public static int rank(DiscoveredPlace place) {
         String name = place.name() == null ? "" : place.name().toLowerCase(Locale.ROOT);
+        if(!place.curated() && place.category()==DiscoveryCategory.ATTRACTION && place.name()!=null
+                && place.name().toLowerCase(java.util.Locale.ROOT).matches(".*\\b(school ground|school play ?ground|parade ground|volleyball ground|badminton ground|soccer ground|football ground|cricket ground|army ground)\\b.*")) return 3;
         if (MARKER.matcher(name).matches()) return 4;
         if (MINOR.matcher(name).matches() || GENERIC.matcher(name).matches()) return 3;
         if (place.category() == DiscoveryCategory.RIVER && STREAM.matcher(name).matches()) return 3;
