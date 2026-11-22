@@ -43,6 +43,7 @@ interface SplitDraft {
   selector: 'app-expense-manager',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  styleUrls: ['./expense-premium.scss'],
   template: `
     <section class="expense-page">
       <div class="expense-toolbar">

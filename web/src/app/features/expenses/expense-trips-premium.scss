@@ -1,0 +1,35 @@
+/* Premium trip picker for Expenses. Nested under :host to win over the inline base styles. */
+:host {
+  background:
+    radial-gradient(60% 40% at 90% 0%, rgba(124, 58, 237, .08), transparent 70%),
+    #f6f7fb;
+
+  main { max-width: 820px; }
+  header {
+    position: relative; overflow: hidden; padding: 1.6rem 1.6rem 1.7rem; border-radius: 22px; color: #fff;
+    background:
+      radial-gradient(110% 140% at 100% 0%, rgba(52, 211, 153, .35), transparent 55%),
+      radial-gradient(80% 120% at 0% 100%, rgba(236, 72, 153, .28), transparent 55%),
+      linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%);
+    box-shadow: 0 18px 44px rgba(49, 46, 129, .30);
+  }
+  header .eyebrow {
+    display: inline-flex; padding: .3rem .7rem; border-radius: 999px; color: #fff;
+    background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .26);
+  }
+  header h1 { color: #fff; font-size: clamp(26px, 4vw, 34px); font-weight: 800; margin: 12px 0 6px; }
+  header p { color: rgba(255, 255, 255, .82); margin: 0; }
+  .trip-list { gap: 14px; }
+  .trip-option {
+    border: 1px solid #e2e8f0; border-radius: 18px; background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 10px 30px rgba(15, 23, 42, .07);
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+  }
+  .trip-option:hover { transform: translateY(-2px); border-color: #c7d2fe; box-shadow: 0 20px 44px rgba(79, 70, 229, .14); }
+  .expense-icon { border-radius: 14px; background: linear-gradient(135deg, #eef2ff, #f5f3ff); }
+  .trip-option strong { font-weight: 800; letter-spacing: -.01em; }
+  .trip-option small { color: #4f46e5; font-weight: 600; }
+  .state { border: 1.5px dashed #c7d2fe; border-radius: 22px; background: linear-gradient(135deg, #fafaff, #f5f3ff); }
+  .state a, .state button { border-radius: 12px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; border: 0; }
+  @media (prefers-reduced-motion: reduce) { .trip-option { transition: none; } .trip-option:hover { transform: none; } }
+}

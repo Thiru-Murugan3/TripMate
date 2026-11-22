@@ -63,6 +63,7 @@ interface DayRoutePlan {
   selector: 'app-itinerary-planner',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, DayRouteMapComponent],
+  styleUrls: ['./itinerary-premium.scss'],
   template: `
     <section class="planner">
       <div class="planner-toolbar">
@@ -114,7 +115,7 @@ interface DayRoutePlan {
           </article>
         </div>
 
-        <button *ngIf="itinerary?.totalActivities" type="button" class="mobile-route-toggle" (click)="mobileRouteOpen=!mobileRouteOpen" [attr.aria-expanded]="mobileRouteOpen" aria-controls="trip-route-tools">{{ mobileRouteOpen ? 'Hide route & map' : 'Route & map tools' }}</button>
+        <button *ngIf="itinerary?.totalActivities" type="button" class="mobile-route-toggle" (click)="mobileRouteOpen=!mobileRouteOpen" [attr.aria-expanded]="mobileRouteOpen" aria-controls="trip-route-tools"><span class="route-toggle-label"><span class="material-symbols-outlined" aria-hidden="true">map</span>Smart route map</span><span class="route-toggle-action">{{ mobileRouteOpen ? 'Collapse' : 'Expand' }}<span class="material-symbols-outlined" aria-hidden="true">{{ mobileRouteOpen ? 'expand_less' : 'expand_more' }}</span></span></button>
         <section *ngIf="itinerary?.totalActivities" id="trip-route-tools" class="route-planner-card" [class.mobile-route-open]="mobileRouteOpen">
           <div class="route-planner-heading">
             <div>
@@ -166,7 +167,7 @@ interface DayRoutePlan {
           </div>
 
           <div *ngIf="routeStart" class="day-routes">
-            <article *ngFor="let plan of dayRoutePlans" class="day-route-card" [class.day-even]="plan.day.dayNumber % 2 === 0">
+            <article *ngFor="let plan of dayRoutePlans; trackBy: trackRoutePlan" class="day-route-card" [class.day-even]="plan.day.dayNumber % 2 === 0" [class.route-day-collapsed]="collapsedRouteDays.has(plan.day.id)">
               <header>
                 <div>
                   <span>DAY {{ plan.day.dayNumber }}</span>
@@ -176,24 +177,19 @@ interface DayRoutePlan {
                   <strong>{{ plan.totalDistanceKm | number:'1.0-1' }} km</strong>
                   <span>Direct distance</span>
                 </div>
+                <button type="button" class="route-day-toggle" (click)="toggleRouteDay(plan.day.id)" [attr.aria-expanded]="!collapsedRouteDays.has(plan.day.id)" [attr.aria-label]="(collapsedRouteDays.has(plan.day.id) ? 'Expand' : 'Collapse') + ' Day ' + plan.day.dayNumber + ' route'"><span class="material-symbols-outlined" aria-hidden="true">{{ collapsedRouteDays.has(plan.day.id) ? 'expand_more' : 'expand_less' }}</span></button>
               </header>
 
               <ng-container *ngIf="plan.visitStops.length">
                 <app-day-route-map [stops]="plan.stops" [dayNumber]="plan.day.dayNumber" [roadPath]="roadEstimate(plan)?.path || []" />
                 <p class="route-distance-note">Nearest-next order · straight-line distances</p>
                 <button type="button" class="btn secondary" [disabled]="loadingRoad[plan.day.id] || plan.stops.length>25" (click)="estimateDayDrive(plan)">{{loadingRoad[plan.day.id] ? 'Estimating drive…' : 'Get driving estimate'}}</button>
-                <p class="route-distance-note">Uses Geoapify to calculate this route. No live traffic; stop order is unchanged.</p>
                 <p *ngIf="plan.stops.length>25" class="route-distance-note">Use Maps for routes with more than 25 stops.</p>
                 <div *ngIf="roadEstimate(plan) as road" class="road-summary" role="status">
                   <strong *ngIf="road.available">{{road.distanceKm | number:'1.0-1'}} km by road · {{road.durationMinutes | number:'1.0-0'}} min driving</strong>
                   <p>{{road.message}}</p>
                   <ol *ngIf="road.available"><li *ngFor="let leg of road.legs;let i=index">{{plan.stops[i].name}} → {{plan.stops[i+1].name}}: {{leg.distanceKm | number:'1.0-1'}} km · {{leg.durationMinutes | number:'1.0-0'}} min</li></ol>
                 </div>
-                <ol class="numbered-stops" aria-label="Sightseeing order">
-                  <li class="stay"><b>H</b><span>{{ plan.stops[0].name }}<small>Start at stay</small></span></li>
-                  <li *ngFor="let stop of plan.visitStops; let index=index"><b>{{ index+1 }}</b><span>{{ stop.name }}<small>{{ plan.legs[index].distanceKm | number:'1.0-1' }} km from {{ index===0 ? 'stay' : 'stop '+index }}</small></span></li>
-                  <li class="stay"><b>H</b><span>{{ plan.stops[0].name }}<small>Return · {{ plan.legs[plan.legs.length-1].distanceKm | number:'1.0-1' }} km</small></span></li>
-                </ol>
               </ng-container>
               <div *ngIf="plan.unmappedItems.length" class="unmapped-stops"><strong>Location needed</strong><span *ngFor="let item of plan.unmappedItems">{{ item.title }}</span></div>
 
@@ -201,7 +197,6 @@ interface DayRoutePlan {
                 Add mapped places to Day {{ plan.day.dayNumber }} to generate its route.
               </div>
 
-              <a *ngFor="let leg of plan.legs;let index=index" class="route-leg-link" [href]="legMapsUrl(leg)" target="_blank" rel="noopener noreferrer">{{ index+1 }}. {{ leg.from.name }} → {{ leg.to.name }} ↗</a>
               <button *ngIf="plan.visitStops.length<=3 && plan.legs.length && plan.googleMapsUrl" type="button" class="google-route-link" (click)="navigateToGoogleMaps(plan.googleMapsUrl, $event)">
                 <span class="material-symbols-outlined">map</span>
                 Open complete Day {{ plan.day.dayNumber }} route in Google Maps
@@ -700,6 +695,13 @@ interface DayRoutePlan {
 })
 export class ItineraryPlannerComponent implements OnInit, OnChanges, OnDestroy {
   mobileRouteOpen=true;
+  collapsedRouteDays=new Set<number>();
+  trackRoutePlan=(_:number,plan:DayRoutePlan)=>plan.day.id;
+  toggleRouteDay(dayId:number):void {
+    const next=new Set(this.collapsedRouteDays);
+    if(!next.delete(dayId))next.add(dayId);
+    this.collapsedRouteDays=next;
+  }
   selectedPlanningDayId=0;
   private roadRequests=new Subscription();
   loadingRoad:Record<number,boolean>={};
@@ -1366,8 +1368,8 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  formatCategory(value: string): string {
-    return value.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  formatCategory(value: string | null | undefined): string {
+    return (value || 'Place').replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
   private to24HourTime(

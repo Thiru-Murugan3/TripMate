@@ -248,4 +248,31 @@ describe('TripDetailsComponent overview (TRIP-201)', () => {
       expect(fixture.nativeElement.querySelector('.dashboard-overview')).not.toBeNull();
     });
   });
+
+  describe('bookings tab', () => {
+    beforeEach(async () => {
+      await createComponent({ tab: 'BOOKINGS' });
+    });
+
+    it('deletes a booking only after confirmation', () => {
+      const component = fixture.componentInstance;
+      component.bookings = [{
+        id: 7, tripId: 42, bookingType: 'TRANSPORT', transportType: 'TRAIN', providerName: 'Rail Express Sandbox',
+        amount: 1040, status: 'CANCELLED', departure: 'chennai', arrival: 'Ooty'
+      } as any];
+      fixture.detectChanges();
+      const card = (): HTMLElement | null => fixture.nativeElement.querySelector('.booking-card');
+      (card()!.querySelector('.delete-booking-btn') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      http.expectNone(r => r.method === 'DELETE');
+      expect(card()!.textContent).toContain('Delete this booking permanently?');
+      const confirm = Array.from(card()!.querySelectorAll('.delete-confirm button')).find(b => b.textContent!.includes('Yes, delete')) as HTMLButtonElement;
+      confirm.click();
+      http.expectOne(r => r.method === 'DELETE' && r.url.endsWith('/trips/42/bookings/7')).flush({ message: 'Booking deleted successfully' });
+      respondToPendingRequests();
+      fixture.detectChanges();
+      expect(card()).toBeNull();
+      expect(component.bookings.length).toBe(0);
+    });
+  });
 });

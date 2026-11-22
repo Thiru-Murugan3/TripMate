@@ -2,7 +2,7 @@ import { shareNativeFile } from '../../../core/utils/native-files';
 import { FlightAlertsComponent } from '../flight-alerts/flight-alerts.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -30,9 +30,6 @@ import { ItineraryPlannerComponent } from '../itinerary-planner/itinerary-planne
 import { ExpenseManagerComponent } from '../expense-manager/expense-manager.component';
 import { DocumentManagerComponent } from '../document-manager/document-manager.component';
 import { ExploreComponent } from '../../discovery/explore.component';
-import { ReservationEmailImportsComponent } from '../../bookings/reservation-email-imports.component';
-import { ReservationImportSelection } from '../../../core/models/reservation-import.model';
-import { ReservationImportService } from '../../../core/services/reservation-import.service';
 
 import { OfflineTripComponent } from '../offline-trip/offline-trip.component';
 
@@ -50,7 +47,6 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
     ExploreComponent,
     ExpenseManagerComponent,
     DocumentManagerComponent,
-    ReservationEmailImportsComponent,
     OfflineTripComponent,
     FlightAlertsComponent
   ],
@@ -458,11 +454,6 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 
         <section *ngIf="activeTab === 'BOOKINGS'" class="tab-content">
           <app-flight-alerts [tripId]="tripId" [bookings]="bookings" [canManage]="canEditTrip"></app-flight-alerts>
-          <app-reservation-email-imports
-            *ngIf="canEditTrip"
-            [canEdit]="canEditTrip"
-            (draftSelected)="applyReservationEmailImport($event)"
-          ></app-reservation-email-imports>
 
           <div *ngIf="isLoadingBookings" class="overview-loading card">
             <div class="spinner small"></div>
@@ -482,11 +473,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
             <h3>No bookings added yet</h3>
             <p>Add flight, hotel, train or activity bookings to keep your trip information together.</p>
             <div *ngIf="canEditTrip" class="empty-booking-actions">
-              <button type="button" (click)="openBookNow()" class="btn btn-primary">
-                <span class="material-symbols-outlined">travel_explore</span>
-                Book inside Suttru
-              </button>
-              <button type="button" (click)="openBookingModal()" class="btn btn-secondary">
+              <button type="button" (click)="openBookingModal()" class="btn btn-primary">
                 <span class="material-symbols-outlined">add</span>
                 Add Existing Booking
               </button>
@@ -505,15 +492,11 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
               <span class="material-symbols-outlined">event_repeat</span>
               <div>
                 <strong>No active bookings</strong>
-                <p>Your booking was cancelled. Create another booking or add an existing one.</p>
+                <p>Your booking was cancelled. Add an existing booking or import a ticket.</p>
               </div>
             </div>
             <div class="empty-booking-actions">
-              <button type="button" (click)="openBookNow()" class="btn btn-primary">
-                <span class="material-symbols-outlined">travel_explore</span>
-                Book inside Suttru
-              </button>
-              <button type="button" (click)="openBookingModal()" class="btn btn-secondary">
+              <button type="button" (click)="openBookingModal()" class="btn btn-primary">
                 <span class="material-symbols-outlined">add</span>
                 Add Existing
               </button>
@@ -587,11 +570,9 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 
                 <p class="notes" *ngIf="booking.notes">{{ booking.notes }}</p>
 
-                <div
-                  *ngIf="canEditTrip && canCancelBooking(booking)"
-                  class="booking-actions"
-                >
+                <div *ngIf="canEditTrip" class="booking-actions">
                   <button
+                    *ngIf="canCancelBooking(booking)"
                     type="button"
                     class="btn btn-danger compact"
                     (click)="openCancelBookingModal(booking)"
@@ -599,7 +580,21 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
                     <span class="material-symbols-outlined">cancel</span>
                     Cancel Booking
                   </button>
+                  <ng-container *ngIf="confirmDeleteBookingId !== booking.id; else confirmDelete">
+                    <button type="button" class="btn delete-booking-btn compact" [disabled]="deletingBookingId === booking.id" (click)="confirmDeleteBookingId = booking.id; deleteBookingError = ''">
+                      <span class="material-symbols-outlined">delete</span>
+                      Delete
+                    </button>
+                  </ng-container>
+                  <ng-template #confirmDelete>
+                    <div class="delete-confirm" role="group" [attr.aria-label]="'Delete ' + booking.providerName">
+                      <span>Delete this booking permanently?</span>
+                      <button type="button" class="btn btn-danger compact" [disabled]="deletingBookingId === booking.id" (click)="deleteBooking(booking)">{{ deletingBookingId === booking.id ? 'Deleting…' : 'Yes, delete' }}</button>
+                      <button type="button" class="btn btn-secondary compact" [disabled]="deletingBookingId === booking.id" (click)="confirmDeleteBookingId = null">Keep</button>
+                    </div>
+                  </ng-template>
                 </div>
+                <div *ngIf="deleteBookingError && confirmDeleteBookingId === booking.id" class="alert-danger" role="alert">{{ deleteBookingError }}</div>
               </div>
             </article>
           </div>
@@ -640,7 +635,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
           </div>
 
           <div *ngIf="!isLoadingMembers && !membersError" class="members-grid">
-            <article *ngFor="let member of members" class="member-card card">
+            <article *ngFor="let member of members" class="member-card card" [attr.data-role]="member.role">
               <div class="member-avatar">
                 {{ member.userName?.charAt(0)?.toUpperCase() || '?' }}
               </div>
@@ -1110,7 +1105,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       </div>
     </main>
   `,
-  styleUrls: ['./trip-overview.scss'],
+  styleUrls: ['./trip-overview.scss', './trip-bookings.scss', './trip-members.scss'],
   styles: [`
 @use '../../../shared/styles/mobile-panels' as mobile;
 
@@ -2389,15 +2384,12 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 `]
 })
 export class TripDetailsComponent implements OnInit {
-  @ViewChild(ReservationEmailImportsComponent)
-  private reservationEmailImports?: ReservationEmailImportsComponent;
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly tripService = inject(TripService);
   private readonly bookingService = inject(BookingService);
-  private readonly reservationImportService = inject(ReservationImportService);
   private readonly tripMemberService = inject(TripMemberService);
   private readonly fb = inject(FormBuilder);
 
@@ -2434,7 +2426,6 @@ export class TripDetailsComponent implements OnInit {
   bookingImportError = '';
   isImportingBooking = false;
   bookingImportDraft: BookingImportDraft | null = null;
-  activeReservationImportId: number | null = null;
 
   showEditTripModal = false;
   isUpdatingTrip = false;
@@ -2453,6 +2444,27 @@ export class TripDetailsComponent implements OnInit {
   bookingToCancel: Booking | null = null;
   cancelReason = '';
   cancelBookingError = '';
+  confirmDeleteBookingId: number | null = null;
+  deletingBookingId: number | null = null;
+  deleteBookingError = '';
+
+  deleteBooking(booking: Booking): void {
+    if (this.deletingBookingId) return;
+    this.deletingBookingId = booking.id;
+    this.deleteBookingError = '';
+    this.bookingService.deleteBooking(this.tripId, booking.id).subscribe({
+      next: () => {
+        this.bookings = this.bookings.filter(b => b.id !== booking.id);
+        this.deletingBookingId = null;
+        this.confirmDeleteBookingId = null;
+        this.loadDashboard();
+      },
+      error: (err) => {
+        this.deletingBookingId = null;
+        this.deleteBookingError = err?.error?.message || 'Could not delete this booking. Please try again.';
+      }
+    });
+  }
   isCancellingBooking = false;
 
   addMemberForm = this.fb.group({
@@ -3213,18 +3225,13 @@ export class TripDetailsComponent implements OnInit {
     return undefined;
   }
 
-  openBookNow(): void {
-    void this.router.navigate(['/trips', this.tripId, 'bookings', 'new']);
-  }
 
   openBookingModal(): void {
-    this.activeReservationImportId = null;
     this.showBookingModal = true;
     this.bookingModalError = '';
   }
 
   openBookingImport(): void {
-    this.activeReservationImportId = null;
     this.bookingImportFile = null;
     this.bookingImportError = '';
     this.bookingImportDraft = null;
@@ -3253,7 +3260,6 @@ export class TripDetailsComponent implements OnInit {
 
   importBookingFile(): void {
     if (!this.bookingImportFile || this.isImportingBooking) return;
-    this.activeReservationImportId = null;
     this.isImportingBooking = true;
     this.bookingImportError = '';
     this.bookingService.importBookingFile(this.tripId, this.bookingImportFile).subscribe({
@@ -3293,37 +3299,10 @@ export class TripDetailsComponent implements OnInit {
     return value ? value.slice(0, 16) : '';
   }
 
-  applyReservationEmailImport(selection: ReservationImportSelection): void {
-    const draft = selection.draft;
-    this.activeReservationImportId = selection.importId;
-    this.bookingImportDraft = draft;
-    this.bookingForm.reset({
-      bookingType: draft.bookingType,
-      transportType: draft.transportType || 'OTHER',
-      providerName: draft.providerName || '',
-      bookingReference: draft.bookingReference || '',
-      departure: draft.departure || '',
-      arrival: draft.arrival || '',
-      passengerDetails: draft.passengerDetails || '',
-      pickupPoint: draft.pickupPoint || '',
-      dropPoint: draft.dropPoint || '',
-      startDatetime: this.toDatetimeLocal(draft.startDatetime),
-          endDatetime: this.toDatetimeLocal(draft.endDatetime),
-      amount: draft.amount ?? null,
-      notes: draft.warnings.length
-        ? `Email import review: ${draft.warnings.join(' ')}`
-        : `Imported from a forwarded reservation email with ${Math.round(draft.confidence * 100)}% confidence.`
-    });
-    this.bookingModalError = draft.warnings.length
-      ? `Email imported. Please review: ${draft.warnings.join(' ')}`
-      : '';
-    this.showBookingModal = true;
-  }
 
   closeBookingModal(): void {
     if (this.isSubmittingBooking) return;
     this.showBookingModal = false;
-    this.activeReservationImportId = null;
     this.bookingImportDraft = null;
     this.bookingForm.reset({
       bookingType: 'TRANSPORT',
@@ -3374,19 +3353,13 @@ export class TripDetailsComponent implements OnInit {
       notes: value.notes || undefined
     };
 
-    const reservationImportId = this.activeReservationImportId;
-    const save = reservationImportId
-      ? this.reservationImportService.confirm(reservationImportId, this.tripId, request)
-      : this.bookingImportDraft
+    const save = this.bookingImportDraft
         ? this.bookingService.confirmImport(this.tripId, request)
         : this.bookingService.createBooking(this.tripId, request);
     save.subscribe({
       next: (newBooking) => {
         this.isSubmittingBooking = false;
         this.bookings = [newBooking, ...this.bookings.filter(b => b.id !== newBooking.id)];
-        if (reservationImportId) {
-          this.reservationEmailImports?.markCompleted(reservationImportId);
-        }
         this.closeBookingModal();
         this.loadDashboard();
       },

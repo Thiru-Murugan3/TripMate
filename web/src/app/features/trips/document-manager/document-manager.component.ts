@@ -23,6 +23,7 @@ import { DocumentService } from '../../../core/services/document.service';
   selector: 'app-document-manager',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  styleUrls: ['./document-premium.scss'],
   template: `
     <section class="documents-page">
       <div class="documents-toolbar">
@@ -134,7 +135,7 @@ import { DocumentService } from '../../../core/services/document.service';
         <div *ngIf="filteredDocuments.length > 0" class="documents-grid">
           <article *ngFor="let document of filteredDocuments" class="document-card">
             <div class="document-card-top">
-              <div class="file-icon">
+              <div class="file-icon" [attr.data-type]="document.documentType">
                 <span class="material-symbols-outlined">{{ fileIcon(document) }}</span>
               </div>
 

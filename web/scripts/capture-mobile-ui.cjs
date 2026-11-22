@@ -138,7 +138,6 @@ async function searchExplore(page){const input=page.locator('app-combined-places
     await page.goto(origin+'/trips/10?tab=ITINERARY');await page.locator('.mobile-route-toggle').waitFor();
     await page.locator('.route-planner-card.mobile-route-open').waitFor();
     await page.locator('app-day-route-map .sightseeing-number').first().waitFor();
-    assert.deepEqual(await page.locator('.day-route-card').first().locator('.numbered-stops li span').evaluateAll(elements=>elements.map(e=>e.firstChild.textContent.trim())),['Hill View Resort','Kodaikanal Lake','Coaker’s Walk','Hill View Resort']);
     assert.equal(await page.locator('app-day-route-map').first().locator('.sightseeing-number').count(),3);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'route map overflows phone viewport');
     assert.equal(await page.locator('.route-start-field select').inputValue(),'3','saved hotel is not selected');

@@ -51,6 +51,16 @@ describe('Hotel-based daily sightseeing routes',()=>{
   const plan=c.dayRoutePlans[0];expect(plan.visitStops.length).toBe(10);expect(plan.legs.length).toBe(11);
   const leg=plan.legs[0],url=new URL(c.legMapsUrl(leg));expect(url.searchParams.get('origin')).toBe('11,77');expect(url.searchParams.get('destination')).toBe('11.01,77');f.destroy();
  });
+ it('collapses and expands each day route from its header button',()=>{
+  const {f,c}=setup();c.places=places.map(p=>({...p,category:p.category||'ATTRACTION'}));f.detectChanges();
+  const card=()=>f.nativeElement.querySelector('.day-route-card') as HTMLElement;
+  const toggle=()=>card().querySelector('.route-day-toggle') as HTMLButtonElement;
+  const firstCard=card();expect(toggle().getAttribute('aria-expanded')).toBe('true');
+  toggle().click();f.detectChanges();
+  expect(card()).toBe(firstCard);expect(card().classList).toContain('route-day-collapsed');expect(toggle().getAttribute('aria-expanded')).toBe('false');
+  toggle().click();f.detectChanges();
+  expect(card().classList).not.toContain('route-day-collapsed');f.destroy();
+ });
  it('ignores late itinerary and place responses from another trip',()=>{
   const lateItinerary=new Subject<any>(),latePlaces=new Subject<any>();api.getItinerary=()=>lateItinerary;placeApi.getPlaces=()=>latePlaces;
   const {f,c}=setup();c.tripId=20;lateItinerary.next({days:[day]});latePlaces.next(places);

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TripService } from '../../core/services/trip.service';
 import { Trip } from '../../core/models/trip.model';
 
-@Component({selector:'app-expense-trips',standalone:true,imports:[CommonModule,RouterLink],template:`
+@Component({selector:'app-expense-trips',standalone:true,imports:[CommonModule,RouterLink],styleUrls:['./expense-trips-premium.scss'],template:`
   <main><header><span class="eyebrow">GROUP SPENDING</span><h1>Trip expenses</h1><p>Choose a trip to track costs, split expenses and settle up.</p></header>
     <p *ngIf="loading" role="status">Loading your trips…</p>
     <section *ngIf="error" class="state" role="alert"><p>{{error}}</p><button (click)="load()">Try again</button></section>
