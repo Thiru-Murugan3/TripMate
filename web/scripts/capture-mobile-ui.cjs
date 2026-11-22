@@ -56,6 +56,7 @@ function response(url){
   if(p.includes('/reservation-imports/address'))return {enabled:false};
   return [];
 }
+async function searchExplore(page){const input=page.locator('app-combined-places input[name=destination]');await input.waitFor();if(!(await input.inputValue()))await input.fill('Kodaikanal');await page.locator('app-combined-places .city-search button:not([type=button])').click();}
 (async()=>{
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const origin=`http://127.0.0.1:${server.address().port}`;
@@ -67,9 +68,9 @@ function response(url){
     const providerRequests=[];context.on('request',request=>{if(request.url().includes('/discovery/tripadvisor'))providerRequests.push(request.url());});
     await context.route('**/api/v1/**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response(route.request().url()))}));
     const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-    const screens=[['home','/dashboard','.mobile-home'],['trips','/trips','.trip-card'],['expenses','/expenses','.trip-option'],['profile','/account','.account-menu'],['trip','/trips/10?tab=OVERVIEW','.trip-header'],['itinerary','/trips/10?tab=ITINERARY','.day-card'],['trip-expenses','/trips/10?tab=EXPENSES','.expense-card'],['documents','/trips/10?tab=DOCUMENTS','.document-card'],['timeline','/trips/10?tab=TIMELINE','.timeline-event-card'],['explore','/trips/10?tab=EXPLORE','app-combined-places .card'],['legacy-places-link','/trips/10?tab=PLACES','app-combined-places .card'],['bookings','/trips/10?tab=BOOKINGS','.booking-card'],['members','/trips/10?tab=MEMBERS','.member-card'],['booking-search','/trips/10/bookings/new','.booking-type-grid'],['notifications','/notifications','.notification-card'],['invitations','/invitations','.invite-card'],['share','/trips/10/share','.invite-card'],['invitation-link','/invite/fixture-token','.invite-summary'],['register','/register','form'],['verify-email','/verify-email?email=traveller%40example.com','.otp-boxes-container'],['forgot-password','/forgot-password','form'],['reset-password','/reset-password?token=fixture','form']];
+    const screens=[['home','/dashboard','.mobile-home'],['trips','/trips','.trip-card'],['expenses','/expenses','.trip-option'],['profile','/account','.account-menu'],['trip','/trips/10?tab=OVERVIEW','.trip-header'],['itinerary','/trips/10?tab=ITINERARY','.day-card'],['trip-expenses','/trips/10?tab=EXPENSES','.expense-card'],['documents','/trips/10?tab=DOCUMENTS','.document-card'],['explore','/trips/10?tab=EXPLORE','app-combined-places .card'],['legacy-places-link','/trips/10?tab=PLACES','app-combined-places .card'],['bookings','/trips/10?tab=BOOKINGS','.booking-card'],['members','/trips/10?tab=MEMBERS','.member-card'],['booking-search','/trips/10/bookings/new','.booking-type-grid'],['notifications','/notifications','.notification-card'],['invitations','/invitations','.invite-card'],['share','/trips/10/share','.invite-card'],['invitation-link','/invite/fixture-token','.invite-summary'],['register','/register','form'],['verify-email','/verify-email?email=traveller%40example.com','.otp-boxes-container'],['forgot-password','/forgot-password','form'],['reset-password','/reset-password?token=fixture','form']];
     for(const [name,url,selector] of screens){
-      await page.goto(origin+url);await page.locator(selector).first().waitFor();await page.waitForTimeout(300);
+      await page.goto(origin+url);if(selector.startsWith('app-combined-places'))await searchExplore(page);await page.locator(selector).first().waitFor();await page.waitForTimeout(300);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${name} overflows phone viewport`);
       if(name==='legacy-places-link'){
         assert.equal(new URL(page.url()).searchParams.get('tab'),'EXPLORE');
@@ -122,7 +123,7 @@ function response(url){
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'gallery review overflows phone viewport');
     await page.screenshot({animations:'disabled',path:path.join(output,'document-gallery-review.png')});
     page.off('request',trackUpload);
-    await page.goto(origin+'/trips/10?tab=TIMELINE');await page.locator('.mobile-offline-toggle').waitFor();
+    await page.goto(origin+'/trips/10?tab=OVERVIEW');await page.locator('.mobile-offline-toggle').waitFor();
     await page.locator('.mobile-offline-toggle').click();await page.locator('.offline-options.mobile-expanded').waitFor();
     await page.screenshot({animations:'disabled',path:path.join(output,'offline-access.png')});
     await page.goto(origin+'/trips/10?tab=EXPENSES');await page.locator('.expense-card').waitFor();
@@ -143,7 +144,7 @@ function response(url){
     assert.equal(await page.locator('.route-start-field select').inputValue(),'3','saved hotel is not selected');
     await page.locator('app-day-route-map').first().scrollIntoViewIfNeeded();
     await page.screenshot({animations:'disabled',path:path.join(output,'itinerary-route-tools.png')});
-    await page.goto(origin+'/trips/10?tab=EXPLORE');await page.locator('app-combined-places .card').first().waitFor();
+    await page.goto(origin+'/trips/10?tab=EXPLORE');await searchExplore(page);await page.locator('app-combined-places .card').first().waitFor();
     await page.locator('app-combined-places .card').first().scrollIntoViewIfNeeded();await page.screenshot({animations:'disabled',path:path.join(output,'explore-results.png')});
     assert.equal(await page.getByRole('button',{name:'Tripadvisor',exact:true}).count(),0);
     assert.equal(await page.locator('app-combined-places .source-notes').count(),0);
@@ -176,7 +177,7 @@ function response(url){
     for(const width of [320,360,454,760]) {
       await page.setViewportSize({width,height:800});
       for(const [url,selector] of [['/trips/10?tab=EXPLORE','app-combined-places .card'],['/trips/10?tab=EXPENSES','.expense-card'],['/trips/10/share','.method-grid']]) {
-        await page.goto(origin+url);await page.locator(selector).first().waitFor();
+        await page.goto(origin+url);if(selector.startsWith('app-combined-places'))await searchExplore(page);await page.locator(selector).first().waitFor();
         assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,`${url} overflows ${width}px`);
       }
     }
