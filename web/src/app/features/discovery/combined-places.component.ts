@@ -13,7 +13,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
   selector:'app-combined-places', standalone:true, imports:[CommonModule,FormsModule,TopPlacesComponent,PlacePhotoGalleryComponent],
   template:`
     <section class="explore">
-      <header><h1>Explore</h1></header>
+      <header class="hero"><span class="kicker">✦ Discover India</span><h1>Explore</h1><p class="lede">Search any city for its must-see sights, adventures and hidden gems, ranked for the way you travel.</p></header>
       <form class="search-form city-search" [class.mobile-filter-open]="mobileFiltersOpen" (ngSubmit)="discover()">
         <label>City or area<input name="destination" [(ngModel)]="searchDestination" (ngModelChange)="cityChanged()" [disabled]="isSaving" maxlength="180" [placeholder]="destination || 'Enter a city or area'" required /></label>
         <label class="trip-type-filter">Trip type<select name="tripType" [(ngModel)]="tripTypeFilter" (ngModelChange)="tripTypeChanged()" [disabled]="isSaving"><option *ngFor="let option of tripTypeOptions" [value]="option.value">{{ option.label }}</option></select></label>
@@ -46,9 +46,9 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
         <div class="cards">
           <article *ngFor="let place of data.places; trackBy:trackPlace" class="card">
             <app-place-photo-gallery [externalId]="place.externalId" [sourceUrl]="place.sourceUrl || ''" [name]="place.name" [initialImages]="place.imageGallery!" [officialWebsite]="place.officialWebsite || place.website || ''" />
-            <div class="card-body"><h3>{{ place.name }}</h3><p>{{ formatCategory(place.category) }} · {{ distanceLabel(place) }}</p><p class="duration">{{ visitTime(place) }}</p><p class="hours-status">{{ place.openingHours?.trim() ? 'Opening hours in details' : 'Opening hours not listed' }}</p><p class="price">{{ formatPlacePrice(place) }}</p>
-              <label class="place-select"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || !canSelectPlaces" (change)="toggleSelection(place)" /> Select place</label>
-              <label *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>
+            <div class="card-body"><h3>{{ place.name }}</h3><p class="meta"><span class="chip">{{ formatCategory(place.category) }}</span><span class="dist" [class.unmapped]="place.distanceKm < 0">{{ distanceLabel(place) }}</span></p><p class="duration">{{ visitTime(place) }}<span class="hours-status"> · {{ place.openingHours?.trim() ? 'Opening hours in details' : 'Opening hours not listed' }}</span></p><p class="price">{{ formatPlacePrice(place) }}</p>
+              <label class="place-select"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || !canSelectPlaces" (change)="toggleSelection(place)" /><span class="select-label">{{ isSelected(place) ? 'Selected' : 'Select place' }}</span></label>
+              <label class="day-assign" *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>
               <details class="place-details" (toggle)="loadListingDetails(place,$event)"><summary>View details</summary><p *ngIf="loadingDetails.has(place.externalId)" role="status">Checking source details…</p>
                 <p *ngIf="place.shortDescription || place.description">{{ place.shortDescription || place.description }}</p>
                 <p><strong>Opening hours:</strong> {{ openingSchedule(place.openingHours) }}</p>
