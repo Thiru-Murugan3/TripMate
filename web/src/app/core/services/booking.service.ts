@@ -34,6 +34,10 @@ export class BookingService {
     return this.http.post<Booking>(`${this.baseUrl}/trips/${tripId}/bookings`, request);
   }
 
+  confirmImport(tripId: number, request: CreateBookingRequest): Observable<Booking> {
+    return this.http.post<Booking>(`${this.baseUrl}/trips/${tripId}/bookings/import/confirm`, request);
+  }
+
   importBookingFile(tripId: number, file: File): Observable<BookingImportDraft> {
     const form = new FormData();
     form.append('file', file);

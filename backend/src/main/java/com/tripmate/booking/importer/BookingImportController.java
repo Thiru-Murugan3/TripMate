@@ -17,6 +17,17 @@ import org.springframework.web.multipart.MultipartFile;
 public class BookingImportController {
     private final BookingImportService bookingImportService;
 
+    private final com.tripmate.booking.BookingService bookingService;
+
+    @PostMapping("/confirm")
+    public ResponseEntity<com.tripmate.booking.BookingResponse> confirm(
+            @org.springframework.web.bind.annotation.PathVariable Long tripId,
+            @AuthenticationPrincipal UserPrincipal principal,
+            @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody
+            com.tripmate.booking.CreateBookingRequest request) {
+        return ResponseEntity.ok(bookingService.createImportedBooking(tripId, principal.getId(), request));
+    }
+
     @PostMapping(value = "/ocr", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BookingImportDraft> importBooking(
             @org.springframework.web.bind.annotation.PathVariable Long tripId,

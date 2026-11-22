@@ -20,7 +20,7 @@ Get-Content $envPath | ForEach-Object {
 $apiKey = $settings['BREVO_API_KEY']
 $senderEmail = $settings['BREVO_SENDER_EMAIL']
 $senderName = $settings['BREVO_SENDER_NAME']
-if ([string]::IsNullOrWhiteSpace($senderName)) { $senderName = 'TripMate' }
+if ([string]::IsNullOrWhiteSpace($senderName)) { $senderName = 'Suttru' }
 
 if ([string]::IsNullOrWhiteSpace($apiKey) -or [string]::IsNullOrWhiteSpace($senderEmail)) {
     Write-Host 'BREVO_API_KEY or BREVO_SENDER_EMAIL is missing. Run setup-brevo.bat first.' -ForegroundColor Red
@@ -36,8 +36,8 @@ if ([string]::IsNullOrWhiteSpace($recipient) -or $recipient -notmatch '^[^\s@]+@
 $body = @{
     sender = @{ name = $senderName; email = $senderEmail }
     to = @(@{ email = $recipient })
-    subject = 'TripMate Brevo Test Email'
-    textContent = 'Brevo is correctly configured for TripMate OTP delivery.'
+    subject = 'Suttru Brevo Test Email'
+    textContent = 'Brevo is correctly configured for Suttru OTP delivery.'
 } | ConvertTo-Json -Depth 5
 
 $sha = [Security.Cryptography.SHA256]::Create()

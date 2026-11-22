@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { Trip, TripStatus, TripType } from '../../../core/models/trip.model';
 import { TripService } from '../../../core/services/trip.service';
 import { findMissedTrip } from '../../../core/utils/missed-trip.util';
+import { formatDateRange } from '../../../core/utils/date-range';
 import { MissedTripDialogComponent } from '../../../shared/components/missed-trip-dialog/missed-trip-dialog.component';
 
 type StatusFilter = 'ALL' | TripStatus;
@@ -32,6 +33,9 @@ export class MyTripsComponent implements OnInit {
   searchTerm = signal('');
   statusFilter = signal<StatusFilter>('ALL');
   typeFilter = signal<TypeFilter>('ALL');
+
+  mobileFiltersOpen = false;
+  readonly mobileStatuses: StatusFilter[] = ['ALL','UPCOMING','ONGOING','COMPLETED'];
 
   readonly statusOptions: StatusFilter[] = [
     'ALL',
@@ -70,8 +74,43 @@ export class MyTripsComponent implements OnInit {
     });
   });
 
+  readonly stats = computed(() => {
+    const trips = this.trips();
+    const upcomingStatuses: TripStatus[] = ['PLANNED', 'UPCOMING', 'CONFIRMED'];
+    return {
+      total: trips.length,
+      upcoming: trips.filter((trip) => upcomingStatuses.includes(trip.status)).length,
+      completed: trips.filter((trip) => trip.status === 'COMPLETED').length
+    };
+  });
+
   ngOnInit(): void {
     this.loadTrips();
+  }
+
+  /** Short timing label shown on each trip card, e.g. "Starts in 5 days". */
+  tripTiming(trip: Trip): { label: string; tone: 'soon' | 'live' | 'done' | 'muted' } {
+    if (trip.status === 'CANCELLED') return { label: 'Cancelled', tone: 'muted' };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(`${trip.startDate}T00:00:00`);
+    const end = new Date(`${trip.endDate}T00:00:00`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return { label: this.formatStatus(trip.status), tone: 'muted' };
+    const toStart = Math.round((start.getTime() - today.getTime()) / 86400000);
+    if (toStart > 1) return { label: `Starts in ${toStart} days`, tone: 'soon' };
+    if (toStart === 1) return { label: 'Starts tomorrow', tone: 'soon' };
+    if (end.getTime() >= today.getTime()) return { label: toStart === 0 ? 'Starts today' : 'In progress', tone: 'live' };
+    return { label: 'Trip completed', tone: 'done' };
+  }
+
+  formatRole(trip: Trip): string {
+    switch (trip.userRole) {
+      case 'EDITOR': return 'Contributor';
+      case 'PLANNER': return 'Planner';
+      case 'EXPENSE_MANAGER': return 'Expense manager';
+      case 'VIEWER': return 'Viewer';
+      default: return 'Organizer';
+    }
   }
 
   loadTrips(): void {
@@ -205,6 +244,10 @@ export class MyTripsComponent implements OnInit {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(value);
+  }
+
+  formatDates(trip: Trip): string {
+    return formatDateRange(trip.startDate, trip.endDate);
   }
 
   tripDuration(trip: Trip): string {

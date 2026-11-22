@@ -38,14 +38,23 @@ public class DestinationDiscoveryController {
             @RequestParam(required = false) Double minRating,
             @RequestParam(defaultValue = "RELEVANCE") String sort,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "100") int size
+            @RequestParam(defaultValue = "100") int size,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String tripType
     ) {
         return ResponseEntity.ok(
                 destinationDiscoveryService.search(destination, radiusKm, new DiscoverySearchFilters(
                         category, subcategory, itemType, minPrice, maxPrice, priceStatus, openNow,
-                        familyFriendly, difficulty, minDuration, maxDuration, minRating, sort, page, size
+                        familyFriendly, difficulty, minDuration, maxDuration, minRating, sort, page, size, name, tripType
                 ))
         );
+    }
+
+    @GetMapping("/top-places")
+    public ResponseEntity<DestinationDiscoveryResponse> topPlaces(@RequestParam String destination,
+            @RequestParam(defaultValue = "25") int radiusKm,
+            @RequestParam(required = false) String tripType) {
+        return ResponseEntity.ok(destinationDiscoveryService.topPlaces(destination,radiusKm,tripType));
     }
 
     @GetMapping("/places/{externalId}")
@@ -66,6 +75,7 @@ public class DestinationDiscoveryController {
     public ResponseEntity<List<String>> getPopularDestinations() {
         return ResponseEntity.ok(List.of(
                 "Chennai, Tamil Nadu",
+                "Mysuru, Karnataka",
                 "Bengaluru, Karnataka",
                 "Kodaikanal, Tamil Nadu",
                 "Ooty, Tamil Nadu",

@@ -34,7 +34,7 @@ public class TripCalendarService {
         StringBuilder calendar = new StringBuilder()
                 .append("BEGIN:VCALENDAR\r\n")
                 .append("VERSION:2.0\r\n")
-                .append("PRODID:-//TripMate//Trip Calendar//EN\r\n")
+                .append("PRODID:-//Suttru//Trip Calendar//EN\r\n")
                 .append("CALSCALE:GREGORIAN\r\n")
                 .append("METHOD:PUBLISH\r\n");
 

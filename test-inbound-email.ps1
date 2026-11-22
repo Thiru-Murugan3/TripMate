@@ -1,12 +1,12 @@
 param(
     [string]$BaseUrl = "http://localhost:8080",
-    [string]$Secret = "test-webhook-secret",
-    [string]$Recipient = "import+testtoken123@inbound.tripmate.app",
+    [string]$Secret = "suttru_inbound_sec_8a3f91e4b27c",
+    [string]$Recipient = "import+testtoken123@inbound.suttru.in",
     [string]$SenderEmail = "traveler@example.com"
 )
 
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host " TripMate Brevo Inbound Email Webhook Tester " -ForegroundColor Cyan
+Write-Host " Suttru Brevo Inbound Email Webhook Tester " -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host "Target Base URL: $BaseUrl"
 Write-Host "Webhook Secret:  $Secret"
@@ -22,12 +22,12 @@ $flightPayload = @{
             Uuid = "brevo-uuid-$(Get-Random)"
             From = @{
                 Address = $SenderEmail
-                Name = "TripMate Traveler"
+                Name = "Suttru Traveler"
             }
             To = @(
                 @{
                     Address = $Recipient
-                    Name = "TripMate Forwarder"
+                    Name = "Suttru Forwarder"
                 }
             )
             Subject = "Fwd: IndiGo Flight Booking Confirmation (PNR: 6E-IND991)"

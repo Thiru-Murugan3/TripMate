@@ -8,5 +8,6 @@ public enum NotificationType {
     ITINERARY_UPDATED,
     BOOKING_REMINDER,
     DOCUMENT_ADDED,
+    FLIGHT_UPDATED,
     GENERAL
 }

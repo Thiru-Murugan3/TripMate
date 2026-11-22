@@ -1,0 +1,104 @@
+<section class="catalogue">
+  <a *ngIf="!embedded" routerLink="/explore">← Back to destination discovery</a>
+  <app-destination-overview [title]="guideTitle" [photos]="guidePhotos" />
+  <header class="catalogue-heading">
+    <div><h2>Essential {{ guideTitle }}</h2></div>
+  </header>
+  <nav class="interest-chips" aria-label="Catalogue interests">
+    <button *ngFor="let item of interests" type="button" [class.active]="interest === item.value" [attr.aria-pressed]="interest === item.value" (click)="chooseInterest(item.value)">{{ item.label }}</button>
+  </nav>
+  <p *ngIf="matchMessage && !selectedState" role="status">{{ matchMessage }}</p>
+  <details class="filter-panel" [open]="!embedded || !selectedState">
+    <summary>Filter places <span *ngIf="selectedState">· {{ selectedState }}</span></summary>
+  <div class="filters">
+    <label>State or union territory
+      <select [ngModel]="selectedState" (ngModelChange)="selectState($event)" [disabled]="!index">
+        <option value="">Choose a state or union territory</option>
+        <option *ngFor="let state of states" [value]="state.name">{{ state.name }} ({{ state.count }})</option>
+      </select>
+    </label>
+    <label>Category
+      <select [(ngModel)]="category" (ngModelChange)="page = 0" [disabled]="loading || !places.length">
+        <option value="">All categories</option>
+        <option *ngFor="let item of categories" [value]="item">{{ categoryLabel(item) }}</option>
+      </select>
+    </label>
+    <label>Source
+      <select [(ngModel)]="sourceKind" (ngModelChange)="page = 0" [disabled]="loading || !places.length">
+        <option value="">All sources</option>
+        <option value="PRIOR_CATALOGUE">Tourism sources</option>
+        <option value="COMMUNITY_STRUCTURED_DATA">Community candidates</option>
+        <option value="GOVERNMENT_HERITAGE_REGISTRY">Heritage register</option>
+      </select>
+    </label>
+    <label>District
+      <select [(ngModel)]="district" (ngModelChange)="page = 0" [disabled]="loading || !places.length">
+        <option value="">All districts</option>
+        <option *ngFor="let item of districts" [value]="item">{{ item }}</option>
+        <option value="__unknown">District not recorded</option>
+      </select>
+    </label>
+    <label>Place or destination
+      <input [(ngModel)]="query" (ngModelChange)="page = 0" placeholder="Search within this state" maxlength="180" />
+    </label>
+    <label class="check"><input type="checkbox" [(ngModel)]="photoOnly" (ngModelChange)="page = 0" /> With photos</label>
+  </div>
+  </details>
+  <p *ngIf="loading" role="status">Loading catalogue…</p>
+  <p *ngIf="error" role="alert">{{ error }} <button type="button" (click)="retry()">Retry</button></p>
+  <ng-container *ngIf="!loading && !error && selectedState">
+    <p role="status">{{ filtered.length }} places <span *ngIf="pageCount">· Page {{ page + 1 }} of {{ pageCount }}</span></p>
+    <p *ngIf="!filtered.length">No places found. Try another district or clear your search, category, source and photo filters.</p>
+    <section *ngFor="let section of catalogueSections; trackBy: trackSection" class="guide-section" [attr.aria-label]="section.title">
+    <h3 class="section-title">{{ section.title }}</h3>
+    <div class="cards" tabindex="0" [attr.aria-label]="section.title + ' places'">
+      <article *ngFor="let place of section.places; trackBy: trackPlace">
+        <app-place-photo-gallery [externalId]="place.place_id" [sourceUrl]="place.source_url" [name]="place.name" [cataloguePhoto]="place.photo" [assetRoot]="root" />
+        <div class="content">
+          <label *ngIf="selectable" class="check place-selection">
+            <input type="checkbox" [checked]="selectedIds.has(selectionKey(place))" [disabled]="saving" (change)="togglePlace(place)" [attr.aria-label]="'Select ' + place.name" />
+            Select place
+          </label>
+          <h3>{{ place.name }}</h3>
+          <p class="location">{{ place.district || place.tourism_destination || place.state_ut || 'Location not assigned' }}<span *ngIf="place.state_ut && (place.district || place.tourism_destination) && (place.district || place.tourism_destination) !== place.state_ut"> · {{ place.state_ut }}</span></p>
+          <small class="source-label">{{ sourceLabel(place) }} · Review required</small>
+          <p class="fee"><strong>{{ place.fees.length ? 'Entry fee options available' : 'Entry fee not verified' }}</strong></p>
+          <label *ngIf="selectable && selectedIds.has(selectionKey(place)) && dayNumbers.length" class="visit-day">
+            Visit on
+            <select [ngModel]="dayAssignments[selectionKey(place)] || 1" (ngModelChange)="dayChange.emit({place: place, day: +$event})" [disabled]="saving">
+              <option *ngFor="let day of dayNumbers" [ngValue]="day">Day {{ day }}</option>
+            </select>
+          </label>
+          <details class="place-details">
+            <summary>Details</summary>
+            <small>Review required<span *ngIf="place.possible_duplicate_group"> · Possible duplicate listing</span></small>
+            <p *ngIf="place.categories?.length">Categories: <span *ngFor="let item of place.categories; let last = last">{{ categoryLabel(item) }}{{ last ? '' : ', ' }}</span></p>
+            <div *ngIf="place.photo as photo" class="photo-details">
+            <details><summary>Full photo credit</summary>{{ photo.attribution_text }}<br />{{ photo.credit }}<br />{{ photo.restrictions }}<br />Provider thumbnail; no additional edits.</details>
+            </div>
+          <details *ngIf="place.fees.length">
+            <summary>Published entry-fee options ({{ place.fees.length }})</summary>
+            <ul><li *ngFor="let fee of place.fees">
+              <strong>{{ fee.amount_inr | currency:'INR':'symbol':'1.0-2' }}</strong> · {{ fee.visitor_category }} · {{ fee.scope }}
+              <span>{{ fee.condition }} · Payment: {{ fee.payment_channel }}</span>
+              <a [href]="fee.source_url" target="_blank" rel="noopener noreferrer">Fee source</a> · Checked {{ fee.source_checked_at }}
+            </li></ul>
+          </details>
+          <p><a [href]="place.source_url" target="_blank" rel="noopener noreferrer">{{ place.source_provider }}</a><br /><small>Source checked {{ place.source_checked_at }}</small></p>
+          <p *ngIf="place.latitude != null && place.longitude != null">
+            <a [href]="mapUrl(place)" target="_blank" rel="noopener noreferrer">View map reference</a> · Community-sourced coordinates
+          </p>
+          <p *ngIf="place.latitude == null || place.longitude == null">Exact location not verified; see the tourism source.</p>
+          <a *ngIf="!embedded" routerLink="/explore" [queryParams]="{search: place.tourism_destination || place.name}">Explore this destination and plan a trip →</a>
+          </details>
+        </div>
+      </article>
+    </div>
+    </section>
+    <nav *ngIf="pageCount > 1" aria-label="Catalogue pages">
+      <button type="button" [disabled]="page === 0" (click)="page = page - 1">Previous</button>
+      <span>{{ page + 1 }} / {{ pageCount }}</span>
+      <button type="button" [disabled]="page + 1 >= pageCount" (click)="page = page + 1">Next</button>
+    </nav>
+  </ng-container>
+</section>

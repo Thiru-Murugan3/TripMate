@@ -34,6 +34,28 @@ class DestinationDiscoveryOrchestrationTest {
                 mock(CuratedDiscoveryRepository.class), mock(CuratedDiscoveryMapper.class), 6, 60, 200);
     }
 
+    @Test void defaultRelevancePromotesVisitDestinationsAheadOfMinorWaterways() {
+        var river=place("Minor stream",1,null,DiscoveryCategory.RIVER).toBuilder().confidenceScore(.99).build();
+        var falls=place("Named Waterfall",7,null,DiscoveryCategory.WATERFALL).toBuilder().confidenceScore(.6).build();
+        when(primary.discover(any())).thenReturn(result("Primary",river,falls));when(fallback.discover(any())).thenReturn(result("Fallback"));
+        assertEquals("Named Waterfall",service.search("Chennai",25,"NATURE").places().getFirst().name());
+        var filters=new DiscoverySearchFilters("NATURE",null,null,null,null,null,null,null,null,null,null,null,"DISTANCE",0,24);
+        assertEquals("Minor stream",service.search("Chennai",25,filters).places().getFirst().name());
+    }
+    @Test
+    void incompleteInventoriesRefreshSoonerWithoutExtendingPriceOrOpeningFreshness() {
+        var now=java.time.Instant.parse("2026-10-24T08:00:00Z");
+        var unknown=place("Garden",1,null,DiscoveryCategory.PARK);
+        assertEquals(now.plusSeconds(21600),service.searchExpiry(now,List.of(unknown),List.of()));
+        for(String warning:List.of("Interest lookup is a limited name search, not a complete destination inventory.",
+                "Provider reached its 100-place limit.","Provider was unavailable; partial results are shown.")) {
+            assertEquals(now.plusSeconds(120),service.searchExpiry(now,List.of(unknown),List.of(warning)));
+        }
+        assertEquals(now.plusSeconds(60),service.searchExpiry(now,List.of(unknown.toBuilder().openNow(true).build()),List.of("Provider limit reached")));
+        var priced=unknown.toBuilder().priceStatus(PriceStatus.VERIFIED).verificationExpiresAt(now.plusSeconds(30)).build();
+        assertEquals(now.plusSeconds(30),service.searchExpiry(now,List.of(priced),List.of("Provider limit reached")));
+    }
+
     @Test
     void providerFailureReturnsVerifiedPartialResultsWithWarning() {
         when(primary.discover(any())).thenThrow(new RuntimeException("provider down"));
@@ -188,4 +210,69 @@ class DestinationDiscoveryOrchestrationTest {
                 PlaceCategory.ATTRACTION, price, null
         );
     }
+    @Test void keepsDistinctTamilNamesAndMergesCreditedDuplicatePhotos() {
+        var image = new DiscoveryImage("https://upload.wikimedia.org/photo.jpg","https://commons.wikimedia.org/wiki/File:Photo.jpg","Commons","Author","CC BY 4.0","Author",true,true);
+        var existing = new DiscoveryImage("https://upload.wikimedia.org/first.jpg","https://commons.wikimedia.org/wiki/File:First.jpg","Commons","First author","CC BY 4.0","First author",true,true);
+        var winner=place("Garden",1,null,DiscoveryCategory.PARK).toBuilder().confidenceScore(.9).imageGallery(List.of(existing)).build();
+        var donor=winner.toBuilder().externalId("otm:other").confidenceScore(.7).imageGallery(List.of(image)).primaryImageUrl(image.url()).imageExact(true).build();
+        var tamil1=winner.toBuilder().externalId("osm:t1").name("கோவில்").build();
+        var tamil2=winner.toBuilder().externalId("osm:t2").name("பூங்கா").build();
+        when(primary.discover(any())).thenReturn(result("Primary",winner,tamil1));
+        when(fallback.discover(any())).thenReturn(result("Fallback",donor,tamil2));
+        var response=service.search("Chennai",25,"ALL");assertEquals(3,response.resultCount());
+        var garden=response.places().stream().filter(p -> p.name().equals("Garden")).findFirst().orElseThrow();
+        assertEquals(winner.externalId(),garden.externalId());assertEquals(List.of(existing,image),garden.imageGallery());
+    }
+    @Test void nameFilteringRunsBeforePaginationAcrossTheCombinedInventory() {
+        when(primary.discover(any())).thenReturn(result("Primary",place("Beach",1,null,DiscoveryCategory.BEACH),place("Garden",2,null,DiscoveryCategory.PARK)));
+        when(fallback.discover(any())).thenReturn(result("Fallback",place("Museum",3,null,DiscoveryCategory.MUSEUM)));
+        var response=service.search("Chennai",25,new DiscoverySearchFilters("ALL",null,null,null,null,null,null,null,null,null,null,null,"NAME",0,1,"Garden"));
+        assertEquals(1,response.resultCount());assertEquals("Garden",response.places().get(0).name());
+    }
+
+    @Test void attractionsSurviveTheInventoryCapAheadOfNearbyHotels() {
+        var hotels=java.util.stream.IntStream.range(0,30).mapToObj(i -> place("Hotel " + i,1,null,DiscoveryCategory.STAY)).toList();
+        when(primary.discover(any())).thenReturn(new DiscoveryProviderResult("Primary","Attribution",hotels,List.of()));
+        when(fallback.discover(any())).thenReturn(result("Fallback",place("Regional landmark",20,null,DiscoveryCategory.ATTRACTION)));
+        var bounded=new DestinationDiscoveryService(geocoding,List.of(primary,fallback),mock(CuratedDiscoveryRepository.class),mock(CuratedDiscoveryMapper.class),6,60,25);
+        var response=bounded.search("Chennai",25,"ALL");assertEquals(25,response.resultCount());
+        assertTrue(response.places().stream().anyMatch(p -> p.name().equals("Regional landmark")));
+    }
+    @Test void keyFreeLandmarkLookupAlsoAugmentsAnAlreadyPopulatedInventory() {
+        var wiki=mock(WikidataDiscoveryProvider.class);
+        when(primary.discover(any())).thenReturn(result("Primary",place("First landmark",1,null,DiscoveryCategory.ATTRACTION)));
+        when(wiki.discover(any())).thenReturn(result("Wikidata",place("Extra landmark",2,null,DiscoveryCategory.ATTRACTION)));
+        var recovering=new DestinationDiscoveryService(geocoding,List.of(primary,wiki),mock(CuratedDiscoveryRepository.class),mock(CuratedDiscoveryMapper.class),6,60,500);
+        assertEquals(2,recovering.search("Chennai",25,"ALL").resultCount());
+        clearInvocations(wiki);
+        var enough=java.util.stream.IntStream.range(0,25).mapToObj(i -> place("Landmark " + i,1,null,DiscoveryCategory.ATTRACTION)).toList();
+        when(primary.discover(any())).thenReturn(new DiscoveryProviderResult("Primary","Attribution",enough,List.of()));
+        recovering.search("Chennai south",25,"ALL");verify(wiki).discover(any());
+    }
+
+    @Test void namedLookupBypassesBroadInventoryAndKeepsSeparateCachesAndDetails() {
+        var wiki=mock(WikidataDiscoveryProvider.class);
+        var enough=java.util.stream.IntStream.range(0,30).mapToObj(i -> place("Landmark " + i,1,null,DiscoveryCategory.ATTRACTION)).toList();
+        when(primary.discover(any())).thenReturn(new DiscoveryProviderResult("Primary","Attribution",enough,List.of()));
+        when(wiki.discover(any())).thenReturn(result("Wikidata",place("Edakkal Caves",10,null,DiscoveryCategory.NATURE)));
+        var recovering=new DestinationDiscoveryService(geocoding,List.of(primary,wiki),mock(CuratedDiscoveryRepository.class),mock(CuratedDiscoveryMapper.class),6,60,25);
+        assertEquals(25,recovering.search("Wayanadu",25,"ALL").resultCount());
+        verify(wiki).discover(any());
+        clearInvocations(wiki);
+        var filters=new DiscoverySearchFilters("ALL",null,null,null,null,null,null,null,null,null,null,null,"NAME",0,24,"Edakkal Caves");
+        var response=recovering.search("Wayanadu",25,filters);
+        assertEquals(1,response.resultCount());assertEquals("Edakkal Caves",response.places().getFirst().name());
+        verify(wiki).discover(argThat(request -> request.placeName().equals("Edakkal Caves") && request.query().equals("Wayanadu") && request.radiusKm()==25));
+        assertEquals(response.places().getFirst(),recovering.findByExternalId(response.places().getFirst().externalId()));
+        recovering.search("Wayanadu",25,filters);verify(wiki,times(1)).discover(any());
+        assertEquals(25,recovering.search("Wayanadu",25,"ALL").resultCount());
+    }
+
+    @Test void punctuationInPlaceNamesDoesNotHideSourceMatches() {
+        when(primary.discover(any())).thenReturn(result("Primary",place("Coaker's Walk",2,null,DiscoveryCategory.VIEWPOINT)));
+        when(fallback.discover(any())).thenReturn(result("Fallback"));
+        var response=service.search("Kodaikanal",25,new DiscoverySearchFilters("ALL",null,null,null,null,null,null,null,null,null,null,null,"NAME",0,24,"Coakers Walk"));
+        assertEquals(1,response.resultCount());assertEquals("Coaker's Walk",response.places().getFirst().name());
+    }
+
 }

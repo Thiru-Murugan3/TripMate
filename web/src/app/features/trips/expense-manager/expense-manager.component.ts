@@ -48,7 +48,7 @@ interface SplitDraft {
       <div class="expense-toolbar">
         <div>
           <span class="eyebrow">EXPENSES</span>
-          <h2>Trip Expenses & Splitting</h2>
+          <h2>Trip expenses</h2>
           <p>Track spending, split costs with members and settle pending shares.</p>
         </div>
 
@@ -102,7 +102,11 @@ interface SplitDraft {
           ></div>
         </div>
 
-        <div class="expense-controls">
+        <nav class="mobile-expense-tabs" aria-label="Expense views">
+          <button type="button" [class.active]="mobileView === 'spending'" [attr.aria-pressed]="mobileView === 'spending'" (click)="mobileView='spending'">Spending</button>
+          <button type="button" [class.active]="mobileView === 'balances'" [attr.aria-pressed]="mobileView === 'balances'" (click)="mobileView='balances'">Balances & settlements</button>
+        </nav>
+        <div class="expense-controls" [class.mobile-hidden]="mobileView === 'balances'">
           <label class="search-box">
             <span class="material-symbols-outlined">search</span>
             <input
@@ -133,7 +137,7 @@ interface SplitDraft {
           </button>
         </div>
 
-        <div class="expense-layout">
+        <div class="expense-layout" [class.mobile-balances]="mobileView === 'balances'">
           <div class="expense-list-column">
             <div *ngIf="expenses.length === 0" class="empty-state">
               <span class="material-symbols-outlined">receipt_long</span>
@@ -173,6 +177,10 @@ interface SplitDraft {
 
                   <div class="expense-amount">
                     <strong>{{ formatCurrency(expense.amount) }}</strong>
+                  <small *ngIf="expense.originalCurrency && expense.originalCurrency !== 'INR'">
+                    {{ expense.originalCurrency }} {{ expense.originalAmount | number:'1.2-2' }}
+                    · 1 {{ expense.originalCurrency }} = ₹{{ expense.exchangeRate | number:'1.0-8' }} (recorded rate)
+                  </small>
                     <small>{{ expense.splits.length }} split{{ expense.splits.length === 1 ? '' : 's' }}</small>
                   </div>
                 </div>
@@ -345,8 +353,24 @@ interface SplitDraft {
 
             <div class="form-grid two">
               <label class="field">
-                <span>Amount (₹) *</span>
-                <input type="number" min="0.01" step="0.01" formControlName="amount" />
+                <span>Original amount *</span>
+                <input type="number" min="0.01" max="9999999999.99" step="0.01" formControlName="originalAmount" (input)="updateConversion()" />
+              </label>
+              <label class="field">
+                <span>Currency *</span>
+                <select formControlName="originalCurrency" (change)="currencyChanged()">
+                  <option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option>
+                </select>
+              </label>
+              <label class="field" *ngIf="expenseForm.value.originalCurrency !== 'INR'">
+                <span>INR per 1 {{ expenseForm.value.originalCurrency }} *</span>
+                <input type="number" min="0.00000001" step="0.00000001" formControlName="exchangeRate" (input)="updateConversion()" />
+                <small>Enter your payment exchange rate. Rates are recorded, not fetched live.</small>
+              </label>
+              <label class="field">
+                <span>Converted total (INR)</span>
+                <input type="number" formControlName="amount" readonly />
+                <small>All budgets, splits and settlements use INR.</small>
               </label>
 
               <label class="field">
@@ -491,6 +515,8 @@ interface SplitDraft {
     </section>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; }
     .expense-page { color:#0f172a; }
     .expense-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
@@ -652,9 +678,53 @@ interface SplitDraft {
       .split-edit-row { grid-template-columns:1fr; }
       .equal-share { text-align:left; padding-left:2.2rem; }
     }
-  `]
+
+@include mobile.panels;
+.mobile-expense-tabs { display:none; }
+@media(max-width:760px) {
+ .expense-toolbar { grid-template-columns:minmax(0,1fr) auto; align-items:center; }
+ .expense-toolbar p { display:none; }
+ .expense-toolbar h2 { margin:2px 0 0; font-size:20px; }
+ .expense-toolbar>.btn { width:auto; padding:10px 12px; font-size:12px; }
+ .expense-controls { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,130px); gap:8px; }
+ .expense-controls input { width:100%; }
+ .expense-controls select { min-width:0; width:100%; }
+ .expense-controls .clear-filter { grid-column:1/-1; }
+ .mobile-expense-tabs { display:grid; grid-template-columns:1fr 1fr; padding:4px; background:#eaf0f8; border-radius:12px; gap:4px; margin:16px 0; }
+ .mobile-expense-tabs button { border:0; border-radius:9px; background:transparent; color:#475569; font:inherit; font-size:12px; font-weight:700; padding:8px; }
+ .mobile-expense-tabs button.active { background:white; color:#2563eb; box-shadow:0 2px 6px #0f172a08; }
+ .expense-layout { display:block; }
+ .expense-sidebar { display:none; }
+ .mobile-balances .expense-sidebar { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+ .mobile-balances .expense-list-column,.mobile-hidden { display:none; }
+ .expense-card { padding:14px; }
+ .expense-card-main { display:grid; grid-template-columns:38px minmax(0,1fr); gap:10px; }
+ .expense-amount { grid-column:2; text-align:left; }
+ .expense-amount strong { font-size:19px; }
+ .expense-amount small { display:block; margin-top:4px; font-size:11px; line-height:1.5; }
+ .title-line { display:block; }
+ .title-line h3 { margin:0 0 6px; }
+ .expense-info p { margin-top:6px; font-size:11px; line-height:1.5; }
+ .expense-card-actions { padding-top:10px; margin-top:10px; }
+ .sidebar-card { padding:14px; }
+ .budget-progress { height:6px; margin-top:12px; }
+}
+
+
+@media(max-width:760px) {
+ .expense-card-main { grid-template-columns:38px minmax(0,1fr); }
+ .expense-amount { text-align:left; }
+ .expense-card-main > *, .expense-sidebar, .balance-person { min-width:0; }
+ .expense-controls, .expense-toolbar { flex-wrap:wrap; }
+ .split-row { grid-template-columns:minmax(0,1fr); }
+ .split-row > * { text-align:left; }
+ .balance-row, .suggested-row { flex-wrap:wrap; }
+ .net-value { white-space:normal; }
+}
+`]
 })
 export class ExpenseManagerComponent implements OnInit, OnChanges {
+  mobileView:'spending'|'balances'='spending';
   private readonly fb = inject(FormBuilder);
   private readonly expenseService = inject(ExpenseService);
 
@@ -694,9 +764,25 @@ export class ExpenseManagerComponent implements OnInit, OnChanges {
     'OTHER'
   ];
 
+  readonly currencies = ['INR', 'USD', 'EUR', 'GBP', 'SGD', 'AUD', 'CAD', 'AED'];
+
+  currencyChanged(): void {
+    this.expenseForm.patchValue({ exchangeRate: this.expenseForm.value.originalCurrency === 'INR' ? 1 : null });
+    this.updateConversion();
+  }
+
+  updateConversion(): void {
+    const value = this.expenseForm.getRawValue();
+    const amount = Number(value.originalAmount) * Number(value.exchangeRate);
+    this.expenseForm.patchValue({ amount: Number.isFinite(amount) ? Math.round((amount + Number.EPSILON) * 100) / 100 : 0 });
+  }
+
   expenseForm = this.fb.group({
+    originalCurrency: ['INR', Validators.required],
+    originalAmount: [0, [Validators.required, Validators.min(0.01), Validators.max(9999999999.99)]],
+    exchangeRate: [1 as number | null, [Validators.required, Validators.min(0.00000001), Validators.max(9999999999)]],
     title: ['', [Validators.required, Validators.maxLength(180)]],
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+    amount: [0, [Validators.required, Validators.min(0.01), Validators.max(9999999999.99)]],
     category: ['FOOD' as ExpenseCategory, Validators.required],
     expenseDate: ['', Validators.required],
     paidById: [0, [Validators.required, Validators.min(1)]],
@@ -891,6 +977,7 @@ export class ExpenseManagerComponent implements OnInit, OnChanges {
     this.formError = '';
     this.expenseForm.reset({
       title: '',
+      originalCurrency: 'INR', originalAmount: 0, exchangeRate: 1,
       amount: 0,
       category: 'FOOD',
       expenseDate: this.defaultExpenseDate(),
@@ -909,6 +996,9 @@ export class ExpenseManagerComponent implements OnInit, OnChanges {
     this.formError = '';
     this.expenseForm.reset({
       title: expense.title,
+      originalCurrency: expense.originalCurrency || 'INR',
+      originalAmount: expense.originalAmount ?? expense.amount,
+      exchangeRate: expense.exchangeRate ?? 1,
       amount: expense.amount,
       category: expense.category,
       expenseDate: expense.expenseDate,
@@ -998,6 +1088,9 @@ export class ExpenseManagerComponent implements OnInit, OnChanges {
     const request: CreateExpenseRequest | UpdateExpenseRequest = {
       title: value.title!.trim(),
       amount: Number(value.amount),
+      originalCurrency: value.originalCurrency!,
+      originalAmount: Number(value.originalAmount),
+      exchangeRate: Number(value.exchangeRate),
       category: value.category as ExpenseCategory,
       expenseDate: value.expenseDate,
       paidById: Number(value.paidById),

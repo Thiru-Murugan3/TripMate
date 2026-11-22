@@ -95,7 +95,7 @@ class BookingMarketplaceServiceTest {
                 "offer-1",
                 BookingType.TRANSPORT,
                 TransportType.FLIGHT,
-                "TripMate Air Sandbox",
+                "Suttru Air Sandbox",
                 "Economy",
                 "Chennai",
                 "Goa",

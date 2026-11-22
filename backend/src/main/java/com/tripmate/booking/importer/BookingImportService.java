@@ -70,7 +70,7 @@ public class BookingImportService {
 
     public BookingImportDraft importFile(Long tripId, Long userId, MultipartFile file) {
         TripResponse trip = tripService.getTripById(tripId, userId);
-        if (trip.userRole() == TripRole.VIEWER) {
+        if (!trip.userRole().canEditContent()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to import bookings");
         }
         validate(file);

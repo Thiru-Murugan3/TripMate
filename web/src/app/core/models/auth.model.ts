@@ -15,6 +15,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
+  user?: User;
   accessToken: string;
   refreshToken: string;
   tokenType?: string;
@@ -70,4 +71,9 @@ export interface ApiErrorResponse {
   message: string;
   path: string;
   fieldErrors?: Record<string, string>;
+}
+
+export interface VerifyEmailResponse {
+  message: string;
+  session: LoginResponse;
 }

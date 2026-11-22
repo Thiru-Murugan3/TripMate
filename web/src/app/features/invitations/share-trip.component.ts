@@ -86,7 +86,7 @@ import { TripService } from '../../core/services/trip.service';
                       formControlName="email"
                       placeholder="traveler@example.com"
                     />
-                    <small>TripMate will email a secure invitation link to this address.</small>
+                    <small>Suttru will email a secure invitation link to this address.</small>
                   </div>
 
                   <div class="form-group" *ngIf="inviteForm.controls.type.value === 'MOBILE'">
@@ -97,7 +97,7 @@ import { TripService } from '../../core/services/trip.service';
                       formControlName="mobileNumber"
                       placeholder="+91 98765 43210"
                     />
-                    <small>The TripMate account mobile number must match.</small>
+                    <small>The Suttru account mobile number must match.</small>
                   </div>
 
                   <div class="form-group" *ngIf="inviteForm.controls.type.value === 'LINK'">
@@ -114,6 +114,8 @@ import { TripService } from '../../core/services/trip.service';
                     <label for="invite-role">Trip permission</label>
                     <select id="invite-role" formControlName="role">
                       <option value="VIEWER">Viewer — read only</option>
+                      <option value="PLANNER">Planner — itinerary and places</option>
+                      <option value="EXPENSE_MANAGER">Expense manager — expenses and settlements</option>
                       <option value="EDITOR">Editor — can update trip content</option>
                     </select>
                   </div>
@@ -142,7 +144,7 @@ import { TripService } from '../../core/services/trip.service';
                     </button>
                   </div>
                   <small>
-                    For security, TripMate stores only a hash of the token. Copy this link now;
+                    For security, Suttru stores only a hash of the token. Copy this link now;
                     it cannot be reconstructed later.
                   </small>
                 </div>
@@ -190,7 +192,7 @@ import { TripService } from '../../core/services/trip.service';
                         </span>
                       </div>
                       <p>
-                        {{ invitation.role === 'EDITOR' ? 'Editor' : 'Viewer' }}
+                        {{ invitation.role === 'EXPENSE_MANAGER' ? 'Expense manager' : invitation.role === 'PLANNER' ? 'Planner' : invitation.role === 'EDITOR' ? 'Editor' : 'Viewer' }}
                         · {{ invitation.type }}
                         · expires {{ invitation.expiresAt | date:'mediumDate' }}
                       </p>
@@ -214,6 +216,8 @@ import { TripService } from '../../core/services/trip.service';
     </main>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     :host { display: block; }
     .share-page { min-height: calc(100vh - 72px); background: #f8fafc; padding: 2rem 1.25rem 4rem; }
     .page-shell { width: min(1120px, 100%); margin: 0 auto; }
@@ -273,7 +277,14 @@ import { TripService } from '../../core/services/trip.service';
     @keyframes spin { to { transform: rotate(360deg); } }
     @media (max-width: 850px) { .content-grid { grid-template-columns: 1fr; } }
     @media (max-width: 600px) { .method-grid { grid-template-columns: 1fr; } .copy-row { flex-direction: column; } .copy-row button { min-height: 42px; } }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .section-heading, .invitation-row { flex-wrap:wrap; }
+ .content-grid > *, .invite-main { min-width:0; }
+}
+`]
 })
 export class ShareTripComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

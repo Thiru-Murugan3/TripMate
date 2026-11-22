@@ -454,10 +454,29 @@ class TripMateE2EIntegrationTest {
                 Map.of("email", email, "otp", otpCaptor.getValue())
         );
 
+        MvcResult verified = mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(verificationJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.session.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.session.refreshToken").isNotEmpty())
+                .andReturn();
+        var session = objectMapper.readTree(verified.getResponse().getContentAsString()).get("session");
+        mockMvc.perform(get("/api/v1/users/me")
+                        .header("Authorization", "Bearer " + session.get("accessToken").asText()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(email));
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "refreshToken", session.get("refreshToken").asText()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+        // The consumed OTP cannot mint another session.
         mockMvc.perform(post("/api/v1/auth/verify-email")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(verificationJson))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
     }
 
 }

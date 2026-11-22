@@ -40,7 +40,7 @@ public final class FlywayV7Repair {
                 if (appliedChecksum != PREVIOUS_APPLIED_CHECKSUM) {
                     fail(
                             "Flyway V7 has an unexpected checksum (" + appliedChecksum + "). " +
-                            "TripMate will not change flyway_schema_history automatically."
+                            "Suttru will not change flyway_schema_history automatically."
                     );
                 }
 

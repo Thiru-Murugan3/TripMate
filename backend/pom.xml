@@ -14,7 +14,7 @@
   <artifactId>tripmate-backend</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>tripmate-backend</name>
-  <description>TripMate Spring Boot Backend</description>
+  <description>Suttru Spring Boot Backend</description>
 
   <properties>
     <java.version>21</java.version>
@@ -53,6 +53,44 @@
     <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-mysql</artifactId></dependency>
     <dependency><groupId>org.apache.pdfbox</groupId><artifactId>pdfbox</artifactId><version>3.0.8</version></dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>google-maven-central</id>
+      <name>Google Maven Central</name>
+      <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>central</id>
+      <name>Maven Central</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>google-maven-central</id>
+      <name>Google Maven Central</name>
+      <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>central</id>
+      <name>Maven Central</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </pluginRepository>
+  </pluginRepositories>
 
   <build>
     <plugins>

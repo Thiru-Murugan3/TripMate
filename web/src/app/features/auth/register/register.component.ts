@@ -8,9 +8,10 @@ import {
   Validators
 } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
+import { authReturnUrl } from '../../../core/utils/auth-return-url';
 import { AuthService } from '../../../core/services/auth.service';
 
 interface ApiErrorResponse {
@@ -29,6 +30,8 @@ export class RegisterComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  readonly returnUrl = authReturnUrl(this.route.snapshot.queryParams['returnUrl']);
 
   readonly heroImageUrl =
     'https://www.figma.com/api/mcp/asset/452be6a7-1a5d-4e35-9c3b-9fd7a9b9582c.png';
@@ -159,7 +162,7 @@ export class RegisterComponent {
       .subscribe({
         next: (res) => {
           void this.router.navigate(['/verify-email'], {
-            queryParams: { email: res.email || email }
+            queryParams: { email: res.email || email, returnUrl: this.returnUrl }
           });
         },
         error: (error: HttpErrorResponse) => {

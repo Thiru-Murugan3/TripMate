@@ -11,10 +11,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
-                title = "TripMate REST API",
+                title = "Suttru REST API",
                 version = "1.0.0",
-                description = "TripMate - Smart Trip Planning & Management Platform Backend API Documentation",
-                contact = @Contact(name = "TripMate Support", email = "support@tripmate.com")
+                description = "Suttru - Smart Trip Planning & Management Platform Backend API Documentation",
+                contact = @Contact(name = "Suttru Support", email = "support@tripmate.com")
         ),
         security = @SecurityRequirement(name = "BearerAuth")
 )

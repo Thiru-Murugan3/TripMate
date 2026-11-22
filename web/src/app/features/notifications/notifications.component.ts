@@ -16,7 +16,7 @@ type NotificationFilter = 'all' | 'unread';
       <div class="page-shell">
         <header class="page-header">
           <div>
-            <p class="eyebrow">TRIPMATE UPDATES</p>
+            <p class="eyebrow">SUTTRU UPDATES</p>
             <h1>Notifications</h1>
             <p class="subtitle">
               Keep track of trip reminders, member activity, expenses,
@@ -144,6 +144,8 @@ type NotificationFilter = 'all' | 'unread';
     </section>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     .notifications-page {
       min-height: calc(100vh - 140px);
       padding: 2.25rem 1.25rem 4rem;
@@ -415,7 +417,13 @@ type NotificationFilter = 'all' | 'unread';
         padding: 0 1rem 0.9rem;
       }
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .notification-actions, .header-actions, .tabs { flex-wrap:wrap; }
+}
+`]
 })
 export class NotificationsComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
@@ -559,6 +567,7 @@ export class NotificationsComponent implements OnInit {
       MEMBER_REMOVED: '−',
       EXPENSE_ADDED: '₹',
       ITINERARY_UPDATED: '☰',
+      FLIGHT_UPDATED: '✈',
       BOOKING_REMINDER: '◷',
       DOCUMENT_ADDED: '▤',
       GENERAL: '•'

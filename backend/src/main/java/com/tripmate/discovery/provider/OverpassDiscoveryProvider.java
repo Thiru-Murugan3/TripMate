@@ -24,27 +24,23 @@ import java.util.*;
 public class OverpassDiscoveryProvider implements DiscoveryProvider {
     private static final Logger log = LoggerFactory.getLogger(OverpassDiscoveryProvider.class);
     private static final String ATTRIBUTION = "© OpenStreetMap contributors · Wikimedia Commons where credited";
-    private static final List<String> GLOBAL_FALLBACK_ENDPOINTS = List.of(
-            "https://overpass-api.de/api/interpreter",
-            "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-            "https://overpass.private.coffee/api/interpreter"
-    );
     private final RestClient client;
     private final List<String> endpoints;
     private final PriceVerificationService priceVerification;
     private final ImageResolverService imageResolver;
     private final WikimediaEnrichmentService wikimediaEnrichment;
     private final int maxResults;
+    private final Map<String, Instant> retryAfter = new java.util.concurrent.ConcurrentHashMap<>();
 
     public OverpassDiscoveryProvider(
             ProviderHttpClientFactory factory,
             PriceVerificationService priceVerification,
             ImageResolverService imageResolver,
             WikimediaEnrichmentService wikimediaEnrichment,
-            @Value("${discovery.overpass-urls:${discovery.overpass-url:https://overpass-api.de/api/interpreter}}") String urls,
-            @Value("${discovery.max-results:200}") int maxResults
+            @Value("${discovery.overpass-urls:${discovery.overpass-url:}}") String urls,
+            @Value("${discovery.max-results:500}") int maxResults
     ) {
-        this.client = factory.create(Integer.MAX_VALUE);
+        this.client = factory.create(3000);
         this.priceVerification = priceVerification;
         this.imageResolver = imageResolver;
         this.wikimediaEnrichment = wikimediaEnrichment;
@@ -56,22 +52,28 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
 
     @Override
     public DiscoveryProviderResult discover(DiscoveryProviderRequest request) {
+        if (endpoints.isEmpty()) return new DiscoveryProviderResult(name(), ATTRIBUTION, List.of(),
+                List.of("Direct OpenStreetMap discovery needs a configured Overpass endpoint; Geoapify can also supply OpenStreetMap data."));
         String query = buildQuery(request.destination().latitude().doubleValue(),
                 request.destination().longitude().doubleValue(), request.radiusKm() * 1000, request.category());
         String body = "data=" + URLEncoder.encode(query, StandardCharsets.UTF_8);
         List<String> warnings = new ArrayList<>();
         for (int index = 0; index < endpoints.size(); index++) {
+            if (retryAfter.getOrDefault(endpoints.get(index), Instant.MIN).isAfter(Instant.now())) continue;
             try {
                 JsonNode response = client.post().uri(endpoints.get(index))
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED).body(body)
                         .retrieve().body(JsonNode.class);
+                retryAfter.remove(endpoints.get(index));
                 List<DiscoveredPlace> places = map(response, request);
                 if (!places.isEmpty()) {
+                    if (places.size() >= maxResults) warnings.add("OpenStreetMap reached the configured " + maxResults + "-place inventory limit.");
                     if (index > 0) warnings.add("The primary OpenStreetMap endpoint was unavailable; a global fallback was used.");
                     return new DiscoveryProviderResult(name(), ATTRIBUTION, places, warnings);
                 }
                 log.warn("Overpass endpoint returned no matching elements: index={}", index + 1);
             } catch (RestClientException ex) {
+                retryAfter.put(endpoints.get(index), Instant.now().plusSeconds(120));
                 log.warn("Overpass endpoint failed: index={} error={}", index + 1, ex.getClass().getSimpleName());
             }
         }
@@ -84,7 +86,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
         if (elements == null || !elements.isArray()) return List.of();
         Map<String, DiscoveredPlace> unique = new LinkedHashMap<>();
         Instant checkedAt = Instant.now();
-        int enrichmentBudget = 6;
+        int enrichmentBudget = request.fast() ? 0 : 6;
         for (JsonNode element : elements) {
             JsonNode tags = element.path("tags");
             String name = first(tags.path("name").asText(null), tags.path("name:en").asText(null));
@@ -101,14 +103,15 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             if (distance > request.radiusKm() + 0.2) continue;
 
             DiscoveryCategory category = classify(tags, name);
-            if (request.category() != null && category != request.category()) continue;
+            if (!DiscoveryCategoryMatching.matches(request.category(), category)
+                    && !(request.category() == DiscoveryCategory.FAMILY && familyFriendly(tags, category))) continue;
             String type = element.path("type").asText("node");
             String id = element.path("id").asText();
             if (id.isBlank()) continue;
             String externalId = "osm:" + type + ":" + id;
             String sourceUrl = "https://www.openstreetmap.org/" + type + "/" + id;
             PriceVerificationService.VerifiedPrice price = priceVerification.fromOpenStreetMap(tags, sourceUrl, checkedAt);
-            ImageResolverService.ResolvedImages resolvedImages = imageResolver.fromOpenStreetMap(tags, sourceUrl);
+            ImageResolverService.ResolvedImages resolvedImages = request.fast() ? new ImageResolverService.ResolvedImages(null,List.of()) : imageResolver.fromOpenStreetMap(tags, sourceUrl);
             DiscoveryImage primary = resolvedImages.primary();
             List<DiscoveryImage> gallery = resolvedImages.gallery();
             String website = first(tags.path("website").asText(null), tags.path("contact:website").asText(null));
@@ -130,7 +133,8 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             String address = address(tags, request.query());
             String subcategory = subcategory(tags, category);
             DiscoveryItemType itemType = itemType(tags, category);
-            Integer duration = suggestedMinutes(category);
+            Integer sourceDuration = SourceDuration.minutes(tags.path("duration").asText(null));
+            Integer duration = sourceDuration == null ? suggestedMinutes(category) : sourceDuration;
             boolean family = familyFriendly(tags, category);
             Double rating = decimalDouble(first(tags.path("rating").asText(null), tags.path("stars").asText(null)));
 
@@ -156,14 +160,25 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
                     + "|" + longitude.setScale(3, RoundingMode.HALF_UP);
             unique.putIfAbsent(key, place);
         }
-        return unique.values().stream().sorted(Comparator.comparingDouble(DiscoveredPlace::distanceKm))
+        return unique.values().stream().sorted(Comparator.comparingInt(TouristPlacePriority::rank).thenComparingDouble(DiscoveredPlace::distanceKm))
                 .limit(maxResults).toList();
     }
 
     public String buildQuery(double lat, double lon, int radiusMeters, DiscoveryCategory category) {
         String around = "(around:" + radiusMeters + "," + lat + "," + lon + ")";
         List<String> selectors = new ArrayList<>();
-        if (category == DiscoveryCategory.FOOD) {
+        if (category == DiscoveryCategory.ADVENTURE) {
+            selectors.add("nwr" + around + "[\"sport\"~\"rafting|canoe|kayak|climbing|paragliding|bungee_jumping|zipline|scuba_diving|surfing|horse_riding\"];");
+            selectors.add("nwr" + around + "[\"leisure\"=\"adventure_park\"];");
+            selectors.add("nwr" + around + "[\"tourism\"=\"adventure_park\"];");
+            selectors.add("nwr" + around + "[\"name\"~\"rafting|bungee|zip.?line|paragliding|adventure|trekking\",i][\"tourism\"];");
+            selectors.add("nwr" + around + "[\"name\"~\"rafting|bungee|zip.?line|paragliding|adventure|trekking\",i][\"office\"=\"travel_agent\"];");
+        } else if (category == DiscoveryCategory.FAMILY) {
+            selectors.add("nwr" + around + "[\"leisure\"~\"park|garden|playground|water_park|theme_park\"];");
+            selectors.add("nwr" + around + "[\"tourism\"~\"museum|zoo|aquarium\"];");
+            selectors.add("nwr" + around + "[\"family\"=\"yes\"];");
+            selectors.add("nwr" + around + "[\"kids_area\"=\"yes\"];");
+        } else if (category == DiscoveryCategory.FOOD) {
             selectors.add("nwr" + around + "[\"amenity\"~\"restaurant|cafe|fast_food|food_court\"];");
         } else if (category == DiscoveryCategory.STAY) {
             selectors.add("nwr" + around + "[\"tourism\"~\"hotel|guest_house|hostel|motel|camp_site|apartment|chalet|homestay\"];");
@@ -185,14 +200,14 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
             selectors.add("nwr" + around + "[\"natural\"~\"waterfall|peak|beach|cave_entrance|spring|water\"];");
             selectors.add("nwr" + around + "[\"water\"~\"lake|reservoir|river\"];");
             selectors.add("nwr" + around + "[\"waterway\"=\"river\"];");
-            selectors.add("nwr" + around + "[\"leisure\"~\"park|garden|nature_reserve|water_park|theme_park|adventure_park|spa\"];");
+            selectors.add("nwr" + around + "[\"leisure\"~\"park|garden|playground|nature_reserve|water_park|theme_park|adventure_park|spa\"];");
             selectors.add("nwr" + around + "[\"amenity\"~\"place_of_worship|restaurant|cafe|fast_food|food_court|marketplace|bar|pub|nightclub|events_venue|arts_centre|theatre|bus_station|taxi|car_rental|bicycle_rental\"];");
             selectors.add("nwr" + around + "[\"shop\"~\"mall|gift|art|craft|souvenir\"];");
             selectors.add("nwr" + around + "[\"sport\"~\"climbing|surfing|scuba_diving|canoe|kayak|rafting|paragliding|horse_racing\"];");
             selectors.add("nwr" + around + "[\"event\"];");
             selectors.add("nwr" + around + "[\"office\"~\"travel_agent|tourism\"];");
         }
-        return "[out:json][timeout:25];(" + String.join("", selectors) + ");out center tags;";
+        return "[out:json][timeout:5];(" + String.join("", selectors) + ");out center tags;";
     }
 
     public DiscoveryCategory classify(JsonNode tags, String name) {
@@ -201,6 +216,12 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
         String amenity = value(tags, "amenity"), shop = value(tags, "shop"), sport = value(tags, "sport");
         String religion = value(tags, "religion"), event = value(tags, "event"), office = value(tags, "office");
         String lower = name.toLowerCase(Locale.ROOT);
+        // Classify explicit activity evidence before generic camp/site/river tags.
+        if (sport.matches("rafting|canoe|kayak|climbing|paragliding|bungee_jumping|zipline|scuba_diving|surfing|horse_riding")
+                || leisure.equals("adventure_park") || tourism.equals("adventure_park")
+                || ((!tourism.isBlank() || office.equals("travel_agent"))
+                    && lower.matches(".*\\b(rafting|bungee|zip.?line|paragliding|adventure|trekking)\\b.*"))) return DiscoveryCategory.ADVENTURE;
+        if (tourism.matches("zoo|aquarium")) return DiscoveryCategory.FAMILY;
         if (!event.isBlank() || "events_venue".equals(amenity)) return DiscoveryCategory.EVENT;
         if (amenity.matches("arts_centre|theatre")) return DiscoveryCategory.CULTURAL;
         if (amenity.matches("bar|pub|nightclub")) return DiscoveryCategory.NIGHTLIFE;
@@ -328,7 +349,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
         Arrays.stream(csv.split(",")).map(String::trim)
                 .filter(url -> url.startsWith("https://"))
                 .forEach(urls::add);
-        urls.addAll(GLOBAL_FALLBACK_ENDPOINTS);
+
         return List.copyOf(urls);
     }
     private String value(JsonNode tags, String key) { return tags.path(key).asText(""); }
@@ -337,7 +358,7 @@ public class OverpassDiscoveryProvider implements DiscoveryProvider {
     private BigDecimal decimal(String value) { try { return value == null || value.isBlank() ? null : new BigDecimal(value); } catch (NumberFormatException ex) { return null; } }
     private Double decimalDouble(String value) { try { return value == null ? null : Double.valueOf(value); } catch (NumberFormatException ex) { return null; } }
     private Integer integer(JsonNode tags, String key) { try { String value = value(tags, key).replaceAll("[^0-9]", ""); return value.isBlank() ? null : Integer.valueOf(value); } catch (NumberFormatException ex) { return null; } }
-    private String normalize(String value) { return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", ""); }
+    private String normalize(String value) { return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}\\p{M}]", ""); }
     private String slug(String value) { return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", ""); }
     private String title(String value) { return Arrays.stream(value.replace('_', ' ').split("\\s+")).filter(part -> !part.isBlank()).map(part -> part.substring(0, 1).toUpperCase(Locale.ROOT) + part.substring(1)).reduce((a, b) -> a + " " + b).orElse(value); }
     private double round(double value) { return Math.round(value * 10.0) / 10.0; }

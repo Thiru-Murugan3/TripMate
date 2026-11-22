@@ -2,6 +2,7 @@ export interface ItineraryItem {
   id: number;
   dayId: number;
   tripId: number;
+  tripadvisorLocationId?: string;
   placeId?: number;
   placeName?: string;
   title: string;

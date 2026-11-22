@@ -59,7 +59,9 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/api/v1/invitations/token/**"
+                                "/api/v1/invitations/token/**",
+                                // <img> tags cannot send a bearer token; these are generated artworks only.
+                                "/api/v1/discovery/place-illustrations/image/*"
                         ).permitAll()
 
                         .requestMatchers(

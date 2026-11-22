@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { authReturnUrl } from '../../../core/utils/auth-return-url';
 import { ApiErrorResponse } from '../../../core/models/auth.model';
 
 @Component({
@@ -23,7 +24,7 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
               <path d="M12 2 2 12h3v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8h3L12 2zm0 3.828L18 11.8v7.2H6v-7.2l6-5.972z"/>
             </svg>
           </div>
-          <span class="brand-text">TripMate</span>
+          <span class="brand-text">Suttru</span>
         </div>
 
         <div class="mail-icon-circle">
@@ -108,7 +109,8 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
         </div>
 
         <div class="verify-footer">
-          <a routerLink="/register" class="back-link">
+          <a routerLink="/login" [queryParams]="{returnUrl}" class="back-link">Already verified? Sign in</a>
+          <a routerLink="/register" [queryParams]="{returnUrl}" class="back-link">
             ← Change email or details
           </a>
         </div>
@@ -116,6 +118,8 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
     </main>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-auth' as phone;
+
     :host {
       display: block;
       min-height: 100vh;
@@ -321,6 +325,7 @@ import { ApiErrorResponse } from '../../../core/models/auth.model';
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+  @include phone.screen;
   `]
 })
 export class VerifyEmailComponent implements OnInit, OnDestroy {
@@ -328,6 +333,7 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private authService = inject(AuthService);
 
+  readonly returnUrl = authReturnUrl(this.route.snapshot.queryParams['returnUrl']);
   email = '';
   maskedEmail = '';
   otpDigits = ['', '', '', '', '', ''];
@@ -342,7 +348,7 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
     this.email = this.route.snapshot.queryParams['email'] || '';
 
     if (!this.email) {
-      void this.router.navigate(['/register']);
+      void this.router.navigate(['/register'], {queryParams:{returnUrl:this.returnUrl}});
       return;
     }
 
@@ -412,7 +418,7 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
 
   onVerifySubmit(event: Event): void {
     event.preventDefault();
-    if (!this.isOtpComplete()) return;
+    if (this.isLoading || !this.isOtpComplete()) return;
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -422,18 +428,16 @@ export class VerifyEmailComponent implements OnInit, OnDestroy {
 
     this.authService.verifyEmail({ email: this.email, otp: otpCode }).subscribe({
       next: (res) => {
-        this.isLoading = false;
-        this.successMessage = res.message || 'Email verified successfully! Account created.';
-        setTimeout(() => {
-          void this.router.navigate(['/login'], {
-            queryParams: { verified: 1 }
-          });
-        }, 1200);
+        this.clearTimer();
+        this.successMessage = 'Account created. Signing you in…';
+        void this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
         const apiError = error.error as ApiErrorResponse | undefined;
-        this.errorMessage = apiError?.message || 'Invalid or expired OTP code. Please try again.';
+        this.errorMessage = error instanceof HttpErrorResponse
+          ? apiError?.message || 'Invalid or expired OTP code. Please try again.'
+          : (error as Error).message;
       }
     });
   }

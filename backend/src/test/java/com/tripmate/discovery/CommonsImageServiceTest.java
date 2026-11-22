@@ -12,7 +12,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class CommonsImageServiceTest {
     private static final String METADATA = """
-      {"query":{"pages":{"1":{"imageinfo":[{"thumburl":"https://upload.wikimedia.org/photo.jpg",
+      {"query":{"pages":{"1":{"imageinfo":[{"mime":"image/jpeg","thumburl":"https://upload.wikimedia.org/photo.jpg",
       "descriptionurl":"https://commons.wikimedia.org/wiki/File:Photo.jpg","extmetadata":{
       "Artist":{"value":"<a href='https://example.test'>A &amp; B</a>"},
       "LicenseShortName":{"value":"CC BY-SA 4.0"},"Credit":{"value":"Own work"}}}]}}}}
@@ -40,6 +40,20 @@ class CommonsImageServiceTest {
         server.expect(anything()).andRespond(withServerError());
         assertNull(new CommonsImageService(builder.build()).resolve("File:Missing.jpg"));
         server.verify();
+    }
+    // Commons moved thumbnails to thumb.wikimedia.org; rejecting that host hid nearly every photo.
+    @Test void acceptsCommonsThumbnailHostButNotLookalikes() throws Exception {
+        var service = new CommonsImageService(RestClient.create());
+        var mapper = new ObjectMapper();
+        String thumb = METADATA.replace("https://upload.wikimedia.org/photo.jpg",
+                "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7b/Photo.jpg/960px-Photo.jpg?utm_source=commons.wikimedia.org");
+        var image = service.fromResponse(mapper.readTree(thumb));
+        assertNotNull(image);
+        assertTrue(image.url().startsWith("https://thumb.wikimedia.org/"));
+        for (String bad : java.util.List.of("https://thumb.wikimedia.org.evil.test/p.jpg", "http://thumb.wikimedia.org/p.jpg",
+                "https://user@thumb.wikimedia.org/p.jpg", "https://thumb.wikimedia.org:8443/p.jpg", "https://evil.test/p.jpg")) {
+            assertNull(service.fromResponse(mapper.readTree(METADATA.replace("https://upload.wikimedia.org/photo.jpg", bad))), bad);
+        }
     }
     @Test void uncreditedExternalImageStaysPlaceholder() throws Exception {
         var resolver = new ImageResolverService(mock(CommonsImageService.class));

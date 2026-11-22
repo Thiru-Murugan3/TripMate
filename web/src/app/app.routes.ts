@@ -34,6 +34,8 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
 
+  { path: 'account', loadComponent: () => import('./features/account/account.component').then(m => m.AccountComponent), canActivate: [authGuard] },
+  { path: 'expenses', loadComponent: () => import('./features/expenses/expense-trips.component').then(m => m.ExpenseTripsComponent), canActivate: [authGuard] },
   {
     path: 'dashboard',
     loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
@@ -42,8 +44,13 @@ export const routes: Routes = [
   {
     path: 'explore',
     loadComponent: () =>
-      import('./features/discovery/destination-discovery.component').then((m) => m.DestinationDiscoveryComponent),
+      import('./features/discovery/explore.component').then((m) => m.ExploreComponent),
     canActivate: [authGuard]
+  },
+  {
+    path: 'explore/india',
+    redirectTo: '/explore',
+    pathMatch: 'full'
   },
   {
     path: 'admin/discovery',

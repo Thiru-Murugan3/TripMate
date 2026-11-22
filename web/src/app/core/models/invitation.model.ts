@@ -5,7 +5,7 @@ export type InvitationStatus =
   | 'REJECTED'
   | 'EXPIRED'
   | 'CANCELLED';
-export type InvitationRole = 'EDITOR' | 'VIEWER';
+export type InvitationRole = 'EDITOR' | 'PLANNER' | 'EXPENSE_MANAGER' | 'VIEWER';
 
 export interface CreateInvitationRequest {
   email?: string;

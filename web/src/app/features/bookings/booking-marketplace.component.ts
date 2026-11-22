@@ -35,7 +35,7 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
 
         <section class="marketplace-hero">
           <div>
-            <span class="eyebrow">TRIPMATE BOOKING</span>
+            <span class="eyebrow">SUTTRU BOOKING</span>
             <h1>Search & book in one place</h1>
             <p *ngIf="trip">Search options for <strong>{{ trip.name }}</strong>.</p>
           </div>
@@ -47,7 +47,7 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
           <div>
             <strong>Why you do not see every real flight, train or bus yet</strong>
             <p>
-              TripMate currently uses simulated inventory. The results page and filters are production-ready,
+              Suttru currently uses simulated inventory. The results page and filters are production-ready,
               but real nationwide availability requires licensed airline/GDS, IRCTC-authorized and bus inventory APIs.
             </p>
           </div>
@@ -422,6 +422,8 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
     </main>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; background:#f8fafc; min-height:100vh; color:#0f172a; }
     .marketplace-page { min-height:100vh; padding:2rem 1rem 4rem; }
     .page-shell { max-width:1260px; margin:0 auto; }
@@ -551,7 +553,18 @@ type DepartureWindow = 'ALL' | 'EARLY' | 'MORNING' | 'AFTERNOON' | 'EVENING';
       .journey-line{text-align:left}
       .confirmation-grid{grid-template-columns:1fr}
     }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) {
+ .offer-card, .offer-route, .offer-info, .offer-main, .checkout-layout > *, .form-grid > *, .traveler-form-grid > * { min-width:0; }
+ .offer-card, .results-header, .search-summary, .checkout-header { flex-wrap:wrap; }
+ .route-line { grid-template-columns:minmax(0,1fr); }
+ .route-line > div:last-child { text-align:left; }
+ .offer-price { min-width:0; width:100%; align-items:stretch; }
+ .form-grid, .traveler-form-grid, .checkout-layout { grid-template-columns:minmax(0,1fr); }
+}
+`]
 })
 export class BookingMarketplaceComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

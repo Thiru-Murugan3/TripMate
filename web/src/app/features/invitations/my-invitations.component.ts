@@ -16,7 +16,7 @@ import { InvitationService } from '../../core/services/invitation.service';
           <div>
             <p class="eyebrow">COLLABORATION</p>
             <h1>My Invitations</h1>
-            <p>Accept or decline pending invitations sent to your TripMate email or mobile number.</p>
+            <p>Accept or decline pending invitations sent to your Suttru email or mobile number.</p>
           </div>
           <button type="button" class="refresh-btn" (click)="loadInvitations()" [disabled]="loading">
             Refresh
@@ -47,7 +47,7 @@ import { InvitationService } from '../../core/services/invitation.service';
             </div>
 
             <div class="content">
-              <span class="role-chip">{{ invitation.role === 'EDITOR' ? 'Editor' : 'Viewer' }}</span>
+              <span class="role-chip">{{ invitation.role === 'EXPENSE_MANAGER' ? 'Expense manager' : invitation.role === 'PLANNER' ? 'Planner' : invitation.role === 'EDITOR' ? 'Editor' : 'Viewer' }}</span>
               <h2>{{ invitation.tripName }}</h2>
               <p>
                 <strong>{{ invitation.inviterName }}</strong> invited you to join this trip.
@@ -83,6 +83,8 @@ import { InvitationService } from '../../core/services/invitation.service';
     </main>
   `,
   styles: [`
+@use '../../shared/styles/mobile-panels' as mobile;
+
     :host { display:block; }
     .page { min-height: calc(100vh - 72px); background:#f8fafc; padding:2rem 1.25rem 4rem; }
     .shell { width:min(900px,100%); margin:0 auto; }
@@ -111,7 +113,11 @@ import { InvitationService } from '../../core/services/invitation.service';
     .spinner { width:30px; height:30px; border:3px solid #dbeafe; border-top-color:#2563eb; border-radius:50%; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     @media (max-width:650px) { .invite-card { grid-template-columns:auto 1fr; } .actions { grid-column:1 / -1; } .actions button { flex:1; } .header { flex-direction:column; } }
-  `]
+
+@include mobile.panels;
+
+@media(max-width:760px) { .invite-card { grid-template-columns:auto minmax(0,1fr); } .invite-card > * { min-width:0; } .actions { grid-column:1/-1; flex-wrap:wrap; } }
+`]
 })
 export class MyInvitationsComponent implements OnInit {
   private readonly invitationService = inject(InvitationService);

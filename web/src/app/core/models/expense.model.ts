@@ -28,7 +28,10 @@ export interface Expense {
   paidById: number;
   paidByName: string;
   title: string;
-  amount: number;
+  amount: number; // INR: balances and splits use this converted amount
+  originalCurrency?: string;
+  originalAmount?: number;
+  exchangeRate?: number; // INR per unit of original currency
   category: ExpenseCategory;
   expenseDate: string;
   splitType: SplitType;
@@ -45,7 +48,10 @@ export interface ExpenseSplitDetailRequest {
 
 export interface CreateExpenseRequest {
   title: string;
-  amount: number;
+  amount: number; // INR: balances and splits use this converted amount
+  originalCurrency?: string;
+  originalAmount?: number;
+  exchangeRate?: number; // INR per unit of original currency
   category: ExpenseCategory;
   expenseDate: string;
   paidById?: number;

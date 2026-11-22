@@ -11,6 +11,14 @@ services:
     healthCheckPath: /api/v1/health
     autoDeployTrigger: commit
     envVars:
+      - key: TRIPADVISOR_API_KEY
+        sync: false
+      - key: TRIPADVISOR_REFERER
+        value: https://www.suttru.in
+      - key: TRIPADVISOR_DAILY_LIMIT
+        value: "100"
+      - key: TRIPADVISOR_MONTHLY_LIMIT
+        value: "4000"
       - key: DB_URL
         sync: false
       - key: DB_USERNAME
@@ -28,9 +36,9 @@ services:
       - key: TRIPMATE_BREVO_SENDER_EMAIL
         value: thirumuruganofficial3@gmail.com
       - key: TRIPMATE_BREVO_SENDER_NAME
-        value: TripMate
+        value: Suttru
       - key: BREVO_INBOUND_DOMAIN
-        sync: false
+        value: inbound.suttru.in
       - key: BREVO_INBOUND_WEBHOOK_SECRET
         sync: false
       - key: R2_ENABLED
@@ -46,9 +54,9 @@ services:
       - key: R2_PRESIGNED_URL_EXPIRATION
         value: "3600"
       - key: APP_FRONTEND_URL
-        value: https://tripmate-web-thiru-murugan3.onrender.com
+        value: https://www.suttru.in
       - key: APP_CORS_ALLOWED_ORIGINS
-        value: https://tripmate-web-thiru-murugan3.onrender.com
+        value: https://www.suttru.in,https://suttru.in,https://tripmate-web-thiru-murugan3.onrender.com
       - key: JPA_DDL_AUTO
         value: none
       - key: JPA_SHOW_SQL

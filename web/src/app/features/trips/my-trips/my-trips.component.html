@@ -16,15 +16,37 @@
       <p>View and manage every trip you are planning or travelling on.</p>
     </div>
 
-    <button type="button" class="create-button" (click)="createTrip()">
-      <span aria-hidden="true">＋</span>
-      Plan New Trip
+    <button type="button" class="create-button" aria-label="Plan New Trip" (click)="createTrip()">
+      <span class="desktop-create-label" aria-hidden="true">＋ Plan New Trip</span><img class="mobile-create-icon" src="assets/mobile/plus-white.svg" alt="" /><span class="mobile-create-label">New trip</span>
     </button>
   </section>
 
-  <section class="toolbar" aria-label="Trip filters">
+  @if (!loading() && !errorMessage() && trips().length > 0) {
+    <section class="stats-strip" aria-label="Trip summary">
+      <div class="stat">
+        <span class="stat-icon tone-blue"><span class="material-symbols-outlined">luggage</span></span>
+        <div><strong>{{ stats().total }}</strong><span>Total trips</span></div>
+      </div>
+      <div class="stat">
+        <span class="stat-icon tone-violet"><span class="material-symbols-outlined">flight_takeoff</span></span>
+        <div><strong>{{ stats().upcoming }}</strong><span>Upcoming</span></div>
+      </div>
+      <div class="stat">
+        <span class="stat-icon tone-green"><span class="material-symbols-outlined">verified</span></span>
+        <div><strong>{{ stats().completed }}</strong><span>Completed</span></div>
+      </div>
+    </section>
+  }
+
+  <nav class="mobile-status-tabs" aria-label="Quick trip filters">
+    @for (status of mobileStatuses; track status) {
+      <button type="button" [class.active]="statusFilter() === status" [attr.aria-pressed]="statusFilter() === status" (click)="updateStatus(status)">{{ status === 'ALL' ? 'All' : status === 'ONGOING' ? 'Active' : formatStatus($any(status)) }}</button>
+    }
+  </nav>
+  <section class="toolbar" [class.filters-open]="mobileFiltersOpen" aria-label="Trip filters">
     <label class="search-field">
       <span>Search</span>
+      <span class="material-symbols-outlined search-icon" aria-hidden="true">search</span>
       <input
         type="search"
         [ngModel]="searchTerm()"
@@ -33,6 +55,7 @@
       />
     </label>
 
+    <button class="mobile-filter-toggle" type="button" (click)="mobileFiltersOpen = !mobileFiltersOpen" [attr.aria-expanded]="mobileFiltersOpen">Filters{{typeFilter() !== 'ALL' ? ' •' : ''}}</button>
     <label class="select-field">
       <span>Status</span>
       <select [ngModel]="statusFilter()" (ngModelChange)="updateStatus($event)">
@@ -72,7 +95,7 @@
       <h2>No trips found</h2>
       <p>
         @if (trips().length === 0) {
-          Start planning your first TripMate journey.
+          Start planning your first Suttru journey.
         } @else {
           Try changing the search or filters.
         }
@@ -85,7 +108,7 @@
     <section class="results-header">
       <div>
         <h2>{{ filteredTrips().length }} trip{{ filteredTrips().length === 1 ? '' : 's' }}</h2>
-        <p>Your current TripMate travel plans.</p>
+        <p>Your current Suttru travel plans.</p>
       </div>
     </section>
 
@@ -104,16 +127,18 @@
             </div>
 
             <div class="image-title">
+              <span class="timing-chip" [attr.data-tone]="tripTiming(trip).tone">{{ tripTiming(trip).label }}</span>
               <h3>{{ trip.name }}</h3>
-              <p>{{ trip.destination }}</p>
+              <p><span class="material-symbols-outlined" aria-hidden="true">location_on</span>{{ trip.destination }}</p>
             </div>
           </div>
 
           <div class="trip-content">
+            <div class="mobile-trip-title"><div><span class="type-badge">{{formatTripType(trip.tripType)}}</span><span class="mobile-status">{{formatStatus(trip.status)}}</span></div><h3>{{trip.name}}</h3><p>{{trip.destination}}</p></div>
             <div class="meta-row">
               <div>
                 <span class="meta-label">DATES</span>
-                <strong>{{ trip.startDate }} → {{ trip.endDate }}</strong>
+                <strong class="desktop-trip-dates">{{ formatDates(trip) }}</strong><strong class="mobile-trip-dates">{{ trip.startDate | date:'d MMM' }} – {{ trip.endDate | date:'d MMM yyyy' }}</strong>
                 <small>{{ tripDuration(trip) }}</small>
               </div>
               <div class="meta-right">
@@ -128,7 +153,7 @@
             }
 
             <div class="card-footer">
-              <span class="role">{{ trip.userRole ?? 'OWNER' }}</span>
+              <span class="role" [class.is-owner]="trip.userRole === 'OWNER'">{{ formatRole(trip) }}</span>
               <div class="card-actions">
                 <button type="button" class="view-button" (click)="$event.stopPropagation(); openTrip(trip)">
                   View Trip
@@ -137,7 +162,7 @@
                 @if (canDeleteTrip(trip)) {
                   <button type="button" class="delete-button" title="Delete Trip" (click)="deleteTrip(trip, $event)">
                     <span class="material-symbols-outlined">delete</span>
-                    Delete
+                    <span class="delete-label">Delete</span>
                   </button>
                 }
               </div>

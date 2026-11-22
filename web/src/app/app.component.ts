@@ -1,16 +1,18 @@
-import { Component, OnDestroy } from '@angular/core';
+import { DevicePermissionsComponent } from './shared/components/device-permissions/device-permissions.component';
+import { AfterViewInit, Component, NgZone, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
-import { FooterComponent } from './shared/components/footer/footer.component';
+import { MobileNavigationComponent } from './shared/components/mobile-navigation/mobile-navigation.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, FooterComponent],
+  imports: [DevicePermissionsComponent,RouterOutlet, NavbarComponent, MobileNavigationComponent],
   template: `
-    <div class="app-layout">
+    <app-device-permissions></app-device-permissions>
+    <div class="app-layout" [class.mobile-inner-view]="isMobileInnerView" [class.has-app-shell]="showAppShell">
       @if (showAppShell) {
         <app-navbar></app-navbar>
       }
@@ -20,24 +22,34 @@ import { FooterComponent } from './shared/components/footer/footer.component';
       </main>
 
       @if (showAppShell) {
-        <app-footer></app-footer>
+        <app-mobile-navigation></app-mobile-navigation>
       }
     </div>
   `,
   styles: [`
+    @media(max-width:760px) {
+      .has-app-shell .main-content { padding-bottom:calc(96px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px))); background:#f8fafc; }
+      .mobile-inner-view app-navbar { display:none; }
+    }
+
     .app-layout {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
+    :host { display: block; width: 100%; min-width: 0; }
+
     .main-content {
+      min-width: 0;
+      width: 100%;
       flex: 1;
     }
   `]
 })
-export class AppComponent implements OnDestroy {
-  title = 'TripMate';
+export class AppComponent implements OnDestroy, AfterViewInit {
+  get isMobileInnerView():boolean { return this.router.url.split('?')[0] !== '/dashboard'; }
+  title = 'Suttru';
   showAppShell = false;
 
   private selectionGestureStartedInField = false;
@@ -77,7 +89,7 @@ export class AppComponent implements OnDestroy {
     this.selectionGestureStartedInField = false;
   };
 
-  constructor(private readonly router: Router) {
+  constructor(private readonly router: Router, private readonly zone: NgZone) {
     this.showAppShell = !this.isAuthOnlyRoute(window.location.pathname);
 
     this.routerSubscription = this.router.events
@@ -95,7 +107,22 @@ export class AppComponent implements OnDestroy {
     document.addEventListener('click', this.handleClickCapture, true);
   }
 
+  private readonly openNativeInvitation = (): void => {
+    const nativeWindow = window as Window & { SuttruPendingInvitationPath?: string };
+    const path = nativeWindow.SuttruPendingInvitationPath;
+    if (typeof path !== 'string' || !/^\/invite\/[A-Za-z0-9-]{1,200}$/.test(path)) return;
+    delete nativeWindow.SuttruPendingInvitationPath;
+    this.zone.run(() => { void this.router.navigateByUrl(path); });
+  };
+
+  ngAfterViewInit(): void {
+    window.addEventListener('suttru:invitation-link', this.openNativeInvitation);
+    // Native launch data can arrive before Angular finishes its initial navigation.
+    setTimeout(this.openNativeInvitation, 0);
+  }
+
   ngOnDestroy(): void {
+    window.removeEventListener('suttru:invitation-link', this.openNativeInvitation);
     this.routerSubscription.unsubscribe();
     document.removeEventListener('pointerdown', this.handlePointerDownCapture, true);
     document.removeEventListener('click', this.handleClickCapture, true);

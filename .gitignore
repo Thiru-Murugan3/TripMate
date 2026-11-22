@@ -15,3 +15,9 @@ mobile/www/
 uploads/
 coverage/
 .tools/
+mobile/android/
+mobile/dist/
+*.keystore
+*.jks
+
+web/mobile-ui-review/

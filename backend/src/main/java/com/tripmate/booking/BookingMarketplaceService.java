@@ -52,7 +52,7 @@ public class BookingMarketplaceService {
                 .endDatetime(offer.endDatetime())
                 .amount(offer.amount())
                 .status(BookingStatus.CONFIRMED)
-                .notes("Booked inside TripMate using " + request.paymentMethod())
+                .notes("Booked inside Suttru using " + request.paymentMethod())
                 .bookingSource(BookingSource.TRIPMATE_SANDBOX)
                 .paymentStatus(providerResult.paymentStatus())
                 .currency(offer.currency())
@@ -111,7 +111,7 @@ public class BookingMarketplaceService {
                 trip.getId(), userId, MemberStatus.ACTIVE
         );
 
-        if (member.isEmpty() || member.get().getRole() == TripRole.VIEWER) {
+        if (member.isEmpty() || !member.get().getRole().canEditContent()) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "You do not have permission to book for this trip"

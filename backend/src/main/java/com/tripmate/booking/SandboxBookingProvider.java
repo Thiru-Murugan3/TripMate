@@ -190,7 +190,7 @@ public class SandboxBookingProvider implements BookingProvider {
 
     private List<BookingOfferResponse> genericTransportOffers(SearchBookingRequest request, int travelers) {
         return List.of(
-                transportOffer(request, "TripMate Transport Sandbox", request.transportType().name(),
+                transportOffer(request, "Suttru Transport Sandbox", request.transportType().name(),
                         LocalTime.of(9, 0), 180, new BigDecimal("1500"), travelers,
                         true, 0, request.transportType().name(), 6, List.of())
         );
@@ -250,11 +250,11 @@ public class SandboxBookingProvider implements BookingProvider {
         int rooms = Math.max(1, (travelers + 1) / 2);
 
         return List.of(
-                hotelOffer(request, "TripMate Stay Sandbox", "Budget Room", new BigDecimal("1900"), nights, rooms, false, "BUDGET", 5),
-                hotelOffer(request, "TripMate Stay Sandbox", "Comfort Room", new BigDecimal("2800"), nights, rooms, true, "STANDARD", 8),
-                hotelOffer(request, "TripMate Resort Sandbox", "Deluxe Room", new BigDecimal("3600"), nights, rooms, true, "DELUXE", 4),
-                hotelOffer(request, "TripMate Resort Sandbox", "Premium Room", new BigDecimal("4200"), nights, rooms, true, "PREMIUM", 3),
-                hotelOffer(request, "TripMate Luxury Sandbox", "Suite", new BigDecimal("6800"), nights, rooms, true, "SUITE", 2)
+                hotelOffer(request, "Suttru Stay Sandbox", "Budget Room", new BigDecimal("1900"), nights, rooms, false, "BUDGET", 5),
+                hotelOffer(request, "Suttru Stay Sandbox", "Comfort Room", new BigDecimal("2800"), nights, rooms, true, "STANDARD", 8),
+                hotelOffer(request, "Suttru Resort Sandbox", "Deluxe Room", new BigDecimal("3600"), nights, rooms, true, "DELUXE", 4),
+                hotelOffer(request, "Suttru Resort Sandbox", "Premium Room", new BigDecimal("4200"), nights, rooms, true, "PREMIUM", 3),
+                hotelOffer(request, "Suttru Luxury Sandbox", "Suite", new BigDecimal("6800"), nights, rooms, true, "SUITE", 2)
         );
     }
 
@@ -297,10 +297,10 @@ public class SandboxBookingProvider implements BookingProvider {
 
         int travelers = request.travelers() != null ? request.travelers() : 1;
         return List.of(
-                activityOffer(request, "TripMate Activities Sandbox", "City Highlights Experience", new BigDecimal("750"), travelers, true, "SIGHTSEEING"),
-                activityOffer(request, "TripMate Activities Sandbox", "Adventure Experience", new BigDecimal("1250"), travelers, false, "ADVENTURE"),
-                activityOffer(request, "TripMate Local Sandbox", "Food & Culture Walk", new BigDecimal("950"), travelers, true, "CULTURE"),
-                activityOffer(request, "TripMate Local Sandbox", "Sunset Experience", new BigDecimal("650"), travelers, false, "LEISURE")
+                activityOffer(request, "Suttru Activities Sandbox", "City Highlights Experience", new BigDecimal("750"), travelers, true, "SIGHTSEEING"),
+                activityOffer(request, "Suttru Activities Sandbox", "Adventure Experience", new BigDecimal("1250"), travelers, false, "ADVENTURE"),
+                activityOffer(request, "Suttru Local Sandbox", "Food & Culture Walk", new BigDecimal("950"), travelers, true, "CULTURE"),
+                activityOffer(request, "Suttru Local Sandbox", "Sunset Experience", new BigDecimal("650"), travelers, false, "LEISURE")
         );
     }
 

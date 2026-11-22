@@ -14,7 +14,7 @@
             <path d="M12 2 2 12h3v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8h3L12 2zm0 3.828L18 11.8v7.2H6v-7.2l6-5.972z"/>
           </svg>
         </div>
-        <span class="brand__name">TripMate</span>
+        <span class="brand__name">Suttru</span>
       </div>
 
       <div class="hero-text">
@@ -56,7 +56,7 @@
     <div class="auth-card">
       <div class="auth-header">
         <span class="eyebrow">WELCOME BACK</span>
-        <h2>Sign in to TripMate</h2>
+        <h2>Sign in to Suttru</h2>
         <p class="subtitle">Enter your credentials to access your account</p>
       </div>
 
@@ -152,7 +152,7 @@
         <button type="submit" class="submit-btn" [disabled]="loginForm.invalid || isLoading">
           @if (isLoading) {
             <span class="spinner"></span>
-            <span>Signing In...</span>
+            <span>{{ readiness.connecting() ? 'Connecting to Suttru…' : 'Signing In...' }}</span>
           } @else {
             <span>Sign In to Account</span>
             <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -161,12 +161,18 @@
             </svg>
           }
         </button>
+        @if (isLoading && slowLogin) {
+          <div class="connection-recovery" role="status">
+            <p>{{ readiness.connecting() ? 'Suttru is starting up. Sign-in will continue automatically when it is ready.' : 'Still connecting. You can cancel and try again.' }}</p>
+            <button type="button" (click)="cancelLogin()">Cancel sign-in</button>
+          </div>
+        }
       </form>
 
       <!-- Footer Link -->
       <div class="auth-footer">
         <span>Don't have an account yet?</span>
-        <a routerLink="/register" class="register-link">Create an account</a>
+        <a routerLink="/register" [queryParams]="{returnUrl}" class="register-link">Create an account</a>
       </div>
     </div>
   </section>

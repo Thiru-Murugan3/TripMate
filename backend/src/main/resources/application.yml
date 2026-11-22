@@ -39,7 +39,7 @@ brevo:
   api-url: ${BREVO_API_URL:https://api.brevo.com/v3/smtp/email}
   api-key: ${TRIPMATE_BREVO_API_KEY:${BREVO_API_KEY:}}
   sender-email: ${TRIPMATE_BREVO_SENDER_EMAIL:${BREVO_SENDER_EMAIL:thirumuruganofficial3@gmail.com}}
-  sender-name: ${TRIPMATE_BREVO_SENDER_NAME:${BREVO_SENDER_NAME:TripMate}}
+  sender-name: ${TRIPMATE_BREVO_SENDER_NAME:${BREVO_SENDER_NAME:Suttru}}
 
 app:
   frontend-url: ${APP_FRONTEND_URL:http://localhost:4200}
@@ -57,8 +57,8 @@ storage:
 discovery:
   nominatim-url: ${DISCOVERY_NOMINATIM_URL:https://nominatim.openstreetmap.org}
   photon-url: ${DISCOVERY_PHOTON_URL:https://photon.komoot.io}
-  overpass-urls: ${DISCOVERY_OVERPASS_URLS:${DISCOVERY_OVERPASS_URL:https://overpass-api.de/api/interpreter,https://maps.mail.ru/osm/tools/overpass/api/interpreter,https://overpass.private.coffee/api/interpreter}}
-  user-agent: ${DISCOVERY_USER_AGENT:TripMate/1.0 (+https://github.com/Thiru-Murugan3/TripMate)}
+  overpass-urls: ${DISCOVERY_OVERPASS_URLS:${DISCOVERY_OVERPASS_URL:}}
+  user-agent: ${DISCOVERY_USER_AGENT:Suttru/1.0 (+https://github.com/Thiru-Murugan3/TripMate)}
   connect-timeout-ms: ${DISCOVERY_CONNECT_TIMEOUT_MS:8000}
   read-timeout-ms: ${DISCOVERY_READ_TIMEOUT_MS:35000}
   cache-minutes: ${DISCOVERY_CACHE_MINUTES:60}
@@ -66,12 +66,33 @@ discovery:
   price-cache-minutes: ${DISCOVERY_PRICE_CACHE_MINUTES:60}
   geocode-cache-hours: ${DISCOVERY_GEOCODE_CACHE_HOURS:24}
   price-verification-days: ${DISCOVERY_PRICE_VERIFICATION_DAYS:30}
-  max-results: ${DISCOVERY_MAX_RESULTS:200}
+  max-results: ${DISCOVERY_MAX_RESULTS:500}
   wikipedia-url: ${DISCOVERY_WIKIPEDIA_URL:https://en.wikipedia.org}
   wikidata-url: ${DISCOVERY_WIKIDATA_URL:https://www.wikidata.org}
+  tripadvisor:
+    api-mode: ${TRIPADVISOR_API_MODE:LEGACY}
+    terra-entity-limit: ${TRIPADVISOR_TERRA_ENTITY_LIMIT:0}
+    api-key: ${TRIPADVISOR_API_KEY:}
+    referer: ${TRIPADVISOR_REFERER:${APP_FRONTEND_URL:https://www.suttru.in}}
+    daily-limit: ${TRIPADVISOR_DAILY_LIMIT:100}
+    monthly-limit: ${TRIPADVISOR_MONTHLY_LIMIT:4000}
+  opentripmap:
+    enabled: ${DISCOVERY_OPENTRIPMAP_ENABLED:false}
+    api-key: ${DISCOVERY_OPENTRIPMAP_API_KEY:}
   geoapify:
     url: ${DISCOVERY_GEOAPIFY_URL:https://api.geoapify.com}
     api-key: ${DISCOVERY_GEOAPIFY_API_KEY:}
+
+ai-images:
+  # Labelled AI illustrations for places with no real photo. Off unless enabled AND a key is set.
+  enabled: ${AI_IMAGES_ENABLED:false}
+  # "pollinations" = free, no key (default). "openai" = paid, needs OPENAI_API_KEY.
+  provider: ${AI_IMAGES_PROVIDER:pollinations}
+  openai-api-key: ${OPENAI_API_KEY:}
+  model: ${AI_IMAGES_MODEL:gpt-image-1}
+  quality: ${AI_IMAGES_QUALITY:low}
+  size: ${AI_IMAGES_SIZE:1536x1024}
+  daily-limit: ${AI_IMAGES_DAILY_LIMIT:50}
 
 weather:
   geocoding-url: ${WEATHER_GEOCODING_URL:https://geocoding-api.open-meteo.com/v1/search}
@@ -98,3 +119,8 @@ jwt:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+flight-alerts:
+  enabled: ${FLIGHT_ALERTS_ENABLED:false}
+  api-key: ${FLIGHTAWARE_API_KEY:}
+  daily-request-limit: ${FLIGHT_ALERTS_DAILY_REQUEST_LIMIT:200}

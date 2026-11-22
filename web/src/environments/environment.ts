@@ -12,6 +12,6 @@ export const environment = {
   production: true,
   // Use a runtime-configured public backend URL when frontend/backend are
   // deployed separately. If omitted, production expects /api/v1 to be
-  // reverse-proxied to the TripMate backend on the same public origin.
+  // reverse-proxied to the Suttru backend on the same public origin.
   apiUrl: runtimeApiUrl || '/api/v1'
 };

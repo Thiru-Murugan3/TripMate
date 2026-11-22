@@ -165,4 +165,31 @@ class ExpenseServiceTest {
         assertEquals(30.0, summary.budgetUtilizationPercentage());
         assertEquals(new BigDecimal("3000.00"), summary.categoryBreakdown().get(ExpenseCategory.HOTEL));
     }
+
+    @Test void expenseManagerCanCreateForeignExpenseWithBalancedPercentageSplits() {
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+        when(tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(10L, 2L, MemberStatus.ACTIVE))
+                .thenReturn(Optional.of(TripMember.builder().user(memberUser).role(TripRole.EXPENSE_MANAGER).build()));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(memberUser));
+        when(userRepository.findAllById(anySet())).thenReturn(List.of(owner, memberUser));
+        when(expenseRepository.save(any(Expense.class))).thenAnswer(i -> i.getArgument(0));
+        var details = List.of(new CreateExpenseRequest.SplitDetail(1L, null, new BigDecimal("50")),
+                new CreateExpenseRequest.SplitDetail(2L, null, new BigDecimal("50")));
+        var response = expenseService.createExpense(10L, 2L, new CreateExpenseRequest("Tickets",
+                BigDecimal.ONE, ExpenseCategory.TICKETS, LocalDate.now(), 2L, SplitType.PERCENTAGE,
+                details, null, "USD", new BigDecimal("1"), new BigDecimal("83.01")));
+        assertEquals(new BigDecimal("83.01"), response.amount());
+        assertEquals("USD", response.originalCurrency());
+        assertEquals(response.amount(), response.splits().stream().map(ExpenseSplitResponse::shareAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+    }
+
+    @Test void plannerCannotWriteExpenses() {
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+        when(tripMemberRepository.findByTripIdAndUserIdAndMemberStatus(10L, 2L, MemberStatus.ACTIVE))
+                .thenReturn(Optional.of(TripMember.builder().user(memberUser).role(TripRole.PLANNER).build()));
+        assertEquals(HttpStatus.FORBIDDEN, assertThrows(ResponseStatusException.class,
+                () -> expenseService.createExpense(10L, 2L, null)).getStatusCode());
+        verifyNoInteractions(expenseRepository);
+    }
 }

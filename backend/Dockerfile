@@ -2,11 +2,12 @@ FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
+COPY .mvn ./.mvn
 COPY pom.xml ./
-RUN mvn -B -DskipTests dependency:go-offline
+RUN mvn -B -DskipTests dependency:go-offline || true
 
 COPY src ./src
-RUN mvn -B -DskipTests clean package
+RUN mvn -B -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine
 
@@ -20,4 +21,6 @@ USER tripmate
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/tripmate.jar"]
+# Favor startup on the small CPU allocation used by the sleeping free service.
+# Remove this flag to restore the default full-tier throughput optimization.
+ENTRYPOINT ["java", "-XX:TieredStopAtLevel=1", "-jar", "/app/tripmate.jar"]

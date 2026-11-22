@@ -1,3 +1,4 @@
+import { currentPosition } from '../../core/utils/device-access';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -9,7 +10,7 @@ import {
   inject
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
 
 import {
@@ -28,26 +29,25 @@ import { Trip } from '../../core/models/trip.model';
 import { DiscoveryService } from '../../core/services/discovery.service';
 import { ItineraryService } from '../../core/services/itinerary.service';
 import { PlaceService } from '../../core/services/place.service';
+import { IndiaCatalogueComponent } from '../india-catalogue/india-catalogue.component';
+import { DestinationOverviewComponent, DestinationPhoto } from './destination-overview.component';
+import { destinationPhotography } from './destination-photography';
+import { CataloguePlace } from '../india-catalogue/india-catalogue.service';
+import { PlanningPlace, catalogueKey, cataloguePlanningPlace } from '../india-catalogue/catalogue-selection';
 import { TripService } from '../../core/services/trip.service';
 
 @Component({
   selector: 'app-destination-discovery',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink, IndiaCatalogueComponent, DestinationOverviewComponent],
   template: `
     <section class="discover-page">
       <div class="discover-hero">
         <div>
-          <span class="eyebrow">DESTINATION DISCOVERY</span>
-          <h2>Explore {{ searchDestination || 'your destination' }}</h2>
-          <p>
-            Search any city, town or destination even when you are only browsing. A trip is optional
-            and is needed only when you want to save places or add them to an itinerary.
-          </p>
+          <span class="guide-breadcrumb">India <span aria-hidden="true">›</span> {{ searchDestination || 'Discover your next destination' }}</span>
         </div>
-        <div class="hero-icon">
-          <span class="material-symbols-outlined">travel_explore</span>
-        </div>
+        <a *ngIf="!catalogueOnly" routerLink="/explore/india">Browse by state →</a>
+        <a *ngIf="catalogueOnly" routerLink="/explore">Back to destination discovery</a>
       </div>
 
       <div class="search-panel">
@@ -60,7 +60,7 @@ import { TripService } from '../../core/services/trip.service';
             </option>
           </select>
           <button
-            *ngIf="selectedTrip as trip"
+            *ngIf="!catalogueOnly && selectedTrip as trip"
             type="button"
             class="use-trip-link"
             (click)="useTripDestination(trip)"
@@ -69,7 +69,7 @@ import { TripService } from '../../core/services/trip.service';
           </button>
         </label>
 
-        <div class="field destination-field">
+        <div *ngIf="!catalogueOnly" class="field destination-field">
           <span>Destination</span>
           <div class="destination-input-row">
             <input
@@ -93,7 +93,7 @@ import { TripService } from '../../core/services/trip.service';
           </div>
         </div>
 
-        <label class="field">
+        <label *ngIf="!catalogueOnly" class="field">
           <span>Category</span>
           <select [(ngModel)]="category" [ngModelOptions]="{ standalone: true }">
             <option *ngFor="let item of categories" [value]="item">
@@ -103,6 +103,7 @@ import { TripService } from '../../core/services/trip.service';
         </label>
 
         <button
+          *ngIf="!catalogueOnly"
           type="button"
           class="btn primary search-btn"
           [disabled]="isLoading || searchDestination.trim().length < 2"
@@ -113,21 +114,14 @@ import { TripService } from '../../core/services/trip.service';
         </button>
       </div>
 
-      <nav class="type-tabs" aria-label="Catalogue type">
-        <button *ngFor="let tab of itemTypeTabs" type="button" [class.active]="itemTypeFilter === tab.value" (click)="selectItemType(tab.value)">
+      <nav *ngIf="!catalogueOnly" class="type-tabs" aria-label="Catalogue type">
+        <button *ngFor="let tab of itemTypeTabs" type="button" [class.active]="itemTypeFilter === tab.value" [attr.aria-pressed]="itemTypeFilter === tab.value" (click)="selectItemType(tab.value)">
           <span class="material-symbols-outlined">{{ tab.icon }}</span>{{ tab.label }}
         </button>
       </nav>
 
-      <div *ngIf="!embeddedMode" class="casual-search-note">
-        <span class="material-symbols-outlined">public</span>
-        <div>
-          <strong>Browse any destination</strong>
-          <span>
-            Search first, select the places you like, then choose an editable trip only when you are ready to add them.
-          </span>
-        </div>
-      </div>
+      <app-destination-overview *ngIf="!catalogueOnly && !showCatalogueFallback && !isLoading"
+        [title]="guideTitle" [photos]="destinationPhotos" />
 
       <div *ngIf="errorMessage" class="message error">
         <span class="material-symbols-outlined">error</span>
@@ -150,19 +144,23 @@ import { TripService } from '../../core/services/trip.service';
         </div>
       </div>
 
-      <div *ngIf="result as data" class="results-container">
-        <div *ngIf="data.warnings?.length" class="data-warning">
-          <span class="material-symbols-outlined">info</span>
-          <div>
-            <strong>Live source coverage can vary</strong>
-            <span *ngFor="let warning of data.warnings">{{ warning }}</span>
-          </div>
-        </div>
+      <app-india-catalogue *ngIf="catalogueOnly || showCatalogueFallback" [embedded]="true" [destination]="catalogueOnly ? '' : catalogueDestination"
+        [discoveryCategory]="catalogueOnly ? 'ALL' : category"
+        [selectable]="canSelectPlaces" [saving]="isSaving" [selectedIds]="selectedIds"
+        [dayNumbers]="activeTripId > 0 ? availableDayNumbers : []" [dayAssignments]="dayAssignments"
+        (selectionChange)="selectCataloguePlace($event)" (dayChange)="setCatalogueDay($event)" (scopeChange)="changeCatalogueScope($event)" />
+
+      <div *ngIf="displayedResult as data" class="results-container">
+        <div class="essential-heading"><h2>Essential {{ guideTitle }}</h2></div>
+        <nav class="interest-chips" aria-label="Explore interests">
+          <button *ngFor="let interest of guideInterests" type="button" [class.active]="category === interest.value" [attr.aria-pressed]="category === interest.value"
+            (click)="chooseInterest(interest.value)">{{ interest.label }}</button>
+        </nav>
 
         <div class="result-toolbar">
           <div>
-            <h3>Found {{ data.resultCount }} tourist places & activities in {{ data.query }}</h3>
-            <p>Select places to add to your saved list or trip itinerary.</p>
+            <h3>{{ data.resultCount }} nearby places & activities</h3>
+
           </div>
 
           <label class="local-filter">
@@ -176,7 +174,7 @@ import { TripService } from '../../core/services/trip.service';
           </label>
         </div>
 
-        <button type="button" class="mobile-filter-toggle" (click)="filtersOpen = !filtersOpen">
+        <button type="button" class="mobile-filter-toggle" (click)="filtersOpen = !filtersOpen" [attr.aria-expanded]="filtersOpen">
           <span class="material-symbols-outlined">tune</span> Filters
         </button>
 
@@ -217,9 +215,11 @@ import { TripService } from '../../core/services/trip.service';
           <p>Try searching another category or clearing your filter text.</p>
         </div>
 
-        <div class="places-grid">
+        <section *ngFor="let section of discoverySections; trackBy: trackSection" class="guide-section" [attr.aria-label]="section.title">
+        <div class="section-heading"><h3>{{ section.title }}</h3><button type="button" (click)="selectItemType(section.type)">See all</button></div>
+        <div class="places-grid" tabindex="0" [attr.aria-label]="section.title + ' places'">
           <article
-            *ngFor="let place of filteredPlaces; trackBy: trackPlace"
+            *ngFor="let place of section.places; trackBy: trackPlace"
             class="place-card"
             [class.selected]="isSelected(place)"
             [class.saved]="isAlreadySaved(place)"
@@ -244,6 +244,7 @@ import { TripService } from '../../core/services/trip.service';
                   [checked]="isSelected(place)"
                   [disabled]="isSaving"
                   (change)="toggleSelection(place)"
+                  [attr.aria-label]="'Select ' + place.name"
                 />
               </label>
             </div>
@@ -260,6 +261,7 @@ import { TripService } from '../../core/services/trip.service';
                   Saved
                 </span>
               </div>
+              <p *ngIf="place.rating != null" class="place-rating"><span aria-hidden="true">●</span> {{ place.rating | number:'1.0-1' }}<span *ngIf="place.ratingCount != null"> ({{ place.ratingCount }})</span><small> · {{ place.sourceName || data.provider }}</small></p>
 
               <div class="meta-row">
                 <span *ngIf="place.city || place.district">
@@ -284,28 +286,6 @@ import { TripService } from '../../core/services/trip.service';
                 </span>
               </div>
 
-              <p class="description">{{ place.description || 'Details are not available from the source.' }}</p>
-
-              <p *ngIf="place.openingHours" class="opening-hours">
-                <span class="material-symbols-outlined">schedule</span>
-                {{ place.openingHours }}
-              </p>
-              <p *ngIf="place.openNow != null" class="open-status" [class.open]="place.openNow">
-                {{ place.openNow ? 'Open now' : 'Closed now' }}
-              </p>
-
-              <div class="source-row">
-                <span>
-                  Source: {{ place.sourceName || data.provider }}
-                  <ng-container *ngIf="place.sourceLastCheckedAt">
-                    · checked {{ place.sourceLastCheckedAt | date:'mediumDate' }}
-                  </ng-container>
-                </span>
-                <span *ngIf="place.confidenceScore != null">
-                  {{ place.confidenceScore * 100 | number:'1.0-0' }}% data confidence
-                </span>
-              </div>
-
               <div class="card-actions">
                 <div class="quick-actions">
                   <button type="button" class="card-action secondary-action" (click)="openDetails(place)">
@@ -324,7 +304,7 @@ import { TripService } from '../../core/services/trip.service';
                   </button>
                 </div>
 
-                <div *ngIf="place.officialWebsite || place.website || place.bookingUrl" class="provider-actions">
+                <details *ngIf="place.officialWebsite || place.website || place.bookingUrl" class="provider-links"><summary>Provider links</summary><div class="provider-actions">
                   <a
                     *ngIf="place.officialWebsite || place.website"
                     class="provider-action"
@@ -341,7 +321,7 @@ import { TripService } from '../../core/services/trip.service';
                     <span>Book with provider</span>
                     <span class="material-symbols-outlined external-icon">open_in_new</span>
                   </a>
-                </div>
+                </div></details>
 
                 <div *ngIf="canSelectPlaces" class="trip-actions">
                   <button
@@ -351,7 +331,7 @@ import { TripService } from '../../core/services/trip.service';
                     (click)="addPlaceToItinerary(place)"
                   >
                     <span class="material-symbols-outlined">event_note</span>
-                    <span>{{ isAlreadySaved(place) ? 'Add saved place to itinerary' : 'Add to itinerary' }}</span>
+                    <span>Add to itinerary</span>
                   </button>
                 </div>
               </div>
@@ -374,6 +354,7 @@ import { TripService } from '../../core/services/trip.service';
             </div>
           </article>
         </div>
+        </section>
 
         <div *ngIf="(data.totalPages || 0) > 1" class="pagination">
           <button type="button" [disabled]="(data.page || 0) === 0 || isLoading" (click)="changePage((data.page || 0) - 1)">← Previous</button>
@@ -382,6 +363,7 @@ import { TripService } from '../../core/services/trip.service';
         </div>
           </main>
         </div>
+      </div>
 
         <div
           *ngIf="canSelectPlaces && selectedCount > 0"
@@ -406,7 +388,7 @@ import { TripService } from '../../core/services/trip.service';
             </select>
           </label>
 
-          <div *ngIf="activeTripId > 0" class="plan-buttons">
+          <div *ngIf="activeTripId > 0 && !hasCatalogueSelection" class="plan-buttons">
             <span>Suggested:</span>
             <button type="button" (click)="applySuggestedPlan(1)">1 Day</button>
             <button type="button" (click)="applySuggestedPlan(2)">2 Days</button>
@@ -432,7 +414,6 @@ import { TripService } from '../../core/services/trip.service';
             </button>
           </div>
         </div>
-      </div>
 
       <div *ngIf="selectedDetail as place" class="detail-backdrop" (click)="closeDetails()">
         <article class="detail-dialog" role="dialog" aria-modal="true" [attr.aria-label]="place.name" (click)="$event.stopPropagation()">
@@ -472,6 +453,8 @@ import { TripService } from '../../core/services/trip.service';
               <div *ngIf="place.accessibilityInformation"><dt>Accessibility</dt><dd>{{ place.accessibilityInformation }}</dd></div>
               <div *ngIf="place.contactPhone"><dt>Contact</dt><dd><a [href]="'tel:' + place.contactPhone">{{ place.contactPhone }}</a></dd></div>
               <div *ngIf="place.cancellationInformation"><dt>Cancellation</dt><dd>{{ place.cancellationInformation }}</dd></div>
+              <div *ngIf="place.openNow != null"><dt>Status</dt><dd>{{ place.openNow ? 'Open now' : 'Closed now' }}</dd></div>
+              <div *ngIf="place.confidenceScore != null"><dt>Data confidence</dt><dd>{{ place.confidenceScore * 100 | number:'1.0-0' }}%</dd></div>
               <div><dt>Source</dt><dd>{{ place.sourceName || result?.provider }}</dd></div>
               <div *ngIf="place.sourceLastCheckedAt"><dt>Last checked</dt><dd>{{ place.sourceLastCheckedAt | date:'medium' }}</dd></div>
             </dl>
@@ -493,215 +476,7 @@ import { TripService } from '../../core/services/trip.service';
       </div>
     </section>
   `,
-  styles: [`
-    :host { display:block; }
-    .image-credit, figcaption { font-size:.7rem; color:#475569; margin:.35rem .6rem; }
-    .image-credit a, figcaption a { color:inherit; }
-    .detail-gallery figure { margin:0; min-width:0; overflow:auto; }
-    .detail-gallery figure img { width:100%; height:75%; object-fit:cover; }
-    @media(max-width:700px) { .detail-gallery figure:not(:first-child) { display:none; } }
-    .discover-page { color:#0f172a; }
-    .discover-hero { display:flex; justify-content:space-between; gap:1rem; padding:1.2rem; margin-bottom:1rem; border:1px solid #dbeafe; border-radius:16px; background:linear-gradient(135deg,#eff6ff,#f8fafc); }
-    .discover-hero h2 { margin:.2rem 0 .35rem; font-size:1.3rem; }
-    .discover-hero p { max-width:720px; margin:0; color:#64748b; font-size:.82rem; line-height:1.55; }
-    .eyebrow { color:#2563eb; font-size:.66rem; font-weight:900; letter-spacing:.09em; }
-    .hero-icon { display:grid; place-items:center; min-width:64px; height:64px; border-radius:16px; color:#fff; background:#2563eb; box-shadow:0 12px 26px rgba(37,99,235,.25); }
-    .hero-icon .material-symbols-outlined { font-size:2rem; }
-
-    .search-panel { display:grid; grid-template-columns:minmax(180px,1.5fr) minmax(130px,.7fr) minmax(160px,.8fr) auto; gap:.7rem; align-items:end; padding:1rem; margin-bottom:1rem; border:1px solid #e2e8f0; border-radius:14px; background:#fff; }
-    .search-panel:has(.trip-field) { grid-template-columns:minmax(180px,1fr) minmax(200px,1.4fr) minmax(120px,.6fr) minmax(150px,.7fr) auto; }
-    .field { display:flex; flex-direction:column; gap:.3rem; color:#475569; font-size:.7rem; font-weight:800; }
-    .field small { color:#94a3b8; font-size:.62rem; font-weight:700; }
-    .use-trip-link { align-self:flex-start; padding:0; border:0; color:#2563eb; background:transparent; font-size:.62rem; font-weight:800; cursor:pointer; text-align:left; }
-    .use-trip-link:hover { text-decoration:underline; }
-    .field input,.field select { min-width:0; padding:.68rem .72rem; border:1px solid #cbd5e1; border-radius:9px; color:#0f172a; background:#fff; font:inherit; font-weight:600; }
-    .field input:focus,.field select:focus { outline:2px solid #bfdbfe; border-color:#2563eb; }
-    .destination-field { position:relative; }
-    .destination-input-row { display:flex; gap:.35rem; }
-    .destination-input-row input { flex:1; }
-    .location-button { display:grid; place-items:center; width:42px; border:1px solid #bfdbfe; border-radius:9px; color:#2563eb; background:#eff6ff; cursor:pointer; }
-    .suggestions { position:absolute; top:100%; left:0; right:0; z-index:60; overflow:hidden; margin-top:.25rem; border:1px solid #cbd5e1; border-radius:9px; background:#fff; box-shadow:0 14px 30px rgba(15,23,42,.16); }
-    .suggestions button { display:flex; width:100%; gap:.45rem; padding:.6rem; border:0; border-bottom:1px solid #f1f5f9; background:#fff; text-align:left; cursor:pointer; }
-    .suggestions button:hover { background:#eff6ff; }
-    .suggestions span:last-child { display:flex; flex-direction:column; }
-    .suggestions small { color:#64748b; font-size:.58rem; }
-    .btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; padding:.68rem .85rem; border:0; border-radius:9px; font-weight:850; cursor:pointer; }
-    .btn.primary { color:#fff; background:#2563eb; }
-    .btn.secondary { color:#334155; background:#e2e8f0; }
-    .btn:disabled { opacity:.55; cursor:not-allowed; }
-    .search-btn { min-height:41px; white-space:nowrap; }
-    .type-tabs { display:flex; gap:.4rem; overflow-x:auto; padding:.35rem 0 .9rem; scrollbar-width:thin; }
-    .type-tabs button { display:inline-flex; align-items:center; gap:.28rem; flex:0 0 auto; padding:.48rem .7rem; border:1px solid #cbd5e1; border-radius:999px; color:#475569; background:#fff; font-size:.68rem; font-weight:800; cursor:pointer; }
-    .type-tabs button.active { color:#fff; border-color:#2563eb; background:#2563eb; }
-    .type-tabs .material-symbols-outlined { font-size:.9rem; }
-
-    .casual-search-note,.browse-only-banner { display:flex; align-items:flex-start; gap:.55rem; padding:.75rem .9rem; margin-bottom:.7rem; border:1px solid #dbeafe; border-radius:10px; color:#1e3a8a; background:#eff6ff; font-size:.73rem; }
-    .casual-search-note div,.browse-only-banner div { display:flex; flex-direction:column; gap:.12rem; }
-    .casual-search-note .material-symbols-outlined,.browse-only-banner .material-symbols-outlined { color:#2563eb; font-size:1rem; }
-    .message { display:flex; gap:.55rem; align-items:center; padding:.75rem .9rem; margin-bottom:1rem; border-radius:10px; font-size:.78rem; }
-    .message div { display:flex; flex-direction:column; gap:.1rem; }
-    .message.error { color:#991b1b; background:#fef2f2; border:1px solid #fecaca; }
-    .message.success { color:#166534; background:#f0fdf4; border:1px solid #bbf7d0; }
-    .data-warning { display:flex; align-items:flex-start; gap:.55rem; padding:.72rem .85rem; margin-bottom:.8rem; border:1px solid #fde68a; border-radius:10px; color:#854d0e; background:#fffbeb; font-size:.7rem; }
-    .data-warning div { display:flex; flex-direction:column; gap:.16rem; }
-    .data-warning .material-symbols-outlined { font-size:1rem; }
-
-    .loading-card,.empty-state { display:flex; align-items:center; justify-content:center; gap:.8rem; min-height:190px; padding:1.2rem; border:1px solid #e2e8f0; border-radius:14px; background:#fff; text-align:center; }
-    .loading-card p { margin:.2rem 0 0; color:#64748b; font-size:.76rem; }
-    .spinner { width:30px; height:30px; border:3px solid #dbeafe; border-top-color:#2563eb; border-radius:50%; animation:spin .75s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .empty-state { flex-direction:column; }
-    .empty-state .material-symbols-outlined { color:#93c5fd; font-size:2.7rem; }
-    .empty-state h3,.empty-state p { margin:0; }
-    .empty-state p { color:#64748b; font-size:.8rem; }
-
-    .result-toolbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.85rem; }
-    .result-toolbar h3 { margin:0; font-size:1rem; }
-    .result-toolbar p { margin:.2rem 0 0; color:#64748b; font-size:.7rem; }
-    .local-filter { display:flex; align-items:center; gap:.4rem; min-width:260px; padding:.55rem .65rem; border:1px solid #cbd5e1; border-radius:9px; background:#fff; }
-    .local-filter .material-symbols-outlined { color:#94a3b8; font-size:1rem; }
-    .local-filter input { width:100%; border:0; outline:0; font:inherit; }
-    .catalogue-layout { display:grid; grid-template-columns:220px minmax(0,1fr); gap:.85rem; }
-    .catalogue-filters { display:flex; flex-direction:column; gap:.65rem; align-self:start; padding:.8rem; border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; }
-    .filter-heading { display:flex; align-items:center; justify-content:space-between; }
-    .filter-heading button { padding:0; border:0; color:#2563eb; background:transparent; font-size:.65rem; font-weight:800; cursor:pointer; }
-    .catalogue-filters label { display:flex; flex-direction:column; gap:.25rem; color:#64748b; font-size:.65rem; font-weight:750; }
-    .catalogue-filters select,.catalogue-filters input { min-width:0; padding:.45rem .5rem; border:1px solid #cbd5e1; border-radius:7px; color:#334155; background:#fff; font-size:.67rem; }
-    .catalogue-filters input[type=range] { padding:0; }
-    .catalogue-filters .check-filter { flex-direction:row; align-items:center; }
-    .catalogue-filters .check-filter input { width:auto; }
-    .range-row { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; }
-    .apply-filter { width:100%; }
-    .catalogue-main { min-width:0; }
-    .sort-filter { display:flex; justify-content:flex-end; align-items:center; gap:.4rem; margin-bottom:.65rem; color:#64748b; font-size:.67rem; }
-    .sort-filter select { padding:.42rem .5rem; border:1px solid #cbd5e1; border-radius:7px; background:#fff; }
-    .mobile-filter-toggle { display:none; }
-
-    .places-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.85rem; padding-bottom:90px; }
-    .place-card { overflow:hidden; border:1px solid #e2e8f0; border-radius:14px; background:#fff; box-shadow:0 6px 18px rgba(15,23,42,.04); transition:.18s ease; }
-    .place-card:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(15,23,42,.08); }
-    .place-card.selected { border-color:#60a5fa; box-shadow:0 0 0 2px #dbeafe; }
-    .place-card.saved { border-color:#bbf7d0; }
-    .media { position:relative; height:145px; overflow:hidden; background:#f1f5f9; }
-    .media img { width:100%; height:100%; object-fit:cover; }
-    .image-fallback { display:grid; place-items:center; width:100%; height:100%; color:#2563eb; background:linear-gradient(135deg,#dbeafe,#eff6ff); }
-    .image-fallback .material-symbols-outlined { font-size:2.4rem; }
-    .category-badge { position:absolute; left:.65rem; bottom:.6rem; padding:.25rem .48rem; border-radius:999px; color:#fff; background:rgba(15,23,42,.78); backdrop-filter:blur(5px); font-size:.6rem; font-weight:850; }
-    .activity-type-badge { position:absolute; left:.65rem; top:.6rem; padding:.25rem .48rem; border-radius:999px; color:#fff; background:rgba(37,99,235,.9); backdrop-filter:blur(5px); font-size:.6rem; font-weight:850; }
-    .verification-badge { position:absolute; right:.6rem; bottom:.6rem; padding:.24rem .42rem; border-radius:999px; color:#334155; background:rgba(255,255,255,.92); font-size:.56rem; font-weight:850; }
-    .verification-badge.verified { color:#166534; background:#dcfce7; }
-    .verification-badge.expired { color:#92400e; background:#fef3c7; }
-    .select-box { position:absolute; top:.6rem; right:.6rem; display:grid; place-items:center; width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,.92); box-shadow:0 2px 8px rgba(15,23,42,.15); cursor:pointer; }
-    .select-box input { width:17px; height:17px; accent-color:#2563eb; }
-    .place-body { padding:.9rem; }
-    .title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; }
-    .title-row h3 { margin:0; font-size:.91rem; line-height:1.35; }
-    .saved-pill { display:inline-flex; align-items:center; gap:.2rem; flex-shrink:0; padding:.22rem .4rem; border-radius:999px; color:#166534; background:#dcfce7; font-size:.58rem; font-weight:850; }
-    .saved-pill .material-symbols-outlined { font-size:.8rem; }
-    .meta-row { display:flex; flex-wrap:wrap; gap:.7rem; margin:.6rem 0; color:#64748b; font-size:.67rem; }
-    .meta-row span { display:inline-flex; align-items:center; gap:.2rem; }
-    .meta-row .material-symbols-outlined { color:#2563eb; font-size:.85rem; }
-    .cost-badge { color:#15803d !important; background:#dcfce7; padding:.2rem .45rem; border-radius:6px; font-weight:850; font-size:.68rem; }
-    .cost-badge .material-symbols-outlined { color:#166534 !important; font-size:.85rem; }
-    .description { min-height:42px; margin:.45rem 0; color:#475569; font-size:.72rem; line-height:1.45; }
-    .opening-hours { display:flex; gap:.3rem; align-items:flex-start; color:#64748b; font-size:.66rem; }
-    .opening-hours .material-symbols-outlined { font-size:.8rem; color:#2563eb; }
-    .open-status { margin:.3rem 0; color:#b91c1c; font-size:.64rem; font-weight:850; }
-    .open-status.open { color:#15803d; }
-    .source-row { display:flex; flex-direction:column; gap:.12rem; margin-top:.45rem; color:#64748b; font-size:.58rem; }
-    .card-actions { display:flex; flex-direction:column; gap:.5rem; margin-top:.75rem; padding-top:.7rem; border-top:1px solid #f1f5f9; }
-    .quick-actions,.trip-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.5rem; }
-    .provider-actions { display:flex; flex-wrap:wrap; gap:.35rem .75rem; padding:.1rem .15rem; }
-    .card-action,.provider-action { min-width:0; font:inherit; }
-    .card-action { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:38px; padding:.5rem .6rem; border-radius:9px; font-size:.67rem; font-weight:850; line-height:1.15; white-space:nowrap; cursor:pointer; transition:background-color 150ms ease,border-color 150ms ease,color 150ms ease,transform 150ms ease; }
-    .card-action:hover:not(:disabled) { transform:translateY(-1px); }
-    .card-action .material-symbols-outlined,.provider-action .material-symbols-outlined { flex:0 0 auto; font-size:.92rem; }
-    .card-action .external-icon,.provider-action .external-icon { font-size:.7rem; }
-    .secondary-action { border:1px solid #bfdbfe; color:#1d4ed8; background:#eff6ff; }
-    .secondary-action:hover { border-color:#60a5fa; background:#dbeafe; }
-    .primary-action { border:1px solid #2563eb; color:#fff; background:#2563eb; box-shadow:0 3px 8px rgba(37,99,235,.18); }
-    .primary-action:hover:not(:disabled) { border-color:#1d4ed8; background:#1d4ed8; }
-    .trip-actions .full-action { grid-column:1/-1; }
-    .card-action:focus-visible,.provider-action:focus-visible { outline:3px solid rgba(59,130,246,.25); outline-offset:2px; }
-    .card-action:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; }
-    .provider-action { display:inline-flex; align-items:center; gap:.25rem; color:#2563eb; text-decoration:none; font-size:.63rem; font-weight:800; }
-    .provider-action:hover { color:#1e40af; text-decoration:underline; }
-    .booking-action { color:#7c3aed; }
-    .booking-action:hover { color:#6d28d9; }
-    .free-badge { color:#0369a1 !important; background:#e0f2fe !important; }
-    .unknown-badge { color:#475569 !important; background:#f1f5f9 !important; }
-    .unknown-badge .material-symbols-outlined { color:#64748b !important; }
-    .day-picker { display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-top:.65rem; padding:.5rem .6rem; border-radius:8px; color:#475569; background:#f8fafc; font-size:.67rem; font-weight:800; }
-    .day-picker select { padding:.32rem .42rem; border:1px solid #cbd5e1; border-radius:6px; background:#fff; }
-
-    .selection-bar { position:sticky; bottom:14px; z-index:20; display:flex; align-items:center; gap:1rem; padding:.8rem 1rem; margin-top:-70px; border:1px solid #bfdbfe; border-radius:14px; background:rgba(255,255,255,.96); box-shadow:0 14px 35px rgba(15,23,42,.16); backdrop-filter:blur(10px); }
-    .selection-bar > div:first-child { min-width:180px; }
-    .selection-bar strong { display:block; font-size:.78rem; }
-    .selection-bar span { color:#64748b; font-size:.65rem; }
-    .plan-buttons { display:flex; align-items:center; gap:.35rem; margin-left:auto; }
-    .plan-buttons button { border:1px solid #cbd5e1; border-radius:7px; padding:.38rem .52rem; color:#334155; background:#fff; font-size:.64rem; font-weight:800; cursor:pointer; }
-    .plan-buttons button:hover { border-color:#93c5fd; color:#2563eb; }
-    .selection-trip-picker { display:flex; flex-direction:column; gap:.25rem; min-width:165px; color:#475569; font-size:.65rem; font-weight:800; }
-    .selection-trip-picker select { padding:.48rem .55rem; border:1px solid #cbd5e1; border-radius:7px; color:#0f172a; background:#fff; font-size:.7rem; font-weight:700; }
-    .bulk-actions { display:flex; gap:.45rem; }
-    .pagination { display:flex; justify-content:center; align-items:center; gap:.7rem; margin:1rem 0 6rem; color:#64748b; font-size:.7rem; }
-    .pagination button { padding:.45rem .65rem; border:1px solid #cbd5e1; border-radius:7px; color:#2563eb; background:#fff; cursor:pointer; }
-    .pagination button:disabled { opacity:.45; cursor:not-allowed; }
-
-    .detail-backdrop { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:1rem; background:rgba(15,23,42,.62); }
-    .detail-dialog { position:relative; overflow:hidden; width:min(760px,100%); max-height:90vh; overflow-y:auto; border-radius:16px; background:#fff; box-shadow:0 24px 70px rgba(15,23,42,.3); }
-    .detail-gallery { display:grid; grid-template-columns:2fr 1fr 1fr; gap:3px; height:260px; background:#f1f5f9; }
-    .detail-gallery img { width:100%; height:100%; object-fit:cover; min-width:0; }
-    .detail-content { padding:1.2rem; }
-    .detail-content h2 { margin:.25rem 0 .5rem; }
-    .detail-content > p { color:#475569; line-height:1.55; }
-    .detail-content dl { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; margin:1rem 0; }
-    .detail-content dl div { padding:.65rem; border-radius:8px; background:#f8fafc; }
-    .detail-content dt { color:#64748b; font-size:.62rem; font-weight:800; text-transform:uppercase; }
-    .detail-content dd { margin:.2rem 0 0; color:#0f172a; font-size:.75rem; }
-    .price-table { margin:1rem 0; padding:.8rem; border:1px solid #dbeafe; border-radius:10px; }
-    .price-table h3,.detail-lists h3 { margin:0 0 .5rem; font-size:.8rem; }
-    .price-table > div { display:grid; grid-template-columns:1fr auto; gap:.12rem .6rem; padding:.45rem 0; border-bottom:1px solid #f1f5f9; font-size:.7rem; }
-    .price-table small { color:#64748b; }
-    .price-table a { color:#2563eb; text-decoration:none; text-align:right; }
-    .detail-lists { display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; margin:1rem 0; }
-    .detail-lists section { padding:.7rem; border-radius:9px; background:#f8fafc; }
-    .detail-lists ul { margin:0; padding-left:1rem; color:#475569; font-size:.7rem; }
-    .detail-close { position:absolute; top:.7rem; right:.7rem; z-index:1; display:grid; place-items:center; width:34px; height:34px; border:0; border-radius:50%; color:#0f172a; background:rgba(255,255,255,.92); cursor:pointer; }
-    .detail-actions { display:flex; justify-content:flex-end; gap:.5rem; }
-
-    @media(max-width:1080px){
-      .places-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      .catalogue-layout { grid-template-columns:190px minmax(0,1fr); }
-      .search-panel,.search-panel:has(.trip-field) { grid-template-columns:1fr 1fr; }
-      .search-btn { grid-column:1/-1; }
-      .selection-bar { flex-wrap:wrap; }
-      .plan-buttons { margin-left:0; }
-    }
-    @media(max-width:700px){
-      .discover-hero { align-items:flex-start; }
-      .hero-icon { display:none; }
-      .search-panel,.search-panel:has(.trip-field) { grid-template-columns:1fr; }
-      .places-grid { grid-template-columns:1fr; }
-      .result-toolbar { align-items:stretch; flex-direction:column; }
-      .local-filter { min-width:0; }
-      .selection-bar { position:static; margin-top:0; }
-      .selection-bar,.plan-buttons,.bulk-actions { align-items:stretch; flex-direction:column; }
-      .bulk-actions .btn { width:100%; }
-      .catalogue-layout { display:block; }
-      .mobile-filter-toggle { display:inline-flex; align-items:center; gap:.3rem; margin-bottom:.6rem; padding:.5rem .7rem; border:1px solid #cbd5e1; border-radius:8px; background:#fff; }
-      .catalogue-filters { display:none; margin-bottom:.7rem; }
-      .catalogue-filters.open { display:flex; }
-      .detail-gallery { height:190px; grid-template-columns:1fr; }
-      .detail-gallery img:not(:first-child) { display:none; }
-      .detail-content dl { grid-template-columns:1fr; }
-      .detail-lists { grid-template-columns:1fr; }
-      .card-action { min-height:42px; font-size:.72rem; }
-    }
-    @media(max-width:380px){
-      .quick-actions,.trip-actions { grid-template-columns:1fr; }
-    }
-  `]
+  styleUrls: ['./destination-discovery.base.scss', './destination-guide.scss']
 })
 export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   private readonly discoveryService = inject(DiscoveryService);
@@ -715,16 +490,25 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   @Input() startDate = '';
   @Input() endDate = '';
   @Input() canEdit = true;
+  /** The trip's own type; pre-selects the Trip type filter in a trip's Explore tab. */
+  @Input() tripType = '';
+  tripTypeFilter = 'ALL';
+  readonly tripTypeOptions = [
+    { value: 'ALL', label: 'Any trip' }, { value: 'FAMILY', label: 'Family' }, { value: 'FRIENDS', label: 'Friends' },
+    { value: 'COUPLE', label: 'Couple' }, { value: 'SOLO', label: 'Solo' }, { value: 'ADVENTURE', label: 'Adventure' }
+  ] as const;
 
   @Output() placesChanged = new EventEmitter<void>();
   @Output() itineraryChanged = new EventEmitter<void>();
 
   activeTripId = 0;
   searchDestination = '';
+  catalogueDestination = '';
   activeStartDate = '';
   activeEndDate = '';
   availableTrips: Trip[] = [];
 
+  autoAddOnSelect = true;
   radiusKm = 25;
   category: DiscoveryCategory = 'ALL';
   filterText = '';
@@ -752,7 +536,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   selectedDetail: DiscoveredPlace | null = null;
   savedPlaces: Place[] = [];
   selectedIds = new Set<string>();
-  private selectedListings = new Map<string, DiscoveredPlace>();
+  private selectedListings = new Map<string, PlanningPlace>();
   private selectionDestination = '';
   dayAssignments: Record<string, number> = {};
 
@@ -790,11 +574,11 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   ];
 
   readonly itemTypeTabs: Array<{ value: DiscoveryItemType | 'ALL'; label: string; icon: string }> = [
-    { value: 'ALL', label: 'All', icon: 'explore' },
-    { value: 'PLACE', label: 'Places', icon: 'attractions' },
+    { value: 'ALL', label: 'Overview', icon: 'explore' },
+    { value: 'PLACE', label: 'Things to do', icon: 'attractions' },
     { value: 'ACTIVITY', label: 'Activities', icon: 'hiking' },
-    { value: 'FOOD', label: 'Food', icon: 'restaurant' },
-    { value: 'STAY', label: 'Stays', icon: 'hotel' },
+    { value: 'FOOD', label: 'Restaurants', icon: 'restaurant' },
+    { value: 'STAY', label: 'Hotels', icon: 'hotel' },
     { value: 'EVENT', label: 'Events', icon: 'event' },
     { value: 'TOUR_SERVICE', label: 'Tour essentials', icon: 'local_taxi' }
   ];
@@ -805,7 +589,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
   get editableTrips(): Trip[] {
     return this.availableTrips.filter(
-      (trip) => trip.userRole === 'OWNER' || trip.userRole === 'EDITOR'
+      (trip) => trip.userRole === 'OWNER' || trip.userRole === 'EDITOR' || trip.userRole === 'PLANNER'
     );
   }
 
@@ -815,11 +599,71 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
 
   get effectiveCanEdit(): boolean {
     if (this.embeddedMode) return this.canEdit;
-    return this.selectedTrip?.userRole === 'OWNER' || this.selectedTrip?.userRole === 'EDITOR';
+    return this.selectedTrip?.userRole === 'OWNER' || this.selectedTrip?.userRole === 'EDITOR' || this.selectedTrip?.userRole === 'PLANNER';
   }
 
   get canSelectPlaces(): boolean {
     return this.embeddedMode ? this.effectiveCanEdit : this.editableTrips.length > 0;
+  }
+  get catalogueOnly(): boolean { return this.route.snapshot?.data?.['catalogueOnly'] === true; }
+  get guideTitle(): string { return (this.result?.resolvedDestination || this.searchDestination || 'India').split(',')[0].trim(); }
+  get destinationPhotos(): DestinationPhoto[] {
+    const seen = new Set<string>();
+    return [...destinationPhotography(this.guideTitle), ...(this.displayedResult?.places ?? []).flatMap(place => this.creditedImages(place).map(image => ({
+      url:image.url, name:place.name, attribution:image.attribution!, license:image.license!, sourcePage:image.sourcePage!
+    })))].filter(photo => { if(seen.has(photo.url)) return false; seen.add(photo.url); return true; }).slice(0,8);
+  }
+  readonly guideInterests: Array<{label:string;value:DiscoveryCategory}> = [
+    {label:'Essentials',value:'ALL'},{label:'Outdoors',value:'NATURE'},{label:'Museums',value:'MUSEUM'},
+    {label:'History',value:'HISTORICAL'},{label:'Family friendly',value:'FAMILY'}
+  ];
+  chooseInterest(value: DiscoveryCategory): void { this.category=value; this.discover(); }
+  get discoverySections(): Array<{title:string;type:DiscoveryItemType;places:DiscoveredPlace[]}> {
+    const groups: Array<{title:string;type:DiscoveryItemType;places:DiscoveredPlace[]}> = [
+      {title:'Things to do',type:'PLACE',places:[]},{title:'Experiences & activities',type:'ACTIVITY',places:[]},
+      {title:'Places to stay',type:'STAY',places:[]},{title:'Food & drink',type:'FOOD',places:[]},
+      {title:'Events & culture',type:'EVENT',places:[]},{title:'Travel essentials',type:'TOUR_SERVICE',places:[]}
+    ];
+    for (const place of this.filteredPlaces) {
+      const type=place.itemType || (place.saveCategory === 'HOTEL' ? 'STAY' : place.saveCategory === 'RESTAURANT' ? 'FOOD' : place.saveCategory === 'ACTIVITY' ? 'ACTIVITY' : 'PLACE');
+      (groups.find(group=>group.type===type) || groups[0]).places.push(place);
+    }
+    return groups.filter(group=>group.places.length);
+  }
+  trackSection(_:number, section:{type:string}): string { return section.type; }
+  get hasCatalogueSelection(): boolean { return [...this.selectedIds].some(id => id.startsWith('catalogue:')); }
+
+  selectCataloguePlace(event: {place: CataloguePlace; selected: boolean}): void {
+    if (!this.canSelectPlaces || this.isSaving) return;
+    const key = catalogueKey(event.place);
+    if (event.selected) {
+      this.selectedIds.add(key); this.selectedListings.set(key, cataloguePlanningPlace(event.place));
+      this.dayAssignments[key] ||= 1;
+    } else {
+      this.selectedIds.delete(key); this.selectedListings.delete(key); delete this.dayAssignments[key];
+    }
+  }
+  setCatalogueDay(event: {place: CataloguePlace; day: number}): void {
+    if (!this.canSelectPlaces || this.isSaving) return;
+    this.dayAssignments[catalogueKey(event.place)] = Math.min(this.availableDayNumbers.length, Math.max(1,event.day || 1));
+  }
+  changeCatalogueScope(state: string): void {
+    if (this.catalogueOnly) this.searchDestination = state;
+    for (const key of [...this.selectedIds]) if (key.startsWith('catalogue:')) {
+      this.selectedIds.delete(key); this.selectedListings.delete(key); delete this.dayAssignments[key];
+    }
+  }
+
+  // Keep the actionable discovery cards primary. The source catalogue replaces
+  // failed/empty searches rather than creating a second grid on the same page.
+  get showCatalogueFallback(): boolean {
+    return !!this.catalogueDestination && !this.isLoading && !this.result?.places.length
+      && (this.itemTypeFilter === 'ALL' || this.itemTypeFilter === 'PLACE')
+      && this.category !== 'STAY' && this.category !== 'FOOD';
+  }
+
+  get displayedResult(): DestinationDiscoveryResponse | null {
+    return this.isLoading || this.showCatalogueFallback ? null : this.result;
   }
 
   get filteredPlaces(): DiscoveredPlace[] {
@@ -853,10 +697,14 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     return [1, 2, 3];
   }
 
+  /** When false, a trip's destination is only shown as the input hint and nothing is searched automatically. */
+  protected prefillTripDestination = true;
+
   ngOnInit(): void {
+    if (this.tripType) this.tripTypeFilter = this.tripType;
     if (this.embeddedMode) {
       this.activeTripId = this.tripId;
-      this.searchDestination = this.destination;
+      this.searchDestination = this.prefillTripDestination ? this.destination : '';
       this.activeStartDate = this.startDate;
       this.activeEndDate = this.endDate;
       void this.loadSavedPlaces();
@@ -867,6 +715,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     }
 
     this.loadTrips();
+    if (this.catalogueOnly) return;
 
     this.routeSubscription = this.route.queryParams.subscribe((params) => {
       const searchParam = params['search'] || params['q'];
@@ -908,12 +757,9 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   }
 
   useCurrentLocation(): void {
-    if (!navigator.geolocation) {
-      this.errorMessage = 'Current location is not supported by this browser.';
-      return;
-    }
+    if(this.isLocating)return;
     this.isLocating = true;
-    navigator.geolocation.getCurrentPosition(
+    void currentPosition().then(
       (position) => this.discoveryService.reverseGeocode(position.coords.latitude, position.coords.longitude).subscribe({
         next: (location) => {
           this.isLocating = false;
@@ -922,14 +768,13 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.isLocating = false;
-          this.errorMessage = 'TripMate could not resolve this location inside India.';
+          this.errorMessage = 'Suttru could not resolve this location inside India.';
         }
       }),
-      () => {
+      (error) => {
         this.isLocating = false;
-        this.errorMessage = 'Location permission was not granted.';
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        this.errorMessage = error instanceof Error ? error.message : 'Location is unavailable. Choose a place manually.';
+      }
     );
   }
 
@@ -998,7 +843,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
         Math.max(1, this.dayAssignments[externalId] || 1)
       );
     }
-    if (this.selectedIds.size > 0 && this.activeTripId > 0 && this.effectiveCanEdit) {
+    if (this.autoAddOnSelect && this.selectedIds.size > 0 && this.activeTripId > 0 && this.effectiveCanEdit) {
       await this.saveSelected(true);
     }
   }
@@ -1011,6 +856,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   discover(page = 0): void {
     const destination = this.searchDestination.trim();
     if (destination.length < 2) return;
+    this.catalogueDestination = destination;
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -1025,6 +871,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     this.selectionDestination = destination.toLocaleLowerCase();
     this.searchSubscription?.unsubscribe();
     this.searchSubscription = this.discoveryService.discoverPlaces(destination, this.radiusKm, this.category, {
+      name: this.filterText || undefined,
       itemType: this.itemTypeFilter,
       subcategory: this.subcategoryFilter || undefined,
       minPrice: this.minPriceFilter,
@@ -1036,6 +883,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       maxDuration: this.maxDurationFilter,
       minRating: this.minRatingFilter,
       sort: this.sortOrder,
+      tripType: this.tripTypeFilter,
       page,
       size: 24
     }).subscribe({
@@ -1069,7 +917,12 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     }
   }
 
+  cancelDiscoverySearch(): void { this.searchSubscription?.unsubscribe(); this.isLoading = false; this.result = null; }
+
+  clearSelection(): void { this.selectedIds.clear(); this.selectedListings.clear(); this.dayAssignments = {}; }
+
   async toggleSelection(place: DiscoveredPlace): Promise<void> {
+    if (this.isSaving || !this.canSelectPlaces) return;
     if (this.selectedIds.has(place.externalId)) {
       this.selectedIds.delete(place.externalId);
       this.selectedListings.delete(place.externalId);
@@ -1081,7 +934,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     this.selectedListings.set(place.externalId, place);
     this.dayAssignments[place.externalId] = this.dayAssignments[place.externalId] || 1;
 
-    if (this.activeTripId > 0 && this.effectiveCanEdit) {
+    if (this.autoAddOnSelect && this.activeTripId > 0 && this.effectiveCanEdit) {
       await this.saveSelected(true);
       return;
     }
@@ -1112,8 +965,9 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       }
     }
 
-    const remaining = [...this.selectedPlaces()];
-    const routeOrdered: DiscoveredPlace[] = [];
+    const remaining = this.selectedPlaces().filter((place): place is PlanningPlace & {latitude:number;longitude:number} => place.latitude != null && place.longitude != null);
+    const unmapped = this.selectedPlaces().filter(place => place.latitude == null || place.longitude == null);
+    const routeOrdered: PlanningPlace[] = [];
     let current = {
       latitude: Number(this.result?.latitude ?? remaining[0]?.latitude ?? 0),
       longitude: Number(this.result?.longitude ?? remaining[0]?.longitude ?? 0)
@@ -1139,8 +993,9 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       current = { latitude: nearest.latitude, longitude: nearest.longitude };
     }
 
-    const placesPerDay = Math.max(1, Math.ceil(routeOrdered.length / days));
-    routeOrdered.forEach((place, index) => {
+    const ordered = [...routeOrdered, ...unmapped];
+    const placesPerDay = Math.max(1, Math.ceil(ordered.length / days));
+    ordered.forEach((place, index) => {
       this.dayAssignments[place.externalId] = Math.min(days, Math.floor(index / placesPerDay) + 1);
     });
 
@@ -1277,7 +1132,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   }
 
   private async addSelectedToItinerary(
-    selected: DiscoveredPlace[],
+    selected: PlanningPlace[],
     savedMap: Map<string, Place>
   ): Promise<void> {
     const itinerary = await firstValueFrom(this.itineraryService.getItinerary(this.activeTripId));
@@ -1409,7 +1264,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     return utc.toISOString().slice(0, 10);
   }
 
-  private selectedPlaces(): DiscoveredPlace[] {
+  private selectedPlaces(): PlanningPlace[] {
     return [...this.selectedListings.values()].filter(place => this.selectedIds.has(place.externalId));
   }
 
@@ -1417,8 +1272,12 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     return this.findSavedPlace(place) !== undefined;
   }
 
-  private findSavedPlace(place: DiscoveredPlace): Place | undefined {
+  private findSavedPlace(place: PlanningPlace): Place | undefined {
     return this.savedPlaces.find((saved) => {
+      if (place.catalogueNotes) {
+        const recordId = place.externalId.slice('catalogue:'.length);
+        return saved.notes?.split(' · ').includes(`CatalogueRecord=${recordId}`) === true;
+      }
       if (saved.name.trim().toLowerCase() !== place.name.trim().toLowerCase()) return false;
       if (saved.latitude == null || saved.longitude == null) return true;
 
@@ -1427,10 +1286,11 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     });
   }
 
-  private discoveryNotes(place: DiscoveredPlace): string {
+  private discoveryNotes(place: PlanningPlace): string {
+    if (place.catalogueNotes) return place.catalogueNotes;
     const parts = [
-      `Discovered via ${place.sourceName || this.result?.provider || 'TripMate Discovery'} (${place.category})`,
-      `${place.distanceKm.toFixed(1)} km from ${this.searchDestination.trim()}`
+      `Discovered via ${place.sourceName || this.result?.provider || 'Suttru Discovery'} (${place.category})`,
+      ...(place.distanceKm != null ? [`${place.distanceKm.toFixed(1)} km from ${this.searchDestination.trim()}`] : [])
     ];
     if (place.activityType) parts.push(`Activity: ${place.activityType}`);
     if (place.priceStatus === 'FREE') {

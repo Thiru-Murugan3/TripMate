@@ -75,6 +75,8 @@ import { AuthService } from '../../../core/services/auth.service';
     </div>
   `,
   styles: [`
+@use '../../../shared/styles/mobile-auth' as phone;
+
     .auth-container {
       min-height: 80vh;
       display: flex;
@@ -123,6 +125,7 @@ import { AuthService } from '../../../core/services/auth.service';
     @keyframes spin {
       100% { transform: rotate(360deg); }
     }
+  @include phone.screen;
   `]
 })
 export class ResetPasswordComponent implements OnInit {

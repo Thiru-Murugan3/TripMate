@@ -31,8 +31,16 @@ public record CreateExpenseRequest(
 
         List<SplitDetail> splits,
 
-        String notes
+        String notes,
+        String originalCurrency,
+        BigDecimal originalAmount,
+        BigDecimal exchangeRate
 ) {
+    public CreateExpenseRequest(String title, BigDecimal amount, ExpenseCategory category, LocalDate expenseDate,
+            Long paidById, SplitType splitType, List<SplitDetail> splits, String notes) {
+        this(title, amount, category, expenseDate, paidById, splitType, splits, notes, null, null, null);
+    }
+
     public record SplitDetail(
             @NotNull(message = "User ID is required in split")
             Long userId,

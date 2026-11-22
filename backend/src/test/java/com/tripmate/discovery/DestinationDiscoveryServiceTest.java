@@ -23,7 +23,7 @@ class DestinationDiscoveryServiceTest {
                 "https://upload.wikimedia.org/exact.jpg", "https://commons.wikimedia.org/wiki/File:Exact_Monument.jpg",
                 "Wikimedia Commons", "Photographer", "CC BY-SA 4.0", "Photographer", true, true));
         provider = new OverpassDiscoveryProvider(
-                new ProviderHttpClientFactory("TripMate-Test/1.0", 1000, 3000),
+                new ProviderHttpClientFactory("Suttru-Test/1.0", 1000, 3000),
                 new PriceVerificationService(30), new ImageResolverService(commons),
                 mock(WikimediaEnrichmentService.class),
                 "https://overpass.example.test/api/interpreter", 200
@@ -31,6 +31,33 @@ class DestinationDiscoveryServiceTest {
         chennai = new DiscoveryProviderRequest("Chennai",
                 new GeocodedDestination(new BigDecimal("13.0827"), new BigDecimal("80.2707"),
                         "Chennai, Tamil Nadu, India", "Chennai", "Chennai", "Tamil Nadu", "IN", "Test"), 10, null);
+    }
+
+    @Test
+    void adventureQueryIsFocusedAndExplicitActivitiesWinOverGenericTags() throws Exception {
+        String query=provider.buildQuery(30.1,78.3,25000,DiscoveryCategory.ADVENTURE);
+        assertTrue(query.contains("bungee_jumping"));assertTrue(query.contains("rafting"));
+        assertFalse(query.contains("restaurant|cafe"));
+        assertEquals(DiscoveryCategory.ADVENTURE,provider.classify(objectMapper.readTree("{\"tourism\":\"camp_site\",\"sport\":\"rafting\"}"),"River Camp"));
+        assertEquals(DiscoveryCategory.ADVENTURE,provider.classify(objectMapper.readTree("{\"office\":\"travel_agent\"}"),"Rishikesh Rafting Centre"));
+        assertEquals(DiscoveryCategory.STAY,provider.classify(tags("tourism","camp_site"),"River Camp"));
+    }
+
+    @Test
+    void familyIncludesRelevantSourceCategoriesWithoutReclassifyingOrInventingSafety() throws Exception {
+        var family=new DiscoveryProviderRequest("Chennai",chennai.destination(),10,DiscoveryCategory.FAMILY);
+        var results=provider.map(response("""
+            {"type":"node","id":201,"lat":13.083,"lon":80.271,"tags":{"name":"City Park","leisure":"park"}},
+            {"type":"node","id":202,"lat":13.083,"lon":80.271,"tags":{"name":"Museum","tourism":"museum"}},
+            {"type":"node","id":203,"lat":13.083,"lon":80.271,"tags":{"name":"Night Club","amenity":"nightclub"}}
+            """),family);
+        assertEquals(2,results.size());
+        assertTrue(results.stream().anyMatch(p->p.category()==DiscoveryCategory.PARK));
+        assertTrue(results.stream().anyMatch(p->p.category()==DiscoveryCategory.MUSEUM));
+        assertTrue(provider.buildQuery(30.1,78.3,25000,DiscoveryCategory.FAMILY).contains("playground"));
+        assertTrue(DiscoveryCategoryMatching.matches(DiscoveryCategory.NATURE, DiscoveryCategory.WATERFALL));
+        assertTrue(DiscoveryCategoryMatching.matches(DiscoveryCategory.NATURE, DiscoveryCategory.VIEWPOINT));
+        assertFalse(DiscoveryCategoryMatching.matches(DiscoveryCategory.NATURE, DiscoveryCategory.FOOD));
     }
 
     @Test
@@ -134,4 +161,13 @@ class DestinationDiscoveryServiceTest {
     private JsonNode response(String element) throws Exception {
         return objectMapper.readTree("{\"elements\":[" + element + "]}");
     }
+    @Test void doesNotCollapseDifferentTamilNamesAtTheSameCoordinates() throws Exception {
+        var json=new com.fasterxml.jackson.databind.ObjectMapper().readTree("""
+          {"elements":[
+            {"type":"node","id":901,"lat":13.083,"lon":80.271,"tags":{"name":"கோவில்","tourism":"attraction"}},
+            {"type":"node","id":902,"lat":13.083,"lon":80.271,"tags":{"name":"பூங்கா","tourism":"attraction"}}]}
+          """);
+        assertEquals(2,provider.map(json,chennai).size());
+    }
+
 }
