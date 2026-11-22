@@ -26,6 +26,24 @@
   --tm-radius-md: 14px;
   --tm-radius-lg: 20px;
   --tm-radius-xl: 28px;
+  --tm-page-bg: #f5f7fb;
+  --tm-ink: #0b1220;
+  --tm-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
+
+  /* Legacy token names still used by some components (footer, reset password,
+     India catalogue). Mapped onto the current palette so they never resolve
+     to transparent/unset values. */
+  --primary: #2563eb;
+  --brand-gradient: var(--tm-gradient-brand);
+  --shadow-glow: var(--tm-shadow-glow);
+  --surface-card: #ffffff;
+  --border: var(--tm-border);
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: var(--tm-text);
+  --text-secondary: var(--tm-text-secondary);
+  --text-muted: var(--tm-muted);
+  --font-heading: var(--tm-font);
 }
 
 *, *::before, *::after {
@@ -38,28 +56,67 @@ html, body {
   height: 100%;
   overscroll-behavior-x: none;
   font-family: var(--tm-font);
-  background-color: var(--tm-bg);
+  background-color: var(--tm-page-bg);
   color: var(--tm-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Smooth custom scrollbars */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+::selection {
+  color: #fff;
+  background: rgba(37, 99, 235, 0.85);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--tm-focus-ring);
+  border-radius: 6px;
+}
+
+/* Slim, light scrollbars to match the light UI */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #cbd5e1;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #94a3b8;
+  background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 /*

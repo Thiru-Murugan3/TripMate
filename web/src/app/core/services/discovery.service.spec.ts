@@ -26,6 +26,15 @@ describe('DiscoveryService', () => {
     httpMock.verify();
   });
 
+  it('sends the trip type for main results and Top 10, and omits it for any trip', () => {
+    service.discoverPlaces('Ooty', 25, 'ALL', { tripType: 'FAMILY' }).subscribe();
+    expect(httpMock.expectOne(r => r.url === `${environment.apiUrl}/discovery/places` && r.params.get('tripType') === 'FAMILY')).toBeTruthy();
+    service.discoverPlaces('Ooty', 25, 'ALL', { tripType: 'ALL' }).subscribe();
+    expect(httpMock.expectOne(r => r.url === `${environment.apiUrl}/discovery/places` && !r.params.has('tripType'))).toBeTruthy();
+    service.getTopPlaces('Ooty', 25, 'FRIENDS').subscribe();
+    expect(httpMock.expectOne(r => r.url.endsWith('/discovery/top-places') && r.params.get('tripType') === 'FRIENDS')).toBeTruthy();
+  });
+
   it('requests destination tourist places with radius and category', () => {
     service.discoverPlaces('Ooty, Tamil Nadu', 25, 'ALL').subscribe((response) => {
       expect(response.resultCount).toBe(1);

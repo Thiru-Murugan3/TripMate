@@ -158,6 +158,41 @@ public class FileStorageService {
         return s3Presigner().presignGetObject(presignRequest).url().toString();
     }
 
+    /**
+     * Stores generated content under a fixed, caller-chosen key (letters, digits, dash, slash, dot only),
+     * so the same key can be found again later. Returns the usual storage reference.
+     */
+    public String storeBytes(String objectKey, byte[] bytes, String contentType) {
+        if (objectKey == null || !objectKey.matches("[a-z0-9][a-z0-9/._-]{0,200}") || objectKey.contains("..")) {
+            throw new IllegalArgumentException("Invalid object key");
+        }
+        if (r2Enabled) {
+            try {
+                s3Client().putObject(PutObjectRequest.builder().bucket(r2Bucket).key(objectKey)
+                        .contentType(normalizeContentType(contentType)).contentLength((long) bytes.length).build(),
+                        RequestBody.fromBytes(bytes));
+                return "r2://" + r2Bucket + "/" + objectKey;
+            } catch (S3Exception ex) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Could not store file. Please try again!", ex);
+            }
+        }
+        Path uploadRoot = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
+        Path target = uploadRoot.resolve(objectKey).normalize();
+        if (!target.startsWith(uploadRoot)) throw new IllegalArgumentException("Invalid object key");
+        try {
+            Files.createDirectories(target.getParent());
+            Files.write(target, bytes);
+            return "/uploads/" + objectKey;
+        } catch (IOException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not store file. Please try again!", ex);
+        }
+    }
+
+    /** Storage reference that {@link #storeBytes} would return for this key. */
+    public String referenceFor(String objectKey) {
+        return r2Enabled ? "r2://" + r2Bucket + "/" + objectKey : "/uploads/" + objectKey;
+    }
+
     public long getPresignedUrlDurationSeconds() {
         return presignedUrlDuration.toSeconds();
     }

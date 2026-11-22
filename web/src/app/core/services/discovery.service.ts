@@ -43,13 +43,15 @@ export class DiscoveryService {
     if (filters.maxDuration != null) params = params.set('maxDuration', filters.maxDuration);
     if (filters.minRating != null) params = params.set('minRating', filters.minRating);
     if (filters.sort) params = params.set('sort', filters.sort);
+    if (filters.tripType && filters.tripType !== 'ALL') params = params.set('tripType', filters.tripType);
     params = params.set('page', filters.page ?? 0).set('size', filters.size ?? 100);
 
     return this.http.get<DestinationDiscoveryResponse>(this.apiUrl, { params });
   }
 
-  getTopPlaces(destination: string, radiusKm=25): Observable<DestinationDiscoveryResponse> {
-    const params = new HttpParams().set('destination',destination.trim()).set('radiusKm',radiusKm);
+  getTopPlaces(destination: string, radiusKm=25, tripType=''): Observable<DestinationDiscoveryResponse> {
+    let params = new HttpParams().set('destination',destination.trim()).set('radiusKm',radiusKm);
+    if (tripType && tripType !== 'ALL') params = params.set('tripType', tripType);
     return this.http.get<DestinationDiscoveryResponse>(`${environment.apiUrl}/discovery/top-places`,{params});
   }
 

@@ -49,7 +49,7 @@ public class CommonsImageService {
             URI uri = URI.create(url);
             if (trusted(url,"commons.wikimedia.org") && uri.getRawPath().startsWith("/wiki/File:"))
                 return resolve(URLDecoder.decode(uri.getRawPath().substring(6).replace("+","%2B"),StandardCharsets.UTF_8));
-            if (!"upload.wikimedia.org".equalsIgnoreCase(uri.getHost())) return null;
+            if (!isWikimediaImageHost(uri.getHost())) return null;
             String path = uri.getRawPath();
             if (!path.startsWith("/wikipedia/commons/")) return null;
             String[] parts = path.split("/");
@@ -94,10 +94,18 @@ public class CommonsImageService {
         String license=plain(metadata.path("LicenseShortName").path("value").asText(""));
         String url=info.path("thumburl").asText(info.path("url").asText(""));
         String source=info.path("descriptionurl").asText("");
-        if(author.isBlank() || !license.matches("(?i)(CC BY(?:-SA)? [0-9.]+|CC0(?: [0-9.]+)?|Public domain|PD)") || !trusted(url,"upload.wikimedia.org") || !trusted(source,"commons.wikimedia.org"))return null;
+        if(author.isBlank() || !license.matches("(?i)(CC BY(?:-SA)? [0-9.]+|CC0(?: [0-9.]+)?|Public domain|PD)") || !trustedImage(url) || !trusted(source,"commons.wikimedia.org"))return null;
         String credit=plain(metadata.path("Credit").path("value").asText(""));
         String attribution=author+(credit.isBlank() || credit.equals(author)?"":" · "+credit);
         return new DiscoveryImage(url,source,"Wikimedia Commons",author,license,attribution,true,true);
+    }
+    /** Commons serves originals from upload.wikimedia.org and (since 2026) thumbnails from thumb.wikimedia.org. */
+    static boolean isWikimediaImageHost(String host) {
+        return "upload.wikimedia.org".equalsIgnoreCase(host) || "thumb.wikimedia.org".equalsIgnoreCase(host);
+    }
+    private boolean trustedImage(String value) {
+        try {URI uri=URI.create(value);return isWikimediaImageHost(uri.getHost()) && trusted(value,uri.getHost());}
+        catch(IllegalArgumentException ex){return false;}
     }
     private boolean trusted(String value,String host) {
         try {URI uri=URI.create(value);return "https".equals(uri.getScheme()) && host.equalsIgnoreCase(uri.getHost()) && uri.getUserInfo()==null && uri.getPort()==-1;}

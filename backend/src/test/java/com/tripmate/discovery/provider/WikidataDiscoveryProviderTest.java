@@ -64,6 +64,18 @@ class WikidataDiscoveryProviderTest {
         new WikidataDiscoveryProvider(builder.build(),mock(WikimediaEnrichmentService.class)).discover(new DiscoveryProviderRequest(base.query(),base.destination(),25,null,"cave \" \\ \n end"));server.verify();
     }
 
+    // An unbounded wdt:P279* walk took ~11s for dense cities (e.g. Madurai), exceeding the
+    // client timeout so every landmark was dropped. Two optional hops cover the same results quickly.
+    @Test void classMatchUsesBoundedSubclassHopsSoDenseCitiesFinishInTime() {
+        var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
+        server.expect(anything()).andExpect(request -> {
+            String query=java.net.URLDecoder.decode(org.springframework.web.util.UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams().getFirst("query"),java.nio.charset.StandardCharsets.UTF_8);
+            assertTrue(query.contains("?item wdt:P31/wdt:P279?/wdt:P279? ?kind"));
+            assertFalse(query.contains("wdt:P279*"));
+        }).andRespond(withSuccess("{\"results\":{\"bindings\":[]}}",MediaType.APPLICATION_JSON));
+        new WikidataDiscoveryProvider(builder.build(),mock(WikimediaEnrichmentService.class)).discover(request(null));server.verify();
+    }
+
     @Test void languageCoverageIsMappedAsProminenceWithoutInventingVisitorRatings() {
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();
         String data=row("Q1","Known museum","Point(80.271 13.083)");

@@ -490,6 +490,13 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
   @Input() startDate = '';
   @Input() endDate = '';
   @Input() canEdit = true;
+  /** The trip's own type; pre-selects the Trip type filter in a trip's Explore tab. */
+  @Input() tripType = '';
+  tripTypeFilter = 'ALL';
+  readonly tripTypeOptions = [
+    { value: 'ALL', label: 'Any trip' }, { value: 'FAMILY', label: 'Family' }, { value: 'FRIENDS', label: 'Friends' },
+    { value: 'COUPLE', label: 'Couple' }, { value: 'SOLO', label: 'Solo' }, { value: 'ADVENTURE', label: 'Adventure' }
+  ] as const;
 
   @Output() placesChanged = new EventEmitter<void>();
   @Output() itineraryChanged = new EventEmitter<void>();
@@ -690,10 +697,14 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     return [1, 2, 3];
   }
 
+  /** When false, a trip's destination is only shown as the input hint and nothing is searched automatically. */
+  protected prefillTripDestination = true;
+
   ngOnInit(): void {
+    if (this.tripType) this.tripTypeFilter = this.tripType;
     if (this.embeddedMode) {
       this.activeTripId = this.tripId;
-      this.searchDestination = this.destination;
+      this.searchDestination = this.prefillTripDestination ? this.destination : '';
       this.activeStartDate = this.startDate;
       this.activeEndDate = this.endDate;
       void this.loadSavedPlaces();
@@ -872,6 +883,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       maxDuration: this.maxDurationFilter,
       minRating: this.minRatingFilter,
       sort: this.sortOrder,
+      tripType: this.tripTypeFilter,
       page,
       size: 24
     }).subscribe({

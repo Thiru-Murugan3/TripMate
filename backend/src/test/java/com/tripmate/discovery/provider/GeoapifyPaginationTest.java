@@ -20,7 +20,7 @@ class GeoapifyPaginationTest {
           ]}
           """;
         var builder=RestClient.builder();var server=MockRestServiceServer.bindTo(builder).build();var factory=mock(ProviderHttpClientFactory.class);when(factory.create(anyInt())).thenReturn(builder.build());
-        server.expect(queryParam("categories","tourism,entertainment,leisure")).andRespond(withSuccess(response,MediaType.APPLICATION_JSON));
+        server.expect(queryParam("categories","tourism,entertainment,leisure,sport,heritage,religion,natural,national_park,beach")).andRespond(withSuccess(response,MediaType.APPLICATION_JSON));
         server.expect(anything()).andRespond(withSuccess(response,MediaType.APPLICATION_JSON));
         var provider=new GeoapifyDiscoveryProvider(factory,"test-secret","https://geo.example");
         assertEquals(java.util.List.of("Heritage Ground"),provider.discover(request()).places().stream().map(p->p.name()).toList());

@@ -23,9 +23,27 @@ describe('Combined compact Explore', () => {
     itinerary=jasmine.createSpyObj('ItineraryService',['getItinerary','createDay','createItem']);itinerary.getItinerary.and.returnValue(of({days:[]} as any));itinerary.createDay.and.returnValue(of({id:100,items:[]} as any));itinerary.createItem.and.returnValue(of({id:501} as any));
     TestBed.configureTestingModule({imports:[CombinedPlacesComponent],providers:[provideHttpClient(),provideRouter([]),{provide:DiscoveryService,useValue:discovery},{provide:PlaceService,useValue:places},{provide:ItineraryService,useValue:itinerary},{provide:TripService,useValue:{getMyTrips:()=>of([trip,{...trip,id:20,userRole:'VIEWER'}])}}]});
   });
+  it('re-ranks places for the chosen trip type as soon as it changes, including Top 10', async () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
+    c.searchDestination='Ooty';c.discover();fixture.detectChanges();await fixture.whenStable();fixture.detectChanges();
+    expect(discovery.discoverPlaces.calls.mostRecent().args[3]?.tripType).toBe('ALL');
+    const select:HTMLSelectElement=fixture.nativeElement.querySelector('select[name="tripType"]');
+    expect([...select.options].map(o=>o.textContent?.trim())).toEqual(['Any trip','Family','Friends','Couple','Solo','Adventure']);
+    select.value='FRIENDS';select.dispatchEvent(new Event('change'));fixture.detectChanges();await fixture.whenStable();fixture.detectChanges();
+    expect(discovery.discoverPlaces).toHaveBeenCalledTimes(2);
+    expect(discovery.discoverPlaces.calls.mostRecent().args[3]?.tripType).toBe('FRIENDS');
+    const top=fixture.debugElement.query(By.directive(TopPlacesComponent));
+    expect(top.componentInstance.tripType).toBe('FRIENDS');
+  });
+  it('pre-selects the trip type of the trip being explored', () => {
+    const fixture=TestBed.createComponent(CombinedPlacesComponent);const c=fixture.componentInstance;
+    fixture.componentRef.setInput('tripType','FAMILY');fixture.detectChanges();
+    expect(c.tripTypeFilter).toBe('FAMILY');
+  });
   it('shows a compact single result grid without provider explanations and preserves unknown prices', () => {
     const fixture=TestBed.createComponent(CombinedPlacesComponent);fixture.detectChanges();const c=fixture.componentInstance;
-    expect(fixture.nativeElement.textContent).toContain('100 km');
+    for(const removed of ['price','duration','radius'])expect(fixture.nativeElement.querySelector('select[name="'+removed+'"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('select[name="tripType"]')).not.toBeNull();
     expect(discovery.discoverPlaces).not.toHaveBeenCalled();c.searchDestination='Ooty';c.discover();fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.cards').length).toBe(1);expect(fixture.nativeElement.querySelector('app-india-catalogue')).toBeNull();
     const open=spyOn(window,'open');
@@ -115,6 +133,10 @@ describe('Combined compact Explore', () => {
     for(const [key,value] of Object.entries({tripId:10,destination:'Ooty',startDate:trip.startDate,endDate:trip.endDate,canEdit:true}))fixture.componentRef.setInput(key,value);
     fixture.detectChanges();
     const c=fixture.componentInstance,changed=spyOn(c.itineraryChanged,'emit');
+    // The trip's destination is only a hint; nothing is searched until the user asks.
+    const input:HTMLInputElement=fixture.nativeElement.querySelector('input[name="destination"]');
+    expect(input.placeholder).toBe('Ooty');expect(c.searchDestination).toBe('');expect(discovery.discoverPlaces).not.toHaveBeenCalled();
+    c.searchDestination='Ooty';c.discover();fixture.detectChanges();
     const top=fixture.debugElement.query(By.directive(TopPlacesComponent)).componentInstance as TopPlacesComponent;
     expect(top.activeTripId).toBe(10);expect(top.canEdit).toBeTrue();expect(top.availableDayNumbers).toEqual([1,2,3]);
     top.load();await top.toggleSelection(place as any);top.setDayAssignment(place as any,2);await top.saveSelected(true);

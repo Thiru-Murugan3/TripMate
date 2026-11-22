@@ -33,11 +33,10 @@ import { ExploreComponent } from '../../discovery/explore.component';
 import { ReservationEmailImportsComponent } from '../../bookings/reservation-email-imports.component';
 import { ReservationImportSelection } from '../../../core/models/reservation-import.model';
 import { ReservationImportService } from '../../../core/services/reservation-import.service';
-import { TripTimelineComponent } from '../trip-timeline/trip-timeline.component';
 
 import { OfflineTripComponent } from '../offline-trip/offline-trip.component';
 
-type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
+type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKINGS' | 'DOCUMENTS' | 'MEMBERS';
 
 @Component({
   selector: 'app-trip-details',
@@ -52,7 +51,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
     ExpenseManagerComponent,
     DocumentManagerComponent,
     ReservationEmailImportsComponent,
-    TripTimelineComponent,
     OfflineTripComponent,
     FlightAlertsComponent
   ],
@@ -153,10 +151,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
           <button type="button" class="tab-btn" [class.active]="activeTab === 'OVERVIEW'" (click)="setActiveTab('OVERVIEW')">
             Overview
           </button>
-          <button type="button" class="tab-btn timeline-tab-btn" [class.active]="activeTab === 'TIMELINE'" (click)="setActiveTab('TIMELINE')">
-            <span class="material-symbols-outlined tab-inline-icon">timeline</span>
-            Timeline
-          </button>
           <button type="button" class="tab-btn" [class.active]="activeTab === 'EXPLORE'" (click)="setActiveTab('EXPLORE')">
             Explore
           </button>
@@ -181,9 +175,16 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
         </nav>
 
         <section *ngIf="activeTab === 'OVERVIEW'" class="tab-content dashboard-overview">
-          <div *ngIf="isLoadingDashboard" class="overview-loading card">
-            <div class="spinner small"></div>
-            <span>Loading trip dashboard...</span>
+          <div *ngIf="isLoadingDashboard" class="ov-skeleton" role="status" aria-live="polite">
+            <span class="sr-only">Loading trip dashboard...</span>
+            <div class="ov-skel ov-skel-hero"></div>
+            <div class="ov-skel-row">
+              <div class="ov-skel ov-skel-tile"></div>
+              <div class="ov-skel ov-skel-tile"></div>
+              <div class="ov-skel ov-skel-tile"></div>
+              <div class="ov-skel ov-skel-tile"></div>
+            </div>
+            <div class="ov-skel ov-skel-card"></div>
           </div>
 
           <div *ngIf="!isLoadingDashboard && dashboardError" class="overview-error card">
@@ -195,196 +196,231 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
           </div>
 
           <ng-container *ngIf="!isLoadingDashboard && !dashboardError && dashboard as overview">
-            <div class="dashboard-main-grid">
-              <div class="dashboard-left">
-                <div class="compact-summary-grid">
-                  <article class="compact-stat card">
-                    <span class="stat-label">Duration</span>
-                    <strong>{{ tripDurationDays }} Day{{ tripDurationDays === 1 ? '' : 's' }}</strong>
-                  </article>
-
-                  <article class="compact-stat card">
-                    <span class="stat-label">Total Budget</span>
-                    <strong>{{ formatCurrency(overview.budget) }}</strong>
-                  </article>
-
-                  <article class="compact-stat card">
-                    <span class="stat-label">Total Spent</span>
-                    <strong class="spent-value">{{ formatCurrency(overview.totalExpenses) }}</strong>
-                  </article>
-
-                  <article class="compact-stat card">
-                    <span class="stat-label">Remaining</span>
-                    <strong [class.negative-value]="overview.remainingBudget < 0" class="remaining-value">
-                      {{ formatCurrency(overview.remainingBudget) }}
-                    </strong>
-                  </article>
+            <section class="ov-hero" [attr.data-phase]="tripPhase" aria-label="Trip journey">
+              <div class="ov-hero-content">
+                <div class="ov-hero-main">
+                  <span class="ov-hero-eyebrow">
+                    <span class="material-symbols-outlined">{{ tripPhaseIcon }}</span>
+                    {{ tripPhaseLabel }}
+                  </span>
+                  <h2 class="ov-hero-title">{{ currentTrip.destination }}</h2>
+                  <p class="ov-hero-dates">
+                    {{ formatDate(currentTrip.startDate) }} – {{ formatDate(currentTrip.endDate) }}
+                    <span aria-hidden="true">·</span>
+                    {{ tripDurationDays }} day{{ tripDurationDays === 1 ? '' : 's' }}
+                  </p>
                 </div>
 
-                <article class="weather-card card">
-                  <div class="section-heading-row">
+                <div class="ov-countdown">
+                  <strong>{{ countdownValue }}</strong>
+                  <span>{{ countdownCaption }}</span>
+                </div>
+              </div>
+
+              <div class="ov-journey">
+                <div
+                  class="ov-journey-track"
+                  role="progressbar"
+                  aria-label="Trip progress"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-valuenow]="tripProgressPercent"
+                >
+                  <span class="ov-journey-fill" [style.width.%]="tripProgressPercent"></span>
+                  <span class="ov-journey-marker" [style.left.%]="tripProgressPercent">
+                    <span class="material-symbols-outlined">flight</span>
+                  </span>
+                </div>
+                <div class="ov-journey-labels">
+                  <span><small>Depart</small>{{ formatDate(currentTrip.startDate) }}</span>
+                  <span><small>Return</small>{{ formatDate(currentTrip.endDate) }}</span>
+                </div>
+              </div>
+            </section>
+
+            <div class="ov-stats">
+              <div class="ov-stat">
+                <span class="ov-stat-icon tone-blue"><span class="material-symbols-outlined">date_range</span></span>
+                <div>
+                  <span class="ov-label">Duration</span>
+                  <strong>{{ tripDurationDays }} Day{{ tripDurationDays === 1 ? '' : 's' }}</strong>
+                </div>
+              </div>
+
+              <button type="button" class="ov-stat" (click)="setActiveTab('MEMBERS')">
+                <span class="ov-stat-icon tone-violet"><span class="material-symbols-outlined">groups</span></span>
+                <div>
+                  <span class="ov-label">Travelers</span>
+                  <strong>{{ overview.travelerCount }}</strong>
+                </div>
+                <span class="material-symbols-outlined ov-stat-arrow">arrow_forward</span>
+              </button>
+
+              <button type="button" class="ov-stat" (click)="setActiveTab('BOOKINGS')">
+                <span class="ov-stat-icon tone-amber"><span class="material-symbols-outlined">confirmation_number</span></span>
+                <div>
+                  <span class="ov-label">Bookings</span>
+                  <strong>{{ bookings.length }}</strong>
+                </div>
+                <span class="material-symbols-outlined ov-stat-arrow">arrow_forward</span>
+              </button>
+
+              <button type="button" class="ov-stat" (click)="setActiveTab('DOCUMENTS')">
+                <span class="ov-stat-icon tone-teal"><span class="material-symbols-outlined">folder_open</span></span>
+                <div>
+                  <span class="ov-label">Documents</span>
+                  <strong>{{ overview.documentCount }}</strong>
+                </div>
+                <span class="material-symbols-outlined ov-stat-arrow">arrow_forward</span>
+              </button>
+            </div>
+
+            <div class="dashboard-main-grid">
+              <div class="dashboard-left">
+                <article class="ov-card ov-budget">
+                  <header class="ov-card-head">
                     <div>
-                      <h2>Trip Weather</h2>
-                      <p>{{ weather?.resolvedLocation || currentTrip.destination }}</p>
+                      <span class="ov-kicker">Budget</span>
+                      <h3>Spending overview</h3>
                     </div>
-                    <button *ngIf="weatherError" type="button" class="mini-action" (click)="loadWeather()">Retry</button>
+                    <button type="button" class="ov-link" (click)="setActiveTab('EXPENSES')">
+                      View expenses
+                      <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                  </header>
+
+                  <div class="ov-budget-headline">
+                    <div>
+                      <span class="ov-label">Total Budget</span>
+                      <strong class="ov-budget-total">{{ formatCurrency(overview.budget) }}</strong>
+                    </div>
+                    <span class="ov-pill" [attr.data-tone]="budgetTone">{{ budgetUsedLabel }}</span>
                   </div>
 
-                  <div *ngIf="isLoadingWeather" class="weather-state">
+                  <div
+                    class="ov-meter"
+                    [attr.data-tone]="budgetTone"
+                    role="progressbar"
+                    aria-label="Budget used"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    [attr.aria-valuenow]="budgetMeterWidth"
+                  >
+                    <span [style.width.%]="budgetMeterWidth"></span>
+                  </div>
+
+                  <div class="ov-budget-split">
+                    <div>
+                      <span class="ov-label"><span class="ov-dot dot-spent"></span>Total Spent</span>
+                      <strong>{{ formatCurrency(overview.totalExpenses) }}</strong>
+                    </div>
+                    <div>
+                      <span class="ov-label"><span class="ov-dot dot-remaining"></span>Remaining</span>
+                      <strong [class.negative-value]="overview.remainingBudget < 0">
+                        {{ formatCurrency(overview.remainingBudget) }}
+                      </strong>
+                    </div>
+                    <div>
+                      <span class="ov-label"><span class="ov-dot dot-traveler"></span>Per traveler</span>
+                      <strong>{{ formatCurrency(perTravelerBudget) }}</strong>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="ov-card ov-weather">
+                  <header class="ov-card-head">
+                    <div>
+                      <span class="ov-kicker">Forecast</span>
+                      <h3>Trip Weather</h3>
+                      <p>{{ weather?.resolvedLocation || currentTrip.destination }}</p>
+                    </div>
+                    <button *ngIf="weatherError" type="button" class="ov-link" (click)="loadWeather()">
+                      Retry
+                      <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                  </header>
+
+                  <div *ngIf="isLoadingWeather" class="ov-weather-state">
                     <div class="spinner small"></div>
                     <span>Checking the forecast...</span>
                   </div>
-                  <div *ngIf="!isLoadingWeather && weatherError" class="weather-state weather-unavailable">
+                  <div *ngIf="!isLoadingWeather && weatherError" class="ov-weather-state is-muted">
                     <span class="material-symbols-outlined">cloud_off</span>
                     <span>{{ weatherError }}</span>
                   </div>
                   <ng-container *ngIf="!isLoadingWeather && !weatherError && weather as tripWeather">
-                    <div *ngIf="tripWeather.available" class="weather-days">
-                      <div *ngFor="let day of tripWeather.days" class="weather-day">
-                        <span class="weather-date">{{ formatWeatherDate(day.date) }}</span>
-                        <span class="material-symbols-outlined weather-icon">{{ day.icon }}</span>
+                    <div *ngIf="tripWeather.available" class="ov-weather-days">
+                      <div *ngFor="let day of tripWeather.days" class="ov-weather-day">
+                        <span class="ov-weather-date">{{ formatWeatherDate(day.date) }}</span>
+                        <span class="material-symbols-outlined ov-weather-icon">{{ day.icon }}</span>
                         <strong>{{ day.maximumTemperatureCelsius | number:'1.0-0' }}°</strong>
-                        <span>{{ day.minimumTemperatureCelsius | number:'1.0-0' }}° low</span>
-                        <span class="weather-condition">{{ day.condition }}</span>
-                        <span class="weather-rain"><span class="material-symbols-outlined">water_drop</span>{{ day.precipitationProbability }}%</span>
+                        <span class="ov-weather-low">{{ day.minimumTemperatureCelsius | number:'1.0-0' }}° low</span>
+                        <span class="ov-weather-condition">{{ day.condition }}</span>
+                        <span class="ov-weather-rain">
+                          <span class="material-symbols-outlined">water_drop</span>{{ day.precipitationProbability }}%
+                        </span>
                       </div>
                     </div>
-                    <div *ngIf="!tripWeather.available" class="weather-state weather-unavailable">
+                    <div *ngIf="!tripWeather.available" class="ov-weather-state is-muted">
                       <span class="material-symbols-outlined">calendar_clock</span>
                       <span>{{ tripWeather.message }}</span>
                     </div>
-                    <p *ngIf="tripWeather.available" class="weather-note">{{ tripWeather.message }}</p>
+                    <p *ngIf="tripWeather.available" class="ov-weather-note">{{ tripWeather.message }}</p>
                   </ng-container>
-                </article>
-
-                <article class="itinerary-board card">
-                  <div class="section-heading-row">
-                    <div>
-                      <h2>{{ itineraryHeading }}</h2>
-                      <p>{{ itinerarySubheading }}</p>
-                    </div>
-                    <button type="button" class="mini-action" (click)="setActiveTab('ITINERARY')">
-                      + Add Activity
-                    </button>
-                  </div>
-
-                  <div *ngIf="overview.upcomingActivities.length === 0" class="dashboard-empty">
-                    <span class="material-symbols-outlined">event_note</span>
-                    <h3>No itinerary activities yet</h3>
-                    <p>Add activities to build the trip timeline.</p>
-                  </div>
-
-                  <div *ngIf="overview.upcomingActivities.length > 0" class="timeline-list">
-                    <div
-                      *ngFor="let activity of overview.upcomingActivities.slice(0, 6)"
-                      class="timeline-row"
-                    >
-                      <div class="timeline-time">
-                        {{ formatActivityTime(activity.time) }}
-                      </div>
-                      <div class="timeline-track">
-                        <span class="timeline-dot"></span>
-                        <span class="timeline-line"></span>
-                      </div>
-                      <div class="timeline-content">
-                        <strong>{{ activity.activity }}</strong>
-                        <span>{{ formatDate(activity.date) }}</span>
-                      </div>
-                    </div>
-                  </div>
                 </article>
               </div>
 
               <aside class="dashboard-sidebar">
-                <article class="quick-actions-card card">
-                  <h3>Quick Actions</h3>
-
-                  <button type="button" class="quick-action-row" (click)="setActiveTab('EXPLORE')">
-                    <span class="quick-action-icon blue">
-                      <span class="material-symbols-outlined">travel_explore</span>
-                    </span>
-                    <span>Explore {{ currentTrip.destination }}</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" (click)="setActiveTab('TIMELINE')">
-                    <span class="quick-action-icon blue">
-                      <span class="material-symbols-outlined">timeline</span>
-                    </span>
-                    <span>View Itinerary Timeline</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" (click)="setActiveTab('ITINERARY')">
-                    <span class="quick-action-icon green">
-                      <span class="material-symbols-outlined">add</span>
-                    </span>
-                    <span>{{ canPlanTrip ? 'Add Itinerary' : 'View Itinerary' }}</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" *ngIf="canManageExpenses" (click)="openExpenseQuickAdd()">
-                    <span class="quick-action-icon green">
-                      <span class="material-symbols-outlined">currency_rupee</span>
-                    </span>
-                    <span>Add Expense</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" *ngIf="canEditTrip" (click)="openBookNow()">
-                    <span class="quick-action-icon orange">
-                      <span class="material-symbols-outlined">confirmation_number</span>
-                    </span>
-                    <span>Add Booking</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-
-                  <button type="button" class="quick-action-row" *ngIf="canEditTrip" (click)="openDocumentQuickUpload()">
-                    <span class="quick-action-icon violet">
-                      <span class="material-symbols-outlined">upload</span>
-                    </span>
-                    <span>Upload Document</span>
-                    <span class="material-symbols-outlined arrow">chevron_right</span>
-                  </button>
-                </article>
-
-                <article class="sidebar-members-card card">
-                  <div class="sidebar-heading">
-                    <h3>Trip Members ({{ overview.memberCount }})</h3>
-                    <button type="button" class="text-link" (click)="setActiveTab('MEMBERS')">
-                      Manage
-                    </button>
-                  </div>
-
-                  <div class="sidebar-member-list">
-                    <div *ngFor="let member of members.slice(0, 5)" class="sidebar-member-row">
-                      <div class="sidebar-avatar">
-                        {{ member.userName?.charAt(0)?.toUpperCase() || '?' }}
-                      </div>
-                      <div>
-                        <strong>{{ member.userName }}</strong>
-                        <span>{{ member.role === 'OWNER' ? 'Organizer' : formatMemberRole(member.role) }}</span>
-                      </div>
+                <article class="ov-card sidebar-members-card">
+                  <header class="ov-card-head">
+                    <div>
+                      <span class="ov-kicker">Travel party</span>
+                      <h3>Trip Members <span class="ov-count">{{ overview.memberCount }}</span></h3>
                     </div>
-                  </div>
+                    <button type="button" class="ov-link" (click)="setActiveTab('MEMBERS')">Manage</button>
+                  </header>
 
-                  <div *ngIf="members.length === 0" class="sidebar-members-empty">
+                  <ul class="ov-member-list">
+                    <li *ngFor="let member of members.slice(0, 5); let i = index" class="ov-member">
+                      <span class="ov-avatar" [attr.data-tone]="i % 5">
+                        {{ (member.userName || '?').charAt(0).toUpperCase() }}
+                      </span>
+                      <span class="ov-member-text">
+                        <strong>{{ member.userName }}</strong>
+                        <span>{{ member.userEmail }}</span>
+                      </span>
+                      <span class="ov-role" [class.is-owner]="member.role === 'OWNER'">
+                        {{ member.role === 'OWNER' ? 'Organizer' : formatMemberRole(member.role) }}
+                      </span>
+                    </li>
+                  </ul>
+
+                  <p *ngIf="members.length > 5" class="ov-member-more">
+                    +{{ members.length - 5 }} more member{{ members.length - 5 === 1 ? '' : 's' }}
+                  </p>
+
+                  <div *ngIf="members.length === 0" class="ov-member-empty">
                     No member details loaded.
                   </div>
+
+                  <button type="button" class="ov-invite" (click)="openShareTrip()">
+                    <span class="material-symbols-outlined">{{ canManageMembers ? 'person_add' : 'group' }}</span>
+                    {{ canManageMembers ? 'Invite travelers' : 'View all members' }}
+                  </button>
                 </article>
               </aside>
             </div>
           </ng-container>
-        </section>
- 
-        <section *ngIf="activeTab === 'TIMELINE'" class="tab-content timeline-tab-content">
-          <app-offline-trip [tripId]="tripId"></app-offline-trip>
-          <app-flight-alerts [tripId]="tripId" [bookings]="bookings" [canManage]="canEditTrip"></app-flight-alerts>
-          <app-trip-timeline
-            [tripId]="tripId"
-            (selectBooking)="goToBookingTab($event)"
-            (selectActivity)="goToItineraryTab($event)"
-          ></app-trip-timeline>
+
+          <section class="ov-tools" aria-labelledby="ov-tools-title">
+            <header class="ov-section-head">
+              <span class="ov-kicker">Travel tools</span>
+              <h3 id="ov-tools-title">Stay ready on the road</h3>
+              <p>Save this trip for offline use and keep an eye on your flights.</p>
+            </header>
+            <app-offline-trip [tripId]="tripId"></app-offline-trip>
+            <app-flight-alerts [tripId]="tripId" [bookings]="bookings" [canManage]="canEditTrip"></app-flight-alerts>
+          </section>
         </section>
  
         <section *ngIf="activeTab === 'EXPLORE'" class="tab-content">
@@ -1074,6 +1110,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
       </div>
     </main>
   `,
+  styleUrls: ['./trip-overview.scss'],
   styles: [`
 @use '../../../shared/styles/mobile-panels' as mobile;
 
@@ -1261,10 +1298,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
     .tab-btn.active {
       color: #1d4ed8;
       background: #eff6ff;
-    }
-
-    .tab-inline-icon {
-      font-size: 1.15rem;
     }
 
     .tab-count,
@@ -2195,104 +2228,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
       border-radius: 999px;
     }
 
-    .dashboard-overview {
-      padding-top: 1rem;
-    }
-
-    .dashboard-main-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 300px;
-      gap: 1rem;
-      align-items: start;
-    }
-
-    .dashboard-left {
-      min-width: 0;
-    }
-
-    .compact-summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0.75rem;
-      margin-bottom: 0.9rem;
-    }
-
-    .compact-stat {
-      min-height: 82px;
-      padding: 0.95rem 1rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
-    }
-
-    .stat-label {
-      display: block;
-      margin-bottom: 0.4rem;
-      color: #64748b;
-      font-size: 0.62rem;
-      font-weight: 850;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .compact-stat strong {
-      color: #0f172a;
-      font-size: 1rem;
-    }
-
-    .compact-stat .spent-value {
-      color: #2563eb;
-    }
-
-    .compact-stat .remaining-value {
-      color: #16a34a;
-    }
-
-    .itinerary-board {
-      min-height: 355px;
-      padding: 1.15rem;
-      border-radius: 12px;
-    }
-
-    .weather-card {
-      padding: 1rem;
-      border-radius: 12px;
-    }
-
-    .weather-days {
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(112px, 1fr);
-      gap: 0.65rem;
-      overflow-x: auto;
-      padding: 0.15rem 0 0.45rem;
-      scrollbar-width: thin;
-    }
-
-    .weather-day {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.25rem;
-      min-width: 0;
-      padding: 0.8rem 0.6rem;
-      border: 1px solid #dbeafe;
-      border-radius: 12px;
-      background: linear-gradient(180deg, #eff6ff, #ffffff);
-      color: #64748b;
-      font-size: 0.68rem;
-      text-align: center;
-    }
-
-    .weather-day strong { color: #0f172a; font-size: 1rem; }
-    .weather-date { color: #334155; font-weight: 800; }
-    .weather-icon { color: #2563eb; font-size: 1.7rem; }
-    .weather-condition { min-height: 2em; color: #475569; }
-    .weather-rain { display: inline-flex; align-items: center; gap: 0.1rem; color: #0284c7; }
-    .weather-rain .material-symbols-outlined { font-size: 0.85rem; }
-    .weather-note { margin: 0.45rem 0 0; color: #94a3b8; font-size: 0.66rem; }
-    .weather-state { display: flex; align-items: center; gap: 0.6rem; min-height: 72px; color: #64748b; font-size: 0.75rem; }
-    .weather-unavailable { padding: 0.7rem; border-radius: 10px; background: #f8fafc; }
-
     .booking-import-modal { max-width: 560px; }
     .ocr-privacy-note { display:flex; gap:.55rem; padding:.75rem; margin-bottom:1rem; border-radius:10px; color:#1e40af; background:#eff6ff; font-size:.74rem; line-height:1.45; }
     .ocr-privacy-note .material-symbols-outlined { font-size:1.05rem; }
@@ -2302,254 +2237,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
     .ocr-file-picker strong { color:#1e293b; font-size:.82rem; }
     .ocr-file-picker small { color:#64748b; font-size:.68rem; }
 
-    .section-heading-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .section-heading-row h2 {
-      margin: 0;
-      color: #0f172a;
-      font-size: 1rem;
-    }
-
-    .section-heading-row p {
-      margin: 0.15rem 0 0;
-      color: #94a3b8;
-      font-size: 0.7rem;
-    }
-
-    .mini-action {
-      border: 0;
-      color: #2563eb;
-      background: #eff6ff;
-      padding: 0.45rem 0.7rem;
-      border-radius: 8px;
-      font-size: 0.7rem;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .timeline-list {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .timeline-row {
-      display: grid;
-      grid-template-columns: 68px 20px minmax(0, 1fr);
-      gap: 0.7rem;
-      min-height: 58px;
-    }
-
-    .timeline-time {
-      padding-top: 0.1rem;
-      color: #64748b;
-      font-size: 0.68rem;
-      font-weight: 750;
-      text-align: right;
-    }
-
-    .timeline-track {
-      position: relative;
-      display: flex;
-      justify-content: center;
-    }
-
-    .timeline-dot {
-      position: relative;
-      z-index: 2;
-      width: 7px;
-      height: 7px;
-      margin-top: 0.3rem;
-      border-radius: 50%;
-      background: #2563eb;
-    }
-
-    .timeline-line {
-      position: absolute;
-      top: 0.8rem;
-      bottom: 0;
-      width: 1px;
-      background: #dbeafe;
-    }
-
-    .timeline-row:last-child .timeline-line {
-      display: none;
-    }
-
-    .timeline-content {
-      display: flex;
-      flex-direction: column;
-      gap: 0.18rem;
-      padding-bottom: 0.8rem;
-    }
-
-    .timeline-content strong {
-      color: #0f172a;
-      font-size: 0.78rem;
-    }
-
-    .timeline-content span {
-      color: #94a3b8;
-      font-size: 0.68rem;
-    }
-
-    .dashboard-sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 0.9rem;
-    }
-
-    .quick-actions-card,
-    .sidebar-members-card {
-      padding: 1rem;
-      border-radius: 12px;
-    }
-
-    .quick-actions-card h3,
-    .sidebar-members-card h3 {
-      margin: 0 0 0.8rem;
-      color: #0f172a;
-      font-size: 0.86rem;
-    }
-
-    .quick-action-row {
-      display: grid;
-      grid-template-columns: 30px minmax(0, 1fr) 20px;
-      align-items: center;
-      gap: 0.65rem;
-      width: 100%;
-      padding: 0.65rem 0.55rem;
-      margin-bottom: 0.45rem;
-      border: 0;
-      border-radius: 9px;
-      color: #334155;
-      background: #f8fafc;
-      font-size: 0.72rem;
-      font-weight: 750;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .quick-action-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .quick-action-icon {
-      display: grid;
-      place-items: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-    }
-
-    .quick-action-icon .material-symbols-outlined {
-      font-size: 1rem;
-    }
-
-    .quick-action-icon.blue { color: #2563eb; background: #eff6ff; }
-    .quick-action-icon.green { color: #16a34a; background: #ecfdf5; }
-    .quick-action-icon.orange { color: #d97706; background: #fff7ed; }
-    .quick-action-icon.violet { color: #7c3aed; background: #f5f3ff; }
-
-    .quick-action-row .arrow {
-      color: #94a3b8;
-      font-size: 1rem;
-    }
-
-    .sidebar-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.8rem;
-    }
-
-    .text-link {
-      padding: 0;
-      border: 0;
-      color: #2563eb;
-      background: transparent;
-      font-size: 0.66rem;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .sidebar-member-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.7rem;
-    }
-
-    .sidebar-member-row {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-    }
-
-    .sidebar-avatar {
-      display: grid;
-      place-items: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      color: #fff;
-      background: linear-gradient(135deg, #0f172a, #2563eb);
-      font-size: 0.72rem;
-      font-weight: 850;
-    }
-
-    .sidebar-member-row > div:last-child {
-      display: flex;
-      min-width: 0;
-      flex-direction: column;
-    }
-
-    .sidebar-member-row strong {
-      overflow: hidden;
-      color: #0f172a;
-      font-size: 0.72rem;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .sidebar-member-row span {
-      color: #94a3b8;
-      font-size: 0.62rem;
-    }
-
-    .sidebar-members-empty {
-      color: #94a3b8;
-      font-size: 0.7rem;
-    }
-
-    .dashboard-empty {
-      display: grid;
-      min-height: 220px;
-      place-items: center;
-      align-content: center;
-      color: #94a3b8;
-      text-align: center;
-    }
-
-    .dashboard-empty .material-symbols-outlined {
-      font-size: 2.4rem;
-      color: #bfdbfe;
-    }
-
-    .dashboard-empty h3 {
-      margin: 0.4rem 0 0.2rem;
-      color: #0f172a;
-      font-size: 0.95rem;
-    }
-
-    .dashboard-empty p {
-      margin: 0;
-      font-size: 0.76rem;
-    }
 
     .feature-panel {
       min-height: 360px;
@@ -2561,28 +2248,11 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
       font-size: 1.05rem;
     }
 
-    .full-timeline {
-      max-width: 760px;
-    }
-
     .expenses-summary {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     @media (max-width: 1050px) {
-      .dashboard-main-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .dashboard-sidebar {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .compact-summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
       .summary-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
@@ -2593,8 +2263,7 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
         padding: 1rem 0.85rem 3rem;
       }
 
-      .trip-header-main,
-      .section-heading-row {
+      .trip-header-main {
         align-items: stretch;
         flex-direction: column;
       }
@@ -2613,11 +2282,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
         flex: 0 0 auto;
       }
 
-      .dashboard-sidebar {
-        grid-template-columns: 1fr;
-      }
-
-      .compact-summary-grid,
       .expenses-summary {
         grid-template-columns: 1fr 1fr;
       }
@@ -2701,7 +2365,6 @@ type TripDetailsTab = 'OVERVIEW' | 'TIMELINE' | 'EXPLORE' | 'ITINERARY' | 'EXPEN
       .trip-header-actions.mobile-expanded { display:flex; }
       .dashboard-tabs { padding:4px; gap:4px; box-shadow:none; border-radius:12px; }
       .dashboard-tabs .tab-btn { padding:12px; font-size:12px; border-radius:9px; }
-      .dashboard-tabs .tab-inline-icon { display:none; }
       .summary-card,.compact-summary-card,.budget-card,.overview-panel,.sidebar-card { background:white; border:0; box-shadow:0 4px 16px #2563eb08; border-radius:16px; }
       .compact-summary-grid { gap:10px; }
       .compact-summary-card { padding:12px; }
@@ -2745,7 +2408,7 @@ export class TripDetailsComponent implements OnInit {
   bookings: Booking[] = [];
   members: TripMember[] = [];
 
-  activeTab: TripDetailsTab = 'TIMELINE';
+  activeTab: TripDetailsTab = 'OVERVIEW';
   mobileActionsOpen = false;
   expenseOpenRequest = 0;
   documentOpenRequest = 0;
@@ -2882,9 +2545,11 @@ export class TripDetailsComponent implements OnInit {
 
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const requestedTab = params.get('tab');
-      const tab = requestedTab === 'PLACES' ? 'EXPLORE' : requestedTab;
-      if(tab && ['OVERVIEW','TIMELINE','EXPLORE','ITINERARY','EXPENSES','BOOKINGS','DOCUMENTS','MEMBERS'].includes(tab)) this.activeTab = tab as TripDetailsTab;
-      if(requestedTab === 'PLACES') void this.router.navigate([], {relativeTo:this.route, queryParams:{tab:'EXPLORE'}, queryParamsHandling:'merge', replaceUrl:true});
+      const legacyTabs: Record<string, TripDetailsTab> = { PLACES: 'EXPLORE', TIMELINE: 'OVERVIEW' };
+      const redirectTab = requestedTab ? legacyTabs[requestedTab] : undefined;
+      const tab = redirectTab ?? requestedTab;
+      if(tab && ['OVERVIEW','EXPLORE','ITINERARY','EXPENSES','BOOKINGS','DOCUMENTS','MEMBERS'].includes(tab)) this.activeTab = tab as TripDetailsTab;
+      if(redirectTab) void this.router.navigate([], {relativeTo:this.route, queryParams:{tab:redirectTab}, queryParamsHandling:'merge', replaceUrl:true});
     });
     this.loadTripDetails();
     this.loadDashboard();
@@ -3044,7 +2709,6 @@ export class TripDetailsComponent implements OnInit {
       this.loadMembers();
       this.loadDashboard();
     } else if (
-      tab === 'TIMELINE' ||
       tab === 'EXPLORE' ||
       tab === 'ITINERARY' ||
       tab === 'EXPENSES' ||
@@ -3052,14 +2716,6 @@ export class TripDetailsComponent implements OnInit {
     ) {
       this.loadDashboard();
     }
-  }
-
-  goToBookingTab(bookingId?: number): void {
-    this.setActiveTab('BOOKINGS');
-  }
-
-  goToItineraryTab(activityId?: number): void {
-    this.setActiveTab('ITINERARY');
   }
 
   loadMembers(): void {
@@ -3191,19 +2847,101 @@ export class TripDetailsComponent implements OnInit {
     return Math.max(1, Math.floor((end.getTime() - start.getTime()) / 86400000) + 1);
   }
 
-  get itineraryHeading(): string {
-    const firstActivity = this.dashboard?.upcomingActivities?.[0];
-    if (!firstActivity) return 'Upcoming Itinerary';
-
+  private daysFromToday(value?: string): number | null {
+    if (!value) return null;
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return null;
     const today = new Date();
-    const todayKey = today.toISOString().slice(0, 10);
-    return firstActivity.date === todayKey ? "Today's Itinerary" : 'Upcoming Itinerary';
+    today.setHours(0, 0, 0, 0);
+    return Math.round((date.getTime() - today.getTime()) / 86400000);
   }
 
-  get itinerarySubheading(): string {
-    const firstActivity = this.dashboard?.upcomingActivities?.[0];
-    if (!firstActivity) return 'Plan your day-by-day trip activities.';
-    return this.formatDate(firstActivity.date);
+  get tripPhase(): 'upcoming' | 'ongoing' | 'completed' | 'cancelled' {
+    if (this.trip?.status === 'CANCELLED') return 'cancelled';
+    const toStart = this.daysFromToday(this.trip?.startDate);
+    const toEnd = this.daysFromToday(this.trip?.endDate);
+    if (toStart === null || toEnd === null) return 'upcoming';
+    if (toStart > 0) return 'upcoming';
+    if (toEnd < 0) return 'completed';
+    return 'ongoing';
+  }
+
+  get tripPhaseLabel(): string {
+    switch (this.tripPhase) {
+      case 'ongoing': return 'Trip in progress';
+      case 'completed': return 'Trip completed';
+      case 'cancelled': return 'Trip cancelled';
+      default: return 'Upcoming journey';
+    }
+  }
+
+  get tripPhaseIcon(): string {
+    switch (this.tripPhase) {
+      case 'ongoing': return 'explore';
+      case 'completed': return 'verified';
+      case 'cancelled': return 'event_busy';
+      default: return 'flight_takeoff';
+    }
+  }
+
+  get currentTripDay(): number {
+    const toStart = this.daysFromToday(this.trip?.startDate) ?? 0;
+    return Math.min(Math.max(1 - toStart, 1), this.tripDurationDays || 1);
+  }
+
+  get countdownValue(): string {
+    switch (this.tripPhase) {
+      case 'ongoing': return `Day ${this.currentTripDay}`;
+      case 'completed': return String(this.tripDurationDays);
+      case 'cancelled': return '—';
+      default: return String(Math.max(this.daysFromToday(this.trip?.startDate) ?? 0, 0));
+    }
+  }
+
+  get countdownCaption(): string {
+    switch (this.tripPhase) {
+      case 'ongoing': return `of ${this.tripDurationDays} day${this.tripDurationDays === 1 ? '' : 's'}`;
+      case 'completed': return `day${this.tripDurationDays === 1 ? '' : 's'} travelled`;
+      case 'cancelled': return 'not travelling';
+      default: return this.daysFromToday(this.trip?.startDate) === 1 ? 'day to go' : 'days to go';
+    }
+  }
+
+  get tripProgressPercent(): number {
+    switch (this.tripPhase) {
+      case 'completed': return 100;
+      case 'ongoing': return Math.round((this.currentTripDay / (this.tripDurationDays || 1)) * 100);
+      default: return 0;
+    }
+  }
+
+  get budgetUsedPercent(): number {
+    const budget = this.dashboard?.budget ?? 0;
+    if (budget <= 0) return 0;
+    return Math.round(((this.dashboard?.totalExpenses ?? 0) / budget) * 100);
+  }
+
+  get budgetMeterWidth(): number {
+    return this.budgetProgressWidth(this.budgetUsedPercent);
+  }
+
+  get budgetTone(): 'healthy' | 'watch' | 'over' | 'none' {
+    if ((this.dashboard?.budget ?? 0) <= 0) return 'none';
+    const used = this.budgetUsedPercent;
+    if (used > 100) return 'over';
+    if (used >= 80) return 'watch';
+    return 'healthy';
+  }
+
+  get budgetUsedLabel(): string {
+    if (this.budgetTone === 'none') return 'No budget set';
+    if (this.budgetTone === 'over') return `${this.budgetUsedPercent - 100}% over budget`;
+    return `${this.budgetUsedPercent}% used`;
+  }
+
+  get perTravelerBudget(): number {
+    const travelers = this.dashboard?.travelerCount || this.trip?.travelerCount || 1;
+    return Math.round((this.dashboard?.budget ?? 0) / Math.max(travelers, 1));
   }
 
   formatMemberRole(role: TripRole): string {
@@ -3244,20 +2982,9 @@ export class TripDetailsComponent implements OnInit {
     this.loadDashboard();
   }
 
-  openExpenseQuickAdd(): void {
-    if (!this.canManageExpenses) return;
-    this.activeTab = 'EXPENSES';
-    this.expenseOpenRequest += 1;
-  }
-
   onExpensesChanged(): void {
     this.loadDashboard();
     this.tripUpdateMessage = 'Expenses updated successfully.';
-  }
-
-  openDocumentQuickUpload(): void {
-    this.activeTab = 'DOCUMENTS';
-    this.documentOpenRequest += 1;
   }
 
   onDocumentsChanged(): void {
@@ -3298,20 +3025,6 @@ export class TripDetailsComponent implements OnInit {
     const date = new Date(`${value}T00:00:00`);
     if (Number.isNaN(date.getTime())) return '';
     return date.toLocaleDateString('en-IN', { month: 'short' });
-  }
-
-  formatActivityTime(value?: string): string {
-    if (!value) return 'Time not set';
-
-    const [hour, minute] = value.split(':').map(Number);
-    if (!Number.isFinite(hour) || !Number.isFinite(minute)) return value;
-
-    const date = new Date();
-    date.setHours(hour, minute, 0, 0);
-    return date.toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   }
 
   formatStatus(status: string): string {

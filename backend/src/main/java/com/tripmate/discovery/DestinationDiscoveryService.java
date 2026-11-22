@@ -59,6 +59,20 @@ public class DestinationDiscoveryService {
         this.maxResults = Math.max(25, Math.min(500, maxResults));
     }
 
+    private WikivoyageGuideService guides;
+    private RecommendedPlacesCatalogue catalogue;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setCatalogue(RecommendedPlacesCatalogue catalogue) { this.catalogue = catalogue; }
+
+    /** Optional: when present, places a travel guide recommends rank first. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setGuides(WikivoyageGuideService guides) { this.guides = guides; }
+
+    /** Places within this distance count as "in the city"; farther, less notable places rank lower. */
+    static final double CITY_CORE_KM = 12;
+    static final int NOTABLE_SITELINKS = 5;
+
     public DestinationDiscoveryResponse search(String destination, int radiusKm, String category) {
         return search(destination, radiusKm, new DiscoverySearchFilters(
                 category, null, null, null, null, null, null, null, null,
@@ -67,8 +81,12 @@ public class DestinationDiscoveryService {
     }
 
     public DestinationDiscoveryResponse topPlaces(String destination, int radiusKm) {
+        return topPlaces(destination, radiusKm, null);
+    }
+
+    public DestinationDiscoveryResponse topPlaces(String destination, int radiusKm, String tripType) {
         return search(destination, radiusKm, new DiscoverySearchFilters("ALL",null,null,null,null,null,null,null,null,
-                null,null,null,"RELEVANCE",0,10), true);
+                null,null,null,"RELEVANCE",0,10,null,tripType), true);
     }
 
     public DestinationDiscoveryResponse search(String destination, int radiusKm, DiscoverySearchFilters filters) {
@@ -82,6 +100,9 @@ public class DestinationDiscoveryService {
         DiscoveryCategory category = enumValue(DiscoveryCategory.class, filters.category(), "category");
         DiscoveryItemType itemType = enumValue(DiscoveryItemType.class, filters.itemType(), "item type");
         PriceStatus priceStatus = enumValue(PriceStatus.class, filters.priceStatus(), "price status");
+        TripTypeAffinity.Style tripStyle;
+        try { tripStyle = TripTypeAffinity.parse(filters.tripType()); }
+        catch (IllegalArgumentException ex) { throw bad("Unsupported trip type"); }
         int size = Math.min(filters.size(), 100);
         String placeName = filters.name() == null ? "" : filters.name().trim();
         String cacheKey = (freeOnly ? "FREE|" : "ALL|") + query.toLowerCase(Locale.ROOT) + "|" + radiusKm + "|" + (category == null ? "ALL" : category) + "|name:" + placeName.toLowerCase(Locale.ROOT);
@@ -101,6 +122,7 @@ public class DestinationDiscoveryService {
         List<DiscoveredPlace> filtered = cached.places().stream()
                 .filter(place -> !freeOnly || highlight(place))
                 .filter(place -> placeNameMatches(place.name(), filters.name()))
+                .filter(place -> !TripTypeAffinity.hidden(place, tripStyle))
                 .filter(place -> itemType == null || place.itemType() == itemType)
                 .filter(place -> priceStatus == null || place.priceStatus() == priceStatus
                         && (!(priceStatus == PriceStatus.VERIFIED || priceStatus == PriceStatus.FREE)
@@ -116,7 +138,7 @@ public class DestinationDiscoveryService {
                 .filter(place -> filters.minDuration() == null || effectiveDuration(place) >= filters.minDuration())
                 .filter(place -> filters.maxDuration() == null || effectiveDuration(place) <= filters.maxDuration())
                 .filter(place -> filters.minRating() == null || place.rating() != null && place.rating() >= filters.minRating())
-                .sorted(freeOnly ? highlightOrder() : comparator(filters.sort()))
+                .sorted(freeOnly ? highlightOrder(tripStyle) : comparator(filters.sort(), tripStyle))
                 .limit(freeOnly ? 10 : Long.MAX_VALUE)
                 .toList();
 
@@ -165,7 +187,8 @@ public class DestinationDiscoveryService {
         List<String> attributions = new ArrayList<>();
 
         var eligible=providers.stream().filter(provider->!freeOnly || provider instanceof CuratedDiscoveryProvider
-                || provider instanceof OverpassDiscoveryProvider || provider instanceof WikidataDiscoveryProvider).toList();
+                || provider instanceof OverpassDiscoveryProvider || provider instanceof WikidataDiscoveryProvider
+                || provider instanceof WikivoyageDiscoveryProvider).toList();
         var primary=eligible.stream().filter(provider->!(provider instanceof PhotonPlaceDiscoveryProvider) || !placeName.isBlank()).toList();
         var batches=new ArrayList<DiscoveryBatch.Result>(DiscoveryBatch.fetch(primary,request,Duration.ofSeconds(8)));
         for(var outcome:batches) addProviderResult(outcome.value(),placeName,freeOnly,unique,usedProviders,warnings,attributions);
@@ -176,13 +199,122 @@ public class DestinationDiscoveryService {
             for(var outcome:DiscoveryBatch.fallback(fallback,request,Duration.ofSeconds(8)))
                 addProviderResult(outcome.value(),placeName,freeOnly,unique,usedProviders,warnings,attributions);
         }
+        if (placeName.isBlank() && guides != null) boostGuideRecommendations(unique, destination);
+        if (placeName.isBlank() && catalogue != null) applyRecommendedList(unique, query, destination, category);
         if (unique.isEmpty()) warnings.add("No source-backed listings were returned. Suttru did not generate placeholder activities.");
         warnings.add("Prices and opening hours may change. Confirm with the linked official provider before travelling.");
         if (unique.size() > maxResults) warnings.add("The configured " + maxResults + "-place search limit was reached. Narrow the category or radius for more focused results.");
         List<DiscoveredPlace> places = unique.values().stream().sorted(Comparator.comparingInt(TouristPlacePriority::rank)
+                .thenComparing(Comparator.comparingInt((DiscoveredPlace place) -> value(place.popularityScore())).reversed())
                 .thenComparingDouble(DiscoveredPlace::distanceKm)).limit(maxResults).toList();
         return new CachedSearch(Instant.now(), destination, places, List.copyOf(usedProviders),
                 List.copyOf(new LinkedHashSet<>(warnings)), List.copyOf(new LinkedHashSet<>(attributions)));
+    }
+
+    /** Places named in the destination's travel guide get the recommended popularity boost. */
+    private void boostGuideRecommendations(Map<String, DiscoveredPlace> unique, GeocodedDestination destination) {
+        var highlights = guides.guide(destination).normalizedHighlights();
+        // Recommended = named by the travel guide, or a notable landmark (5+ Wikipedia language editions) in the city core.
+        unique.replaceAll((key, place) -> {
+            int popularity = value(place.popularityScore());
+            if (popularity >= WikivoyageDiscoveryProvider.RECOMMENDED_POPULARITY) return place;
+            boolean guide = !highlights.isEmpty() && WikivoyageGuideService.recommended(place.name(), highlights);
+            boolean notable = popularity >= NOTABLE_SITELINKS && place.distanceKm() <= CITY_CORE_KM;
+            return guide || notable ? place.toBuilder().popularityScore(WikivoyageDiscoveryProvider.RECOMMENDED_POPULARITY + popularity).build() : place;
+        });
+    }
+
+    /** Highest popularity given to Suttru's recommended list; list order is preserved below it. */
+    static final int LIST_POPULARITY = 1000;
+    /** Distance sent for list places with no known location (shown as "Location not mapped"). */
+    static final double UNMAPPED_DISTANCE = -1;
+
+    /**
+     * Applies Suttru's recommended list for the destination: matching places move to the top in list order,
+     * and listed places no source located are added as clearly labelled area cards (no invented coordinates).
+     */
+    private void applyRecommendedList(Map<String, DiscoveredPlace> unique, String query, GeocodedDestination destination, DiscoveryCategory category) {
+        var match = catalogue.forDestination(query, destination);
+        if (match.isEmpty()) return;
+        var list = match.get();
+        String city = list.title();
+        Instant checked = Instant.now();
+        for (int i = 0; i < list.places().size(); i++) {
+            var item = list.places().get(i);
+            int popularity = LIST_POPULARITY - i;
+            String found = unique.entrySet().stream()
+                    .filter(e -> item.wikidataId() != null && e.getKey().equals("wikidata:" + item.wikidataId())
+                            // Never attach a list entry to a junk record such as a bare "Aarti" label.
+                            || TouristPlacePriority.rank(e.getValue()) < 3
+                                && RecommendedPlacesCatalogue.sameName(e.getValue().name(), item.name(), city))
+                    .map(Map.Entry::getKey).findFirst().orElse(null);
+            if (found != null) {
+                DiscoveredPlace place = unique.get(found);
+                if (value(place.popularityScore()) < popularity) unique.put(found, place.toBuilder().popularityScore(popularity).build());
+                continue;
+            }
+            DiscoveryCategory itemCategory = item.activity() ? DiscoveryCategory.ADVENTURE : guessCategory(item.name());
+            if (category != null && !DiscoveryCategoryMatching.matches(category, itemCategory)) continue;
+            String id = item.wikidataId() != null ? "wikidata:" + item.wikidataId()
+                    : "suttru-rec:" + Integer.toHexString((city + "|" + item.name()).toLowerCase(Locale.ROOT).hashCode());
+            if (unique.containsKey(id)) continue;
+            String source = item.wikidataId() != null ? "https://www.wikidata.org/wiki/" + item.wikidataId()
+                    : !list.guideUrl().isBlank() ? list.guideUrl() : null;
+            boolean mapped = item.mapped();
+            BigDecimal lat = mapped ? BigDecimal.valueOf(item.latitude()) : destination.latitude();
+            BigDecimal lon = mapped ? BigDecimal.valueOf(item.longitude()) : destination.longitude();
+            // Real distance when the place has coordinates; UNMAPPED_DISTANCE tells the app to say "Location not mapped".
+            double distance = mapped ? Math.round(haversine(destination.latitude().doubleValue(), destination.longitude().doubleValue(),
+                    item.latitude(), item.longitude()) * 10) / 10.0 : UNMAPPED_DISTANCE;
+            String note = mapped ? "Recommended in " + city + "."
+                    : "Recommended in " + city + ". Exact location isn't mapped yet; search it in Maps before you go.";
+            unique.put(id, DiscoveredPlace.builder().externalId(id).name(item.name()).category(itemCategory)
+                    .latitude(lat).longitude(lon).distanceKm(distance)
+                    .itemType(item.activity() ? DiscoveryItemType.ACTIVITY : DiscoveryItemType.PLACE)
+                    .saveCategory(item.activity() ? com.tripmate.place.PlaceCategory.ACTIVITY : com.tripmate.place.PlaceCategory.ATTRACTION)
+                    .description(note).shortDescription(note).city(city).state(list.state())
+                    .sourceName(item.verified() ? "Suttru recommended list" : "Suttru recommended list (not source-verified)")
+                    .sourceUrl(source).sourceLastCheckedAt(checked).confidenceScore(.7).popularityScore(popularity)
+                    .priceStatus(PriceStatus.UNKNOWN).priceType(PriceType.UNKNOWN)
+                    .mapUrl(mapped ? "https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lon
+                            : "https://www.google.com/maps/search/?api=1&query="
+                            + java.net.URLEncoder.encode(item.name() + ", " + city, java.nio.charset.StandardCharsets.UTF_8))
+                    .build());
+        }
+    }
+
+    private static final java.util.regex.Pattern[] CATEGORY_WORDS = {
+            java.util.regex.Pattern.compile(".*\\b(temple|mandir|ashram|ghat|aarti|gurudwara|gurdwara|dargah|mosque|masjid|monastery|math)\\b.*"),
+            java.util.regex.Pattern.compile(".*\\b(church|cathedral|basilica)\\b.*"),
+            java.util.regex.Pattern.compile(".*\\b(museum|gallery)\\b.*"),
+            java.util.regex.Pattern.compile(".*\\b(fort|palace|tomb|caves?|ruins|monument|mahal)\\b.*"),
+            java.util.regex.Pattern.compile(".*\\b(falls|waterfalls?)\\b.*"),
+            java.util.regex.Pattern.compile(".*\\b(lake|backwaters?)\\b.*"),
+            java.util.regex.Pattern.compile(".*\\b(beach)\\b.*"),
+            java.util.regex.Pattern.compile(".*\\b(park|garden|gardens)\\b.*"),
+            java.util.regex.Pattern.compile(".*\\b(view ?point|peak|hill|top)\\b.*"),
+            java.util.regex.Pattern.compile(".*\\b(safari|sanctuary|national park|zoo|reserve)\\b.*") };
+    private static final DiscoveryCategory[] CATEGORY_FOR = { DiscoveryCategory.TEMPLE, DiscoveryCategory.CHURCH, DiscoveryCategory.MUSEUM,
+            DiscoveryCategory.HISTORICAL, DiscoveryCategory.WATERFALL, DiscoveryCategory.LAKE, DiscoveryCategory.BEACH, DiscoveryCategory.PARK,
+            DiscoveryCategory.VIEWPOINT, DiscoveryCategory.WILDLIFE };
+
+    static DiscoveryCategory guessCategory(String name) {
+        String n = name.toLowerCase(Locale.ROOT);
+        for (int i = 0; i < CATEGORY_WORDS.length; i++) if (CATEGORY_WORDS[i].matcher(n).matches()) return CATEGORY_FOR[i];
+        return DiscoveryCategory.ATTRACTION;
+    }
+
+    static boolean inRecommendedList(DiscoveredPlace place) {
+        return place.popularityScore() != null && place.popularityScore() > LIST_POPULARITY - 50 && place.popularityScore() <= LIST_POPULARITY;
+    }
+
+    static boolean recommended(DiscoveredPlace place) {
+        return place.popularityScore() != null && place.popularityScore() >= WikivoyageDiscoveryProvider.RECOMMENDED_POPULARITY;
+    }
+
+    /** Less notable places outside the city core (e.g. a neighbouring town) rank after the city's own sights. */
+    static boolean outsideCore(DiscoveredPlace place) {
+        return place.distanceKm() > CITY_CORE_KM && !recommended(place) && value(place.popularityScore()) < 15;
     }
 
     private void addProviderResult(DiscoveryProviderResult result,String placeName,boolean freeOnly,
@@ -248,6 +380,9 @@ public class DestinationDiscoveryService {
                 winner.imageGallery().forEach(image -> PlacePhotoService.add(gallery,image));
                 donor.imageGallery().forEach(image -> PlacePhotoService.add(gallery,image));
                 winner=winner.toBuilder().imageGallery(gallery.stream().limit(8).toList()).build();
+                if (value(donor.popularityScore()) > value(winner.popularityScore())) {
+                    winner = winner.toBuilder().popularityScore(donor.popularityScore()).build();
+                }
                 unique.put(nearbyKey, winner);
             }
         }
@@ -255,9 +390,19 @@ public class DestinationDiscoveryService {
 
     private boolean samePlace(DiscoveredPlace left, DiscoveredPlace right) {
         String leftName = normalize(left.name()), rightName = normalize(right.name());
-        if (leftName.isBlank() || !leftName.equals(rightName)) return false;
-        return haversine(left.latitude().doubleValue(), left.longitude().doubleValue(),
-                right.latitude().doubleValue(), right.longitude().doubleValue()) <= 0.25;
+        if (leftName.isBlank()) return false;
+        double distance = haversine(left.latitude().doubleValue(), left.longitude().doubleValue(),
+                right.latitude().doubleValue(), right.longitude().doubleValue());
+        if (leftName.equals(rightName)) return distance <= 0.25;
+        // Spelling variants and a trailing type word ("Parmarth Niketan" / "Parmarth Niketan Ashram") are the
+        // same nearby place. Area activities sit at the city centre and are never merged this way.
+        if (left.itemType() == DiscoveryItemType.ACTIVITY || right.itemType() == DiscoveryItemType.ACTIVITY || distance > 0.3) return false;
+        String a = WikivoyageGuideService.normalize(left.name()), b = WikivoyageGuideService.normalize(right.name());
+        if (a.length() < 5 || b.length() < 5) return false;
+        if (a.equals(b)) return true;
+        String longer = a.length() >= b.length() ? a : b, shorter = longer == a ? b : a;
+        return longer.startsWith(shorter + " ") && longer.substring(shorter.length()).trim()
+                .matches("(ashram|temple|mandir|bridge|ghat|niketan|complex|area|point|park|garden|lake|falls)");
     }
 
     private boolean highlight(DiscoveredPlace place) {
@@ -268,18 +413,20 @@ public class DestinationDiscoveryService {
             default -> false;
         };
     }
-    private Comparator<DiscoveredPlace> highlightOrder() {
+    private Comparator<DiscoveredPlace> highlightOrder(TripTypeAffinity.Style tripStyle) {
         return Comparator.comparing((DiscoveredPlace place) -> !place.curated())
+                .thenComparing((DiscoveredPlace place) -> !inRecommendedList(place))
+                .thenComparing(Comparator.comparingInt((DiscoveredPlace place) -> TripTypeAffinity.score(place, tripStyle)).reversed())
                 .thenComparing(Comparator.comparingInt((DiscoveredPlace place) -> value(place.popularityScore())).reversed())
                 .thenComparing(Comparator.comparingDouble(DiscoveredPlace::confidenceScore).reversed())
                 .thenComparingDouble(DiscoveredPlace::distanceKm)
                 .thenComparing(DiscoveredPlace::name,String.CASE_INSENSITIVE_ORDER);
     }
 
-    private Comparator<DiscoveredPlace> comparator(String value) {
+    private Comparator<DiscoveredPlace> comparator(String value, TripTypeAffinity.Style tripStyle) {
         String sort = value == null ? "RELEVANCE" : value.trim().toUpperCase(Locale.ROOT);
         return switch (sort) {
-            case "DISTANCE" -> Comparator.comparingDouble(DiscoveredPlace::distanceKm);
+            case "DISTANCE" -> Comparator.comparingDouble((DiscoveredPlace place) -> place.distanceKm() < 0 ? Double.MAX_VALUE : place.distanceKm());
             case "PRICE_LOW" -> Comparator.comparing(DiscoveredPlace::estimatedCostPerPerson,
                     Comparator.nullsLast(BigDecimal::compareTo)).thenComparingDouble(DiscoveredPlace::distanceKm);
             case "PRICE_HIGH" -> Comparator.comparing(DiscoveredPlace::estimatedCostPerPerson,
@@ -291,10 +438,21 @@ public class DestinationDiscoveryService {
             case "RECENT", "RECENTLY_VERIFIED" -> Comparator.comparing(DiscoveredPlace::sourceLastCheckedAt,
                     Comparator.nullsLast(Comparator.reverseOrder()));
             case "NAME" -> Comparator.comparing(DiscoveredPlace::name, String.CASE_INSENSITIVE_ORDER);
+            // Popularity (e.g. Wikipedia language coverage) outranks the small per-provider
+            // confidence differences, so major landmarks lead the default list.
+            // The chosen trip type reorders within each relevance band, so suitable places lead.
+            // Guide-recommended sights first, then relevance bands, the city's own places, then trip type.
+            // Suttru's recommended list first (in list order), then guide-recommended sights, then the rest.
             default -> Comparator.comparing((DiscoveredPlace place) -> !place.curated())
+                    .thenComparing((DiscoveredPlace place) -> !inRecommendedList(place))
+                    .thenComparing(Comparator.comparingInt((DiscoveredPlace place) -> inRecommendedList(place) ? TripTypeAffinity.score(place, tripStyle) : 0).reversed())
+                    .thenComparing(Comparator.comparingInt((DiscoveredPlace place) -> inRecommendedList(place) ? value(place.popularityScore()) : 0).reversed())
+                    .thenComparing((DiscoveredPlace place) -> !recommended(place))
                     .thenComparingInt(TouristPlacePriority::rank)
-                    .thenComparing(Comparator.comparingDouble(DiscoveredPlace::confidenceScore).reversed())
+                    .thenComparing(DestinationDiscoveryService::outsideCore)
+                    .thenComparing(Comparator.comparingInt((DiscoveredPlace place) -> TripTypeAffinity.score(place, tripStyle)).reversed())
                     .thenComparing(Comparator.comparingInt((DiscoveredPlace place) -> value(place.popularityScore())).reversed())
+                    .thenComparing(Comparator.comparingDouble(DiscoveredPlace::confidenceScore).reversed())
                     .thenComparingDouble(DiscoveredPlace::distanceKm);
         };
     }
@@ -330,7 +488,7 @@ public class DestinationDiscoveryService {
     }
     private boolean textMatches(String actual, String expected) { return expected == null || expected.isBlank() || actual != null && actual.toLowerCase(Locale.ROOT).contains(expected.toLowerCase(Locale.ROOT)); }
     private int effectiveDuration(DiscoveredPlace place) { return Optional.ofNullable(place.activityDuration()).orElse(Optional.ofNullable(place.suggestedVisitMinutes()).orElse(0)); }
-    private int value(Integer value) { return value == null ? 0 : value; }
+    private static int value(Integer value) { return value == null ? 0 : value; }
     private String normalize(String value) { return java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}\\p{M}]", ""); }
     private ResponseStatusException bad(String message) { return new ResponseStatusException(HttpStatus.BAD_REQUEST, message); }
     private double haversine(double lat1, double lon1, double lat2, double lon2) {

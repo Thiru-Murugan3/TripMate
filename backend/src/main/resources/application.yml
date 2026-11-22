@@ -83,6 +83,17 @@ discovery:
     url: ${DISCOVERY_GEOAPIFY_URL:https://api.geoapify.com}
     api-key: ${DISCOVERY_GEOAPIFY_API_KEY:}
 
+ai-images:
+  # Labelled AI illustrations for places with no real photo. Off unless enabled AND a key is set.
+  enabled: ${AI_IMAGES_ENABLED:false}
+  # "pollinations" = free, no key (default). "openai" = paid, needs OPENAI_API_KEY.
+  provider: ${AI_IMAGES_PROVIDER:pollinations}
+  openai-api-key: ${OPENAI_API_KEY:}
+  model: ${AI_IMAGES_MODEL:gpt-image-1}
+  quality: ${AI_IMAGES_QUALITY:low}
+  size: ${AI_IMAGES_SIZE:1536x1024}
+  daily-limit: ${AI_IMAGES_DAILY_LIMIT:50}
+
 weather:
   geocoding-url: ${WEATHER_GEOCODING_URL:https://geocoding-api.open-meteo.com/v1/search}
   forecast-url: ${WEATHER_FORECAST_URL:https://api.open-meteo.com/v1/forecast}
