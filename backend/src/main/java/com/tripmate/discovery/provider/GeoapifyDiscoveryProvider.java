@@ -117,7 +117,9 @@ public class GeoapifyDiscoveryProvider implements DiscoveryProvider {
         if (category == DiscoveryCategory.STAY) return "accommodation";
         if (category == DiscoveryCategory.SHOPPING) return "commercial";
         if (category == DiscoveryCategory.ENTERTAINMENT || category == DiscoveryCategory.NIGHTLIFE) return "entertainment";
-        return "tourism,entertainment,leisure,sport,catering,accommodation,commercial";
+        // Sights only: hotels, restaurants and shops filled most of the 300 slots in busy towns
+        // (e.g. 205 of 245 in Rishikesh). They remain available via the Stay/Food/Shopping categories.
+        return "tourism,entertainment,leisure,sport,heritage,religion,natural,national_park,beach";
     }
     private DiscoveryCategory classify(JsonNode categories, String name) {
         String joined = categories.toString().toLowerCase(Locale.ROOT);

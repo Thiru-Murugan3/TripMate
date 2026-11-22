@@ -20,13 +20,20 @@ public record DiscoverySearchFilters(
         String sort,
         int page,
         int size,
-        String name
+        String name,
+        String tripType
 ) {
+    public DiscoverySearchFilters(String category, String subcategory, String itemType, BigDecimal minPrice,
+            BigDecimal maxPrice, String priceStatus, Boolean openNow, Boolean familyFriendly, String difficulty,
+            Integer minDuration, Integer maxDuration, Double minRating, String sort, int page, int size, String name) {
+        this(category, subcategory, itemType, minPrice, maxPrice, priceStatus, openNow, familyFriendly, difficulty,
+                minDuration, maxDuration, minRating, sort, page, size, name, null);
+    }
     public DiscoverySearchFilters(String category, String subcategory, String itemType, BigDecimal minPrice,
             BigDecimal maxPrice, String priceStatus, Boolean openNow, Boolean familyFriendly, String difficulty,
             Integer minDuration, Integer maxDuration, Double minRating, String sort, int page, int size) {
         this(category, subcategory, itemType, minPrice, maxPrice, priceStatus, openNow, familyFriendly, difficulty,
-                minDuration, maxDuration, minRating, sort, page, size, null);
+                minDuration, maxDuration, minRating, sort, page, size, null, null);
     }
     public Map<String, Object> asMap() {
         Map<String, Object> filters = new LinkedHashMap<>();
@@ -44,6 +51,7 @@ public record DiscoverySearchFilters(
         put(filters, "maxDuration", maxDuration);
         put(filters, "minRating", minRating);
         put(filters, "sort", sort);
+        put(filters, "tripType", tripType);
         filters.put("page", page);
         filters.put("size", size);
         return Map.copyOf(filters);

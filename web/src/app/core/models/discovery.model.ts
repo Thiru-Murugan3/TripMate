@@ -162,6 +162,8 @@ export interface DiscoverySearchFilters {
   maxDuration?: number;
   minRating?: number;
   sort?: 'RELEVANCE' | 'DISTANCE' | 'PRICE_LOW' | 'PRICE_HIGH' | 'POPULAR' | 'VERIFIED' | 'RECENTLY_VERIFIED' | 'NAME';
+  /** Ranks places for this kind of trip (FAMILY, FRIENDS, COUPLE, SOLO, ADVENTURE). */
+  tripType?: string;
   page?: number;
   size?: number;
 }

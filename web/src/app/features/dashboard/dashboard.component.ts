@@ -7,6 +7,7 @@ import { TripService } from '../../core/services/trip.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Trip, TripType, TripDashboard, CreateTripRequest } from '../../core/models/trip.model';
 import { findMissedTrip } from '../../core/utils/missed-trip.util';
+import { formatDateRange } from '../../core/utils/date-range';
 import { MissedTripDialogComponent } from '../../shared/components/missed-trip-dialog/missed-trip-dialog.component';
 
 interface DisplayTrip {
@@ -60,9 +61,8 @@ interface PopularDestination {
           <button type="button" class="mobile-trip-link" (click)="openMobileTrip('OVERVIEW')"><img [src]="next.image" alt="" width="60" height="60" /><div><strong>{{next.name}}</strong><span>{{next.startDate | date:'d MMM'}} – {{next.endDate | date:'d MMM yyyy'}}</span><small>{{next.countdown}}</small></div><span aria-hidden="true">›</span></button>
           <div class="mobile-trip-budget" *ngIf="mobileBudget as budget"><div><span>Budget used</span><strong>{{budget.budgetUtilizationPercentage | number:'1.0-0'}}%</strong></div><progress [value]="budget.budgetUtilizationPercentage" max="100" aria-label="Trip budget used"></progress><div><small>Spent: {{budget.totalExpenses | currency:'INR':'symbol':'1.0-0'}}</small><small>Limit: {{budget.budget | currency:'INR':'symbol':'1.0-0'}}</small></div></div>
         </article>
-        <ng-template #noMobileTrip><article class="mobile-next-trip"><h2>Your next journey starts here</h2><p>Create a trip, invite your group and plan each day together.</p><button class="mobile-text-link" (click)="openCreateModal()">Create your first trip →</button></article></ng-template>
+        <ng-template #noMobileTrip><article class="mobile-next-trip"><h2>Your next journey starts here</h2><p>Create a trip, invite your group and plan each day together.</p></article></ng-template>
         <section class="mobile-quick"><h2>Quick actions</h2><div>
-          <button (click)="openCreateModal()"><span><img src="assets/mobile/plus.svg" alt="" /></span>Add trip</button>
           <button (click)="openMobileTrip('EXPENSES')"><span><img src="assets/mobile/expense.svg" alt="" /></span>Expenses</button>
           <button (click)="openMobileTrip('BOOKINGS')"><span><img src="assets/mobile/booking.svg" alt="" /></span>Bookings</button>
           <button (click)="openMobileTrip('DOCUMENTS')"><span><img src="assets/mobile/document.svg" alt="" /></span>Documents</button>
@@ -76,12 +76,12 @@ interface PopularDestination {
         
         <div class="hero-content">
           <!-- User Request: Change 'Welcome back' to 'Welcome Traveller' and remove the name -->
-          <div class="greeting-badge">
+          <div class="hero-pill">
             <span class="welcome-text">👋 Welcome Traveller</span>
+            <span class="hero-pill-divider" aria-hidden="true"></span>
+            <span class="eyebrow-pill">Explore · Plan · Travel</span>
           </div>
 
-          <div class="eyebrow-pill">EXPLORE. PLAN. TRAVEL.</div>
-          
           <h1 class="hero-title">
             Your Journey, <span class="highlight-teal">Perfectly Planned.</span>
           </h1>
@@ -92,34 +92,64 @@ interface PopularDestination {
 
           <div class="hero-actions">
             <button (click)="openCreateModal()" class="btn-hero btn-hero-primary">
+              <span class="material-symbols-outlined" aria-hidden="true">add</span>
               Plan New Trip
             </button>
             <button (click)="scrollToUpcoming()" class="btn-hero btn-hero-outline">
               View My Trips
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
             </button>
           </div>
+
+          <ul class="hero-trust" aria-label="What Suttru helps with">
+            <li><span class="material-symbols-outlined" aria-hidden="true">route</span>Day-by-day itineraries</li>
+            <li><span class="material-symbols-outlined" aria-hidden="true">payments</span>Shared budgets</li>
+            <li><span class="material-symbols-outlined" aria-hidden="true">groups</span>Group planning</li>
+          </ul>
         </div>
       </section>
 
       <!-- Main Content Area -->
       <main class="content-wrapper">
+        <nav class="quick-actions" aria-label="Quick actions">
+          <button type="button" class="quick-action" (click)="goTo('/trips')">
+            <span class="qa-icon qa-violet"><span class="material-symbols-outlined">luggage</span></span>
+            <span class="qa-text"><strong>My trips</strong><small>All your plans</small></span>
+            <span class="material-symbols-outlined qa-arrow" aria-hidden="true">arrow_forward</span>
+          </button>
+          <button type="button" class="quick-action" (click)="goTo('/invitations')">
+            <span class="qa-icon qa-amber"><span class="material-symbols-outlined">mail</span></span>
+            <span class="qa-text"><strong>Invitations</strong><small>Trips you're invited to</small></span>
+            <span class="material-symbols-outlined qa-arrow" aria-hidden="true">arrow_forward</span>
+          </button>
+          <button type="button" class="quick-action" (click)="goTo('/expenses')">
+            <span class="qa-icon qa-teal"><span class="material-symbols-outlined">account_balance_wallet</span></span>
+            <span class="qa-text"><strong>Expenses</strong><small>Track &amp; split costs</small></span>
+            <span class="material-symbols-outlined qa-arrow" aria-hidden="true">arrow_forward</span>
+          </button>
+        </nav>
+
         <!-- Upcoming Trips Section -->
         <section class="section-block" id="upcoming-trips-section">
           <div class="section-header">
             <div>
+              <span class="section-kicker">Your journeys</span>
               <h2 class="section-title">Upcoming Trips</h2>
               <p class="section-subtitle">Everything you're planning, all in one place.</p>
             </div>
+            <button type="button" class="section-link" (click)="goTo('/trips')">
+              View all trips
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            </button>
           </div>
 
           <div *ngIf="upcomingTrips.length === 0" class="upcoming-empty-state">
             <h3>No active upcoming trips</h3>
-            <p>Trips in Planning, Upcoming or Confirmed status will appear here.</p>
-            <button type="button" class="btn-create-trip" (click)="openCreateModal()">Plan New Trip</button>
+            <p>Trips in Planning, Upcoming or Confirmed status will appear here. Use <strong>Plan New Trip</strong> above to start one.</p>
           </div>
 
-          <div *ngIf="upcomingTrips.length > 0" class="trips-grid">
-            <div *ngFor="let trip of upcomingTrips" class="trip-card">
+          <div *ngIf="upcomingTrips.length > 0" class="trips-grid" [class.is-single]="upcomingTrips.length === 1">
+            <div *ngFor="let trip of upcomingTrips; let first = first" class="trip-card" [class.is-featured]="first">
               <div class="trip-card-image" [style.background-image]="'url(' + trip.image + ')'">
                 <div class="card-badges">
                   <span class="badge-tag">{{ trip.tag }}</span>
@@ -161,7 +191,9 @@ interface PopularDestination {
         <section class="section-block">
           <div class="section-header">
             <div>
+              <span class="section-kicker">Get inspired</span>
               <h2 class="section-title">Explore Popular Destinations</h2>
+              <p class="section-subtitle">Hand-picked getaways to start planning in one click.</p>
             </div>
           </div>
 
@@ -279,7 +311,7 @@ interface PopularDestination {
     /* Hero Section */
     .hero-section {
       position: relative;
-      height: 480px;
+      height: 540px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -297,55 +329,80 @@ interface PopularDestination {
     .hero-overlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(
-        180deg,
-        rgba(15, 23, 42, 0.65) 0%,
-        rgba(15, 23, 42, 0.85) 100%
-      );
+      background:
+        radial-gradient(70% 90% at 50% 40%, rgba(15, 23, 42, 0.35) 0%, rgba(15, 23, 42, 0) 70%),
+        linear-gradient(180deg, rgba(11, 18, 32, 0.55) 0%, rgba(11, 18, 32, 0.7) 55%, rgba(11, 18, 32, 0.92) 100%);
       z-index: 2;
     }
 
     .hero-content {
       position: relative;
       z-index: 3;
-      max-width: 900px;
+      max-width: 1080px;
       text-align: center;
       padding: 0 1.5rem;
-      margin-bottom: 30px;
+      margin-bottom: 64px;
     }
 
-    .greeting-badge {
-      display: inline-block;
-      margin-bottom: 0.75rem;
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.4rem;
+      padding: 0.4rem 0.95rem 0.4rem 0.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .welcome-text {
-      display: inline-block;
-      padding: 0.35rem 1rem;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 20px;
-      font-size: 0.875rem;
-      font-weight: 600;
+      font-size: 0.84rem;
+      font-weight: 650;
       color: #ffffff;
     }
 
+    .hero-pill-divider {
+      width: 1px;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
     .eyebrow-pill {
-      display: inline-block;
-      padding: 0.25rem 0.85rem;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 6px;
       font-size: 0.7rem;
       font-weight: 800;
-      letter-spacing: 0.15em;
-      color: #e2e8f0;
-      margin-bottom: 1.25rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #bae6fd;
+    }
+
+    .hero-trust {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.6rem 1.5rem;
+      margin: 2rem 0 0;
+      padding: 0;
+      list-style: none;
+      color: rgba(226, 232, 240, 0.85);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .hero-trust li {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .hero-trust .material-symbols-outlined {
+      color: #67e8f9;
+      font-size: 1.05rem;
     }
 
     .hero-title {
-      font-size: 3.2rem;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
       font-weight: 800;
       color: #ffffff;
       line-height: 1.15;
@@ -377,24 +434,30 @@ interface PopularDestination {
     }
 
     .btn-hero {
-      padding: 0.75rem 1.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.85rem 1.6rem;
+      font-family: inherit;
       font-size: 0.95rem;
-      font-weight: 700;
-      border-radius: 10px;
+      font-weight: 750;
+      border-radius: 14px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, filter 0.2s ease;
     }
 
+    .btn-hero .material-symbols-outlined { font-size: 1.15rem; }
+
     .btn-hero-primary {
-      background-color: #2563eb;
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
       color: #ffffff;
       border: none;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 14px 30px -12px rgba(79, 70, 229, 0.9);
     }
 
     .btn-hero-primary:hover {
-      background-color: #1d4ed8;
-      transform: translateY(-1px);
+      filter: brightness(1.08);
+      transform: translateY(-2px);
     }
 
     .btn-hero-outline {
@@ -510,7 +573,142 @@ interface PopularDestination {
     }
 
     .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
       margin-bottom: 1.5rem;
+    }
+
+    .section-kicker {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: #2563eb;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .section-link {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.55rem 0.95rem;
+      border: 1px solid #dbe5ff;
+      border-radius: 999px;
+      color: #2563eb;
+      background: #f5f8ff;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 750;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .section-link:hover { background: #eaf0ff; border-color: #bfd0ff; }
+    .section-link .material-symbols-outlined { font-size: 1rem; }
+
+    /* Quick actions (overlaps the hero) */
+    .quick-actions {
+      position: relative;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin: -58px 0 3rem;
+    }
+
+    .quick-action {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      min-width: 0;
+      padding: 1.05rem 1.1rem;
+      border: 1px solid #e7ecf3;
+      border-radius: 18px;
+      color: inherit;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04), 0 20px 40px -22px rgba(15, 23, 42, 0.35);
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .quick-action:hover {
+      transform: translateY(-3px);
+      border-color: #c7d7fe;
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 24px 44px -20px rgba(37, 99, 235, 0.4);
+    }
+
+    .qa-icon {
+      display: grid;
+      flex-shrink: 0;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+    }
+
+    .qa-icon .material-symbols-outlined { font-size: 1.35rem; }
+    .qa-blue { color: #2563eb; background: linear-gradient(135deg, #eff6ff, #dbeafe); }
+    .qa-violet { color: #7c3aed; background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
+    .qa-amber { color: #d97706; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+    .qa-teal { color: #0d9488; background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
+
+    .qa-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+    }
+
+    .qa-text strong {
+      color: #0b1220;
+      font-size: 0.9rem;
+      font-weight: 750;
+    }
+
+    .qa-text small {
+      overflow: hidden;
+      color: #64748b;
+      font-size: 0.74rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .qa-arrow {
+      margin-left: auto;
+      color: #cbd5e1;
+      font-size: 1.1rem;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    .quick-action:hover .qa-arrow { color: #2563eb; transform: translateX(2px); }
+
+    /* Featured (next) trip spans two columns with a side image */
+    .trip-card.is-featured {
+      grid-column: span 2;
+      flex-direction: row;
+    }
+
+    .trip-card.is-featured .trip-card-image {
+      flex: 0 0 46%;
+      height: auto;
+      min-height: 260px;
+    }
+
+    .trip-card.is-featured .trip-card-content {
+      padding: 1.4rem 1.5rem;
+      justify-content: center;
+    }
+
+    .trip-card.is-featured .trip-name {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
 
     .section-title {
@@ -554,22 +752,23 @@ interface PopularDestination {
 
     .trip-card {
       background: #ffffff;
-      border-radius: 16px;
+      border-radius: 18px;
       overflow: hidden;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+      border: 1px solid #e7ecf3;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -20px rgba(15, 23, 42, 0.25);
       display: flex;
       flex-direction: column;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     }
 
     .trip-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+      border-color: #d6e0f5;
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(37, 99, 235, 0.35);
     }
 
     .trip-card-image {
-      height: 140px;
+      height: 160px;
       background-size: cover;
       background-position: center;
       padding: 0.75rem;
@@ -719,19 +918,21 @@ interface PopularDestination {
 
     .btn-view-trip {
       width: 100%;
-      padding: 0.55rem;
-      background-color: #eff6ff;
-      color: #2563eb;
+      padding: 0.65rem;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: #ffffff;
       font-size: 0.85rem;
-      font-weight: 700;
+      font-weight: 750;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: background 0.2s ease;
+      box-shadow: 0 10px 20px -12px rgba(37, 99, 235, 0.8);
+      transition: filter 0.2s ease, box-shadow 0.2s ease;
     }
 
     .btn-view-trip:hover {
-      background-color: #dbeafe;
+      filter: brightness(1.06);
+      box-shadow: 0 14px 24px -12px rgba(37, 99, 235, 0.9);
     }
 
     /* Destinations Grid */
@@ -742,78 +943,104 @@ interface PopularDestination {
     }
 
     .dest-card {
+      position: relative;
       background: #ffffff;
-      border-radius: 16px;
+      border-radius: 18px;
       overflow: hidden;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+      border: 1px solid #e7ecf3;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -20px rgba(15, 23, 42, 0.25);
       display: flex;
       flex-direction: column;
-      transition: transform 0.2s ease;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     }
 
     .dest-card:hover {
       transform: translateY(-4px);
+      border-color: #d6e0f5;
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(37, 99, 235, 0.35);
     }
 
     .dest-card-image {
-      height: 140px;
+      position: relative;
+      height: 170px;
       background-size: cover;
       background-position: center;
+      transition: transform 0.6s ease;
+      transform-origin: center bottom;
+    }
+
+    .dest-card-image::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0) 55%, rgba(15, 23, 42, 0.35) 100%);
+    }
+
+    .dest-card:hover .dest-card-image {
+      transform: scale(1.06);
     }
 
     .dest-card-content {
-      padding: 1.1rem;
+      position: relative;
+      z-index: 1;
+      padding: 1.1rem 1.15rem 1.15rem;
       display: flex;
       flex-direction: column;
       flex: 1;
+      background: #ffffff;
     }
 
     .dest-name {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 0.2rem;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0b1220;
+      margin: 0 0 0.25rem;
     }
 
     .dest-duration {
-      font-size: 0.75rem;
+      font-size: 0.76rem;
       color: #64748b;
-      margin-bottom: 0.75rem;
+      margin: 0 0 0.8rem;
     }
 
     .dest-tags {
       display: flex;
       flex-wrap: wrap;
       gap: 0.35rem;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.15rem;
       flex: 1;
+      align-content: flex-start;
     }
 
     .dest-tag-chip {
-      font-size: 0.675rem;
-      color: #64748b;
+      font-size: 0.68rem;
+      font-weight: 650;
+      color: #475569;
       background-color: #f1f5f9;
-      padding: 0.2rem 0.55rem;
-      border-radius: 4px;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
     }
 
     .btn-plan-dest {
       width: 100%;
-      padding: 0.55rem;
-      background: #ffffff;
+      padding: 0.65rem;
+      background: #f5f8ff;
       color: #2563eb;
-      border: 1px solid #2563eb;
+      border: 1px solid #dbe5ff;
       font-size: 0.85rem;
-      font-weight: 700;
-      border-radius: 8px;
+      font-weight: 750;
+      border-radius: 12px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .btn-plan-dest:hover {
-      background-color: #2563eb;
+    .btn-plan-dest:hover,
+    .dest-card:hover .btn-plan-dest {
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      border-color: transparent;
       color: #ffffff;
+      box-shadow: 0 10px 20px -10px rgba(37, 99, 235, 0.7);
     }
 
     /* Modal Styling */
@@ -857,7 +1084,7 @@ interface PopularDestination {
     .btn-submit { background: #2563eb; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
     @media (max-width: 1024px) {
-      .trips-grid, .destinations-grid {
+      .trips-grid, .destinations-grid, .quick-actions {
         grid-template-columns: repeat(2, 1fr);
       }
       .search-bar-card {
@@ -873,9 +1100,11 @@ interface PopularDestination {
       .hero-actions { flex-wrap: wrap; gap: 0.75rem; }
       .btn-hero { min-height: 44px; }
       .trips-grid, .destinations-grid { min-width: 0; }
-      .trips-grid, .destinations-grid {
+      .trips-grid, .destinations-grid, .quick-actions {
         grid-template-columns: minmax(0, 1fr);
       }
+      .trip-card.is-featured { grid-column: auto; flex-direction: column; }
+      .trip-card.is-featured .trip-card-image { flex: none; min-height: 180px; }
       .hero-title {
         font-size: 2.2rem;
       }
@@ -1056,7 +1285,7 @@ export class DashboardComponent implements OnInit {
       id: trip.id,
       name: trip.name,
       destination: trip.destination,
-      tag: `${trip.tripType} Trip`,
+      tag: `${trip.tripType.charAt(0)}${trip.tripType.slice(1).toLowerCase()} trip`,
       status: displayStatus,
       statusClass:
         trip.status === 'UPCOMING'
@@ -1064,7 +1293,7 @@ export class DashboardComponent implements OnInit {
           : trip.status === 'PLANNED'
             ? 'status-planning'
             : 'status-confirmed',
-      dates: `${trip.startDate} - ${trip.endDate}`,
+      dates: formatDateRange(trip.startDate, trip.endDate),
       startDate:trip.startDate, endDate:trip.endDate,
       ...this.tripCountdown(trip.startDate),
       spent: '₹0',
@@ -1104,6 +1333,10 @@ export class DashboardComponent implements OnInit {
     if (destination.includes('coorg')) return 'assets/images/coorg.jpg';
     if (destination.includes('munnar')) return 'assets/images/munnar.jpg';
     return 'assets/images/kodaikanal.jpg';
+  }
+
+  goTo(path: string): void {
+    void this.router.navigate([path]);
   }
 
   scrollToUpcoming(): void {

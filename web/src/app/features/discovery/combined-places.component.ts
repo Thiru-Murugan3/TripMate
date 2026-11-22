@@ -15,11 +15,9 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
     <section class="explore">
       <header><h1>Explore</h1></header>
       <form class="search-form city-search" [class.mobile-filter-open]="mobileFiltersOpen" (ngSubmit)="discover()">
-        <label>City or area<input name="destination" [(ngModel)]="searchDestination" (ngModelChange)="cityChanged()" [disabled]="isSaving" maxlength="180" placeholder="Ooty, Tamil Nadu" required /></label>
+        <label>City or area<input name="destination" [(ngModel)]="searchDestination" (ngModelChange)="cityChanged()" [disabled]="isSaving" maxlength="180" [placeholder]="destination || 'Enter a city or area'" required /></label>
+        <label class="trip-type-filter">Trip type<select name="tripType" [(ngModel)]="tripTypeFilter" (ngModelChange)="tripTypeChanged()" [disabled]="isSaving"><option *ngFor="let option of tripTypeOptions" [value]="option.value">{{ option.label }}</option></select></label>
         <label class="advanced-filter">Category<select name="category" [(ngModel)]="category" (ngModelChange)="categoryChanged()" [disabled]="isSaving"><option value="ALL">All categories</option><option *ngFor="let value of exploreCategories" [value]="value">{{ formatCategory(value) }}</option></select></label>
-        <label class="advanced-filter">Price<select name="price" [(ngModel)]="priceStatusFilter" [disabled]="isSaving"><option value="ALL">Any price</option><option value="FREE">Free entry</option><option value="VERIFIED">Verified price</option></select></label>
-        <label class="advanced-filter">Visit duration<select name="duration" [(ngModel)]="maxDurationFilter" [disabled]="isSaving"><option [ngValue]="undefined">Any duration</option><option [ngValue]="60">Up to 1 hour</option><option [ngValue]="180">Up to 3 hours</option><option [ngValue]="480">Up to 8 hours</option></select></label>
-        <label class="advanced-filter">Within<select name="radius" [(ngModel)]="radiusKm" [disabled]="isSaving"><option [ngValue]="10">10 km</option><option [ngValue]="25">25 km</option><option [ngValue]="50">50 km</option><option [ngValue]="100">100 km · wider region</option></select></label>
         <button class="phone-filter-button" type="button" (click)="mobileFiltersOpen=!mobileFiltersOpen" [attr.aria-expanded]="mobileFiltersOpen">{{mobileFiltersOpen ? 'Hide filters' : 'Filters'}}</button>
         <button [disabled]="isLoading || isSaving || searchDestination.trim().length < 2">Search</button>
       </form>
@@ -28,11 +26,11 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
       <p *ngIf="errorMessage" role="alert" class="notice">{{ errorMessage }}</p>
       <p *ngIf="successMessage && !selectedCount" role="status" class="notice">{{ successMessage }}</p>
       <ng-container *ngIf="result as data">
-        <app-top-places *ngIf="!isLoading && itemTypeFilter === 'ALL'" [destination]="data.query" [radiusKm]="radiusKm" [tripId]="activeTripId" [startDate]="activeStartDate" [endDate]="activeEndDate" [canEdit]="effectiveCanEdit" [disabled]="isSaving" (savingChanged)="isSaving=$event" (placesChanged)="loadSavedPlaces(); placesChanged.emit()" (itineraryChanged)="itineraryChanged.emit()" [canFind]="true" (placeRequested)="filterText=$event; discover()" />
+        <app-top-places *ngIf="!isLoading && itemTypeFilter === 'ALL'" [destination]="data.query" [tripType]="tripTypeFilter" [radiusKm]="radiusKm" [tripId]="activeTripId" [startDate]="activeStartDate" [endDate]="activeEndDate" [canEdit]="effectiveCanEdit" [disabled]="isSaving" (savingChanged)="isSaving=$event" (placesChanged)="loadSavedPlaces(); placesChanged.emit()" (itineraryChanged)="itineraryChanged.emit()" [canFind]="true" (placeRequested)="filterText=$event; discover()" />
         <div class="result-heading"><h2>{{ data.resolvedDestination }}</h2><span>{{ data.resultCount }} matches from available sources</span></div>
         <details *ngIf="coverageWarnings.length" class="coverage-status"><summary>Coverage and source status</summary><p *ngFor="let warning of coverageWarnings">{{ warning }}</p></details>
         <form class="search-form" (ngSubmit)="discover()">
-          <label>Find a particular place here<input name="placeName" [(ngModel)]="filterText" [disabled]="isSaving" maxlength="180" placeholder="e.g. Botanical Garden" /></label>
+          <label>Find a particular place here<input name="placeName" [(ngModel)]="filterText" [disabled]="isSaving" maxlength="180" placeholder="Search a place by name" /></label>
           <button [disabled]="isSaving || isLoading">Find place</button><button *ngIf="filterText" type="button" [disabled]="isSaving || isLoading" (click)="filterText=''; discover()">All places</button>
         </form>
         <div *ngIf="!data.places.length" class="notice" role="status"><p>No matching places could be loaded from the available sources.</p><p>Try All categories, a wider radius or a particular place name.</p>
@@ -48,7 +46,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
         <div class="cards">
           <article *ngFor="let place of data.places; trackBy:trackPlace" class="card">
             <app-place-photo-gallery [externalId]="place.externalId" [sourceUrl]="place.sourceUrl || ''" [name]="place.name" [initialImages]="place.imageGallery!" [officialWebsite]="place.officialWebsite || place.website || ''" />
-            <div class="card-body"><h3>{{ place.name }}</h3><p>{{ formatCategory(place.category) }} · {{ place.distanceKm }} km</p><p class="duration">{{ visitTime(place) }}</p><p class="hours-status">{{ place.openingHours?.trim() ? 'Opening hours in details' : 'Opening hours not listed' }}</p><p class="price">{{ formatPlacePrice(place) }}</p>
+            <div class="card-body"><h3>{{ place.name }}</h3><p>{{ formatCategory(place.category) }} · {{ distanceLabel(place) }}</p><p class="duration">{{ visitTime(place) }}</p><p class="hours-status">{{ place.openingHours?.trim() ? 'Opening hours in details' : 'Opening hours not listed' }}</p><p class="price">{{ formatPlacePrice(place) }}</p>
               <label class="place-select"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || !canSelectPlaces" (change)="toggleSelection(place)" /> Select place</label>
               <label *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>
               <details class="place-details" (toggle)="loadListingDetails(place,$event)"><summary>View details</summary><p *ngIf="loadingDetails.has(place.externalId)" role="status">Checking source details…</p>
@@ -101,6 +99,9 @@ export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
     }));
   }
   override ngOnDestroy():void {this.detailRequests.unsubscribe();super.ngOnDestroy();}
+  distanceLabel(place:DiscoveredPlace):string {
+    return Number.isFinite(place.distanceKm) && place.distanceKm >= 0 ? place.distanceKm+' km' : 'Location not mapped';
+  }
   visitTime(place:DiscoveredPlace):string {
     const activity=place.activityDuration;
     const minutes=activity!=null&&Number.isFinite(activity)&&activity>0 ? activity : place.suggestedVisitMinutes;
@@ -145,6 +146,8 @@ export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
     {value:'ACTIVITY',label:'Activities'}, {value:'TOUR_SERVICE',label:'Tours'}
   ] as const;
   categoryChanged():void { this.itemTypeFilter='ALL'; }
+  /** Re-rank suggestions as soon as the trip type changes. */
+  tripTypeChanged():void { if(this.searchDestination.trim().length>=2 && !this.isSaving) this.discover(); }
   override discover(page=0):void {
     const query=this.searchDestination.trim();
     const match=query.match(/^(.+?)\s+(adventure|family|nature|temple|museum|food)(?:\s+(?:activities|places))?$/i);
@@ -158,6 +161,6 @@ export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
     if(!value) return null;
     try { const url=new URL(value); return ['https:','http:'].includes(url.protocol) ? url.href : null; } catch { return null; }
   }
-  constructor() { super(); this.autoAddOnSelect=false; }
+  constructor() { super(); this.autoAddOnSelect=false; this.prefillTripDestination=false; }
   cityChanged(): void { this.cancelDiscoverySearch(); this.filterText=''; this.clearSelection(); this.errorMessage=''; this.successMessage=''; }
 }

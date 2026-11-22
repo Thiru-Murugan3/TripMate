@@ -26,14 +26,20 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
             Map.entry("Q35509",DiscoveryCategory.NATURE),Map.entry("Q839954",DiscoveryCategory.HISTORICAL),
             Map.entry("Q16970",DiscoveryCategory.CHURCH),Map.entry("Q4022",DiscoveryCategory.RIVER),
             Map.entry("Q12323",DiscoveryCategory.NATURE),Map.entry("Q43501",DiscoveryCategory.WILDLIFE),
-            Map.entry("Q179049",DiscoveryCategory.WILDLIFE));
+            Map.entry("Q179049",DiscoveryCategory.WILDLIFE),
+            // Bridges (e.g. Lakshman Jhula), ghats, ashrams and hiking trails are major sights in many Indian towns.
+            Map.entry("Q12280",DiscoveryCategory.ATTRACTION),Map.entry("Q1010155",DiscoveryCategory.TEMPLE),
+            Map.entry("Q466449",DiscoveryCategory.TEMPLE),Map.entry("Q2143825",DiscoveryCategory.ADVENTURE));
+    /** Kinds that are only sights when notable: an ordinary bridge is not a tourist place. */
+    private static final Map<String,Integer> MIN_SITELINKS = Map.of("Q12280", 2);
     private static final Pattern ENTITY = Pattern.compile("https?://www\\.wikidata\\.org/entity/(Q[0-9]+)");
     private static final Pattern POINT = Pattern.compile("Point\\(\\s*([-+0-9.eE]+)\\s+([-+0-9.eE]+)\\s*\\)");
     private final RestClient client;
     private final WikimediaEnrichmentService enrichment;
     @org.springframework.beans.factory.annotation.Autowired
     public WikidataDiscoveryProvider(ProviderHttpClientFactory factory, WikimediaEnrichmentService enrichment) {
-        this(factory.create(5000),enrichment);
+        // 7s stays inside the 8s discovery phase deadline.
+        this(factory.create(7000),enrichment);
     }
     WikidataDiscoveryProvider(RestClient client, WikimediaEnrichmentService enrichment) { this.client=client; this.enrichment=enrichment; }
     @Override public String name() { return "Wikidata"; }
@@ -52,7 +58,7 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
             }
             %s
             VALUES ?kind { %s }
-            ?item wdt:P31/wdt:P279* ?kind .
+            ?item wdt:P31/wdt:P279?/wdt:P279? ?kind .
             FILTER NOT EXISTS { ?item wdt:P17 ?country . FILTER(?country != wd:Q668) }
             OPTIONAL { ?item wikibase:sitelinks ?sitelinks . }
             SERVICE wikibase:label { bd:serviceParam wikibase:language "en,ta" . }
@@ -69,6 +75,8 @@ public class WikidataDiscoveryProvider implements DiscoveryProvider {
             var kind=ENTITY.matcher(value(row,"kind"));String label=value(row,"itemLabel").trim();
             if(!entity.matches() || !point.matches() || !kind.matches() || !KINDS.containsKey(kind.group(1)))continue;
             String id=entity.group(1);if(label.isBlank() || label.equals(id) || places.containsKey(id))continue;
+            Integer links=sitelinks(row);
+            if(links==null ? MIN_SITELINKS.containsKey(kind.group(1)) : links < MIN_SITELINKS.getOrDefault(kind.group(1),0))continue;
             BigDecimal lon,lat;
             try{lon=new BigDecimal(point.group(1));lat=new BigDecimal(point.group(2));}catch(NumberFormatException ex){continue;}
             if(lat.doubleValue()<6 || lat.doubleValue()>38 || lon.doubleValue()<68 || lon.doubleValue()>98)continue;

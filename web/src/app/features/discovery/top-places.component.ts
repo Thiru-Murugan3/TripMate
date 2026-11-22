@@ -28,7 +28,7 @@ import { DiscoveryService } from '../../core/services/discovery.service';
         <ol>
           <li *ngFor="let place of data.places">
             <app-place-photo-gallery [externalId]="place.externalId" [sourceUrl]="place.sourceUrl || ''" [name]="place.name" [initialImages]="place.imageGallery!" />
-            <div class="place-heading"><label class="place-option"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || disabled || !canSelectPlaces" (change)="toggleSelection(place)" [attr.aria-label]="'Select ' + place.name" /> <strong>{{ place.name }}</strong></label><span class="note">{{ place.category.replaceAll('_',' ').toLowerCase() }} · {{ place.distanceKm }} km</span></div>
+            <div class="place-heading"><label class="place-option"><input type="checkbox" [checked]="isSelected(place)" [disabled]="isSaving || disabled || !canSelectPlaces" (change)="toggleSelection(place)" [attr.aria-label]="'Select ' + place.name" /> <strong>{{ place.name }}</strong></label><span class="note">{{ place.category.replaceAll('_',' ').toLowerCase() }} · {{ place.distanceKm >= 0 ? place.distanceKm + ' km' : 'Location not mapped' }}</span></div>
             <label class="day-picker" *ngIf="isSelected(place) && activeTripId">Trip day<select [ngModel]="dayAssignments[place.externalId]" (ngModelChange)="setDayAssignment(place,$event)" [disabled]="isSaving || disabled"><option *ngFor="let day of availableDayNumbers" [ngValue]="day">Day {{ day }}</option></select></label>
             <div class="actions"><a [href]="place.sourceUrl" target="_blank" rel="noopener noreferrer">{{ place.sourceName || 'Source' }} ↗</a><button *ngIf="canFind" type="button" [disabled]="disabled || isSaving" (click)="placeRequested.emit(place.name)">Find in Explore</button></div>
           </li>
@@ -56,7 +56,7 @@ export class TopPlacesComponent extends DestinationDiscoveryComponent implements
   constructor() {super();this.autoAddOnSelect=false;}
   override ngOnInit():void {this.syncContext();}
   ngOnChanges(changes:SimpleChanges):void {
-    if (['destination','radiusKm','tripId','startDate','endDate'].some(key=>changes[key])) {
+    if (['destination','radiusKm','tripId','startDate','endDate','tripType'].some(key=>changes[key])) {
       if (this.isSaving) {this.pendingContext=true;return;}
       this.resetPanel();this.syncContext();
     }
@@ -75,7 +75,7 @@ export class TopPlacesComponent extends DestinationDiscoveryComponent implements
         error:()=>{this.tripsLoading=false;this.availableTrips=[];}
       });
     }
-    this.request=this.discovery.getTopPlaces(this.destination,this.radiusKm).subscribe({
+    this.request=this.discovery.getTopPlaces(this.destination,this.radiusKm,this.tripType).subscribe({
       next:result=>{this.busy=false;this.result=result;},
       error:err=>{this.busy=false;this.error=err?.error?.message || err?.error?.detail || 'Highlights are unavailable. Your regular places are still available.';}
     });

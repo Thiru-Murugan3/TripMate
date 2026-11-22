@@ -39,20 +39,22 @@ public class DestinationDiscoveryController {
             @RequestParam(defaultValue = "RELEVANCE") String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size,
-            @RequestParam(required = false) String name
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String tripType
     ) {
         return ResponseEntity.ok(
                 destinationDiscoveryService.search(destination, radiusKm, new DiscoverySearchFilters(
                         category, subcategory, itemType, minPrice, maxPrice, priceStatus, openNow,
-                        familyFriendly, difficulty, minDuration, maxDuration, minRating, sort, page, size, name
+                        familyFriendly, difficulty, minDuration, maxDuration, minRating, sort, page, size, name, tripType
                 ))
         );
     }
 
     @GetMapping("/top-places")
     public ResponseEntity<DestinationDiscoveryResponse> topPlaces(@RequestParam String destination,
-            @RequestParam(defaultValue = "25") int radiusKm) {
-        return ResponseEntity.ok(destinationDiscoveryService.topPlaces(destination,radiusKm));
+            @RequestParam(defaultValue = "25") int radiusKm,
+            @RequestParam(required = false) String tripType) {
+        return ResponseEntity.ok(destinationDiscoveryService.topPlaces(destination,radiusKm,tripType));
     }
 
     @GetMapping("/places/{externalId}")

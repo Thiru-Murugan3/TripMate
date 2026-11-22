@@ -5,12 +5,11 @@ import { filter, Subscription } from 'rxjs';
 
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 import { MobileNavigationComponent } from './shared/components/mobile-navigation/mobile-navigation.component';
-import { FooterComponent } from './shared/components/footer/footer.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [DevicePermissionsComponent,RouterOutlet, NavbarComponent, FooterComponent, MobileNavigationComponent],
+  imports: [DevicePermissionsComponent,RouterOutlet, NavbarComponent, MobileNavigationComponent],
   template: `
     <app-device-permissions></app-device-permissions>
     <div class="app-layout" [class.mobile-inner-view]="isMobileInnerView" [class.has-app-shell]="showAppShell">
@@ -23,7 +22,6 @@ import { FooterComponent } from './shared/components/footer/footer.component';
       </main>
 
       @if (showAppShell) {
-        <app-footer class="desktop-footer"></app-footer>
         <app-mobile-navigation></app-mobile-navigation>
       }
     </div>
@@ -31,7 +29,6 @@ import { FooterComponent } from './shared/components/footer/footer.component';
   styles: [`
     @media(max-width:760px) {
       .has-app-shell .main-content { padding-bottom:calc(96px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px))); background:#f8fafc; }
-      .desktop-footer { display:none; }
       .mobile-inner-view app-navbar { display:none; }
     }
 

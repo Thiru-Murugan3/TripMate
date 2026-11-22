@@ -21,6 +21,23 @@
     </button>
   </section>
 
+  @if (!loading() && !errorMessage() && trips().length > 0) {
+    <section class="stats-strip" aria-label="Trip summary">
+      <div class="stat">
+        <span class="stat-icon tone-blue"><span class="material-symbols-outlined">luggage</span></span>
+        <div><strong>{{ stats().total }}</strong><span>Total trips</span></div>
+      </div>
+      <div class="stat">
+        <span class="stat-icon tone-violet"><span class="material-symbols-outlined">flight_takeoff</span></span>
+        <div><strong>{{ stats().upcoming }}</strong><span>Upcoming</span></div>
+      </div>
+      <div class="stat">
+        <span class="stat-icon tone-green"><span class="material-symbols-outlined">verified</span></span>
+        <div><strong>{{ stats().completed }}</strong><span>Completed</span></div>
+      </div>
+    </section>
+  }
+
   <nav class="mobile-status-tabs" aria-label="Quick trip filters">
     @for (status of mobileStatuses; track status) {
       <button type="button" [class.active]="statusFilter() === status" [attr.aria-pressed]="statusFilter() === status" (click)="updateStatus(status)">{{ status === 'ALL' ? 'All' : status === 'ONGOING' ? 'Active' : formatStatus($any(status)) }}</button>
@@ -29,6 +46,7 @@
   <section class="toolbar" [class.filters-open]="mobileFiltersOpen" aria-label="Trip filters">
     <label class="search-field">
       <span>Search</span>
+      <span class="material-symbols-outlined search-icon" aria-hidden="true">search</span>
       <input
         type="search"
         [ngModel]="searchTerm()"
@@ -109,8 +127,9 @@
             </div>
 
             <div class="image-title">
+              <span class="timing-chip" [attr.data-tone]="tripTiming(trip).tone">{{ tripTiming(trip).label }}</span>
               <h3>{{ trip.name }}</h3>
-              <p>{{ trip.destination }}</p>
+              <p><span class="material-symbols-outlined" aria-hidden="true">location_on</span>{{ trip.destination }}</p>
             </div>
           </div>
 
@@ -119,7 +138,7 @@
             <div class="meta-row">
               <div>
                 <span class="meta-label">DATES</span>
-                <strong class="desktop-trip-dates">{{ trip.startDate }} → {{ trip.endDate }}</strong><strong class="mobile-trip-dates">{{ trip.startDate | date:'d MMM' }} – {{ trip.endDate | date:'d MMM yyyy' }}</strong>
+                <strong class="desktop-trip-dates">{{ formatDates(trip) }}</strong><strong class="mobile-trip-dates">{{ trip.startDate | date:'d MMM' }} – {{ trip.endDate | date:'d MMM yyyy' }}</strong>
                 <small>{{ tripDuration(trip) }}</small>
               </div>
               <div class="meta-right">
@@ -134,7 +153,7 @@
             }
 
             <div class="card-footer">
-              <span class="role">{{ trip.userRole ?? 'OWNER' }}</span>
+              <span class="role" [class.is-owner]="trip.userRole === 'OWNER'">{{ formatRole(trip) }}</span>
               <div class="card-actions">
                 <button type="button" class="view-button" (click)="$event.stopPropagation(); openTrip(trip)">
                   View Trip
@@ -143,7 +162,7 @@
                 @if (canDeleteTrip(trip)) {
                   <button type="button" class="delete-button" title="Delete Trip" (click)="deleteTrip(trip, $event)">
                     <span class="material-symbols-outlined">delete</span>
-                    Delete
+                    <span class="delete-label">Delete</span>
                   </button>
                 }
               </div>
