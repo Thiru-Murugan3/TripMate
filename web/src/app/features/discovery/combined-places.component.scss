@@ -128,7 +128,7 @@ button:disabled { opacity: .45; cursor: default; box-shadow: none; }
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .chip { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; color: var(--ex-primary); background: var(--ex-soft); }
 .dist { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--ex-ink); }
-.dist::before { content: "📍"; font-size: 11px; }
+.dist::before { content: "📍" / ""; font-size: 11px; }
 .dist.unmapped { color: var(--ex-muted); font-weight: 500; }
 .card-body .duration, .card-body .hours-status { font-size: 12px; color: var(--ex-muted); margin-bottom: 4px; }
 .card-body .price { font-weight: 750; color: var(--ex-ink); margin: 6px 0 10px; }
@@ -222,7 +222,7 @@ figure { margin: 0; }
 }
 .place-select input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
 .place-select::before {
-  content: "+"; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  content: "+" / ""; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
   font-size: 15px; line-height: 1; color: #fff; background: var(--ex-primary);
 }
 .place-select:hover { background: color-mix(in srgb, var(--ex-primary) 12%, #fff); box-shadow: 0 6px 16px color-mix(in srgb, var(--ex-primary) 18%, transparent); transform: translateY(-1px); border-color: color-mix(in srgb, var(--ex-primary) 40%, transparent); }
@@ -232,7 +232,7 @@ figure { margin: 0; }
   background: linear-gradient(135deg, var(--ex-primary), #7c3aed);
   box-shadow: 0 8px 20px color-mix(in srgb, var(--ex-primary) 32%, transparent);
 }
-.place-select:has(input:checked)::before { content: "✓"; font-size: 12px; color: var(--ex-primary); background: #fff; }
+.place-select:has(input:checked)::before { content: "✓" / ""; font-size: 12px; color: var(--ex-primary); background: #fff; }
 .place-select:has(input:disabled) { opacity: .5; cursor: default; transform: none; box-shadow: none; }
 .card:has(.place-select input:checked) { border-color: color-mix(in srgb, var(--ex-primary) 55%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ex-primary) 25%, transparent), var(--ex-shadow); }
 @media (max-width: 760px) { .place-select { min-height: 44px; font-size: 12px; padding: 0 10px; } }
