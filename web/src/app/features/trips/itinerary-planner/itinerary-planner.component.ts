@@ -543,8 +543,8 @@ interface DayRoutePlan {
     .route-start-prompt { display:flex; align-items:center; gap:.4rem; color:#854d0e; background:#fffbeb; }
     .route-start-prompt .material-symbols-outlined { font-size:1rem; }
     .day-routes { display:flex; flex-direction:column; gap:.8rem; margin-top:.8rem; }
-    .day-route-card { --route-color:#dc2626; --route-dark:#991b1b; --route-soft:#fee2e2; overflow:hidden; border:1px solid color-mix(in srgb,var(--route-color) 28%,white); border-radius:16px; background:#fff; }
-    .day-route-card.day-even { --route-color:#15803d; --route-dark:#166534; --route-soft:#dcfce7; }
+    .day-route-card { --route-color:#c2570c; --route-dark:#7c2d12; --route-soft:#fff1dd; overflow:hidden; border:1px solid color-mix(in srgb,var(--route-color) 28%,white); border-radius:16px; background:#fff; }
+    .day-route-card.day-even { --route-color:#34417a; --route-dark:#141a33; --route-soft:#eef0f8; }
     .day-route-card > header { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.78rem 1rem; color:#fff; background:linear-gradient(115deg,var(--route-dark),var(--route-color)); }
     .day-route-card > header span { font-size:.6rem; font-weight:900; letter-spacing:.09em; }
     .day-route-card > header h4 { margin:.15rem 0 0; font-size:.86rem; }

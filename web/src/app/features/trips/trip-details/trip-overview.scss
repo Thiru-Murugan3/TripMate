@@ -834,3 +834,18 @@ button.ov-stat:hover .ov-stat-arrow {
     grid-column: 1 / -1;
   }
 }
+
+/* Travel motion on the countdown: the track is a moving dashed flight path and the plane glows. */
+.ov-journey-track {
+  height: 2px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .38) 0 6px, transparent 6px 12px);
+  background-size: 12px 2px;
+  animation: ov-route 1.2s linear infinite;
+}
+.ov-journey-fill { height: 3px; top: -.5px; background: linear-gradient(90deg, #ffc46b, #e8860c); box-shadow: 0 0 14px rgba(232, 134, 12, .8); }
+.ov-journey-marker { width: 34px; height: 34px; color: #141a33; background: linear-gradient(145deg, #ffc46b, #e8860c); box-shadow: 0 0 0 5px rgba(232, 134, 12, .22), 0 10px 22px rgba(232, 134, 12, .45); animation: ov-glow 2.4s ease-in-out infinite; }
+.ov-journey-labels { position: relative; }
+.ov-hero-eyebrow { box-shadow: inset 0 0 0 1px rgba(255, 196, 107, .35); }
+@keyframes ov-route { to { background-position: 12px 0; } }
+@keyframes ov-glow { 50% { box-shadow: 0 0 0 9px rgba(232, 134, 12, .1), 0 10px 22px rgba(232, 134, 12, .45); } }
+@media (prefers-reduced-motion: reduce) { .ov-journey-track, .ov-journey-marker { animation: none; } }

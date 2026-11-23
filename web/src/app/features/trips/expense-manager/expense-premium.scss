@@ -130,3 +130,25 @@
     .expense-card:hover, .btn.primary:hover:not(:disabled) { transform: none; }
   }
 }
+
+/* Mobile "travel wallet": the four totals live in one navy card with the budget bar tucked into its base. */
+@media (max-width: 760px) {
+  :host .budget-summary {
+    position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; padding: 6px 6px 34px; border-radius: 24px; overflow: hidden;
+    background: radial-gradient(120% 90% at 100% 0%, rgba(232, 134, 12, .32), transparent 55%), linear-gradient(135deg, #0b1022, #141a33 55%, #232c55);
+    box-shadow: 0 26px 44px -30px rgba(11, 16, 34, .9);
+  }
+  :host .budget-summary::after { content: ""; position: absolute; right: -30px; top: -30px; width: 130px; height: 130px; border-radius: 50%; border: 1.5px dashed rgba(255, 196, 107, .35); animation: wallet-orbit 30s linear infinite; pointer-events: none; }
+  :host .budget-summary article { padding: 14px 14px 10px; border: 0; border-radius: 0; background: none; box-shadow: none; }
+  :host .budget-summary article::before { display: none; }
+  :host .budget-summary article:nth-child(odd) { border-right: 1px solid rgba(255, 255, 255, .1); }
+  :host .budget-summary article:nth-child(-n+2) { border-bottom: 1px solid rgba(255, 255, 255, .1); }
+  :host .budget-summary span { color: #a3a9c4; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+  :host .budget-summary strong { margin-top: 4px; color: #fff; font-size: 19px; }
+  :host .budget-summary strong.spent { color: #ffc46b; }
+  :host .budget-summary strong.negative { color: #fca5a5; }
+  :host .budget-progress { position: relative; z-index: 1; height: 6px; margin: -22px 18px 22px; background: rgba(255, 255, 255, .14); }
+  :host .budget-progress-fill { background: linear-gradient(90deg, #ffc46b, #e8860c); box-shadow: 0 0 12px rgba(232, 134, 12, .8); }
+  @keyframes wallet-orbit { to { rotate: 360deg; } }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) { :host .budget-summary::after { animation: none; } }

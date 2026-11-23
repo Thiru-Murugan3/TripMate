@@ -9,7 +9,7 @@ function snapshot(routeConfig: Route, params: Record<string, string> = {}): Acti
 describe('page transitions', () => {
   const trips: Route = { path: 'trips' }, trip: Route = { path: 'trips/:id' };
   const info = (from: ActivatedRouteSnapshot, to: ActivatedRouteSnapshot) => {
-    const transition = jasmine.createSpyObj('ViewTransition', ['skipTransition']);
+    const transition = jasmine.createSpyObj('ViewTransition', ['skipTransition'], { ready: Promise.resolve(), finished: Promise.resolve() });
     skipSameScreenTransition({ transition, from, to } as unknown as ViewTransitionInfo);
     return transition.skipTransition as jasmine.Spy;
   };

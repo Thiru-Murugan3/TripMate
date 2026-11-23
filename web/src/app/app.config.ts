@@ -16,6 +16,9 @@ function leaf(snapshot: ActivatedRouteSnapshot): ActivatedRouteSnapshot {
  * create-trip prompts) keep the page still so in-page interaction is never interrupted.
  */
 export function skipSameScreenTransition({ transition, from, to }: ViewTransitionInfo): void {
+  // Skipped or interrupted transitions reject these promises; that is expected, not an app error.
+  transition.ready.catch(() => undefined);
+  transition.finished.catch(() => undefined);
   const a = leaf(from), b = leaf(to);
   if (a.routeConfig === b.routeConfig && JSON.stringify(a.params) === JSON.stringify(b.params)) {
     transition.skipTransition();
