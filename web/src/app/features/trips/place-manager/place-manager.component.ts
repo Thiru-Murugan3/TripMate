@@ -275,9 +275,9 @@ import { PlaceService } from '../../../core/services/place.service';
     .places-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
     .places-toolbar h2 { margin:.15rem 0 .25rem; font-size:1.15rem; }
     .places-toolbar p { margin:0; color:#64748b; font-size:.82rem; }
-    .eyebrow { color:#b45309; font-size:.66rem; font-weight:850; letter-spacing:.08em; }
+    .eyebrow { color:#0f766e; font-size:.66rem; font-weight:850; letter-spacing:.08em; }
     .btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; padding:.62rem .9rem; border:0; border-radius:9px; font-weight:800; cursor:pointer; }
-    .btn.primary { color:#fff; background:#b45309; }
+    .btn.primary { color:#fff; background:#0f766e; }
     .btn.secondary { color:#334155; background:#e2e8f0; }
     .btn:disabled { opacity:.55; cursor:not-allowed; }
 
@@ -286,7 +286,7 @@ import { PlaceService } from '../../../core/services/place.service';
     .search-box .material-symbols-outlined { color:#94a3b8; font-size:1rem; }
     .search-box input { width:100%; min-width:0; border:0; outline:0; color:#0f172a; font:inherit; }
     .category-filter { min-width:190px; padding:.62rem .7rem; border:1px solid #cbd5e1; border-radius:10px; color:#334155; background:#fff; }
-    .clear-filter { border:0; color:#b45309; background:transparent; font-weight:800; cursor:pointer; }
+    .clear-filter { border:0; color:#0f766e; background:transparent; font-weight:800; cursor:pointer; }
 
     .places-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin-bottom:1rem; }
     .places-summary article { padding:.85rem 1rem; border:1px solid #e2e8f0; border-radius:12px; background:#fff; }
@@ -296,11 +296,11 @@ import { PlaceService } from '../../../core/services/place.service';
     .places-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.85rem; }
     .place-card { padding:1rem; border:1px solid #e2e8f0; border-radius:14px; background:#fff; box-shadow:0 5px 18px rgba(15,23,42,.035); }
     .place-card-top { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.75rem; align-items:flex-start; }
-    .place-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:11px; color:#b45309; background:#fff7ed; }
+    .place-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:11px; color:#0f766e; background:#effaf8; }
     .place-icon[data-category='RESTAURANT'] { color:#dc2626; background:#fef2f2; }
-    .place-icon[data-category='HOTEL'] { color:#3d4b8a; background:#f4f5fa; }
-    .place-icon[data-category='SHOPPING'] { color:#c2410c; background:#fdf2f8; }
-    .place-icon[data-category='FUEL'] { color:#d97706; background:#fffbeb; }
+    .place-icon[data-category='HOTEL'] { color:#1a7f8c; background:#f1faf9; }
+    .place-icon[data-category='SHOPPING'] { color:#0f766e; background:#fdf2f8; }
+    .place-icon[data-category='FUEL'] { color:#0d9488; background:#fffbeb; }
     .place-icon[data-category='ACTIVITY'] { color:#059669; background:#ecfdf5; }
     .place-heading h3 { margin:0 0 .28rem; font-size:.92rem; }
     .category-pill { display:inline-flex; padding:.22rem .45rem; border-radius:999px; color:#475569; background:#f1f5f9; font-size:.62rem; font-weight:850; }
@@ -315,7 +315,7 @@ import { PlaceService } from '../../../core/services/place.service';
     .detail-row span { color:#64748b; }
     .coordinates { margin-top:.55rem; }
     .coordinates span { display:inline-flex; align-items:center; gap:.25rem; color:#64748b; font-size:.7rem; }
-    .coordinates .material-symbols-outlined { color:#b45309; font-size:.85rem; }
+    .coordinates .material-symbols-outlined { color:#0f766e; font-size:.85rem; }
     .place-notes { margin:.65rem 0 0; color:#475569; font-size:.75rem; line-height:1.45; }
     .place-notes.muted { color:#94a3b8; font-style:italic; }
 
@@ -323,10 +323,10 @@ import { PlaceService } from '../../../core/services/place.service';
     .state-card.error { color:#b91c1c; }
     .state-card.error p { margin:.2rem 0 0; color:#64748b; }
     .empty-state { flex-direction:column; }
-    .empty-state > .material-symbols-outlined { color:#f8c98a; font-size:2.7rem; }
+    .empty-state > .material-symbols-outlined { color:#99d8cf; font-size:2.7rem; }
     .empty-state h3 { margin:0; }
     .empty-state p { max-width:520px; margin:0 0 .4rem; color:#64748b; font-size:.8rem; }
-    .spinner { width:28px; height:28px; border:3px solid #ffedd5; border-top-color:#b45309; border-radius:50%; animation:spin .75s linear infinite; }
+    .spinner { width:28px; height:28px; border:3px solid #d5f0ec; border-top-color:#0f766e; border-radius:50%; animation:spin .75s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
 
     .modal-backdrop { position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; padding:1rem; background:rgba(15,23,42,.62); backdrop-filter:blur(5px); }
@@ -338,12 +338,12 @@ import { PlaceService } from '../../../core/services/place.service';
     .form-error { margin-bottom:.8rem; padding:.7rem .8rem; border-radius:8px; color:#b91c1c; background:#fee2e2; font-size:.78rem; }
     .field { display:flex; flex-direction:column; gap:.3rem; margin-bottom:.8rem; color:#334155; font-size:.75rem; font-weight:750; }
     .field input,.field select,.field textarea { width:100%; box-sizing:border-box; padding:.65rem .72rem; border:1px solid #cbd5e1; border-radius:8px; color:#0f172a; background:#fff; font:inherit; font-weight:500; }
-    .field input:focus,.field select:focus,.field textarea:focus { outline:2px solid #fbdcb0; border-color:#b45309; }
+    .field input:focus,.field select:focus,.field textarea:focus { outline:2px solid #bfe6e0; border-color:#0f766e; }
     .form-grid.two { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
     .coordinate-hint { display:flex; align-items:center; gap:.35rem; align-self:end; min-height:39px; margin-bottom:.8rem; color:#64748b; font-size:.7rem; }
-    .coordinate-hint .material-symbols-outlined { color:#b45309; font-size:.9rem; }
+    .coordinate-hint .material-symbols-outlined { color:#0f766e; font-size:.9rem; }
     .itinerary-note { display:flex; align-items:flex-start; gap:.45rem; padding:.7rem .8rem; color:#475569; background:#f8fafc; border-radius:9px; font-size:.73rem; }
-    .itinerary-note .material-symbols-outlined { color:#b45309; font-size:1rem; }
+    .itinerary-note .material-symbols-outlined { color:#0f766e; font-size:1rem; }
     .modal-actions { display:flex; justify-content:flex-end; gap:.6rem; margin-top:1rem; }
 
     @media(max-width:760px){

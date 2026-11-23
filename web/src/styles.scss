@@ -3,46 +3,47 @@
 
 :root {
   --tm-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  /* Brand: ink navy with a saffron accent (shared with suttru.in/portfolio).
-     --tm-primary is the deep saffron used behind white text (4.5:1); --tm-saffron is the
-     bright accent, used for highlights and with navy text on top. */
-  --tm-navy: #141a33;
-  --tm-navy-2: #232c55;
-  --tm-saffron: #e8860c;
-  --tm-saffron-soft: #fff1dd;
-  --tm-bg: #141a33;
+  /* Brand: Ocean teal with a sand-gold accent.
+     --tm-primary is the deep teal used behind white text (5.4:1); --tm-saffron holds the sand-gold
+     accent (name kept for compatibility), used for highlights with deep-teal text on top.
+     --tm-navy / --tm-navy-2 hold the deep-sea teals used for banners and headings. */
+  --tm-navy: #0b3c49;
+  --tm-navy-2: #115e6b;
+  --tm-saffron: #f2c14e;
+  --tm-saffron-soft: #e0f5f2;
+  --tm-bg: #0b3c49;
   --tm-card-bg: rgba(255, 255, 255, 0.96);
   --tm-card-border: rgba(227, 229, 238, 0.9);
-  --tm-text: #141a33;
-  --tm-text-secondary: #4a5170;
-  --tm-muted: #5d6481;
-  --tm-primary: #c2570c;
-  --tm-primary-hover: #9a3f07;
-  --tm-primary-glow: rgba(194, 87, 12, 0.25);
-  --tm-accent: #232c55;
-  --tm-gradient-brand: linear-gradient(135deg, #c2570c 0%, #9a3f07 100%);
-  --tm-gradient-navy: linear-gradient(135deg, #0b1022 0%, #141a33 55%, #232c55 100%);
-  --tm-gradient-hero: linear-gradient(135deg, rgba(11, 16, 34, 0.92) 0%, rgba(20, 26, 51, 0.85) 100%);
-  --tm-border: #e3e5ee;
-  --tm-border-focus: #c2570c;
+  --tm-text: #0b3c49;
+  --tm-text-secondary: #3f5c61;
+  --tm-muted: #4f6b70;
+  --tm-primary: #0f766e;
+  --tm-primary-hover: #115e59;
+  --tm-primary-glow: rgba(15, 118, 110, 0.25);
+  --tm-accent: #115e6b;
+  --tm-gradient-brand: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+  --tm-gradient-navy: linear-gradient(135deg, #062a33 0%, #0b3c49 55%, #115e6b 100%);
+  --tm-gradient-hero: linear-gradient(135deg, rgba(4, 30, 37, 0.92) 0%, rgba(6, 40, 48, 0.85) 100%);
+  --tm-border: #d9ecea;
+  --tm-border-focus: #0f766e;
   --tm-danger: #ef4444;
   --tm-success: #10b981;
   --tm-shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
   --tm-shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
   --tm-shadow-lg: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
-  --tm-shadow-glow: 0 12px 30px -5px rgba(194, 87, 12, 0.32);
+  --tm-shadow-glow: 0 12px 30px -5px rgba(15, 118, 110, 0.32);
   --tm-radius-sm: 8px;
   --tm-radius-md: 14px;
   --tm-radius-lg: 20px;
   --tm-radius-xl: 28px;
-  --tm-page-bg: #f7f7fa;
-  --tm-ink: #0b1022;
-  --tm-focus-ring: 0 0 0 3px rgba(232, 134, 12, 0.4);
+  --tm-page-bg: #f2fbfa;
+  --tm-ink: #062a33;
+  --tm-focus-ring: 0 0 0 3px rgba(242, 193, 78, 0.4);
 
   /* Legacy token names still used by some components (footer, reset password,
      India catalogue). Mapped onto the current palette so they never resolve
      to transparent/unset values. */
-  --primary: #c2570c;
+  --primary: #0f766e;
   --brand-gradient: var(--tm-gradient-brand);
   --shadow-glow: var(--tm-shadow-glow);
   --surface-card: #ffffff;
@@ -81,7 +82,7 @@ textarea {
 
 ::selection {
   color: #fff;
-  background: rgba(180, 83, 9, 0.85);
+  background: rgba(15, 118, 110, 0.85);
 }
 
 :focus-visible {

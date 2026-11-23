@@ -523,9 +523,9 @@ interface SplitDraft {
     .expense-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
     .expense-toolbar h2 { margin:.15rem 0 .25rem; font-size:1.15rem; }
     .expense-toolbar p { margin:0; color:#64748b; font-size:.82rem; }
-    .eyebrow { color:#b45309; font-size:.66rem; font-weight:850; letter-spacing:.08em; }
+    .eyebrow { color:#0f766e; font-size:.66rem; font-weight:850; letter-spacing:.08em; }
     .btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; padding:.62rem .9rem; border:0; border-radius:9px; font-weight:800; cursor:pointer; }
-    .btn.primary { color:#fff; background:#b45309; }
+    .btn.primary { color:#fff; background:#0f766e; }
     .btn.secondary { color:#334155; background:#e2e8f0; }
     .btn:disabled { opacity:.55; cursor:not-allowed; }
 
@@ -533,11 +533,11 @@ interface SplitDraft {
     .budget-summary article { padding:.9rem 1rem; border:1px solid #e2e8f0; border-radius:12px; background:#fff; }
     .budget-summary span { display:block; color:#64748b; font-size:.65rem; font-weight:850; text-transform:uppercase; }
     .budget-summary strong { display:block; margin-top:.35rem; font-size:1.05rem; }
-    .budget-summary .spent { color:#b45309; }
+    .budget-summary .spent { color:#0f766e; }
     .negative { color:#dc2626 !important; }
     .positive { color:#059669 !important; }
     .budget-progress { height:7px; margin:.65rem 0 1rem; overflow:hidden; border-radius:999px; background:#e2e8f0; }
-    .budget-progress-fill { height:100%; border-radius:inherit; background:#b45309; transition:width .2s ease; }
+    .budget-progress-fill { height:100%; border-radius:inherit; background:#0f766e; transition:width .2s ease; }
     .budget-progress-fill.over-budget { background:#dc2626; }
 
     .expense-controls { display:flex; align-items:center; gap:.65rem; margin-bottom:1rem; }
@@ -545,18 +545,18 @@ interface SplitDraft {
     .search-box .material-symbols-outlined { color:#94a3b8; font-size:1rem; }
     .search-box input { width:100%; min-width:0; border:0; outline:0; color:#0f172a; font:inherit; }
     .expense-controls select { min-width:180px; padding:.62rem .7rem; border:1px solid #cbd5e1; border-radius:10px; background:#fff; color:#334155; }
-    .clear-filter { border:0; color:#b45309; background:transparent; font-weight:800; cursor:pointer; }
+    .clear-filter { border:0; color:#0f766e; background:transparent; font-weight:800; cursor:pointer; }
 
     .expense-layout { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:1rem; align-items:start; }
     .expense-list { display:flex; flex-direction:column; gap:.75rem; }
     .expense-card { overflow:hidden; border:1px solid #e2e8f0; border-radius:14px; background:#fff; box-shadow:0 5px 18px rgba(15,23,42,.035); }
     .expense-card-main { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.75rem; padding:1rem; align-items:flex-start; }
-    .category-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:11px; color:#b45309; background:#fff7ed; }
+    .category-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:11px; color:#0f766e; background:#effaf8; }
     .category-icon[data-category='FOOD'] { color:#dc2626; background:#fef2f2; }
-    .category-icon[data-category='HOTEL'] { color:#3d4b8a; background:#f4f5fa; }
-    .category-icon[data-category='TRANSPORT'] { color:#d97706; background:#fff7ed; }
+    .category-icon[data-category='HOTEL'] { color:#1a7f8c; background:#f1faf9; }
+    .category-icon[data-category='TRANSPORT'] { color:#0d9488; background:#effaf8; }
     .category-icon[data-category='ACTIVITIES'] { color:#059669; background:#ecfdf5; }
-    .category-icon[data-category='SHOPPING'] { color:#c2410c; background:#fdf2f8; }
+    .category-icon[data-category='SHOPPING'] { color:#0f766e; background:#fdf2f8; }
     .title-line { display:flex; align-items:center; flex-wrap:wrap; gap:.45rem; }
     .title-line h3 { margin:0; font-size:.9rem; }
     .category-pill { display:inline-flex; padding:.2rem .42rem; border-radius:999px; color:#475569; background:#f1f5f9; font-size:.6rem; font-weight:850; }
@@ -566,7 +566,7 @@ interface SplitDraft {
     .expense-amount strong { font-size:1rem; }
     .expense-amount small { color:#94a3b8; font-size:.62rem; }
     .expense-card-actions { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.58rem 1rem; border-top:1px solid #f1f5f9; background:#fafcff; }
-    .text-action { display:inline-flex; align-items:center; gap:.3rem; border:0; color:#b45309; background:transparent; font-size:.7rem; font-weight:800; cursor:pointer; }
+    .text-action { display:inline-flex; align-items:center; gap:.3rem; border:0; color:#0f766e; background:transparent; font-size:.7rem; font-weight:800; cursor:pointer; }
     .text-action .material-symbols-outlined { font-size:.95rem; }
     .edit-actions { display:flex; gap:.3rem; }
     .icon-btn { display:grid; place-items:center; width:30px; height:30px; border:0; border-radius:8px; color:#475569; background:#fff; cursor:pointer; }
@@ -582,11 +582,11 @@ interface SplitDraft {
     .split-person > div { display:flex; min-width:0; flex-direction:column; }
     .split-person strong { overflow:hidden; font-size:.72rem; text-overflow:ellipsis; white-space:nowrap; }
     .split-person small { color:#94a3b8; font-size:.6rem; }
-    .avatar { display:grid; place-items:center; width:30px; height:30px; min-width:30px; border-radius:50%; color:#fff; background:linear-gradient(135deg,#0f172a,#b45309); font-size:.65rem; font-weight:850; }
+    .avatar { display:grid; place-items:center; width:30px; height:30px; min-width:30px; border-radius:50%; color:#fff; background:linear-gradient(135deg,#0f172a,#0f766e); font-size:.65rem; font-weight:850; }
     .split-value { display:flex; flex-direction:column; align-items:flex-end; }
     .split-value strong { font-size:.72rem; }
     .split-value small { color:#94a3b8; font-size:.6rem; }
-    .settlement-pill { display:inline-flex; justify-content:center; padding:.22rem .38rem; border-radius:999px; color:#b45309; background:#fef3c7; font-size:.56rem; font-weight:850; }
+    .settlement-pill { display:inline-flex; justify-content:center; padding:.22rem .38rem; border-radius:999px; color:#0f766e; background:#fef3c7; font-size:.56rem; font-weight:850; }
     .settlement-pill[data-status='SETTLED'] { color:#047857; background:#d1fae5; }
     .settle-btn { border:0; border-radius:7px; padding:.38rem .48rem; color:#047857; background:#ecfdf5; font-size:.62rem; font-weight:800; cursor:pointer; }
     .settle-btn:disabled { opacity:.5; cursor:not-allowed; }
@@ -613,12 +613,12 @@ interface SplitDraft {
 
     .empty-state,.state-card { display:flex; align-items:center; justify-content:center; gap:.75rem; min-height:220px; padding:1rem; border:1px solid #e2e8f0; border-radius:14px; background:#fff; text-align:center; }
     .empty-state { flex-direction:column; }
-    .empty-state > .material-symbols-outlined { color:#f8c98a; font-size:2.7rem; }
+    .empty-state > .material-symbols-outlined { color:#99d8cf; font-size:2.7rem; }
     .empty-state h3 { margin:0; }
     .empty-state p { margin:0 0 .4rem; color:#64748b; font-size:.78rem; }
     .state-card.error { color:#b91c1c; }
     .state-card.error p { margin:.15rem 0 0; color:#64748b; }
-    .spinner { width:28px; height:28px; border:3px solid #ffedd5; border-top-color:#b45309; border-radius:50%; animation:spin .75s linear infinite; }
+    .spinner { width:28px; height:28px; border:3px solid #d5f0ec; border-top-color:#0f766e; border-radius:50%; animation:spin .75s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
 
     .modal-backdrop { position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; padding:1rem; background:rgba(15,23,42,.62); backdrop-filter:blur(5px); }
@@ -636,10 +636,10 @@ interface SplitDraft {
     .split-editor-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:.8rem; margin-bottom:.6rem; }
     .split-editor-heading strong { font-size:.78rem; }
     .split-editor-heading p { margin:.12rem 0 0; color:#64748b; font-size:.64rem; }
-    .select-all-btn { border:0; color:#b45309; background:transparent; font-size:.65rem; font-weight:800; cursor:pointer; }
+    .select-all-btn { border:0; color:#0f766e; background:transparent; font-size:.65rem; font-weight:800; cursor:pointer; }
     .split-edit-row { display:grid; grid-template-columns:minmax(0,1fr) 130px; align-items:center; gap:.7rem; padding:.5rem 0; border-top:1px solid #e2e8f0; }
     .member-check { display:flex; align-items:center; gap:.5rem; min-width:0; font-size:.72rem; cursor:pointer; }
-    .member-check input { accent-color:#b45309; }
+    .member-check input { accent-color:#0f766e; }
     .member-check > span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .equal-share { text-align:right; font-size:.72rem; }
     .split-input { display:flex; align-items:center; gap:.3rem; }
@@ -647,9 +647,9 @@ interface SplitDraft {
     .split-input span { color:#64748b; font-size:.7rem; }
     .split-total { display:flex; align-items:center; justify-content:space-between; gap:.8rem; margin-top:.6rem; padding-top:.65rem; border-top:1px solid #cbd5e1; font-size:.72rem; }
     .split-total.invalid strong { color:#dc2626; }
-    .split-warning { margin-top:.5rem; padding:.55rem .65rem; border-radius:8px; color:#b45309; background:#fffbeb; font-size:.65rem; }
+    .split-warning { margin-top:.5rem; padding:.55rem .65rem; border-radius:8px; color:#0f766e; background:#fffbeb; font-size:.65rem; }
     .edit-warning { display:flex; align-items:flex-start; gap:.4rem; padding:.65rem .75rem; border-radius:8px; color:#475569; background:#f8fafc; font-size:.68rem; }
-    .edit-warning .material-symbols-outlined { color:#b45309; font-size:.9rem; }
+    .edit-warning .material-symbols-outlined { color:#0f766e; font-size:.9rem; }
     .modal-actions { display:flex; justify-content:flex-end; gap:.6rem; margin-top:1rem; }
 
     @media(max-width:1000px){
@@ -693,7 +693,7 @@ interface SplitDraft {
  .expense-controls .clear-filter { grid-column:1/-1; }
  .mobile-expense-tabs { display:grid; grid-template-columns:1fr 1fr; padding:4px; background:#eaf0f8; border-radius:12px; gap:4px; margin:16px 0; }
  .mobile-expense-tabs button { border:0; border-radius:9px; background:transparent; color:#475569; font:inherit; font-size:12px; font-weight:700; padding:8px; }
- .mobile-expense-tabs button.active { background:white; color:#b45309; box-shadow:0 2px 6px #0f172a08; }
+ .mobile-expense-tabs button.active { background:white; color:#0f766e; box-shadow:0 2px 6px #0f172a08; }
  .expense-layout { display:block; }
  .expense-sidebar { display:none; }
  .mobile-balances .expense-sidebar { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }

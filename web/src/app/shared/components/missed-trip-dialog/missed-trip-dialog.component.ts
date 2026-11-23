@@ -39,8 +39,8 @@ import { Trip } from '../../../core/models/trip.model';
   styles: [`
     .backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 20px; background: rgba(15, 23, 42, .7); backdrop-filter: blur(4px); }
     .dialog { width: min(100%, 500px); padding: 30px; border-radius: 22px; background: #fff; box-shadow: 0 24px 70px rgba(15, 23, 42, .3); text-align: center; }
-    .icon { width: 54px; height: 54px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 50%; background: #fef3c7; color: #b45309; font-size: 30px; font-weight: 900; }
-    .eyebrow { margin: 0 0 7px; color: #b45309; font-size: 11px; font-weight: 850; letter-spacing: .12em; }
+    .icon { width: 54px; height: 54px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 50%; background: #fef3c7; color: #0f766e; font-size: 30px; font-weight: 900; }
+    .eyebrow { margin: 0 0 7px; color: #0f766e; font-size: 11px; font-weight: 850; letter-spacing: .12em; }
     h2 { margin: 0; color: #0f172a; font-size: 26px; }
     .message { margin: 13px auto 0; color: #64748b; font-size: 14px; line-height: 1.65; }
     .message strong { color: #0f172a; }
@@ -50,7 +50,7 @@ import { Trip } from '../../../core/models/trip.model';
     button:disabled { opacity: .6; cursor: wait; }
     .secondary { border: 1px solid #cbd5e1; background: #fff; color: #475569; }
     .danger { border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; }
-    .primary { border: 1px solid #b45309; background: #b45309; color: #fff; }
+    .primary { border: 1px solid #0f766e; background: #0f766e; color: #fff; }
     @media (max-width: 520px) { .dialog { padding: 24px 18px; } .actions { flex-direction: column-reverse; } button { width: 100%; } }
   `]
 })

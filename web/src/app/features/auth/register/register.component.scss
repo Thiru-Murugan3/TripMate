@@ -41,7 +41,7 @@
   left: -150px;
   width: 550px;
   height: 550px;
-  background: radial-gradient(circle, #f4a340 0%, rgba(13, 148, 136, 0) 70%);
+  background: radial-gradient(circle, #f6d27a 0%, rgba(13, 148, 136, 0) 70%);
   animation-delay: -6s;
 }
 
@@ -400,10 +400,10 @@ form {
     color: #ef4444;
   }
   &[data-strength="Fair"] {
-    color: #f59e0b;
+    color: #f2c14e;
   }
   &[data-strength="Good"] {
-    color: #d97706;
+    color: #0d9488;
   }
   &[data-strength="Strong 💪"] {
     color: #10b981;
@@ -427,10 +427,10 @@ form {
     background-color: #ef4444;
   }
   &[data-score="60"] {
-    background-color: #f59e0b;
+    background-color: #f2c14e;
   }
   &[data-score="80"] {
-    background-color: #d97706;
+    background-color: #0d9488;
   }
   &[data-score="100"] {
     background-color: #10b981;
@@ -711,7 +711,7 @@ form {
  .glow-sphere,.hero-badge,.hero-features,.hero-description { display:none; }
  .register-hero { min-height:230px; padding:24px; justify-content:flex-end; background:linear-gradient(180deg,#0f172a33,#0f172ab3),url('/assets/images/hero.jpg') center/cover; border:0; }
  .hero-content { margin:0; } .brand { margin-bottom:12px; }
- .brand__icon { width:30px; height:30px; border-radius:8px; background:#b45309; }
+ .brand__icon { width:30px; height:30px; border-radius:8px; background:#0f766e; }
  .brand__name { font-size:20px; } .hero-text h1 { font-size:24px; line-height:1.25; letter-spacing:-.035em; margin:0; }
  .gradient-text { background:none; -webkit-text-fill-color:white; color:white; }
  .register-panel { padding:24px; background:#f8fafc; align-items:flex-start; }
@@ -721,6 +721,6 @@ form {
  .field label { color:#64748b; font-size:12px; }
  .input-wrapper { background:#fff; border:1px solid #e2e8f0; border-radius:12px; min-height:48px; }
  .input-wrapper input { color:#0f172a; font-size:16px; }
- .btn-primary,.submit-btn { background:#b45309; border-radius:12px; min-height:48px; }
+ .btn-primary,.submit-btn { background:#0f766e; border-radius:12px; min-height:48px; }
  .subtitle,.form-footer,.register-footer { color:#64748b; }
 }

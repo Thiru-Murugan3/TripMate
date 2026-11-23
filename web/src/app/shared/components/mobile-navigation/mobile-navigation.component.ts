@@ -26,10 +26,10 @@ type Tab = 'home' | 'trips' | 'expenses' | 'profile';
         position:fixed; left:12px; right:12px; bottom:calc(10px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px))); z-index:1100;
         display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-items:center;
         height:66px; padding:0 6px; border-radius:24px;
-        background:linear-gradient(135deg, rgba(11,16,34,.96), rgba(20,26,51,.96) 60%, rgba(35,44,85,.96));
+        background:linear-gradient(135deg, rgba(4, 30, 37,.96), rgba(6, 40, 48,.96) 60%, rgba(17, 94, 107,.96));
         -webkit-backdrop-filter:blur(16px) saturate(1.3); backdrop-filter:blur(16px) saturate(1.3);
         border:1px solid rgba(255,255,255,.08);
-        box-shadow:0 18px 40px -16px rgba(11,16,34,.75), inset 0 1px 0 rgba(255,255,255,.06);
+        box-shadow:0 18px 40px -16px rgba(4, 30, 37,.75), inset 0 1px 0 rgba(255,255,255,.06);
       }
       .glider {
         position:absolute; top:7px; bottom:7px; left:6px; width:calc((100% - 12px) / 5);
@@ -38,22 +38,22 @@ type Tab = 'home' | 'trips' | 'expenses' | 'profile';
         transition:translate .45s cubic-bezier(.3,1.4,.4,1), opacity .2s;
       }
       .has-active .glider { opacity:1; }
-      a { position:relative; z-index:1; display:flex; min-width:0; height:52px; flex-direction:column; gap:4px; align-items:center; justify-content:center; text-decoration:none; color:#a3a9c4; font-size:10.5px; font-weight:600; letter-spacing:.01em; border-radius:16px; transition:color .25s; -webkit-tap-highlight-color:transparent; }
+      a { position:relative; z-index:1; display:flex; min-width:0; height:52px; flex-direction:column; gap:4px; align-items:center; justify-content:center; text-decoration:none; color:#9bb8ba; font-size:10.5px; font-weight:600; letter-spacing:.01em; border-radius:16px; transition:color .25s; -webkit-tap-highlight-color:transparent; }
       /* Icons are masks so they follow the text colour. */
       .ico { width:22px; height:22px; background:currentColor; -webkit-mask:var(--icon) center/contain no-repeat; mask:var(--icon) center/contain no-repeat; transition:translate .35s cubic-bezier(.3,1.4,.4,1); }
       a.active { color:#fff; font-weight:700; }
-      a.active .ico { color:#f4a340; translate:0 -1px; }
-      a.active .lbl::after { content:""; display:block; width:4px; height:4px; margin:3px auto 0; border-radius:50%; background:#e8860c; }
+      a.active .ico { color:#f6d27a; translate:0 -1px; }
+      a.active .lbl::after { content:""; display:block; width:4px; height:4px; margin:3px auto 0; border-radius:50%; background:#f2c14e; }
       a.active .lbl { margin-bottom:-7px; }
 
-      .create-trip { justify-self:center; width:56px; height:56px; margin-top:-30px; border-radius:20px; color:#141a33;
-        background:linear-gradient(145deg,#ffc46b,#e8860c); box-shadow:0 0 0 6px #f7f7fa, 0 14px 26px -10px rgba(232,134,12,.9); transition:scale .15s, rotate .35s cubic-bezier(.3,1.4,.4,1); }
-      .create-trip .ico { width:24px; height:24px; color:#141a33; }
+      .create-trip { justify-self:center; width:56px; height:56px; margin-top:-30px; border-radius:20px; color:#0b3c49;
+        background:linear-gradient(145deg,#f8dc8f,#f2c14e); box-shadow:0 0 0 6px #f2fbfa, 0 14px 26px -10px rgba(242, 193, 78,.9); transition:scale .15s, rotate .35s cubic-bezier(.3,1.4,.4,1); }
+      .create-trip .ico { width:24px; height:24px; color:#0b3c49; }
       .create-trip:active { scale:.92; rotate:90deg; }
       /* A dashed orbit slowly circles the create button: a quiet "start a journey" cue. */
-      .orbit { position:absolute; inset:-11px; border-radius:26px; border:1.5px dashed rgba(232,134,12,.55); animation:orbit 14s linear infinite; pointer-events:none; }
+      .orbit { position:absolute; inset:-11px; border-radius:26px; border:1.5px dashed rgba(242, 193, 78,.55); animation:orbit 14s linear infinite; pointer-events:none; }
       @keyframes orbit { to { rotate:360deg; } }
-      a:focus-visible { outline:3px solid #f4a340; outline-offset:2px; }
+      a:focus-visible { outline:3px solid #f6d27a; outline-offset:2px; }
       @media (prefers-reduced-motion: reduce) { .orbit { animation:none; } .glider, .ico, .create-trip { transition:none; } }
     }
   `]

@@ -15,16 +15,26 @@ $ease-out: cubic-bezier(.2, .8, .2, 1);
 @keyframes tm-float { 50% { translate: 0 -5px; } }
 @keyframes tm-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
 
+@keyframes tm-waves { to { translate: -50% 0; } }
+@keyframes tm-sheen { 0%, 70% { translate: -120% 0; } 100% { translate: 220% 0; } }
+
 // Reusable motifs (opt-in classes)
 .tm-route-line { stroke-dasharray: 6 8; animation: tm-dash 1.6s linear infinite; }
 .tm-float { animation: tm-float 3.2s ease-in-out infinite; }
 
+// A tileable strip of three soft wave lines (400px wide so it loops seamlessly).
+$wave-strip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='120' fill='none'%3E%3Cpath d='M0 40Q50 20 100 40T200 40T300 40T400 40' stroke='%230f766e' stroke-opacity='.09' stroke-width='2'/%3E%3Cpath d='M0 70Q50 52 100 70T200 70T300 70T400 70' stroke='%2314b8a6' stroke-opacity='.10' stroke-width='2'/%3E%3Cpath d='M0 100Q50 84 100 100T200 100T300 100T400 100' stroke='%23f2c14e' stroke-opacity='.16' stroke-width='2' stroke-dasharray='6 8'/%3E%3C/svg%3E");
+
 @media (max-width: 760px) {
-  // Faint flight paths behind every page: two dashed arcs, a pin and a plane.
+  // Sea-mist page with gentle wave lines drifting across the top of every screen.
   .has-app-shell .main-content {
-    background:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 390 260' fill='none'%3E%3Cpath d='M-10 210C70 120 150 230 230 140S360 40 410 70' stroke='%23141a33' stroke-opacity='.07' stroke-width='2' stroke-dasharray='5 9' stroke-linecap='round'/%3E%3Cpath d='M40 260C120 200 170 120 300 110' stroke='%23e8860c' stroke-opacity='.12' stroke-width='2' stroke-dasharray='3 8' stroke-linecap='round'/%3E%3Ccircle cx='300' cy='110' r='5' fill='%23e8860c' fill-opacity='.22'/%3E%3Cpath d='M352 58l14-6-6 14-2-6z' fill='%23141a33' fill-opacity='.12'/%3E%3C/svg%3E") top center / 100% auto no-repeat,
-      var(--tm-page-bg, #f7f7fa) !important;
+    position: relative; isolation: isolate; overflow-x: clip;
+    background: radial-gradient(120% 40% at 100% 0%, rgba(20, 184, 166, .10), transparent 70%), var(--tm-page-bg, #f2fbfa) !important;
+  }
+  .has-app-shell .main-content::before {
+    content: ""; position: absolute; z-index: -1; top: 0; left: 0; width: 200%; height: 220px;
+    background: $wave-strip 0 0 / 400px 120px repeat-x, $wave-strip 200px 70px / 400px 120px repeat-x;
+    opacity: .9; pointer-events: none;
   }
 
   // Page transitions: the bars stay put while the page slides.
@@ -36,6 +46,17 @@ $ease-out: cubic-bezier(.2, .8, .2, 1);
   ::view-transition-old(root) { animation: tm-vt-out .22s cubic-bezier(.4, 0, 1, 1) both; }
   ::view-transition-new(root) { animation: tm-vt-in .44s $ease-out both; }
   ::view-transition-group(tm-tabbar), ::view-transition-group(tm-topbar) { animation: none; }
+
+  // The waves drift slowly (GPU-friendly translate on one layer).
+  .has-app-shell .main-content::before { animation: tm-waves 26s linear infinite; }
+
+  // A light sheen sweeps across primary buttons every few seconds.
+  .main-content :is(.btn.primary, .btn-primary, .create-button, .mobile-hero button, .view-button, .place-select:has(input:checked)) { position: relative; overflow: hidden; }
+  .main-content :is(.btn.primary, .btn-primary, .create-button, .mobile-hero button, .view-button)::after {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: 45%; pointer-events: none;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .35), transparent);
+    animation: tm-sheen 4.5s ease-in-out infinite;
+  }
 
   // Entrance choreography for whichever page just opened.
   // Only the page's top-level blocks move, all starting at once (no delay), so offsets never
@@ -63,7 +84,7 @@ $ease-out: cubic-bezier(.2, .8, .2, 1);
 
   // Shimmer for loading placeholders that use the shared spinner card.
   .main-content .state-card .spinner + h2 {
-    background: linear-gradient(90deg, #141a33 0%, #141a33 40%, #e8860c 50%, #141a33 60%, #141a33 100%) 0 0 / 200% 100%;
+    background: linear-gradient(90deg, #0b3c49 0%, #0b3c49 40%, #f2c14e 50%, #0b3c49 60%, #0b3c49 100%) 0 0 / 200% 100%;
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     animation: tm-shimmer 2.2s linear infinite;
   }

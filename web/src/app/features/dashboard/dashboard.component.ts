@@ -59,7 +59,7 @@ interface PopularDestination {
 
         <article class="pass" *ngIf="upcomingTrips[0] as next; else noMobileTrip">
           <button type="button" class="pass-top" (click)="openMobileTrip('OVERVIEW')" [attr.aria-label]="'Open ' + next.name"
-            [style.background-image]="'linear-gradient(180deg,rgba(11,16,34,.1) 0%,rgba(11,16,34,.88) 100%),url(' + next.image + ')'">
+            [style.background-image]="'linear-gradient(180deg,rgba(4, 30, 37,.1) 0%,rgba(4, 30, 37,.88) 100%),url(' + next.image + ')'">
             <span class="pass-chips"><span class="pass-chip">{{ next.tag }}</span><span class="pass-chip pass-chip--live">{{ next.countdown }}</span></span>
             <strong class="pass-title">{{ next.name }}</strong>
             <span class="pass-sub">{{ next.destination }}</span>
@@ -84,7 +84,7 @@ interface PopularDestination {
           <div class="mobile-trip-budget" *ngIf="mobileBudget as budget"><div><span>Budget used</span><strong>{{budget.budgetUtilizationPercentage | number:'1.0-0'}}%</strong></div><progress [value]="budget.budgetUtilizationPercentage" max="100" aria-label="Trip budget used"></progress><div><small>Spent: {{budget.totalExpenses | currency:'INR':'symbol':'1.0-0'}}</small><small>Limit: {{budget.budget | currency:'INR':'symbol':'1.0-0'}}</small></div></div>
         </article>
         <ng-template #noMobileTrip>
-          <section class="mobile-hero" [style.background-image]="'linear-gradient(100deg,rgba(11,16,34,.88) 0%,rgba(20,26,51,.55) 55%,rgba(20,26,51,.15) 100%),url(' + popularDestinations[0].image + ')'">
+          <section class="mobile-hero" [style.background-image]="'linear-gradient(100deg,rgba(4, 30, 37,.88) 0%,rgba(6, 40, 48,.55) 55%,rgba(6, 40, 48,.15) 100%),url(' + popularDestinations[0].image + ')'">
             <svg class="hero-route" viewBox="0 0 320 90" preserveAspectRatio="none" aria-hidden="true"><path id="tmHeroArc" d="M4 80 C 90 10, 200 90, 316 14" /><g class="arc-plane"><path d="M-8 0 L7 -4.5 L4.5 0 L7 4.5 Z" /><animateMotion dur="7s" repeatCount="indefinite" rotate="auto"><mpath href="#tmHeroArc" /></animateMotion></g></svg>
             <span class="mobile-hero-eyebrow">Plan together</span><h2>Your next journey starts here</h2><button type="button" (click)="openCreateModal()">Plan a new trip</button>
           </section>
@@ -402,7 +402,7 @@ interface PopularDestination {
       font-weight: 800;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: #fbdcb0;
+      color: #bfe6e0;
     }
 
     .hero-trust {
@@ -439,8 +439,8 @@ interface PopularDestination {
     }
 
     .highlight-teal {
-      color: #f4a340;
-      background: linear-gradient(135deg, #f4a340 0%, #f4a340 100%);
+      color: #f6d27a;
+      background: linear-gradient(135deg, #f6d27a 0%, #f6d27a 100%);
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -480,7 +480,7 @@ interface PopularDestination {
       background: var(--tm-gradient-brand);
       color: #ffffff;
       border: none;
-      box-shadow: 0 14px 30px -12px rgba(35, 44, 85, 0.9);
+      box-shadow: 0 14px 30px -12px rgba(17, 94, 107, 0.9);
     }
 
     .btn-hero-primary:hover {
@@ -543,7 +543,7 @@ interface PopularDestination {
     .search-icon {
       width: 16px;
       height: 16px;
-      color: #b45309;
+      color: #0f766e;
       flex-shrink: 0;
     }
 
@@ -574,7 +574,7 @@ interface PopularDestination {
     }
 
     .btn-create-trip {
-      background-color: #b45309;
+      background-color: #0f766e;
       color: #ffffff;
       font-size: 0.9rem;
       font-weight: 700;
@@ -586,7 +586,7 @@ interface PopularDestination {
     }
 
     .btn-create-trip:hover {
-      background-color: #92400e;
+      background-color: #115e59;
     }
 
     /* Content Area */
@@ -611,7 +611,7 @@ interface PopularDestination {
     .section-kicker {
       display: block;
       margin-bottom: 0.35rem;
-      color: #b45309;
+      color: #0f766e;
       font-size: 0.7rem;
       font-weight: 800;
       letter-spacing: 0.12em;
@@ -626,7 +626,7 @@ interface PopularDestination {
       padding: 0.55rem 0.95rem;
       border: 1px solid #dbe5ff;
       border-radius: 999px;
-      color: #b45309;
+      color: #0f766e;
       background: #f5f8ff;
       font-family: inherit;
       font-size: 0.8rem;
@@ -668,7 +668,7 @@ interface PopularDestination {
     .quick-action:hover {
       transform: translateY(-3px);
       border-color: #c7d7fe;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 24px 44px -20px rgba(180, 83, 9, 0.4);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 24px 44px -20px rgba(15, 118, 110, 0.4);
     }
 
     .qa-icon {
@@ -681,9 +681,9 @@ interface PopularDestination {
     }
 
     .qa-icon .material-symbols-outlined { font-size: 1.35rem; }
-    .qa-blue { color: #b45309; background: linear-gradient(135deg, #fff7ed, #ffedd5); }
-    .qa-violet { color: #3d4b8a; background: linear-gradient(135deg, #f4f5fa, #eceef7); }
-    .qa-amber { color: #d97706; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+    .qa-blue { color: #0f766e; background: linear-gradient(135deg, #effaf8, #d5f0ec); }
+    .qa-violet { color: #1a7f8c; background: linear-gradient(135deg, #f1faf9, #e6f5f3); }
+    .qa-amber { color: #0d9488; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
     .qa-teal { color: #0d9488; background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
 
     .qa-text {
@@ -714,7 +714,7 @@ interface PopularDestination {
       transition: color 0.2s ease, transform 0.2s ease;
     }
 
-    .quick-action:hover .qa-arrow { color: #b45309; transform: translateX(2px); }
+    .quick-action:hover .qa-arrow { color: #0f766e; transform: translateX(2px); }
 
     /* Featured (next) trip spans two columns with a side image */
     .trip-card.is-featured {
@@ -792,7 +792,7 @@ interface PopularDestination {
     .trip-card:hover {
       transform: translateY(-4px);
       border-color: #d6e0f5;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(180, 83, 9, 0.35);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(15, 118, 110, 0.35);
     }
 
     .trip-card-image {
@@ -835,12 +835,12 @@ interface PopularDestination {
 
     .status-planning {
       background: #fef3c7;
-      color: #d97706;
+      color: #0d9488;
     }
 
     .status-confirmed {
-      background: #fff1dd;
-      color: #b45309;
+      background: #e0f5f2;
+      color: #0f766e;
     }
 
     .trip-card-content {
@@ -869,10 +869,10 @@ interface PopularDestination {
       gap: 0.4rem;
       margin-bottom: 1rem;
       padding: 0.55rem 0.65rem;
-      border: 1px solid #fbdcb0;
+      border: 1px solid #bfe6e0;
       border-radius: 9px;
-      color: #92400e;
-      background: #fff7ed;
+      color: #115e59;
+      background: #effaf8;
       font-size: 0.72rem;
       font-weight: 800;
     }
@@ -883,7 +883,7 @@ interface PopularDestination {
 
     .trip-countdown.starts-soon {
       border-color: #fde68a;
-      color: #b45309;
+      color: #0f766e;
       background: #fffbeb;
     }
 
@@ -894,9 +894,9 @@ interface PopularDestination {
     }
 
     .trip-countdown.in-progress {
-      border-color: #f8c98a;
-      color: #232c55;
-      background: #f4f5fa;
+      border-color: #99d8cf;
+      color: #115e6b;
+      background: #f1faf9;
     }
 
     .budget-progress-block {
@@ -915,7 +915,7 @@ interface PopularDestination {
 
     .progress-percent {
       font-weight: 700;
-      color: #b45309;
+      color: #0f766e;
     }
 
     .progress-bar-track {
@@ -928,7 +928,7 @@ interface PopularDestination {
 
     .progress-bar-fill {
       height: 100%;
-      background: #b45309;
+      background: #0f766e;
       border-radius: 4px;
       transition: width 0.3s ease;
     }
@@ -954,13 +954,13 @@ interface PopularDestination {
       border: none;
       border-radius: 12px;
       cursor: pointer;
-      box-shadow: 0 10px 20px -12px rgba(180, 83, 9, 0.8);
+      box-shadow: 0 10px 20px -12px rgba(15, 118, 110, 0.8);
       transition: filter 0.2s ease, box-shadow 0.2s ease;
     }
 
     .btn-view-trip:hover {
       filter: brightness(1.06);
-      box-shadow: 0 14px 24px -12px rgba(180, 83, 9, 0.9);
+      box-shadow: 0 14px 24px -12px rgba(15, 118, 110, 0.9);
     }
 
     /* Destinations Grid */
@@ -985,7 +985,7 @@ interface PopularDestination {
     .dest-card:hover {
       transform: translateY(-4px);
       border-color: #d6e0f5;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(180, 83, 9, 0.35);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(15, 118, 110, 0.35);
     }
 
     .dest-card-image {
@@ -1054,7 +1054,7 @@ interface PopularDestination {
       width: 100%;
       padding: 0.65rem;
       background: #f5f8ff;
-      color: #b45309;
+      color: #0f766e;
       border: 1px solid #dbe5ff;
       font-size: 0.85rem;
       font-weight: 750;
@@ -1068,7 +1068,7 @@ interface PopularDestination {
       background: var(--tm-gradient-brand);
       border-color: transparent;
       color: #ffffff;
-      box-shadow: 0 10px 20px -10px rgba(180, 83, 9, 0.7);
+      box-shadow: 0 10px 20px -10px rgba(15, 118, 110, 0.7);
     }
 
     /* Modal Styling */
@@ -1102,14 +1102,14 @@ interface PopularDestination {
       border: 1px solid #cbd5e1; border-radius: 8px;
       font-family: inherit; font-size: 0.9rem; outline: none;
     }
-    .form-control:focus { border-color: #b45309; }
+    .form-control:focus { border-color: #0f766e; }
 
     .form-row { display: flex; gap: 1rem; }
     .half { flex: 1; }
 
     .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
     .btn-cancel { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    .btn-submit { background: #b45309; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn-submit { background: #0f766e; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
     @media (max-width: 1024px) {
       .trips-grid, .destinations-grid, .quick-actions {
@@ -1140,6 +1140,7 @@ interface PopularDestination {
 
 @include mobile.panels;
 @include mobileHome.home;
+@include mobileHome.home-waves;
 
 @media(max-width:760px) {
  .home-page { width:100%; min-width:0; }

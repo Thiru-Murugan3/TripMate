@@ -2,7 +2,7 @@
 .catalogue { max-width:1280px; margin:auto; padding:16px; }
 .catalogue-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
 h2 { font-size:1.1rem; margin:0; } h3 { font-size:.95rem; margin:0 0 6px; line-height:1.4; overflow-wrap:anywhere; }
-p { line-height:1.5; font-size:.82rem; } a { color:var(--primary,#b45309); overflow-wrap:anywhere; }
+p { line-height:1.5; font-size:.82rem; } a { color:var(--primary,#0f766e); overflow-wrap:anywhere; }
 summary { cursor:pointer; font-size:.8rem; font-weight:600; padding:6px 0; }
 .about { max-width:540px; color:#64748b; } .about[open] { flex-basis:100%; }
 .filter-panel { border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:12px; }

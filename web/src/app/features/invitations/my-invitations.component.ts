@@ -89,28 +89,28 @@ import { InvitationService } from '../../core/services/invitation.service';
     .page { min-height: calc(100vh - 72px); background:#f8fafc; padding:2rem 1.25rem 4rem; }
     .shell { width:min(900px,100%); margin:0 auto; }
     .header { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; margin-bottom:1.25rem; }
-    .eyebrow { color:#b45309; font-size:.72rem; font-weight:800; letter-spacing:.12em; margin:0 0 .3rem; }
+    .eyebrow { color:#0f766e; font-size:.72rem; font-weight:800; letter-spacing:.12em; margin:0 0 .3rem; }
     h1 { margin:0; color:#0f172a; font-size:clamp(1.8rem,4vw,2.4rem); }
     .header p { color:#64748b; margin:.55rem 0 0; line-height:1.5; }
     .refresh-btn, .state-card button { border:1px solid #cbd5e1; border-radius:9px; background:#fff; padding:.6rem .85rem; font-weight:800; cursor:pointer; }
     .invite-grid { display:grid; gap:.8rem; }
     .invite-card { display:grid; grid-template-columns:auto 1fr auto; gap:1rem; align-items:center; padding:1rem; background:#fff; border:1px solid #e2e8f0; border-radius:15px; box-shadow:0 5px 18px rgba(15,23,42,.04); }
-    .icon-box { width:48px; height:48px; display:grid; place-items:center; border-radius:13px; background:#fff7ed; color:#b45309; }
+    .icon-box { width:48px; height:48px; display:grid; place-items:center; border-radius:13px; background:#effaf8; color:#0f766e; }
     .content h2 { margin:.2rem 0; color:#0f172a; font-size:1.05rem; }
     .content p { margin:.25rem 0; color:#475569; }
     .role-chip { display:inline-block; padding:.2rem .45rem; border-radius:999px; background:#f1f5f9; color:#475569; font-size:.68rem; font-weight:900; }
     .meta { display:flex; flex-wrap:wrap; gap:.35rem; color:#94a3b8; font-size:.75rem; margin-top:.5rem; }
     .actions { display:flex; gap:.5rem; }
     .accept-btn, .reject-btn { min-height:40px; border-radius:9px; padding:0 .85rem; font-weight:800; cursor:pointer; }
-    .accept-btn { border:0; background:#b45309; color:#fff; }
+    .accept-btn { border:0; background:#0f766e; color:#fff; }
     .reject-btn { border:1px solid #cbd5e1; background:#fff; color:#475569; }
     .accept-btn:disabled, .reject-btn:disabled { opacity:.55; cursor:not-allowed; }
     .state-card { min-height:260px; display:grid; place-items:center; align-content:center; gap:.4rem; padding:2rem; background:#fff; border:1px solid #e2e8f0; border-radius:16px; text-align:center; color:#64748b; }
     .state-card.error { color:#991b1b; border-color:#fecaca; background:#fffafa; }
     .state-card h2 { margin:.25rem 0 0; color:#0f172a; }
     .state-card p { margin:0; }
-    .empty-icon { font-size:2.5rem; color:#b45309; }
-    .spinner { width:30px; height:30px; border:3px solid #ffedd5; border-top-color:#b45309; border-radius:50%; animation:spin .8s linear infinite; }
+    .empty-icon { font-size:2.5rem; color:#0f766e; }
+    .spinner { width:30px; height:30px; border:3px solid #d5f0ec; border-top-color:#0f766e; border-radius:50%; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     @media (max-width:650px) { .invite-card { grid-template-columns:auto 1fr; } .actions { grid-column:1 / -1; } .actions button { flex:1; } .header { flex-direction:column; } }
 

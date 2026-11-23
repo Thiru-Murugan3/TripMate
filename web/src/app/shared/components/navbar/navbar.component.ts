@@ -261,12 +261,12 @@ import { NotificationService } from '../../../core/services/notification.service
       width: 36px;
       height: 36px;
       border-radius: 10px;
-      background: #141a33;
+      background: #0b3c49;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #e8860c;
-      box-shadow: 0 3px 10px rgba(20, 26, 51, 0.25);
+      color: #f2c14e;
+      box-shadow: 0 3px 10px rgba(6, 40, 48, 0.25);
     }
     .logo-icon-badge svg {
       width: 20px;
@@ -285,7 +285,7 @@ import { NotificationService } from '../../../core/services/notification.service
       letter-spacing: -0.02em;
     }
     .brand-highlight {
-      color: #b45309;
+      color: #0f766e;
     }
     .brand-subtext {
       font-size: 0.6rem;
@@ -311,7 +311,7 @@ import { NotificationService } from '../../../core/services/notification.service
       color: #1e293b;
     }
     .nav-link.active {
-      color: #b45309;
+      color: #0f766e;
       font-weight: 600;
     }
     .nav-link.active::after {
@@ -321,7 +321,7 @@ import { NotificationService } from '../../../core/services/notification.service
       left: 0;
       right: 0;
       height: 2.5px;
-      background-color: #b45309;
+      background-color: #0f766e;
       border-radius: 2px;
     }
     .nav-actions {
@@ -395,14 +395,14 @@ import { NotificationService } from '../../../core/services/notification.service
       height: 36px;
       border-radius: 50%;
       overflow: hidden;
-      border: 1.5px solid #d97706;
-      box-shadow: 0 2px 8px rgba(180, 83, 9, 0.2);
+      border: 1.5px solid #0d9488;
+      box-shadow: 0 2px 8px rgba(15, 118, 110, 0.2);
     }
     .avatar {
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, #141a33 0%, #232c55 100%);
-      color: #f4a340;
+      background: linear-gradient(135deg, #0b3c49 0%, #115e6b 100%);
+      color: #f6d27a;
       font-weight: 700;
       display: flex;
       align-items: center;
@@ -454,14 +454,14 @@ import { NotificationService } from '../../../core/services/notification.service
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #b45309 0%, #f4a340 100%);
+      background: linear-gradient(135deg, #0f766e 0%, #f6d27a 100%);
       color: white;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.1rem;
-      box-shadow: 0 4px 12px rgba(180, 83, 9, 0.3);
+      box-shadow: 0 4px 12px rgba(15, 118, 110, 0.3);
     }
     .popover-user-info {
       display: flex;
@@ -480,8 +480,8 @@ import { NotificationService } from '../../../core/services/notification.service
       align-self: flex-start;
       font-size: 0.65rem;
       font-weight: 800;
-      color: #b45309;
-      background: #fff7ed;
+      color: #0f766e;
+      background: #effaf8;
       padding: 0.15rem 0.5rem;
       border-radius: 4px;
       letter-spacing: 0.05em;
@@ -512,7 +512,7 @@ import { NotificationService } from '../../../core/services/notification.service
     .detail-icon {
       width: 18px;
       height: 18px;
-      color: #b45309;
+      color: #0f766e;
       margin-top: 2px;
       flex-shrink: 0;
     }
@@ -593,7 +593,7 @@ import { NotificationService } from '../../../core/services/notification.service
     }
     .btn-primary {
       color: #ffffff;
-      background: #b45309;
+      background: #0f766e;
       border: 0;
     }
 
@@ -636,8 +636,8 @@ import { NotificationService } from '../../../core/services/notification.service
     }
 
     .search-input-header:focus-within {
-      border-color: #b45309;
-      box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
+      border-color: #0f766e;
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
       background: #ffffff;
     }
 
@@ -712,9 +712,9 @@ import { NotificationService } from '../../../core/services/notification.service
     }
 
     .search-chip:hover {
-      background: #fff7ed;
-      color: #92400e;
-      border-color: #fbdcb0;
+      background: #effaf8;
+      color: #115e59;
+      border-color: #bfe6e0;
     }
 
     @keyframes fadeIn {
@@ -784,8 +784,8 @@ import { NotificationService } from '../../../core/services/notification.service
       .nav-links { display:none; }
       .brand-subtext { display:none; }
       .logo-icon-badge { width:30px; height:30px; border-radius:9px; box-shadow:none; }
-      .brand-text { font-size:19px; color:#141a33; font-weight:800; letter-spacing:-.03em; }
-      .icon-btn { background:white; border:1px solid #e3e5ee; border-radius:14px; margin-left:4px; color:#141a33; box-shadow:0 6px 14px -12px rgba(20,26,51,.6); }
+      .brand-text { font-size:19px; color:#0b3c49; font-weight:800; letter-spacing:-.03em; }
+      .icon-btn { background:white; border:1px solid #d9ecea; border-radius:14px; margin-left:4px; color:#0b3c49; box-shadow:0 6px 14px -12px rgba(6, 40, 48,.6); }
       .nav-actions .icon-btn[aria-label="Open invitations"] { display:none; }
       .user-profile-btn { margin-left:4px; }
       .profile-popover { top:64px; }

@@ -1,9 +1,9 @@
 :host { display:block; min-width:0; margin:16px 0; color:#0f172a; }
 *, *::before, *::after { box-sizing:border-box; }
 .top-places { border:1px solid #e2e8f0; border-radius:14px; padding:14px; background:white; overflow-wrap:anywhere; }
-button { font:inherit; min-height:44px; max-width:100%; padding:8px 12px; border:1px solid #232c55; border-radius:18px; background:#232c55; color:white; cursor:pointer; }
+button { font:inherit; min-height:44px; max-width:100%; padding:8px 12px; border:1px solid #115e6b; border-radius:18px; background:#115e6b; color:white; cursor:pointer; }
 button:disabled { opacity:.55; cursor:default; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid #a9b1d4; outline-offset:3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid #a7d3d3; outline-offset:3px; }
 .note { display:block; font-size:12px; color:#64748b; margin:6px 0; line-height:1.5; }
 header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
 header button { flex-shrink:0; }
@@ -13,12 +13,12 @@ li { padding:10px 0; border-bottom:1px solid #f1f5f9; }
 .place-heading { min-width:0; }
 .place-option { display:flex; align-items:center; gap:10px; min-height:44px; cursor:pointer; }
 .place-option strong { min-width:0; }
-input[type=checkbox] { accent-color:#232c55; width:20px; height:20px; flex:0 0 20px; margin:0; }
+input[type=checkbox] { accent-color:#115e6b; width:20px; height:20px; flex:0 0 20px; margin:0; }
 .day-picker, .trip-picker { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:8px 0; }
 select { font:inherit; min-height:44px; min-width:0; max-width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; background:white; color:inherit; }
 .trip-picker select { flex:1; }
 .actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin-top:4px; }
-a { display:inline-flex; align-items:center; min-height:44px; color:#232c55; font-size:12px; }
+a { display:inline-flex; align-items:center; min-height:44px; color:#115e6b; font-size:12px; }
 .actions button { font-size:12px; }
 details { font-size:12px; margin-top:12px; }
 summary { min-height:44px; padding:12px 0; cursor:pointer; }
@@ -38,26 +38,26 @@ summary { min-height:44px; padding:12px 0; cursor:pointer; }
 }
 @media(max-width:760px) {
  :host { color:#0f172a; margin:12px 0; }
- .top-places { padding:12px; border-color:#e3e6f3; border-radius:14px; background:#ffffff; }
- .top-places>button { background:#eef0f8; color:#232c55; border-color:#cfd4ea; border-radius:10px; width:100%; font-weight:750; }
+ .top-places { padding:12px; border-color:#dcf0ee; border-radius:14px; background:#ffffff; }
+ .top-places>button { background:#e8f6f4; color:#115e6b; border-color:#c9e7e5; border-radius:10px; width:100%; font-weight:750; }
  .note { font-size:11px; color:#64748b; }
  h3 { font-size:15px; }
  li { padding:10px 0; }
  .place-option { font-size:13px; }
  .place-option strong { line-height:1.4; }
  .actions { gap:6px; }
- button { background:#232c55; border-color:#232c55; border-radius:10px; }
- a { color:#232c55; }
- input[type=checkbox] { accent-color:#232c55; }
- .selection-actions { background:#eef0f8; border-color:#cfd4ea; padding:10px; border-radius:12px; }
+ button { background:#115e6b; border-color:#115e6b; border-radius:10px; }
+ a { color:#115e6b; }
+ input[type=checkbox] { accent-color:#115e6b; }
+ .selection-actions { background:#e8f6f4; border-color:#c9e7e5; padding:10px; border-radius:12px; }
 }
 
 /* Premium refresh */
 .top-places { border-radius:20px; padding:18px 20px; box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.06); }
 .top-places > button { border:0; border-radius:14px; font-weight:700; padding:10px 20px; color:#fff;
-  background:linear-gradient(135deg,#f59e0b,#e8860c); box-shadow:0 8px 20px rgba(52, 65, 122,.28); }
+  background:linear-gradient(135deg,#f2c14e,#f2c14e); box-shadow:0 8px 20px rgba(20, 112, 125,.28); }
 .top-places > button::before { content:"★ " / ""; }
-header button { border-radius:12px; background:#eef0f8; color:#232c55; border-color:#cfd4ea; }
+header button { border-radius:12px; background:#e8f6f4; color:#115e6b; border-color:#c9e7e5; }
 h3 { font-weight:800; letter-spacing:-.01em; }
 li { border-radius:14px; padding:12px; margin:6px 0; border:1px solid #f1f5f9; transition:background .15s; }
 li:hover { background:#f8faff; }

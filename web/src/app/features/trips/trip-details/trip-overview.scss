@@ -1,3 +1,4 @@
+@use '../../../shared/styles/ocean-waves' as ow;
 /* ---------- Overview (premium dashboard) ---------- */
 .dashboard-overview {
   --ov-ink: #0b1220;
@@ -7,14 +8,14 @@
   --ov-line: #e7ecf3;
   --ov-surface: #ffffff;
   --ov-soft: #f6f8fc;
-  --ov-blue: #b45309;
-  --ov-indigo: #232c55;
+  --ov-blue: #0f766e;
+  --ov-indigo: #115e6b;
   --ov-green: #059669;
-  --ov-amber: #d97706;
+  --ov-amber: #0d9488;
   --ov-red: #dc2626;
   --ov-radius: 18px;
   --ov-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -18px rgba(15, 23, 42, 0.18);
-  --ov-shadow-hover: 0 2px 4px rgba(15, 23, 42, 0.05), 0 18px 40px -18px rgba(180, 83, 9, 0.28);
+  --ov-shadow-hover: 0 2px 4px rgba(15, 23, 42, 0.05), 0 18px 40px -18px rgba(15, 118, 110, 0.28);
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
@@ -66,9 +67,9 @@
   border-radius: 22px;
   color: #fff;
   background:
-    radial-gradient(110% 130% at 100% 0%, rgba(232, 134, 12, 0.28) 0%, rgba(232, 134, 12, 0) 55%),
-    linear-gradient(135deg, #0b1022 0%, #141a33 55%, #232c55 100%);
-  box-shadow: 0 24px 48px -28px rgba(11, 16, 34, 0.85);
+    radial-gradient(110% 130% at 100% 0%, rgba(242, 193, 78, 0.28) 0%, rgba(242, 193, 78, 0) 55%),
+    linear-gradient(135deg, #062a33 0%, #0b3c49 55%, #115e6b 100%);
+  box-shadow: 0 24px 48px -28px rgba(4, 30, 37, 0.85);
   isolation: isolate;
 }
 
@@ -181,8 +182,8 @@
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, #f4a340, #a9b1d4);
-  box-shadow: 0 0 16px rgba(169, 177, 212, 0.7);
+  background: linear-gradient(90deg, #f6d27a, #a7d3d3);
+  box-shadow: 0 0 16px rgba(167, 211, 211, 0.7);
   transition: width 0.6s ease;
 }
 
@@ -194,7 +195,7 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  color: #141a33;
+  color: #0b3c49;
   background: #fff;
   box-shadow: 0 6px 16px rgba(2, 6, 23, 0.35);
   transform: translate(-50%, -50%);
@@ -270,7 +271,7 @@ button.ov-stat:hover {
 button.ov-stat:focus-visible,
 .ov-link:focus-visible,
 .ov-invite:focus-visible {
-  outline: 3px solid rgba(180, 83, 9, 0.35);
+  outline: 3px solid rgba(15, 118, 110, 0.35);
   outline-offset: 2px;
 }
 
@@ -301,9 +302,9 @@ button.ov-stat:focus-visible,
   font-size: 1.3rem;
 }
 
-.tone-blue { color: #b45309; background: linear-gradient(135deg, #fff7ed, #ffedd5); }
-.tone-violet { color: #3d4b8a; background: linear-gradient(135deg, #f4f5fa, #eceef7); }
-.tone-amber { color: #d97706; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+.tone-blue { color: #0f766e; background: linear-gradient(135deg, #effaf8, #d5f0ec); }
+.tone-violet { color: #1a7f8c; background: linear-gradient(135deg, #f1faf9, #e6f5f3); }
+.tone-amber { color: #0d9488; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
 .tone-teal { color: #0d9488; background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
 
 .ov-stat-arrow {
@@ -439,7 +440,7 @@ button.ov-stat:hover .ov-stat-arrow {
 }
 
 .ov-pill[data-tone='healthy'] { color: #047857; background: #ecfdf5; }
-.ov-pill[data-tone='watch'] { color: #b45309; background: #fffbeb; }
+.ov-pill[data-tone='watch'] { color: #0f766e; background: #fffbeb; }
 .ov-pill[data-tone='over'] { color: #b91c1c; background: #fef2f2; }
 .ov-pill[data-tone='none'] { color: var(--ov-muted); background: var(--ov-soft); }
 
@@ -454,11 +455,11 @@ button.ov-stat:hover .ov-stat-arrow {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #f4a340, #e8860c);
+  background: linear-gradient(90deg, #f6d27a, #f2c14e);
   transition: width 0.6s ease;
 }
 
-.ov-meter[data-tone='watch'] span { background: linear-gradient(90deg, #f59e0b, #f97316); }
+.ov-meter[data-tone='watch'] span { background: linear-gradient(90deg, #f2c14e, #f97316); }
 .ov-meter[data-tone='over'] span { background: linear-gradient(90deg, #ef4444, #dc2626); }
 
 .ov-budget-split {
@@ -498,9 +499,9 @@ button.ov-stat:hover .ov-stat-arrow {
   border-radius: 50%;
 }
 
-.dot-spent { background: #232c55; }
+.dot-spent { background: #115e6b; }
 .dot-remaining { background: #10b981; }
-.dot-traveler { background: #f59e0b; }
+.dot-traveler { background: #f2c14e; }
 
 /* Weather */
 .ov-weather-days {
@@ -536,11 +537,11 @@ button.ov-stat:hover .ov-stat-arrow {
 }
 
 .ov-weather-date { color: var(--ov-text); font-weight: 800; }
-.ov-weather-icon { color: #f59e0b; font-size: 1.9rem; }
+.ov-weather-icon { color: #f2c14e; font-size: 1.9rem; }
 .ov-weather-day strong { color: var(--ov-ink); font-size: 1.2rem; font-weight: 800; }
 .ov-weather-low { color: var(--ov-faint); }
 .ov-weather-condition { min-height: 2.2em; color: #475569; line-height: 1.3; }
-.ov-weather-rain { display: inline-flex; align-items: center; gap: 0.15rem; color: #b45309; font-weight: 700; }
+.ov-weather-rain { display: inline-flex; align-items: center; gap: 0.15rem; color: #0f766e; font-weight: 700; }
 .ov-weather-rain .material-symbols-outlined { font-size: 0.85rem; }
 .ov-weather-note { margin: 0.6rem 0 0; color: var(--ov-faint); font-size: 0.68rem; }
 
@@ -600,10 +601,10 @@ button.ov-stat:hover .ov-stat-arrow {
   box-shadow: 0 0 0 2px #fff, 0 0 0 3px #e7ecf3;
 }
 
-.ov-avatar[data-tone='0'] { background: linear-gradient(135deg, #141a33, #34417a); }
-.ov-avatar[data-tone='1'] { background: linear-gradient(135deg, #232c55, #f4a340); }
+.ov-avatar[data-tone='0'] { background: linear-gradient(135deg, #0b3c49, #14707d); }
+.ov-avatar[data-tone='1'] { background: linear-gradient(135deg, #115e6b, #f6d27a); }
 .ov-avatar[data-tone='2'] { background: linear-gradient(135deg, #0f766e, #2dd4bf); }
-.ov-avatar[data-tone='3'] { background: linear-gradient(135deg, #b45309, #fbbf24); }
+.ov-avatar[data-tone='3'] { background: linear-gradient(135deg, #0f766e, #fbbf24); }
 .ov-avatar[data-tone='4'] { background: linear-gradient(135deg, #be123c, #fb7185); }
 
 .ov-member-text {
@@ -642,7 +643,7 @@ button.ov-stat:hover .ov-stat-arrow {
 }
 
 .ov-role.is-owner {
-  color: #92400e;
+  color: #115e59;
   background: #fef3c7;
 }
 
@@ -842,10 +843,14 @@ button.ov-stat:hover .ov-stat-arrow {
   background-size: 12px 2px;
   animation: ov-route 1.2s linear infinite;
 }
-.ov-journey-fill { height: 3px; top: -.5px; background: linear-gradient(90deg, #ffc46b, #e8860c); box-shadow: 0 0 14px rgba(232, 134, 12, .8); }
-.ov-journey-marker { width: 34px; height: 34px; color: #141a33; background: linear-gradient(145deg, #ffc46b, #e8860c); box-shadow: 0 0 0 5px rgba(232, 134, 12, .22), 0 10px 22px rgba(232, 134, 12, .45); animation: ov-glow 2.4s ease-in-out infinite; }
+.ov-journey-fill { height: 3px; top: -.5px; background: linear-gradient(90deg, #f8dc8f, #f2c14e); box-shadow: 0 0 14px rgba(242, 193, 78, .8); }
+.ov-journey-marker { width: 34px; height: 34px; color: #0b3c49; background: linear-gradient(145deg, #f8dc8f, #f2c14e); box-shadow: 0 0 0 5px rgba(242, 193, 78, .22), 0 10px 22px rgba(242, 193, 78, .45); animation: ov-glow 2.4s ease-in-out infinite; }
 .ov-journey-labels { position: relative; }
-.ov-hero-eyebrow { box-shadow: inset 0 0 0 1px rgba(255, 196, 107, .35); }
+.ov-hero-eyebrow { box-shadow: inset 0 0 0 1px rgba(248, 220, 143, .35); }
 @keyframes ov-route { to { background-position: 12px 0; } }
-@keyframes ov-glow { 50% { box-shadow: 0 0 0 9px rgba(232, 134, 12, .1), 0 10px 22px rgba(232, 134, 12, .45); } }
+@keyframes ov-glow { 50% { box-shadow: 0 0 0 9px rgba(242, 193, 78, .1), 0 10px 22px rgba(242, 193, 78, .45); } }
 @media (prefers-reduced-motion: reduce) { .ov-journey-track, .ov-journey-marker { animation: none; } }
+@media (max-width: 760px) {
+  .ov-hero { @include ow.ocean-waves(56px, 18s); }
+  .ov-hero > * { position: relative; z-index: 1; }
+}

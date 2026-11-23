@@ -83,7 +83,7 @@ import { DestinationDiscoveryComponent } from './destination-discovery.component
       </ng-container>
     </section>`,
   styleUrls:['./combined-places.component.scss'],
-  styles:[`.phone-filter-button { display:none; } @media(max-width:760px) { .city-search .advanced-filter { display:none; } .city-search.mobile-filter-open .advanced-filter { display:grid; } .city-search .phone-filter-button { display:block; background:#fff7ed; color:#b45309; border-color:#ffedd5; } .city-search>button { grid-column:auto; } } @media(min-width:761px) { .search-form label { min-width:140px; } }.source-link { display:block; font-size:11px; margin-top:12px; }.plan-panel h2 { margin-bottom:12px; }`]
+  styles:[`.phone-filter-button { display:none; } @media(max-width:760px) { .city-search .advanced-filter { display:none; } .city-search.mobile-filter-open .advanced-filter { display:grid; } .city-search .phone-filter-button { display:block; background:#effaf8; color:#0f766e; border-color:#d5f0ec; } .city-search>button { grid-column:auto; } } @media(min-width:761px) { .search-form label { min-width:140px; } }.source-link { display:block; font-size:11px; margin-top:12px; }.plan-panel h2 { margin-bottom:12px; }`]
 })
 export class CombinedPlacesComponent extends DestinationDiscoveryComponent {
   mobileFiltersOpen=false;
