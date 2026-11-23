@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -59,7 +59,7 @@ interface PopularDestination {
           <p>{{ upcomingTrips.length ? 'Your journeys and places to go next' : 'Places worth the journey' }}</p>
         </header>
 
-        <div class="cine-rail" (scroll)="onRailScroll($event)" aria-label="Your trips and destinations">
+        <div #cineRail class="cine-rail" (scroll)="onRailScroll($event)" aria-label="Your trips and destinations">
           <button type="button" class="cine-card" *ngFor="let trip of upcomingTrips; let i = index" [attr.data-sky]="i % 3" (click)="openTrip(trip)" [attr.aria-label]="'Open ' + trip.name">
             <span class="cine-badge">{{ initialsOf(trip.destination) }}</span>
             <span class="cine-kicker">Your trip · {{ trip.tag }}</span>
@@ -1209,6 +1209,17 @@ export class DashboardComponent implements OnInit {
     this.railIndex = Math.max(0, Math.round(rail.scrollLeft / Math.max(1, step)));
   }
 
+  @ViewChild('cineRail') private cineRail?: ElementRef<HTMLElement>;
+
+  /**
+   * Trip cards are inserted in front of the destination cards once trips load, and scroll
+   * snapping would otherwise keep the rail parked on the destination it was showing.
+   */
+  private resetGalleryRail(): void {
+    this.railIndex = 0;
+    setTimeout(() => this.cineRail?.nativeElement.scrollTo({ left: 0 }));
+  }
+
   pad(value: number): string { return String(value).padStart(2, '0'); }
 
   initialsOf(text: string): string {
@@ -1311,6 +1322,7 @@ export class DashboardComponent implements OnInit {
           );
 
         this.upcomingTrips = activeTrips.map((trip) => this.toDisplayTrip(trip));
+        this.resetGalleryRail();
         this.mobileBudget = null;
         const firstId = this.upcomingTrips[0]?.id;
         if (firstId) this.tripService.getTripDashboard(firstId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
