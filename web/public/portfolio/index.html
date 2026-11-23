@@ -1,0 +1,760 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>Suttru Portfolio</title>
+<meta name="description" content="Suttru is a trip planner for groups: find places worth seeing, build each day, get the best route and split the spending in one shared plan.">
+<link rel="icon" href="/suttru-icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,1,0&display=block">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+</head><body>
+<style>
+/* Layout: a calm product page. Photo hero, a quiet numbers strip, a tabbed tour of every module,
+   the planning journey as a route line, and a short close. Ink navy with a saffron accent. */
+:root {
+  --bg: #f7f7fa;
+  --surface: #ffffff;
+  --ink: #141a33;
+  --muted: #5d6481;
+  --line: #e3e5ee;
+  --accent: #e8860c;
+  --accent-soft: #fff1dd;
+  --deep: #141a33;
+  --on-deep: #f3f4fa;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 18px;
+  --shadow: 0 1px 2px rgba(20, 26, 51, .05), 0 14px 40px rgba(20, 26, 51, .07);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1224; --surface: #161b33; --ink: #eef0fa; --muted: #a3a9c4; --line: #2a3050;
+    --accent: #f4a340; --accent-soft: #3a2a12; --deep: #070a17; --on-deep: #eef0fa;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 14px 40px rgba(0,0,0,.35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1224; --surface: #161b33; --ink: #eef0fa; --muted: #a3a9c4; --line: #2a3050;
+  --accent: #f4a340; --accent-soft: #3a2a12; --deep: #070a17; --on-deep: #eef0fa;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 14px 40px rgba(0,0,0,.35); color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.6; overflow-x: hidden; }
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; letter-spacing: -.025em; text-wrap: balance; }
+h2 { font-size: clamp(1.9rem, 3.6vw, 2.7rem); font-weight: 800; line-height: 1.08; }
+.eyebrow { display: inline-block; margin-bottom: .8rem; font-size: .75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); font-size: 1.05rem; max-width: 60ch; margin: .8rem 0 0; }
+section { padding-block: 5rem; }
+
+/* Hero */
+.hero { position: relative; overflow: hidden; color: #fff; isolation: isolate; }
+.hero-photo { position: absolute; inset: 0; z-index: -2; background: url("/portfolio/img/hero.jpg") center / cover; transform-origin: 50% 30%; animation: settle 1.8s cubic-bezier(.2,.8,.2,1) both; }
+.hero::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(100deg, rgba(10,14,32,.82) 0%, rgba(10,14,32,.55) 48%, rgba(10,14,32,.15) 100%); }
+.hero-inner { padding-block: 6rem 5.5rem; display: grid; gap: 1.3rem; max-width: 1120px; }
+.brand { display: inline-flex; align-items: center; gap: .6rem; font-family: var(--f-display); font-weight: 800; font-size: 1.15rem; }
+.brand i { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); display: grid; place-items: center; font-style: normal; color: #141a33; font-size: .9rem; }
+.hero h1 { font-size: clamp(2.8rem, 7vw, 5.4rem); font-weight: 800; line-height: 1; max-width: 13ch; }
+.hero h1 em { font-style: normal; color: #ffc46b; }
+.hero p { max-width: 52ch; margin: 0; font-size: 1.1rem; color: rgba(255,255,255,.86); }
+.actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: .4rem; }
+.btn { display: inline-flex; align-items: center; gap: .5rem; padding: .85rem 1.35rem; border-radius: 12px; font-weight: 700; text-decoration: none; transition: transform .2s, background .2s; }
+.btn:hover { transform: translateY(-2px); }
+.btn-primary { background: var(--accent); color: #141a33; }
+.btn-ghost { color: #fff; border: 1px solid rgba(255,255,255,.4); background: rgba(255,255,255,.08); }
+.hero-inner > * { animation: rise .9s cubic-bezier(.2,.8,.2,1) both; }
+.hero-inner > :nth-child(2) { animation-delay: .08s; } .hero-inner > :nth-child(3) { animation-delay: .16s; } .hero-inner > :nth-child(4) { animation-delay: .24s; }
+@keyframes settle { from { transform: scale(1.12); } to { transform: scale(1); } }
+@keyframes rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+
+/* Ticker */
+.ticker { overflow: hidden; background: var(--deep); color: var(--on-deep); }
+.ticker-track { display: flex; width: max-content; animation: slide 40s linear infinite; }
+.ticker-track span { flex: none; padding: .85rem 2rem .85rem 0; font-size: .82rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
+.ticker-track b { color: var(--accent); margin: 0 .9rem; }
+@keyframes slide { to { transform: translateX(-50%); } }
+
+/* Numbers */
+.numbers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-top: 2.4rem; }
+.numbers div { background: var(--surface); padding: 1.6rem 1.4rem; }
+.numbers strong { display: block; font-family: var(--f-display); font-size: clamp(1.8rem, 3.4vw, 2.5rem); font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.numbers span { color: var(--muted); font-size: .9rem; }
+
+/* Modules: tabbed tour */
+.tour { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 1.6rem; margin-top: 2.6rem; align-items: start; }
+.tabs { display: grid; gap: .35rem; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); }
+.tab { display: flex; align-items: center; gap: .75rem; width: 100%; padding: .8rem .95rem; border: 1px solid transparent; border-radius: 12px; background: none; color: var(--ink); font: inherit; font-weight: 600; text-align: left; cursor: pointer; transition: background .2s, border-color .2s; }
+.tab:hover { background: var(--surface); }
+.tab[aria-selected="true"] { background: var(--surface); border-color: var(--line); box-shadow: var(--shadow); }
+.tab .ico { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-size: 1rem; }
+.tab small { display: block; color: var(--muted); font-weight: 500; font-size: .78rem; line-height: 1.3; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2rem; min-width: 0; }
+.panel[hidden] { display: none !important; }
+.panel h3 { font-size: 1.6rem; font-weight: 800; }
+.panel > p { color: var(--muted); margin: .4rem 0 1.4rem; max-width: 62ch; }
+.panel.show { animation: rise .45s cubic-bezier(.2,.8,.2,1) both; }
+.opts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem 1.4rem; }
+.opts li { position: relative; padding-left: 1.7rem; font-size: .95rem; }
+.opts li::before { content: ""; position: absolute; left: 0; top: .42rem; width: 1rem; height: 1rem; border-radius: 50%; background: var(--accent-soft); box-shadow: inset 0 0 0 4px var(--accent-soft), inset 0 0 0 10px var(--accent); }
+.opts li b { font-weight: 600; }
+
+/* Journey */
+.journey { background: var(--surface); border-block: 1px solid var(--line); }
+.journey-grid { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 3rem; align-items: center; }
+.photos { position: relative; min-height: 400px; }
+.photo { position: absolute; width: 50%; margin: 0; padding: .55rem .55rem 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 22px 50px rgba(20,26,51,.16); transform: rotate(var(--r)); transition: transform .35s cubic-bezier(.2,1.2,.3,1); }
+.photo:hover { transform: rotate(0) translateY(-6px); z-index: 4; }
+.photo img { aspect-ratio: 4 / 3.3; object-fit: cover; border-radius: 6px; }
+.photo figcaption { padding: .5rem .1rem .6rem; font-size: .82rem; font-weight: 600; color: var(--muted); }
+.ph1 { --r: -6deg; left: 0; top: 16%; } .ph2 { --r: 3deg; left: 26%; top: 0; z-index: 2; } .ph3 { --r: -2deg; left: 50%; top: 24%; }
+.steps { list-style: none; margin: 1.8rem 0 0; padding: 0 0 0 2.6rem; position: relative; display: grid; gap: 1.3rem; }
+.steps::before { content: ""; position: absolute; left: .78rem; top: .5rem; bottom: .5rem; width: 2px; background: repeating-linear-gradient(180deg, var(--accent) 0 8px, transparent 8px 14px); transform-origin: top; }
+.steps li { position: relative; }
+.steps li::before { counter-increment: step; content: counter(step); position: absolute; left: -2.6rem; top: .05rem; display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); color: var(--accent); font-size: .78rem; font-weight: 700; }
+.steps { counter-reset: step; }
+.steps strong { display: block; font-family: var(--f-display); font-size: 1.12rem; }
+.steps span { color: var(--muted); font-size: .93rem; }
+
+/* Platforms + stack */
+.split { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; margin-top: 2.4rem; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.6rem; box-shadow: var(--shadow); transition: transform .25s, box-shadow .25s; }
+.card:hover { transform: translateY(-4px); }
+.card h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: .4rem; }
+.card p { margin: 0; color: var(--muted); font-size: .94rem; }
+.stack { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.4rem; list-style: none; padding: 0; }
+.stack li { padding: .4rem .8rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: .85rem; font-weight: 500; color: var(--muted); }
+
+/* Scroll-linked entrances (progressive: content is visible without them) */
+@supports (animation-timeline: view()) {
+  .reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  .steps::before { animation: draw linear both; animation-timeline: view(); animation-range: entry 15% cover 55%; }
+  .photo { animation: drop linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
+}
+@keyframes draw { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes drop { from { opacity: .2; transform: translateY(60px) rotate(calc(var(--r) * -2)); } to { opacity: 1; transform: rotate(var(--r)); } }
+
+/* Group trips */
+.group { background: var(--surface); border-block: 1px solid var(--line); }
+.group-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-top: 2.4rem; counter-reset: g; }
+.flow { position: relative; padding: 1.4rem 1.3rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); }
+.flow::before { counter-increment: g; content: counter(g); display: grid; place-items: center; width: 2rem; height: 2rem; margin-bottom: .8rem; border-radius: 50%; background: var(--accent); color: #141a33; font-weight: 800; font-size: .85rem; }
+.flow h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: .35rem; }
+.flow p { margin: 0; color: var(--muted); font-size: .92rem; }
+.roles-title { font-size: 1.35rem; font-weight: 800; margin: 3rem 0 1.1rem; }
+.roles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .8rem; }
+.role { padding: 1.2rem 1.1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); border-top: 4px solid var(--c); }
+.role strong { display: block; font-family: var(--f-display); font-size: 1.05rem; margin-bottom: .25rem; }
+.role span { color: var(--muted); font-size: .86rem; line-height: 1.45; display: block; }
+.r-owner { --c: #e8860c; } .r-editor { --c: #5b6cff; } .r-planner { --c: #0ea5e9; } .r-money { --c: #10b981; } .r-viewer { --c: #94a3b8; }
+.money { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.2rem; margin-top: 3rem; }
+.ledger { padding: 1.5rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); }
+.ledger h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: .9rem; }
+.ledger table { width: 100%; border-collapse: collapse; font-size: .92rem; font-variant-numeric: tabular-nums; }
+.ledger th, .ledger td { padding: .55rem 0; border-bottom: 1px solid var(--line); text-align: left; }
+.ledger th { color: var(--muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+.ledger td:last-child, .ledger th:last-child { text-align: right; }
+.ledger .owe { color: #d9480f; font-weight: 700; } .ledger .get { color: #0f9d58; font-weight: 700; }
+.ledger small { display: block; margin-top: .7rem; color: var(--muted); }
+.ledger ul { margin: 0; padding-left: 1.1rem; color: var(--muted); font-size: .93rem; display: grid; gap: .4rem; }
+@media (max-width: 900px) { .group-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } .roles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .money { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .group-flow, .roles { grid-template-columns: minmax(0, 1fr); } }
+
+/* Trip types */
+.types { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem; margin-top: 2.4rem; }
+.type { display: flex; flex-direction: column; gap: .8rem; padding: 1.4rem 1.2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); transition: transform .25s; }
+.type:hover { transform: translateY(-4px); }
+.type .badge { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; background: var(--accent-soft); font-size: 1.3rem; }
+.type h3 { font-size: 1.2rem; font-weight: 800; }
+.type p { margin: 0; color: var(--muted); font-size: .9rem; }
+.type dl { margin: 0; display: grid; gap: .55rem; font-size: .85rem; }
+.type dt { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.type dd { margin: .15rem 0 0; }
+.type .less { color: var(--muted); }
+.type .hide { display: inline-block; margin-top: .15rem; padding: .15rem .5rem; border-radius: 6px; background: var(--accent-soft); color: var(--ink); font-size: .78rem; font-weight: 600; }
+.types-note { margin-top: 1.4rem; color: var(--muted); font-size: .92rem; max-width: 70ch; }
+@media (max-width: 1000px) { .types { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .types { grid-template-columns: minmax(0, 1fr); } }
+
+/* ===== Travel motion: real photos, crisp icons ===== */
+.mi { font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal; font-size: 22px; line-height: 1; display: inline-block; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; -webkit-font-smoothing: antialiased; font-feature-settings: "liga"; }
+.chip-ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.92); color: #141a33; box-shadow: 0 8px 22px rgba(10,14,32,.3); }
+.chip-ic .mi { font-size: 24px; }
+
+/* Hero: slow Ken Burns on the photo and a route that draws itself with a vehicle travelling it */
+.hero-photo { animation: settle 1.8s cubic-bezier(.2,.8,.2,1) both, kenburns 28s ease-in-out 1.8s infinite alternate; }
+@keyframes kenburns { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.1) translate(-2%, -1.5%); } }
+.hero-route { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; z-index: -1; pointer-events: none; }
+.hero-route svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.hr-line { fill: none; stroke: rgba(255,255,255,.85); stroke-width: 3; stroke-dasharray: 2 12; stroke-linecap: round; }
+.hr-glow { fill: none; stroke: rgba(255,196,107,.9); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: drawRoute 3.2s cubic-bezier(.6,.1,.2,1) .6s forwards; }
+@keyframes drawRoute { to { stroke-dashoffset: 0; } }
+.hr-pin { fill: #ffc46b; stroke: #fff; stroke-width: 3; }
+.hr-label { fill: #fff; font: 700 13px var(--f-body); letter-spacing: .04em; }
+.hr-vehicle circle { fill: #fff; filter: drop-shadow(0 6px 12px rgba(10,14,32,.35)); }
+.hr-vehicle text { font-family: "Material Symbols Rounded"; font-size: 22px; fill: #141a33; font-feature-settings: "liga"; }
+
+/* Realistic vehicles */
+.veh { display: block; overflow: visible; filter: drop-shadow(0 8px 10px rgba(10,14,32,.28)); }
+.wheel { animation: spin .5s linear infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.bob { animation: bob 2.6s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(4px) rotate(2deg); } }
+
+/* Trip-type photo headers with gentle motion and a travelling icon */
+.scene { position: relative; margin: -1.4rem -1.2rem 0; height: 132px; border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; background: var(--line); }
+.scene img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.06); transition: transform 6s ease; }
+.type:hover .scene img { transform: scale(1.16) translateX(-2%); }
+.scene::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,14,32,0) 40%, rgba(10,14,32,.55)); }
+.scene .lane { position: absolute; left: 0; right: 0; bottom: 18px; height: 2px; z-index: 1; background: repeating-linear-gradient(90deg, rgba(255,255,255,.85) 0 8px, transparent 8px 16px); animation: laneMove 1.4s linear infinite; }
+@keyframes laneMove { to { background-position: -16px 0; } }
+.scene .mover { position: absolute; z-index: 2; bottom: 4px; left: calc(var(--w) * -1); animation: drive var(--sp, 9s) linear infinite; }
+.scene .mover.boat { bottom: 8px; }
+.scene .mover.float { bottom: auto; top: 10px; animation-name: soar; }
+@keyframes drive { from { left: calc(var(--w) * -1); } to { left: 100%; } }
+@keyframes soar { 0% { left: calc(var(--w) * -1); transform: translateY(0); } 50% { transform: translateY(16px) rotate(-4deg); } 100% { left: 100%; transform: translateY(0); } }
+.scene .chip-ic-old { position: absolute; z-index: 2; bottom: 0; left: -48px; width: 38px; height: 38px; animation: travel var(--sp, 9s) linear infinite; animation-delay: var(--dl, 0s); }
+.scene .chip-ic .mi { font-size: 21px; }
+@keyframes travel { from { left: -48px; } to { left: calc(100% + 48px); } }
+.scene .chip-ic.float { bottom: auto; top: 16px; animation-name: glide; }
+@keyframes glide { 0% { left: -48px; transform: translateY(0); } 50% { transform: translateY(14px); } 100% { left: calc(100% + 48px); transform: translateY(0); } }
+.scene .tag { position: absolute; z-index: 2; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .6rem; border-radius: 999px; background: rgba(10,14,32,.55); color: #fff; font-size: .72rem; font-weight: 600; backdrop-filter: blur(6px); }
+.scene .tag .mi { font-size: 16px; }
+
+/* Transport strip between sections */
+.transit { position: relative; height: 96px; overflow: hidden; border-block: 1px solid var(--line); background: var(--surface); }
+.transit::before { content: ""; position: absolute; left: 0; right: 0; bottom: 28px; height: 2px; background: repeating-linear-gradient(90deg, var(--accent) 0 10px, transparent 10px 20px); animation: laneMove 1.2s linear infinite; }
+.transit .rider { position: absolute; bottom: 30px; left: calc(var(--w) * -1); animation: drive var(--sp) linear infinite; animation-delay: var(--dl); }
+.transit .rider.high { bottom: auto; top: 6px; }
+.transit .chip-ic-old { position: absolute; top: 50%; left: -60px; margin-top: -22px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow); animation: travel var(--sp) linear infinite; animation-delay: var(--dl); }
+.transit .chip-ic .mi { color: var(--accent); }
+
+/* The planning route: a car icon travels the dashed line as you scroll */
+.steps::after { content: "directions_car"; font-family: "Material Symbols Rounded"; font-feature-settings: "liga"; position: absolute; left: -.05rem; top: -.4rem; display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--accent); color: #141a33; font-size: 1.05rem; box-shadow: 0 6px 14px rgba(232,134,12,.35); }
+@supports (animation-timeline: view()) {
+  .steps::after { animation: carDown linear both; animation-timeline: view(); animation-range: entry 15% cover 55%; }
+}
+@keyframes carDown { from { top: -.4rem; } to { top: calc(100% - 1.7rem); } }
+
+footer { background: var(--deep); color: var(--on-deep); }
+footer .wrap { padding-block: 4rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1.5rem; }
+footer h2 { color: var(--on-deep); }
+footer p { margin: .6rem 0 0; color: #a3a9c4; max-width: 50ch; }
+
+@media (max-width: 900px) {
+  .tour { grid-template-columns: minmax(0, 1fr); }
+  .tabs { position: static; grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; padding-bottom: .4rem; }
+  .tab small { display: none; }
+  .journey-grid { grid-template-columns: minmax(0, 1fr); }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  section { padding-block: 3.5rem; }
+  .hero-inner { padding-block: 4rem 3.5rem; }
+  .opts { grid-template-columns: minmax(0, 1fr); }
+  .panel { padding: 1.4rem; }
+  .photos { min-height: 260px; }
+}
+
+/* Compass cursor: mouse and trackpad only. Touch, pens and reduced motion keep the native cursor. */
+.cur-ring, .cur-dot, .cur-trail, .cur-ping { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 2147483000; opacity: 0; }
+.cur-trail { width: 100vw; height: 100vh; }
+html.cur-on .cur-ring, html.cur-on .cur-dot, html.cur-on .cur-trail { opacity: 1; transition: opacity .25s; }
+html.cur-on.cur-out .cur-ring, html.cur-on.cur-out .cur-dot, html.cur-on.cur-out .cur-trail { opacity: 0; }
+html.cur-on, html.cur-on * { cursor: none !important; }
+.cur-ring { width: 36px; height: 36px; border-radius: 18px; will-change: transform; }
+@property --cur-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.cur-ring { filter: drop-shadow(0 0 6px rgba(232, 134, 12, .4)); }
+.cur-ring::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: color-mix(in srgb, var(--accent) 14%, transparent); opacity: 0; transition: opacity .25s; }
+.cur-body { position: absolute; inset: 0; border-radius: inherit; padding: 1.75px; background: conic-gradient(from var(--cur-a), var(--accent), #ffc46b, var(--accent) 55%, color-mix(in srgb, var(--accent) 35%, transparent), var(--accent)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: curSpin 2.6s linear infinite; transition: transform .18s cubic-bezier(.2,.8,.2,1); }
+@keyframes curSpin { to { --cur-a: 360deg; } }
+.cur-dial { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; transition: opacity .2s; }
+.cur-dial .plane { fill: var(--accent); stroke: #fff; stroke-width: 2.4; stroke-linejoin: round; paint-order: stroke; }
+.cur-dial line { stroke: var(--accent); stroke-width: 1.5; stroke-linecap: round; opacity: .55; }
+.cur-dot { width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px rgba(255,255,255,.75); will-change: transform; transition: width .2s, height .2s, margin .2s, opacity .25s; }
+html.cur-snap .cur-ring::before { opacity: 1; }
+html.cur-snap .cur-body { animation-duration: 1.4s; }
+html.cur-snap .cur-dial { opacity: 0; }
+html.cur-snap .cur-dot { width: 4px; height: 4px; margin: -2px 0 0 -2px; }
+html.cur-press .cur-body { transform: scale(.88); }
+.cur-ping { width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%; border: 1.5px solid var(--accent); animation: curPing .6s cubic-bezier(.2,.8,.2,1) forwards; }
+@keyframes curPing { from { transform: scale(.4); opacity: .9; } to { transform: scale(2.2); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<svg class="vehicle-defs" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+<defs>
+  <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2f4f8"/><stop offset="1" stop-color="#9aa0b3"/></linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd3f0"/><stop offset=".55" stop-color="#2f5d80"/><stop offset="1" stop-color="#1b2b40"/></linearGradient>
+  <linearGradient id="paint-red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a5a"/><stop offset=".45" stop-color="#d7261b"/><stop offset="1" stop-color="#8f130d"/></linearGradient>
+  <linearGradient id="paint-bus" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe3ec"/></linearGradient>
+  <linearGradient id="paint-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f86ff"/><stop offset="1" stop-color="#1a3fa8"/></linearGradient>
+  <linearGradient id="paint-white" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd5e2"/></linearGradient>
+  <linearGradient id="hull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f3b73"/><stop offset="1" stop-color="#0e1d3d"/></linearGradient>
+  <linearGradient id="sail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9e2f0"/></linearGradient>
+
+  <symbol id="v-car" viewBox="0 0 120 52"><g transform="translate(120 0) scale(-1 1)">
+    <ellipse cx="60" cy="48" rx="52" ry="3.5" fill="rgba(0,0,0,.28)"/>
+    <path d="M8 36 L10 24 Q12 19 20 18 L36 16 L50 6 Q54 3 62 3 L84 3 Q92 3 98 9 L106 18 Q114 20 115 27 L116 36 Q116 40 112 40 L12 40 Q8 40 8 36 Z" fill="url(#paint-red)"/>
+    <path d="M40 17 L52 7.5 Q55 6 60 6 L70 6 L70 17 Z" fill="url(#glass)"/>
+    <path d="M73 6 L84 6 Q90 6 94 10 L101 17 L73 17 Z" fill="url(#glass)"/>
+    <path d="M14 23 L110 23" stroke="rgba(255,255,255,.35)" stroke-width="1.4"/>
+    <rect x="108" y="25" width="7" height="5" rx="1.5" fill="#ff3b30"/>
+    <rect x="8.5" y="25" width="6" height="4" rx="2" fill="#fff6c8"/>
+    <rect x="58" y="21" width="7" height="1.6" rx=".8" fill="#5c0c08"/><rect x="84" y="21" width="7" height="1.6" rx=".8" fill="#5c0c08"/>
+    <g transform="translate(30 40)"><g class="wheel"><circle r="10" fill="#1b1d24"/><circle r="6.2" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="1.4000000000000001" stroke-linecap="round"><line x1="0" y1="-5.5" x2="0" y2="5.5"/><line x1="-5.5" y1="0" x2="5.5" y2="0"/><line x1="-3.9000000000000004" y1="-3.9000000000000004" x2="3.9000000000000004" y2="3.9000000000000004"/><line x1="-3.9000000000000004" y1="3.9000000000000004" x2="3.9000000000000004" y2="-3.9000000000000004"/></g><circle r="1.6" fill="#d9dce6"/></g></g><g transform="translate(94 40)"><g class="wheel"><circle r="10" fill="#1b1d24"/><circle r="6.2" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="1.4000000000000001" stroke-linecap="round"><line x1="0" y1="-5.5" x2="0" y2="5.5"/><line x1="-5.5" y1="0" x2="5.5" y2="0"/><line x1="-3.9000000000000004" y1="-3.9000000000000004" x2="3.9000000000000004" y2="3.9000000000000004"/><line x1="-3.9000000000000004" y1="3.9000000000000004" x2="3.9000000000000004" y2="-3.9000000000000004"/></g><circle r="1.6" fill="#d9dce6"/></g></g>
+  </g></symbol>
+
+  <symbol id="v-bus" viewBox="0 0 160 60">
+    <ellipse cx="80" cy="56" rx="74" ry="3.5" fill="rgba(0,0,0,.28)"/>
+    <rect x="4" y="4" width="150" height="42" rx="7" fill="url(#paint-bus)"/>
+    <rect x="4" y="30" width="150" height="7" fill="#ff7a1a"/><rect x="4" y="37" width="150" height="3" fill="#1a3fa8"/>
+    <g fill="url(#glass)"><rect x="12" y="10" width="20" height="15" rx="2"/><rect x="36" y="10" width="20" height="15" rx="2"/><rect x="60" y="10" width="20" height="15" rx="2"/><rect x="84" y="10" width="20" height="15" rx="2"/><rect x="108" y="10" width="20" height="15" rx="2"/><path d="M132 8 L148 8 Q153 8 153 14 L153 30 L132 30 Z"/></g>
+    <rect x="149" y="33" width="5" height="4" rx="1.5" fill="#fff6c8"/>
+    <g transform="translate(32 46)"><g class="wheel"><circle r="9" fill="#1b1d24"/><circle r="5.58" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="1.2600000000000002" stroke-linecap="round"><line x1="0" y1="-4.95" x2="0" y2="4.95"/><line x1="-4.95" y1="0" x2="4.95" y2="0"/><line x1="-3.5100000000000002" y1="-3.5100000000000002" x2="3.5100000000000002" y2="3.5100000000000002"/><line x1="-3.5100000000000002" y1="3.5100000000000002" x2="3.5100000000000002" y2="-3.5100000000000002"/></g><circle r="1.44" fill="#d9dce6"/></g></g><g transform="translate(124 46)"><g class="wheel"><circle r="9" fill="#1b1d24"/><circle r="5.58" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="1.2600000000000002" stroke-linecap="round"><line x1="0" y1="-4.95" x2="0" y2="4.95"/><line x1="-4.95" y1="0" x2="4.95" y2="0"/><line x1="-3.5100000000000002" y1="-3.5100000000000002" x2="3.5100000000000002" y2="3.5100000000000002"/><line x1="-3.5100000000000002" y1="3.5100000000000002" x2="3.5100000000000002" y2="-3.5100000000000002"/></g><circle r="1.44" fill="#d9dce6"/></g></g>
+  </symbol>
+
+  <symbol id="v-train" viewBox="0 0 220 56">
+    <ellipse cx="110" cy="52" rx="106" ry="3" fill="rgba(0,0,0,.25)"/>
+    <rect x="2" y="10" width="96" height="32" rx="4" fill="url(#paint-white)"/>
+    <rect x="2" y="30" width="96" height="5" fill="#d7261b"/>
+    <g fill="url(#glass)"><rect x="10" y="15" width="14" height="10" rx="1.5"/><rect x="30" y="15" width="14" height="10" rx="1.5"/><rect x="50" y="15" width="14" height="10" rx="1.5"/><rect x="70" y="15" width="14" height="10" rx="1.5"/></g>
+    <rect x="98" y="22" width="6" height="8" fill="#3a3f52"/>
+    <path d="M104 10 L190 10 Q206 10 214 26 L216 34 Q216 42 208 42 L104 42 Z" fill="url(#paint-blue)"/>
+    <path d="M192 13 Q204 14 210 26 L190 26 Z" fill="url(#glass)"/>
+    <rect x="112" y="16" width="18" height="10" rx="1.5" fill="url(#glass)"/>
+    <rect x="104" y="30" width="112" height="4" fill="#ffd23f"/>
+    <rect x="208" y="34" width="6" height="3" rx="1" fill="#fff6c8"/>
+    <g transform="translate(18 44)"><g class="wheel"><circle r="6" fill="#1b1d24"/><circle r="3.7199999999999998" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="0.8400000000000001" stroke-linecap="round"><line x1="0" y1="-3.3000000000000003" x2="0" y2="3.3000000000000003"/><line x1="-3.3000000000000003" y1="0" x2="3.3000000000000003" y2="0"/><line x1="-2.34" y1="-2.34" x2="2.34" y2="2.34"/><line x1="-2.34" y1="2.34" x2="2.34" y2="-2.34"/></g><circle r="0.96" fill="#d9dce6"/></g></g><g transform="translate(36 44)"><g class="wheel"><circle r="6" fill="#1b1d24"/><circle r="3.7199999999999998" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="0.8400000000000001" stroke-linecap="round"><line x1="0" y1="-3.3000000000000003" x2="0" y2="3.3000000000000003"/><line x1="-3.3000000000000003" y1="0" x2="3.3000000000000003" y2="0"/><line x1="-2.34" y1="-2.34" x2="2.34" y2="2.34"/><line x1="-2.34" y1="2.34" x2="2.34" y2="-2.34"/></g><circle r="0.96" fill="#d9dce6"/></g></g><g transform="translate(66 44)"><g class="wheel"><circle r="6" fill="#1b1d24"/><circle r="3.7199999999999998" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="0.8400000000000001" stroke-linecap="round"><line x1="0" y1="-3.3000000000000003" x2="0" y2="3.3000000000000003"/><line x1="-3.3000000000000003" y1="0" x2="3.3000000000000003" y2="0"/><line x1="-2.34" y1="-2.34" x2="2.34" y2="2.34"/><line x1="-2.34" y1="2.34" x2="2.34" y2="-2.34"/></g><circle r="0.96" fill="#d9dce6"/></g></g><g transform="translate(84 44)"><g class="wheel"><circle r="6" fill="#1b1d24"/><circle r="3.7199999999999998" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="0.8400000000000001" stroke-linecap="round"><line x1="0" y1="-3.3000000000000003" x2="0" y2="3.3000000000000003"/><line x1="-3.3000000000000003" y1="0" x2="3.3000000000000003" y2="0"/><line x1="-2.34" y1="-2.34" x2="2.34" y2="2.34"/><line x1="-2.34" y1="2.34" x2="2.34" y2="-2.34"/></g><circle r="0.96" fill="#d9dce6"/></g></g><g transform="translate(122 44)"><g class="wheel"><circle r="6.5" fill="#1b1d24"/><circle r="4.03" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="0.9100000000000001" stroke-linecap="round"><line x1="0" y1="-3.575" x2="0" y2="3.575"/><line x1="-3.575" y1="0" x2="3.575" y2="0"/><line x1="-2.535" y1="-2.535" x2="2.535" y2="2.535"/><line x1="-2.535" y1="2.535" x2="2.535" y2="-2.535"/></g><circle r="1.04" fill="#d9dce6"/></g></g><g transform="translate(140 44)"><g class="wheel"><circle r="6.5" fill="#1b1d24"/><circle r="4.03" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="0.9100000000000001" stroke-linecap="round"><line x1="0" y1="-3.575" x2="0" y2="3.575"/><line x1="-3.575" y1="0" x2="3.575" y2="0"/><line x1="-2.535" y1="-2.535" x2="2.535" y2="2.535"/><line x1="-2.535" y1="2.535" x2="2.535" y2="-2.535"/></g><circle r="1.04" fill="#d9dce6"/></g></g><g transform="translate(176 44)"><g class="wheel"><circle r="6.5" fill="#1b1d24"/><circle r="4.03" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="0.9100000000000001" stroke-linecap="round"><line x1="0" y1="-3.575" x2="0" y2="3.575"/><line x1="-3.575" y1="0" x2="3.575" y2="0"/><line x1="-2.535" y1="-2.535" x2="2.535" y2="2.535"/><line x1="-2.535" y1="2.535" x2="2.535" y2="-2.535"/></g><circle r="1.04" fill="#d9dce6"/></g></g><g transform="translate(194 44)"><g class="wheel"><circle r="6.5" fill="#1b1d24"/><circle r="4.03" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="0.9100000000000001" stroke-linecap="round"><line x1="0" y1="-3.575" x2="0" y2="3.575"/><line x1="-3.575" y1="0" x2="3.575" y2="0"/><line x1="-2.535" y1="-2.535" x2="2.535" y2="2.535"/><line x1="-2.535" y1="2.535" x2="2.535" y2="-2.535"/></g><circle r="1.04" fill="#d9dce6"/></g></g>
+  </symbol>
+
+  <symbol id="v-plane" viewBox="0 0 160 60">
+    <path d="M10 30 Q10 22 24 22 L132 22 Q154 24 156 32 Q154 38 132 38 L24 38 Q10 38 10 30 Z" fill="url(#paint-white)"/>
+    <path d="M18 22 L8 4 L22 4 L44 22 Z" fill="url(#paint-blue)"/>
+    <path d="M66 34 L104 34 L80 56 L66 56 Z" fill="#c7cede"/>
+    <path d="M70 26 L98 26 L84 12 L74 12 Z" fill="#dfe4ee"/>
+    <rect x="26" y="29" width="104" height="2.5" fill="#ff7a1a"/>
+    <g fill="#2f5d80"><circle cx="40" cy="26.5" r="1.6"/><circle cx="47.5" cy="26.5" r="1.6"/><circle cx="55" cy="26.5" r="1.6"/><circle cx="62.5" cy="26.5" r="1.6"/><circle cx="70" cy="26.5" r="1.6"/><circle cx="77.5" cy="26.5" r="1.6"/><circle cx="85" cy="26.5" r="1.6"/><circle cx="92.5" cy="26.5" r="1.6"/><circle cx="100" cy="26.5" r="1.6"/><circle cx="107.5" cy="26.5" r="1.6"/><circle cx="115" cy="26.5" r="1.6"/><circle cx="122.5" cy="26.5" r="1.6"/></g>
+    <path d="M140 25 Q150 26 153 31 L140 31 Z" fill="url(#glass)"/>
+  </symbol>
+
+  <symbol id="v-boat" viewBox="0 0 120 90">
+    <path d="M58 6 L58 64 L18 64 Z" fill="url(#sail)"/>
+    <path d="M62 14 L62 64 L96 64 Z" fill="#ffc46b"/>
+    <rect x="58" y="4" width="3" height="64" fill="#3a2a1a"/>
+    <path d="M8 66 L112 66 L100 82 Q98 85 94 85 L24 85 Q20 85 18 82 Z" fill="url(#hull)"/>
+    <rect x="12" y="68" width="96" height="2.5" fill="#ffffff" opacity=".8"/>
+  </symbol>
+
+  <symbol id="v-bike" viewBox="0 0 120 70">
+    <ellipse cx="60" cy="66" rx="50" ry="2.5" fill="rgba(0,0,0,.25)"/>
+    <g transform="translate(26 46)"><g class="wheel"><circle r="18" fill="#1b1d24"/><circle r="11.16" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="2.5200000000000005" stroke-linecap="round"><line x1="0" y1="-9.9" x2="0" y2="9.9"/><line x1="-9.9" y1="0" x2="9.9" y2="0"/><line x1="-7.0200000000000005" y1="-7.0200000000000005" x2="7.0200000000000005" y2="7.0200000000000005"/><line x1="-7.0200000000000005" y1="7.0200000000000005" x2="7.0200000000000005" y2="-7.0200000000000005"/></g><circle r="2.88" fill="#d9dce6"/></g></g><g transform="translate(94 46)"><g class="wheel"><circle r="18" fill="#1b1d24"/><circle r="11.16" fill="url(#rim)"/><g stroke="#8a90a2" stroke-width="2.5200000000000005" stroke-linecap="round"><line x1="0" y1="-9.9" x2="0" y2="9.9"/><line x1="-9.9" y1="0" x2="9.9" y2="0"/><line x1="-7.0200000000000005" y1="-7.0200000000000005" x2="7.0200000000000005" y2="7.0200000000000005"/><line x1="-7.0200000000000005" y1="7.0200000000000005" x2="7.0200000000000005" y2="-7.0200000000000005"/></g><circle r="2.88" fill="#d9dce6"/></g></g>
+    <g fill="none" stroke="#e8860c" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M26 46 L48 22 L82 22 L94 46"/><path d="M48 22 L58 46 L82 22"/><path d="M26 46 L58 46"/></g>
+    <path d="M44 16 L54 16" stroke="#1b1d24" stroke-width="5" stroke-linecap="round"/>
+    <path d="M80 22 L84 12 L92 12" fill="none" stroke="#1b1d24" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="58" cy="46" r="4" fill="#1b1d24"/>
+  </symbol>
+
+  <symbol id="v-glider" viewBox="0 0 120 100">
+    <path d="M6 30 Q60 -6 114 30 Q60 14 6 30 Z" fill="#ff7a1a"/>
+    <path d="M18 26 Q60 2 102 26" fill="none" stroke="#ffd23f" stroke-width="5"/>
+    <g stroke="#ffffff" stroke-width="1" opacity=".9"><line x1="10" y1="30" x2="58" y2="78"/><line x1="110" y1="30" x2="62" y2="78"/><line x1="40" y1="20" x2="58" y2="78"/><line x1="80" y1="20" x2="62" y2="78"/></g>
+    <circle cx="60" cy="76" r="6" fill="#1a3fa8"/><path d="M54 82 L66 82 L64 96 L56 96 Z" fill="#1a3fa8"/>
+  </symbol>
+</defs></svg>
+<header class="hero">
+  <div class="hero-photo" role="img" aria-label="Green hills under a wide sky"></div>
+  <div class="wrap hero-inner">
+    <span class="brand"><i class="mi" aria-hidden="true">travel_explore</i>Suttru</span>
+    <h1>Plan India, <em>day by day.</em></h1>
+    <p>A trip planner for groups. Find the places worth seeing, build each day, get the best route, split the spending and keep every ticket in one shared plan.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="/">Open Suttru</a>
+      <a class="btn btn-ghost" href="#group">How group trips work</a>
+    </div>
+  </div>
+  <div class="hero-route" aria-hidden="true">
+    <svg viewBox="0 0 1200 170" preserveAspectRatio="xMidYMax slice">
+      <path id="route" class="hr-line" d="M40 140 C 260 60 420 150 620 100 S 980 40 1160 90"/>
+      <path class="hr-glow" d="M40 140 C 260 60 420 150 620 100 S 980 40 1160 90"/>
+      <circle class="hr-pin" cx="40" cy="140" r="8"/><circle class="hr-pin" cx="1160" cy="90" r="8"/>
+      <g><use href="#v-car" x="-38" y="-30" width="76" height="33"/>
+        <animateMotion dur="12s" begin="1.5s" repeatCount="indefinite" rotate="auto"><mpath href="#route"/></animateMotion></g>
+    </svg>
+  </div>
+</header>
+
+<div class="ticker" aria-hidden="true"><div class="ticker-track">
+  <span>Trips<b>·</b>Explore<b>·</b>Itinerary<b>·</b>Smart route<b>·</b>Expenses<b>·</b>Bookings<b>·</b>Documents<b>·</b>Members<b>·</b>Android<b>·</b></span>
+  <span>Trips<b>·</b>Explore<b>·</b>Itinerary<b>·</b>Smart route<b>·</b>Expenses<b>·</b>Bookings<b>·</b>Documents<b>·</b>Members<b>·</b>Android<b>·</b></span>
+</div></div>
+
+<main>
+  <section class="wrap" aria-labelledby="numbers-title">
+    <span class="eyebrow">Built on real data</span>
+    <h2 id="numbers-title">Recommended places for every corner of India</h2>
+    <p class="lead">Explore is backed by a curated dataset drawn from Wikivoyage and Wikidata, with real photos from Wikimedia Commons and distances measured from each city centre.</p>
+    <div class="numbers reveal">
+      <div><strong data-count="1322">1,322</strong><span>Destinations covered</span></div>
+      <div><strong data-count="13948">13,948</strong><span>Recommended places</span></div>
+      <div><strong data-count="9064">9,064</strong><span>Places with real distances</span></div>
+      <div><strong data-count="7">7</strong><span>Tabs in every trip</span></div>
+    </div>
+  </section>
+
+  <section class="group" id="group" aria-labelledby="group-title">
+    <div class="wrap">
+      <span class="eyebrow">Made for group trips</span>
+      <h2 id="group-title">One plan the whole group shares</h2>
+      <p class="lead">A Suttru trip belongs to everyone going. Friends, family or colleagues join the same trip, see the same days, routes, bookings and documents, and track one shared budget. Each person gets a role, so everyone can help without anyone breaking the plan.</p>
+
+      <div class="group-flow">
+        <article class="flow reveal"><h3>Create and invite</h3><p>The organiser creates the trip and invites people by email or with a share link.</p></article>
+        <article class="flow reveal"><h3>Members join</h3><p>Invitees see the trip on their Invitations page and accept it. It then appears in their My Trips.</p></article>
+        <article class="flow reveal"><h3>Plan together</h3><p>Planners build the days and pick places. Everyone sees the same itinerary and smart route.</p></article>
+        <article class="flow reveal"><h3>Share the costs</h3><p>Whoever pays logs the expense. Suttru splits it and shows who owes whom until everyone settles.</p></article>
+      </div>
+
+      <h3 class="roles-title">Roles decide who can change what</h3>
+      <div class="roles">
+        <div class="role r-owner"><strong>Owner</strong><span>Created the trip. Adds and removes members and changes their roles.</span></div>
+        <div class="role r-editor"><strong>Editor</strong><span>Can edit the whole trip: itinerary, places, expenses, bookings and documents.</span></div>
+        <div class="role r-planner"><strong>Planner</strong><span>Plans the itinerary and saved places.</span></div>
+        <div class="role r-money"><strong>Expense manager</strong><span>Handles expenses, splits and settlements.</span></div>
+        <div class="role r-viewer"><strong>Viewer</strong><span>Sees everything in the trip but can't change it.</span></div>
+      </div>
+
+      <div class="money">
+        <div class="ledger">
+          <h3>Example: a weekend in Coorg</h3>
+          <table>
+            <thead><tr><th>Expense</th><th>Paid by</th><th>Amount</th></tr></thead>
+            <tbody>
+              <tr><td>Homestay, 2 nights</td><td>Asha</td><td>₹9,000</td></tr>
+              <tr><td>Fuel and tolls</td><td>Ravi</td><td>₹3,000</td></tr>
+              <tr><td>Dinner</td><td>Meera</td><td>₹1,500</td></tr>
+            </tbody>
+          </table>
+          <small>Split equally between 3: ₹4,500 each. Sample figures for illustration.</small>
+        </div>
+        <div class="ledger">
+          <h3>Balances Suttru shows</h3>
+          <table>
+            <thead><tr><th>Member</th><th>Paid</th><th>Balance</th></tr></thead>
+            <tbody>
+              <tr><td>Asha</td><td>₹9,000</td><td class="get">gets ₹4,500</td></tr>
+              <tr><td>Ravi</td><td>₹3,000</td><td class="owe">owes ₹1,500</td></tr>
+              <tr><td>Meera</td><td>₹1,500</td><td class="owe">owes ₹3,000</td></tr>
+            </tbody>
+          </table>
+          <small>Each share stays pending until it is marked settled. Splits can also be custom amounts or percentages.</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="trip-types" aria-labelledby="types-title">
+    <span class="eyebrow">Trip types</span>
+    <h2 id="types-title">Suggestions that fit the way you travel</h2>
+    <p class="lead">Every trip has a type. Explore re-ranks a city's recommended places for it the moment you pick one, so the first results suit who's going. The recommended highlights for the city stay on top for every type.</p>
+    <div class="types">
+      <article class="type reveal"><div class="scene"><img src="/portfolio/img/kodaikanal.jpg" alt="Lake and hills in Kodaikanal" loading="lazy"><span class="tag"><span class="mi" aria-hidden="true">attractions</span>Toy trains &amp; lakes</span><span class="lane" aria-hidden="true"></span><svg class="veh mover " style="--sp:10s;--w:120px" width="120" height="31" aria-hidden="true"><use href="#v-train"/></svg></div><h3>Family</h3><p>Easy, safe days out for all ages.</p>
+        <dl><div><dt>Ranks higher</dt><dd>Parks, zoos, lakes, boating, museums, beaches, toy trains, amusement and water parks</dd></div>
+        <div><dt>Ranks lower</dt><dd class="less">Bungee, paragliding, rafting, steep treks</dd></div>
+        <div><dt>Hidden</dt><dd><span class="hide">Bars, pubs, clubs, nightlife</span></dd></div></dl></article>
+      <article class="type reveal"><div class="scene"><img src="/portfolio/img/goa.jpg" alt="Beach in Goa" loading="lazy"><span class="tag"><span class="mi" aria-hidden="true">beach_access</span>Road trips &amp; beaches</span><span class="lane" aria-hidden="true"></span><svg class="veh mover " style="--sp:7s;--w:70px" width="70" height="30" aria-hidden="true"><use href="#v-car"/></svg></div><h3>Friends</h3><p>Active, social trips with a group.</p>
+        <dl><div><dt>Ranks higher</dt><dd>Adventure sports, treks, camping, waterfalls, viewpoints, beaches, cafes, nightlife</dd></div>
+        <div><dt>Ranks lower</dt><dd class="less">Children's playgrounds</dd></div></dl></article>
+      <article class="type reveal"><div class="scene"><img src="/portfolio/img/munnar.jpg" alt="Tea hills in Munnar" loading="lazy"><span class="tag"><span class="mi" aria-hidden="true">favorite</span>Sunsets &amp; boating</span><span class="lane" aria-hidden="true"></span><svg class="veh mover  boat" style="--sp:12s;--w:52px" width="52" height="39" aria-hidden="true"><use href="#v-boat"/></svg></div><h3>Couple</h3><p>Scenic, relaxed time for two.</p>
+        <dl><div><dt>Ranks higher</dt><dd>Lakes, sunset viewpoints, gardens, boating, valleys, palaces, tea estates, cafes, spas</dd></div>
+        <div><dt>Ranks lower</dt><dd class="less">Playgrounds and amusement parks</dd></div></dl></article>
+      <article class="type reveal"><div class="scene"><img src="/portfolio/img/coorg.jpg" alt="Green valley in Coorg" loading="lazy"><span class="tag"><span class="mi" aria-hidden="true">hiking</span>Trails &amp; heritage</span><span class="lane" aria-hidden="true"></span><svg class="veh mover " style="--sp:9s;--w:56px" width="56" height="33" aria-hidden="true"><use href="#v-bike"/></svg></div><h3>Solo</h3><p>Culture and quiet discovery at your own pace.</p>
+        <dl><div><dt>Ranks higher</dt><dd>Museums, heritage sites, forts, temples, walking trails, markets, galleries, monasteries</dd></div>
+        <div><dt>Ranks lower</dt><dd class="less">Playgrounds and amusement parks</dd></div></dl></article>
+      <article class="type reveal"><div class="scene"><img src="/portfolio/img/hero.jpg" alt="Mountains and meadows" loading="lazy"><span class="tag"><span class="mi" aria-hidden="true">landscape</span>Peaks &amp; waterfalls</span><svg class="veh mover float" style="--sp:11s;--w:54px" width="54" height="45" aria-hidden="true"><use href="#v-glider"/></svg></div><h3>Adventure</h3><p>Outdoors, wild places and adrenaline.</p>
+        <dl><div><dt>Ranks higher</dt><dd>Rafting, paragliding, bungee, treks, peaks, caves, forests, waterfalls, safaris, national parks</dd></div>
+        <div><dt>Ranks lower</dt><dd class="less">Museums, malls and markets</dd></div></dl></article>
+    </div>
+    <p class="types-note">Ranking uses only each place's own category and name, so nothing about a place is made up. You can switch the type in Explore at any time to compare.</p>
+  </section>
+
+  <section class="wrap" id="modules" aria-labelledby="modules-title">
+    <span class="eyebrow">Everything in one plan</span>
+    <h2 id="modules-title">Every feature, module by module</h2>
+    <p class="lead">Each trip has its own tabs. Pick one to see what it can do.</p>
+
+    <div class="tour">
+      <div class="tabs" role="tablist" aria-label="Suttru modules" id="tabs"></div>
+      <div id="panels"></div>
+    </div>
+  </section>
+
+  <div class="transit" aria-hidden="true">
+    <svg class="veh rider" style="--sp:16s;--dl:0s;--w:84px" width="84" height="36" aria-hidden="true"><use href="#v-car"/></svg>
+    <svg class="veh rider" style="--sp:16s;--dl:-4s;--w:104px" width="104" height="39" aria-hidden="true"><use href="#v-bus"/></svg>
+    <svg class="veh rider" style="--sp:16s;--dl:-8s;--w:170px" width="170" height="43" aria-hidden="true"><use href="#v-train"/></svg>
+    <svg class="veh rider high" style="--sp:16s;--dl:-12s;--w:96px" width="96" height="36" aria-hidden="true"><use href="#v-plane"/></svg>
+  </div>
+
+  <section class="journey" aria-labelledby="journey-title">
+    <div class="wrap journey-grid">
+      <div class="photos">
+        <figure class="photo ph1"><img src="/portfolio/img/munnar.jpg" alt="Tea gardens on the hills of Munnar"><figcaption>Munnar · Day 1</figcaption></figure>
+        <figure class="photo ph2"><img src="/portfolio/img/goa.jpg" alt="A beach in Goa"><figcaption>Goa · Day 2</figcaption></figure>
+        <figure class="photo ph3"><img src="/portfolio/img/coorg.jpg" alt="Green valley in Coorg"><figcaption>Coorg · Day 3</figcaption></figure>
+      </div>
+      <div>
+        <span class="eyebrow">How a trip comes together</span>
+        <h2 id="journey-title">From idea to itinerary in six steps</h2>
+        <ol class="steps">
+          <li><strong>Create the trip</strong><span>Destination, dates, budget and trip type, then invite your group.</span></li>
+          <li><strong>Explore the city</strong><span>Recommended sights ranked for your trip type, with photos and distances.</span></li>
+          <li><strong>Build each day</strong><span>Assign places to days and add times, notes and estimated costs.</span></li>
+          <li><strong>Get the smart route</strong><span>Pick your stay and each day is ordered nearest-first on a map.</span></li>
+          <li><strong>Split the spending</strong><span>Log expenses, split them fairly and settle up.</span></li>
+          <li><strong>Travel with everything</strong><span>Tickets, documents, flight alerts and offline packs on your phone.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" aria-labelledby="platform-title">
+    <span class="eyebrow">Platforms</span>
+    <h2 id="platform-title">On the web and on Android</h2>
+    <div class="split">
+      <article class="card reveal"><h3>Web app</h3><p>Works in any modern browser on desktop and phone, with a layout made for small screens.</p></article>
+      <article class="card reveal"><h3>Android app</h3><p>The same app packaged for Android, with native sharing, the camera for documents and the system Back button.</p></article>
+      <article class="card reveal"><h3>Honest by design</h3><p>No invented fees, coordinates or photos. Unknown locations say so, and AI images are clearly labelled.</p></article>
+    </div>
+    <ul class="stack" aria-label="Technology">
+      <li>Angular 19</li><li>Spring Boot</li><li>Capacitor</li><li>MySQL-compatible database</li><li>Render</li><li>Cloudflare R2</li><li>Brevo</li><li>Leaflet</li><li>Wikidata</li><li>Wikivoyage</li><li>OpenStreetMap</li><li>Geoapify</li><li>Wikimedia Commons</li>
+    </ul>
+  </section>
+</main>
+
+<div class="transit" aria-hidden="true">
+  <svg class="veh rider" style="--sp:18s;--dl:-2s;--w:58px" width="58" height="44" aria-hidden="true"><use href="#v-boat"/></svg>
+  <svg class="veh rider" style="--sp:18s;--dl:-8s;--w:62px" width="62" height="36" aria-hidden="true"><use href="#v-bike"/></svg>
+  <svg class="veh rider high" style="--sp:18s;--dl:-14s;--w:52px" width="52" height="44" aria-hidden="true"><use href="#v-glider"/></svg>
+</div>
+<footer>
+  <div class="wrap">
+    <div><h2>Plan your next trip together</h2><p>Days, routes, budget and bookings in one shared plan for everyone going.</p></div>
+    <a class="btn btn-primary" href="/">Start planning on Suttru</a>
+  </div>
+</footer>
+
+<canvas class="cur-trail" aria-hidden="true"></canvas>
+<div class="cur-ring" aria-hidden="true"><div class="cur-body"></div>
+  <svg class="cur-dial" viewBox="0 0 36 36" focusable="false"><g transform="translate(11.4 -2.2) scale(.56)"><path class="plane" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></g><line x1="30" y1="18" x2="27.5" y2="18"/><line x1="18" y1="30" x2="18" y2="27.5"/><line x1="6" y1="18" x2="8.5" y2="18"/></svg>
+</div>
+<div class="cur-dot" aria-hidden="true"></div>
+
+<script>
+(() => {
+  const modules = [
+    { id: 'trips', ico: 'luggage', name: 'Trips', sub: 'Create and manage', lead: 'Start a trip in seconds and see every plan at a glance.', opts: [
+      'Create a trip with destination, dates, budget and type', 'Trip types: family, friends, couple, solo, adventure',
+      'My Trips with total, upcoming and completed counts', 'Filter trips by status and type',
+      'Trip overview with countdown and journey progress', 'Budget used, remaining and per-traveller share',
+      'Weather forecast for the destination', 'Missed-trip prompt to reschedule or cancel'] },
+    { id: 'explore', ico: 'explore', name: 'Explore', sub: 'Find places worth seeing', lead: 'Search any Indian city and see the places guidebooks and locals recommend first.', opts: [
+      'Search by city, area or a place name', 'Results ranked for your trip type',
+      'Filter by category: sights, nature, food, stays and more', 'Top 10 places to visit',
+      'Real photos with credits, or labelled AI illustrations', 'Distance from the city centre',
+      'Open any place in Google Maps', 'Add places to a chosen day of your trip'] },
+    { id: 'itinerary', ico: 'event_note', name: 'Itinerary', sub: 'Plan each day', lead: 'Turn places into a clear day-by-day plan the whole group can follow.', opts: [
+      'Add and edit days with dates and notes', 'Activities with start and end times',
+      'Estimated cost for each activity', 'Reorder activities up and down',
+      'View all days or focus on one', 'Saved places linked to activities'] },
+    { id: 'route', ico: 'route', name: 'Smart route', sub: 'Best order to visit', lead: 'Each day becomes a route from your stay to nearby sights and back.', opts: [
+      'Start from a saved stay, your location or a map pin', 'Nearest-first order for every day',
+      'Numbered stops drawn on a map', 'Save the sightseeing order to the itinerary',
+      'Driving distance and time estimate', 'Open the full day route in Google Maps',
+      'Collapse the map or any single day'] },
+    { id: 'expenses', ico: 'payments', name: 'Expenses', sub: 'Split and settle', lead: 'Track every rupee and know exactly who owes whom.', opts: [
+      'Total budget, spent, remaining and budget used', 'Categories: hotel, food, fuel, tickets and more',
+      'Expenses in INR, USD, EUR and other currencies', 'Split equally or by custom shares',
+      'Pending and settled status for each share', 'Balances and settlements per member',
+      'Search and filter expenses'] },
+    { id: 'bookings', ico: 'confirmation_number', name: 'Bookings', sub: 'Tickets in one place', lead: 'Every train, flight and hotel booking shown as a clear ticket.', opts: [
+      'Add an existing booking by hand', 'Import a booking from a PDF or image',
+      'Route, times, reference and passengers', 'Confirmed, cancelled and completed status',
+      'Cancel a booking with a reason', 'Delete a booking after confirming',
+      'Flight alerts for your flights'] },
+    { id: 'documents', ico: 'description', name: 'Documents', sub: 'Files for the trip', lead: 'Keep tickets, confirmations and receipts with the trip they belong to.', opts: [
+      'Upload files from your device', 'Take a photo with the camera or pick from the gallery',
+      'Review a photo before it is uploaded', 'Document types: tickets, hotel, receipts, insurance',
+      'Search and filter by type', 'View and delete documents'] },
+    { id: 'members', ico: 'groups', name: 'Members', sub: 'Plan together', lead: 'Invite your group and decide who can change what.', opts: [
+      'Invite members by email or a share link', 'Roles: owner, editor, planner, expense manager, viewer',
+      'Change a member’s role at any time', 'Remove members from a trip',
+      'Invitations page for trips you are invited to', 'Notifications for trip activity'] },
+    { id: 'account', ico: 'lock', name: 'Account', sub: 'Secure sign-in', lead: 'Simple, secure access on every device.', opts: [
+      'Sign up with email verification code', 'Sign in with email and password',
+      'Forgot password and reset by email', 'Account and profile settings',
+      'Offline travel packs for the road', 'Android app with native sharing'] }
+  ];
+  const tabs = document.getElementById('tabs'), panels = document.getElementById('panels');
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  modules.forEach((m, i) => {
+    tabs.insertAdjacentHTML('beforeend',
+      `<button class="tab" role="tab" id="tab-${m.id}" aria-controls="panel-${m.id}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">
+        <span class="ico mi" aria-hidden="true">${m.ico}</span><span>${esc(m.name)}<small>${esc(m.sub)}</small></span></button>`);
+    panels.insertAdjacentHTML('beforeend',
+      `<div class="panel" role="tabpanel" id="panel-${m.id}" aria-labelledby="tab-${m.id}" ${i === 0 ? '' : 'hidden'}>
+        <h3>${esc(m.name)}</h3><p>${esc(m.lead)}</p><ul class="opts">${m.opts.map(o => `<li>${esc(o)}</li>`).join('')}</ul></div>`);
+  });
+  const all = [...tabs.querySelectorAll('.tab')];
+  const select = tab => {
+    all.forEach(t => { const on = t === tab; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1;
+      const p = document.getElementById(t.getAttribute('aria-controls')); p.hidden = !on; p.classList.toggle('show', on); });
+  };
+  tabs.addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) select(t); });
+  tabs.addEventListener('keydown', e => {
+    const i = all.indexOf(document.activeElement); if (i < 0) return;
+    const next = e.key === 'ArrowDown' || e.key === 'ArrowRight' ? all[(i + 1) % all.length]
+      : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? all[(i - 1 + all.length) % all.length] : null;
+    if (next) { e.preventDefault(); next.focus(); select(next); }
+  });
+
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('svg').forEach(svg => svg.pauseAnimations && svg.pauseAnimations());
+
+  // Numbers count up once visible (they rest at their real values).
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (!entry.isIntersecting) return; io.unobserve(entry.target);
+      const el = entry.target, end = +el.dataset.count, t0 = performance.now();
+      const tick = now => { const t = Math.min(1, (now - t0) / 1300);
+        el.textContent = Math.round(end * (1 - Math.pow(1 - t, 3))).toLocaleString('en-IN'); if (t < 1) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }), { threshold: .6 });
+    document.querySelectorAll('[data-count]').forEach(el => io.observe(el));
+  }
+
+  // Compass cursor: the needle turns to the direction of travel, a dotted route trails behind,
+  // and the ring wraps itself around anything clickable.
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const root = document.documentElement;
+    const ring = document.querySelector('.cur-ring'), dot = document.querySelector('.cur-dot');
+    const dial = ring.querySelector('.cur-dial'), cv = document.querySelector('.cur-trail'), ctx = cv.getContext('2d');
+    const HIT = 'a[href], button, [role="tab"], summary, label, input, select, textarea';
+    const LIFE = 700;
+    let mx = -100, my = -100, rx = -100, ry = -100, pmx = -100, pmy = -100, ang = 0;
+    let w = 36, h = 36, rad = 18, target = null, seen = false, last = performance.now(), accent = '#e8860c';
+    const pts = [];
+    let trav = 0;
+    // Travel stickers: little icons pop out of the trail, and every click drops a map pin.
+    const ICONS = ['flight', 'luggage', 'explore', 'photo_camera', 'beach_access', 'landscape', 'directions_car', 'train', 'sailing', 'hiking', 'map', 'hotel'];
+    const marks = [];
+    const mark = (x, y, name, kind) => {
+      if (!document.fonts || !document.fonts.check('20px "Material Symbols Rounded"')) return;
+      if (marks.length > 24) marks.shift();
+      const t = performance.now(), pin = kind === 'pin';
+      marks.push({ x, y, name, pin, t, life: pin ? 1300 : 1700, size: pin ? 32 : 17 + Math.random() * 6,
+        rot: (Math.random() - .5) * .5, vx: (Math.random() - .5) * .5 });
+    };
+    const size = () => { const d = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * d; cv.height = innerHeight * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
+    const tint = () => { accent = getComputedStyle(root).getPropertyValue('--accent').trim() || accent; };
+    size(); tint();
+    addEventListener('resize', size);
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', tint);
+    new MutationObserver(tint).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+
+    document.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      if (seen) trav += Math.hypot(e.clientX - mx, e.clientY - my);
+      mx = e.clientX; my = e.clientY;
+      if (trav > 170) { trav = 0; if (!target) mark(mx, my - 6, ICONS[Math.floor(Math.random() * ICONS.length)], 'sticker'); }
+      if (!seen) { seen = true; rx = pmx = mx; ry = pmy = my; }
+      root.classList.add('cur-on'); root.classList.remove('cur-out');
+      dot.style.transform = `translate3d(${mx}px, ${my}px, 0)`;
+      const p = pts[pts.length - 1];
+      if (!target && (!p || Math.hypot(mx - p.x, my - p.y) > 14)) pts.push({ x: mx, y: my, t: performance.now() });
+    }, { passive: true });
+    document.addEventListener('pointerover', e => {
+      target = (e.target.closest && e.target.closest(HIT)) || null;
+      root.classList.toggle('cur-snap', !!target);
+    });
+    document.addEventListener('pointerout', e => { if (!e.relatedTarget) root.classList.add('cur-out'); });
+    addEventListener('blur', () => root.classList.add('cur-out'));
+    document.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'mouse') { root.classList.remove('cur-on'); return; }
+      root.classList.add('cur-press');
+      const ping = document.createElement('span');
+      ping.className = 'cur-ping'; ping.setAttribute('aria-hidden', 'true');
+      ping.style.left = mx + 'px'; ping.style.top = my + 'px';
+      document.body.appendChild(ping);
+      mark(mx, my, 'location_on', 'pin');
+      ping.addEventListener('animationend', () => ping.remove());
+    });
+    addEventListener('pointerup', () => root.classList.remove('cur-press'));
+
+    const frame = now => {
+      const dt = Math.min(64, now - last), f = dt / 16.7, k = 1 - Math.pow(.8, f); last = now;
+      let tx = mx, ty = my, tw = 36, th = 36, tr = 18;
+      if (target) {
+        const b = target.getBoundingClientRect();
+        if (!target.isConnected || mx < b.left - 8 || mx > b.right + 8 || my < b.top - 8 || my > b.bottom + 8) {
+          target = null; root.classList.remove('cur-snap');
+        } else {
+          const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+          tx = cx + (mx - cx) * .1; ty = cy + (my - cy) * .1;   // a light magnetic pull toward the pointer
+          tw = b.width + 14; th = b.height + 14;
+          tr = Math.min(th / 2, (parseFloat(getComputedStyle(target).borderTopLeftRadius) || 8) + 7);
+        }
+      }
+      rx += (tx - rx) * k; ry += (ty - ry) * k; w += (tw - w) * k; h += (th - h) * k; rad += (tr - rad) * k;
+      ring.style.width = w + 'px'; ring.style.height = h + 'px'; ring.style.borderRadius = rad + 'px';
+      ring.style.transform = `translate3d(${rx - w / 2}px, ${ry - h / 2}px, 0)`;
+
+      const vx = mx - pmx, vy = my - pmy; pmx = mx; pmy = my;
+      if (vx * vx + vy * vy > 4) {
+        const want = Math.atan2(vy, vx) * 180 / Math.PI + 90;
+        ang += ((((want - ang) % 360) + 540) % 360 - 180) * Math.min(1, k * 1.2);
+      }
+      dial.style.transform = `rotate(${ang}deg)`;
+
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      while (pts.length && now - pts[0].t > LIFE) pts.shift();
+      // The trail is a dashed flight path, like the route lines on the page.
+      if (pts.length > 1) {
+        ctx.strokeStyle = accent; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.setLineDash([5, 7]);
+        for (let i = 1; i < pts.length; i++) {
+          ctx.globalAlpha = (1 - (now - pts[i].t) / LIFE) * .6;
+          ctx.beginPath(); ctx.moveTo(pts[i - 1].x, pts[i - 1].y); ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke();
+        }
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+      }
+      for (let i = marks.length - 1; i >= 0; i--) {
+        const m = marks[i], t = (now - m.t) / m.life;
+        if (t >= 1) { marks.splice(i, 1); continue; }
+        let x = m.x, y = m.y, s = 1, a, rot = 0;
+        if (m.pin) {
+          const d = Math.min(1, t / .28);   // drop in, then a small bounce
+          y -= m.size * .45 + 34 * (1 - d) * (1 - d) + (t > .28 && t < .46 ? 7 * Math.sin((t - .28) / .18 * Math.PI) : 0);
+          a = t < .6 ? Math.min(1, t * 8) : 1 - (t - .6) / .4;
+        } else {
+          m.x += m.vx * f; m.y -= .45 * f; x = m.x; y = m.y;
+          s = .55 + .45 * Math.min(1, t * 6); rot = m.rot;
+          a = Math.min(1, t * 6) * Math.pow(1 - t, 1.2) * .9;
+        }
+        ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s); ctx.globalAlpha = a;
+        ctx.font = `${m.size}px "Material Symbols Rounded"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.strokeText(m.name, 0, 0);
+        ctx.fillStyle = accent; ctx.fillText(m.name, 0, 0);
+        ctx.restore();
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+
+</body></html>

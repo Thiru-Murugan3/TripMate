@@ -26,6 +26,8 @@ test('packages independent native entry points while preserving the web build an
     assert.equal(readFileSync(join(source,'config.js'),'utf8'),'original web config');
     assert.match(readFileSync(join(target,'config.js'),'utf8'),/https:\/\/api.suttru.in\/api\/v1/);
     assert.ok(existsSync(join(target,'offline-store.js')));
+    mkdirSync(join(source,'portfolio','img'),{recursive:true});writeFileSync(join(source,'portfolio','index.html'),'site');writeFileSync(join(source,'portfolio','img','hero.jpg'),'photo');
+    packageWeb(source,target,'https://api.suttru.in');assert.ok(!existsSync(join(target,'portfolio')),'the public portfolio page stays out of the APK');
     writeFileSync(join(target,'stale.js'),'old');packageWeb(source,target,'https://api.suttru.in');assert.ok(!existsSync(join(target,'stale.js')));
     assert.throws(()=>packageWeb(source,target,'http://bad.example'));
     assert.ok(existsSync(join(target,'index.html')));
