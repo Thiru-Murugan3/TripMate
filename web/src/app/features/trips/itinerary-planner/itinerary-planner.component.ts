@@ -516,9 +516,9 @@ interface DayRoutePlan {
     .planner-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
     .planner-toolbar h2 { margin:.15rem 0 .25rem; font-size:1.15rem; }
     .planner-toolbar p { margin:0; color:#64748b; font-size:.82rem; }
-    .eyebrow { color:#2563eb; font-size:.66rem; font-weight:850; letter-spacing:.08em; }
+    .eyebrow { color:#b45309; font-size:.66rem; font-weight:850; letter-spacing:.08em; }
     .btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; padding:.62rem .9rem; border:0; border-radius:9px; font-weight:800; cursor:pointer; }
-    .btn.primary { color:#fff; background:#2563eb; }
+    .btn.primary { color:#fff; background:#b45309; }
     .btn.secondary { color:#334155; background:#e2e8f0; }
     .btn.small { padding:.48rem .68rem; font-size:.75rem; }
     .btn:disabled { opacity:.55; cursor:not-allowed; }
@@ -526,18 +526,18 @@ interface DayRoutePlan {
     .summary-grid article { padding:.9rem 1rem; border:1px solid #e2e8f0; border-radius:12px; background:#fff; }
     .summary-grid span { display:block; color:#64748b; font-size:.68rem; font-weight:800; text-transform:uppercase; }
     .summary-grid strong { display:block; margin-top:.35rem; font-size:1.05rem; }
-    .route-planner-card { margin-bottom:1rem; padding:1rem; border:1px solid #bfdbfe; border-radius:16px; background:linear-gradient(145deg,#fff,#f8fbff); box-shadow:0 10px 28px rgba(37,99,235,.08); }
+    .route-planner-card { margin-bottom:1rem; padding:1rem; border:1px solid #fbdcb0; border-radius:16px; background:linear-gradient(145deg,#fff,#f8fbff); box-shadow:0 10px 28px rgba(180, 83, 9,.08); }
     .route-planner-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
     .route-planner-heading h3 { margin:.15rem 0 .25rem; font-size:1rem; }
     .route-planner-heading p { margin:0; max-width:680px; color:#64748b; font-size:.76rem; line-height:1.5; }
-    .optimize-btn { flex:0 0 auto; color:#fff; background:linear-gradient(135deg,#2563eb,#4f46e5); box-shadow:0 6px 14px rgba(37,99,235,.22); }
-    .route-controls { display:flex; align-items:flex-end; gap:.65rem; margin-top:.9rem; padding:.75rem; border-radius:11px; background:#eff6ff; }
+    .optimize-btn { flex:0 0 auto; color:#fff; background:var(--tm-gradient-brand); box-shadow:0 6px 14px rgba(180, 83, 9,.22); }
+    .route-controls { display:flex; align-items:flex-end; gap:.65rem; margin-top:.9rem; padding:.75rem; border-radius:11px; background:#fff7ed; }
     .route-start-field { display:flex; flex:1; flex-direction:column; gap:.3rem; color:#334155; font-size:.69rem; font-weight:800; }
-    .route-start-field select { width:100%; min-height:40px; padding:.55rem .65rem; border:1px solid #93c5fd; border-radius:8px; color:#0f172a; background:#fff; font:inherit; font-weight:650; }
-    .location-btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:40px; padding:.55rem .7rem; border:1px solid #93c5fd; border-radius:8px; color:#1d4ed8; background:#fff; font-size:.68rem; font-weight:800; cursor:pointer; }
+    .route-start-field select { width:100%; min-height:40px; padding:.55rem .65rem; border:1px solid #f8c98a; border-radius:8px; color:#0f172a; background:#fff; font:inherit; font-weight:650; }
+    .location-btn { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; min-height:40px; padding:.55rem .7rem; border:1px solid #f8c98a; border-radius:8px; color:#92400e; background:#fff; font-size:.68rem; font-weight:800; cursor:pointer; }
     .location-btn:disabled { opacity:.55; cursor:not-allowed; }
     .location-btn .material-symbols-outlined { font-size:1rem; }
-    .map-select-btn { color:#6d28d9; border-color:#c4b5fd; }
+    .map-select-btn { color:#232c55; border-color:#f8c98a; }
     .route-message,.route-start-prompt { margin-top:.7rem; padding:.65rem .75rem; border-radius:9px; color:#166534; background:#f0fdf4; font-size:.72rem; }
     .route-message.error { color:#991b1b; background:#fef2f2; }
     .route-start-prompt { display:flex; align-items:center; gap:.4rem; color:#854d0e; background:#fffbeb; }
@@ -551,14 +551,14 @@ interface DayRoutePlan {
     .route-totals { display:flex; flex-direction:column; align-items:flex-end; white-space:nowrap; }
     .route-totals strong { font-size:.82rem; }
     .route-totals span { opacity:.85; font-size:.62rem !important; letter-spacing:0 !important; }
-    .route-infographic { position:relative; overflow:hidden; padding:.8rem; background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(240,253,244,.78)),radial-gradient(circle at 15% 78%,#86efac 0 8%,transparent 9%),radial-gradient(circle at 88% 12%,#bae6fd 0 12%,transparent 13%),repeating-linear-gradient(32deg,transparent 0 55px,rgba(148,163,184,.13) 56px 59px,transparent 60px 105px); }
+    .route-infographic { position:relative; overflow:hidden; padding:.8rem; background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(240,253,244,.78)),radial-gradient(circle at 15% 78%,#86efac 0 8%,transparent 9%),radial-gradient(circle at 88% 12%,#fbdcb0 0 12%,transparent 13%),repeating-linear-gradient(32deg,transparent 0 55px,rgba(148,163,184,.13) 56px 59px,transparent 60px 105px); }
     .route-infographic::after { position:absolute; right:-8%; bottom:-72px; left:-8%; height:125px; pointer-events:none; content:''; background:linear-gradient(155deg,#bbf7d0 40%,#86efac 41% 58%,#4ade80 59%); clip-path:polygon(0 60%,12% 30%,24% 58%,39% 18%,50% 55%,63% 27%,78% 62%,91% 25%,100% 52%,100% 100%,0 100%); opacity:.48; }
     .route-summary { position:relative; z-index:1; display:flex; align-items:center; gap:.35rem; overflow-x:auto; padding:.45rem .55rem; border-left:4px solid var(--route-color); color:#334155; background:rgba(255,255,255,.82); font-size:.62rem; white-space:nowrap; scrollbar-width:thin; }
     .route-summary strong { padding:.18rem .35rem; border-radius:4px; color:#fff; background:var(--route-color); letter-spacing:.05em; }
     .route-summary b { color:var(--route-color); }
     .photo-route { position:relative; z-index:1; display:flex; align-items:center; gap:.35rem; overflow-x:auto; min-height:205px; padding:1rem .55rem .75rem; scrollbar-color:var(--route-color) transparent; }
     .photo-stop { display:flex; flex:0 0 116px; min-width:0; flex-direction:column; align-items:center; text-align:center; }
-    .photo-ring { position:relative; display:grid; width:96px; height:96px; place-items:center; overflow:visible; border:5px solid var(--route-color); border-radius:50%; color:var(--route-color); background:linear-gradient(145deg,#dbeafe,#fef3c7); box-shadow:0 7px 18px rgba(15,23,42,.2),0 0 0 3px #fff; }
+    .photo-ring { position:relative; display:grid; width:96px; height:96px; place-items:center; overflow:visible; border:5px solid var(--route-color); border-radius:50%; color:var(--route-color); background:linear-gradient(145deg,#ffedd5,#fef3c7); box-shadow:0 7px 18px rgba(15,23,42,.2),0 0 0 3px #fff; }
     .photo-ring > img { position:absolute; inset:0; width:100%; height:100%; border-radius:50%; object-fit:cover; }
     .photo-ring > .material-symbols-outlined { font-size:2.25rem; }
     .photo-fallback { color:#15803d; }
@@ -579,16 +579,16 @@ interface DayRoutePlan {
     .state-card.error { color:#b91c1c; }
     .state-card.error p { margin:.2rem 0 0; color:#64748b; }
     .empty-card { flex-direction:column; }
-    .empty-card .material-symbols-outlined { color:#93c5fd; font-size:2.7rem; }
+    .empty-card .material-symbols-outlined { color:#f8c98a; font-size:2.7rem; }
     .empty-card h3 { margin:0; }
     .empty-card p { margin:0 0 .5rem; color:#64748b; }
-    .spinner { width:28px; height:28px; border:3px solid #dbeafe; border-top-color:#2563eb; border-radius:50%; animation:spin .75s linear infinite; }
+    .spinner { width:28px; height:28px; border:3px solid #ffedd5; border-top-color:#b45309; border-radius:50%; animation:spin .75s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .days-list { display:flex; flex-direction:column; gap:.9rem; }
     .day-card { overflow:hidden; border:1px solid #e2e8f0; border-radius:14px; background:#fff; box-shadow:0 5px 18px rgba(15,23,42,.035); }
     .day-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1.1rem; border-bottom:1px solid #eef2f7; background:#f8fafc; }
     .day-title { display:flex; align-items:center; gap:.8rem; }
-    .day-number { padding:.42rem .58rem; color:#1d4ed8; background:#dbeafe; border-radius:8px; font-size:.72rem; font-weight:850; white-space:nowrap; }
+    .day-number { padding:.42rem .58rem; color:#92400e; background:#ffedd5; border-radius:8px; font-size:.72rem; font-weight:850; white-space:nowrap; }
     .day-title h3 { margin:0; font-size:.95rem; }
     .day-title p { margin:.2rem 0 0; color:#64748b; font-size:.72rem; }
     .day-actions,.activity-actions { display:flex; align-items:center; gap:.35rem; }
@@ -598,14 +598,14 @@ interface DayRoutePlan {
     .move-btn:disabled { opacity:.35; cursor:not-allowed; }
     .icon-btn .material-symbols-outlined,.move-btn .material-symbols-outlined { font-size:1rem; }
     .day-empty { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1.1rem; color:#64748b; font-size:.8rem; }
-    .day-empty button { border:0; color:#2563eb; background:transparent; font-weight:800; cursor:pointer; }
+    .day-empty button { border:0; color:#b45309; background:transparent; font-weight:800; cursor:pointer; }
     .activity-list { padding:.3rem 1.1rem .7rem; }
     .activity-row { display:grid; grid-template-columns:82px 22px minmax(0,1fr); gap:.65rem; padding-top:.85rem; }
     .activity-time { display:flex; flex-direction:column; align-items:flex-end; gap:.15rem; color:#64748b; font-size:.68rem; }
     .activity-time strong { color:#334155; font-size:.72rem; }
     .timeline { position:relative; display:flex; justify-content:center; }
-    .dot { position:relative; z-index:2; width:8px; height:8px; margin-top:.25rem; border-radius:50%; background:#2563eb; }
-    .line { position:absolute; top:.75rem; bottom:-.85rem; width:1px; background:#dbeafe; }
+    .dot { position:relative; z-index:2; width:8px; height:8px; margin-top:.25rem; border-radius:50%; background:#b45309; }
+    .line { position:absolute; top:.75rem; bottom:-.85rem; width:1px; background:#ffedd5; }
     .activity-row:last-child .line { display:none; }
     .activity-main { padding-bottom:.9rem; }
     .activity-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:.8rem; }
@@ -615,10 +615,10 @@ interface DayRoutePlan {
     .description { margin:.45rem 0 0; color:#475569; font-size:.75rem; line-height:1.45; }
     .activity-meta { display:flex; flex-wrap:wrap; gap:.55rem; margin-top:.5rem; }
     .activity-meta span { display:inline-flex; align-items:center; gap:.15rem; color:#64748b; font-size:.66rem; }
-    .activity-meta .material-symbols-outlined { font-size:.8rem; color:#2563eb; }
+    .activity-meta .material-symbols-outlined { font-size:.8rem; color:#b45309; }
     .modal-backdrop { position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; padding:1rem; background:rgba(15,23,42,.62); backdrop-filter:blur(5px); }
     .map-picker-modal { width:min(760px,96vw); }
-    .route-map-picker { width:100%; height:min(55vh,430px); margin-top:.8rem; overflow:hidden; border:1px solid #bfdbfe; border-radius:12px; background:#e2e8f0; }
+    .route-map-picker { width:100%; height:min(55vh,430px); margin-top:.8rem; overflow:hidden; border:1px solid #fbdcb0; border-radius:12px; background:#e2e8f0; }
     .selected-coordinate { display:flex; align-items:center; gap:.35rem; margin-top:.65rem; padding:.55rem .65rem; border-radius:8px; color:#166534; background:#f0fdf4; font-size:.72rem; font-weight:750; }
     .selected-coordinate .material-symbols-outlined { font-size:1rem; }
     :host ::ng-deep .route-picker-pin { display:grid; width:34px !important; height:34px !important; margin:-30px 0 0 -17px !important; place-items:center; border:3px solid #fff; border-radius:50% 50% 50% 0; color:#fff; background:#dc2626; box-shadow:0 4px 12px rgba(15,23,42,.35); font-size:18px; transform:rotate(-45deg); }
@@ -632,7 +632,7 @@ interface DayRoutePlan {
     .form-error { margin-bottom:.8rem; padding:.7rem .8rem; border-radius:8px; color:#b91c1c; background:#fee2e2; font-size:.78rem; }
     .field { display:flex; flex-direction:column; gap:.3rem; margin-bottom:.8rem; color:#334155; font-size:.75rem; font-weight:750; }
     .field input,.field select,.field textarea { width:100%; box-sizing:border-box; padding:.65rem .72rem; border:1px solid #cbd5e1; border-radius:8px; color:#0f172a; background:#fff; font:inherit; font-weight:500; }
-    .field input:focus,.field select:focus,.field textarea:focus { outline:2px solid #bfdbfe; border-color:#2563eb; }
+    .field input:focus,.field select:focus,.field textarea:focus { outline:2px solid #fbdcb0; border-color:#b45309; }
     .form-grid.two { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
     .time-picker { display:grid; grid-template-columns:minmax(70px,1fr) auto minmax(72px,1fr) minmax(76px,1fr); align-items:center; gap:.35rem; }
     .time-picker select { min-width:0; }
@@ -656,7 +656,7 @@ interface DayRoutePlan {
 @include mobile.panels;
 .mobile-route-toggle { display:none; }
 @media(max-width:760px) {
- .mobile-route-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; padding:12px 14px; border:1px solid #dbeafe; border-radius:12px; background:#eff6ff; color:#2563eb; font:inherit; font-weight:700; margin:14px 0; }
+ .mobile-route-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; padding:12px 14px; border:1px solid #ffedd5; border-radius:12px; background:#fff7ed; color:#b45309; font:inherit; font-weight:700; margin:14px 0; }
  .route-planner-card { display:none; }
  .route-planner-card.mobile-route-open { display:block; }
  .day-card { padding:14px; border-radius:16px; }
@@ -673,8 +673,8 @@ interface DayRoutePlan {
  .mobile-day-strip { display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:4px; }
  .mobile-day-strip button { flex:0 0 80px; display:grid; gap:4px; min-height:52px; border:1px solid #e2e8f0; border-radius:12px; padding:8px; background:white; color:#334155; font:inherit; font-size:13px; font-weight:700; cursor:pointer; }
  .mobile-day-strip small { font-size:10px; color:#64748b; font-weight:400; }
- .mobile-day-strip button.active { color:#2563eb; background:#eff6ff; border-color:#2563eb; }
- .day-card { border:0; border-radius:16px; box-shadow:0 4px 16px #2563eb08; scroll-margin-top:16px; }
+ .mobile-day-strip button.active { color:#b45309; background:#fff7ed; border-color:#b45309; }
+ .day-card { border:0; border-radius:16px; box-shadow:0 4px 16px #b4530908; scroll-margin-top:16px; }
  .activity-card { border-radius:12px; background:#f8fafc; }
 }
 
@@ -690,7 +690,7 @@ interface DayRoutePlan {
  .day-header, .activity-actions, .day-actions { flex-wrap:wrap; }
  .route-summary, .photo-route { max-width:100%; min-width:0; }
 }
-.day-focus{display:grid;gap:6px;max-width:440px;margin:12px 0}.day-focus select{min-height:44px;max-width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:10px}.road-summary{padding:12px;background:#eff6ff;border-radius:10px;font-size:12px}.road-summary p{font-size:11px}.road-summary li{margin-bottom:8px}.numbered-stops{list-style:none;padding:0;display:grid;gap:10px;margin:12px 0}.numbered-stops li{display:flex;align-items:center;gap:10px;min-width:0}.numbered-stops b{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;color:white;background:#2563eb}.numbered-stops .stay b{background:#166534}.numbered-stops span{font-size:13px;overflow-wrap:anywhere}.numbered-stops small{display:block;font-size:11px;color:#64748b;margin-top:2px}.route-distance-note{font-size:11px;color:#64748b;margin:8px 0}.unmapped-stops{display:grid;gap:4px;font-size:12px;padding:10px;background:#fffbeb;border-radius:8px}.route-leg-link{display:block;overflow-wrap:anywhere;font-size:12px;padding:10px 0;min-height:44px;box-sizing:border-box}
+.day-focus{display:grid;gap:6px;max-width:440px;margin:12px 0}.day-focus select{min-height:44px;max-width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:10px}.road-summary{padding:12px;background:#fff7ed;border-radius:10px;font-size:12px}.road-summary p{font-size:11px}.road-summary li{margin-bottom:8px}.numbered-stops{list-style:none;padding:0;display:grid;gap:10px;margin:12px 0}.numbered-stops li{display:flex;align-items:center;gap:10px;min-width:0}.numbered-stops b{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;color:white;background:#b45309}.numbered-stops .stay b{background:#166534}.numbered-stops span{font-size:13px;overflow-wrap:anywhere}.numbered-stops small{display:block;font-size:11px;color:#64748b;margin-top:2px}.route-distance-note{font-size:11px;color:#64748b;margin:8px 0}.unmapped-stops{display:grid;gap:4px;font-size:12px;padding:10px;background:#fffbeb;border-radius:8px}.route-leg-link{display:block;overflow-wrap:anywhere;font-size:12px;padding:10px 0;min-height:44px;box-sizing:border-box}
 `]
 })
 export class ItineraryPlannerComponent implements OnInit, OnChanges, OnDestroy {

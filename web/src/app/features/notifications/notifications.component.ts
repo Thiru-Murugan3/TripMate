@@ -164,7 +164,7 @@ type NotificationFilter = 'all' | 'unread';
     }
     .eyebrow {
       margin: 0 0 0.35rem;
-      color: #2563eb;
+      color: #b45309;
       font-size: 0.72rem;
       font-weight: 800;
       letter-spacing: 0.12em;
@@ -195,7 +195,7 @@ type NotificationFilter = 'all' | 'unread';
       border: 0;
       border-radius: 10px;
       padding: 0.7rem 1rem;
-      background: #2563eb;
+      background: #b45309;
       color: #fff;
       font-weight: 700;
     }
@@ -227,8 +227,8 @@ type NotificationFilter = 'all' | 'unread';
       font-weight: 700;
     }
     .filter-tab.active {
-      background: #eff6ff;
-      color: #2563eb;
+      background: #fff7ed;
+      color: #b45309;
     }
     .count-pill {
       display: inline-flex;
@@ -265,7 +265,7 @@ type NotificationFilter = 'all' | 'unread';
       box-shadow: 0 4px 15px rgba(15, 23, 42, 0.035);
     }
     .notification-card.unread {
-      border-color: #bfdbfe;
+      border-color: #fbdcb0;
       background: #f8fbff;
     }
     .notification-main {
@@ -287,8 +287,8 @@ type NotificationFilter = 'all' | 'unread';
       display: grid;
       place-items: center;
       border-radius: 12px;
-      background: #eff6ff;
-      color: #2563eb;
+      background: #fff7ed;
+      color: #b45309;
       font-size: 1.15rem;
     }
     .notification-content {
@@ -311,7 +311,7 @@ type NotificationFilter = 'all' | 'unread';
       height: 8px;
       flex: 0 0 8px;
       border-radius: 50%;
-      background: #2563eb;
+      background: #b45309;
     }
     .notification-content p {
       margin: 0.4rem 0 0;
@@ -344,7 +344,7 @@ type NotificationFilter = 'all' | 'unread';
       font-weight: 700;
     }
     .text-action {
-      color: #2563eb;
+      color: #b45309;
     }
     .delete-action {
       color: #dc2626;
@@ -393,8 +393,8 @@ type NotificationFilter = 'all' | 'unread';
     .spinner {
       width: 30px;
       height: 30px;
-      border: 3px solid #dbeafe;
-      border-top-color: #2563eb;
+      border: 3px solid #ffedd5;
+      border-top-color: #b45309;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }

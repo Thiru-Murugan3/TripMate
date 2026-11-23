@@ -50,7 +50,7 @@ import { Trip } from '../../../core/models/trip.model';
     button:disabled { opacity: .6; cursor: wait; }
     .secondary { border: 1px solid #cbd5e1; background: #fff; color: #475569; }
     .danger { border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; }
-    .primary { border: 1px solid #2563eb; background: #2563eb; color: #fff; }
+    .primary { border: 1px solid #b45309; background: #b45309; color: #fff; }
     @media (max-width: 520px) { .dialog { padding: 24px 18px; } .actions { flex-direction: column-reverse; } button { width: 100%; } }
   `]
 })

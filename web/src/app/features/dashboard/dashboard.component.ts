@@ -53,8 +53,8 @@ interface PopularDestination {
       ></app-missed-trip-dialog>
       <section class="mobile-home" aria-label="Your travel home">
         <header class="mobile-welcome"><span>Welcome Traveller</span><h1>Let’s plan your next escape.</h1></header>
-        <section class="mobile-hero" [style.background-image]="'linear-gradient(180deg,#0f172a33,#0f172ab3),url('+(upcomingTrips[0]?.image || popularDestinations[0].image)+')'">
-          <h2>Where are you going next?</h2><button type="button" (click)="openCreateModal()">Plan New Trip</button>
+        <section class="mobile-hero" [style.background-image]="'linear-gradient(100deg,rgba(11,16,34,.88) 0%,rgba(20,26,51,.55) 55%,rgba(20,26,51,.15) 100%),url('+(upcomingTrips[0]?.image || popularDestinations[0].image)+')'">
+          <span class="mobile-hero-eyebrow">Plan together</span><h2>Where are you going next?</h2><button type="button" (click)="openCreateModal()">Plan New Trip</button>
         </section>
         <article class="mobile-next-trip" *ngIf="upcomingTrips[0] as next; else noMobileTrip">
           <div class="mobile-card-heading"><h2>Your next trip</h2><span>{{next.tag}}</span></div>
@@ -63,9 +63,9 @@ interface PopularDestination {
         </article>
         <ng-template #noMobileTrip><article class="mobile-next-trip"><h2>Your next journey starts here</h2><p>Create a trip, invite your group and plan each day together.</p></article></ng-template>
         <section class="mobile-quick"><h2>Quick actions</h2><div>
-          <button (click)="openMobileTrip('EXPENSES')"><span><img src="assets/mobile/expense.svg" alt="" /></span>Expenses</button>
-          <button (click)="openMobileTrip('BOOKINGS')"><span><img src="assets/mobile/booking.svg" alt="" /></span>Bookings</button>
-          <button (click)="openMobileTrip('DOCUMENTS')"><span><img src="assets/mobile/document.svg" alt="" /></span>Documents</button>
+          <button (click)="openMobileTrip('EXPENSES')"><span class="qa-ico" style="--icon:url(assets/mobile/expense.svg)"></span>Expenses</button>
+          <button (click)="openMobileTrip('BOOKINGS')"><span class="qa-ico" style="--icon:url(assets/mobile/booking.svg)"></span>Bookings</button>
+          <button (click)="openMobileTrip('DOCUMENTS')"><span class="qa-ico" style="--icon:url(assets/mobile/document.svg)"></span>Documents</button>
         </div></section>
         <section class="mobile-destinations"><div class="mobile-card-heading"><h2>Find your next destination</h2></div><div class="mobile-destination-scroll"><button *ngFor="let destination of popularDestinations" (click)="planDestination(destination)"><img [src]="destination.image" [alt]="destination.name" loading="lazy" /><strong>{{destination.name}}</strong><span>{{destination.tags}}</span></button></div></section>
       </section>
@@ -374,7 +374,7 @@ interface PopularDestination {
       font-weight: 800;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: #bae6fd;
+      color: #fbdcb0;
     }
 
     .hero-trust {
@@ -412,7 +412,7 @@ interface PopularDestination {
 
     .highlight-teal {
       color: #00e5ff;
-      background: linear-gradient(135deg, #00e5ff 0%, #38bdf8 100%);
+      background: linear-gradient(135deg, #00e5ff 0%, #f4a340 100%);
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -449,10 +449,10 @@ interface PopularDestination {
     .btn-hero .material-symbols-outlined { font-size: 1.15rem; }
 
     .btn-hero-primary {
-      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+      background: var(--tm-gradient-brand);
       color: #ffffff;
       border: none;
-      box-shadow: 0 14px 30px -12px rgba(79, 70, 229, 0.9);
+      box-shadow: 0 14px 30px -12px rgba(35, 44, 85, 0.9);
     }
 
     .btn-hero-primary:hover {
@@ -515,7 +515,7 @@ interface PopularDestination {
     .search-icon {
       width: 16px;
       height: 16px;
-      color: #2563eb;
+      color: #b45309;
       flex-shrink: 0;
     }
 
@@ -546,7 +546,7 @@ interface PopularDestination {
     }
 
     .btn-create-trip {
-      background-color: #2563eb;
+      background-color: #b45309;
       color: #ffffff;
       font-size: 0.9rem;
       font-weight: 700;
@@ -558,7 +558,7 @@ interface PopularDestination {
     }
 
     .btn-create-trip:hover {
-      background-color: #1d4ed8;
+      background-color: #92400e;
     }
 
     /* Content Area */
@@ -583,7 +583,7 @@ interface PopularDestination {
     .section-kicker {
       display: block;
       margin-bottom: 0.35rem;
-      color: #2563eb;
+      color: #b45309;
       font-size: 0.7rem;
       font-weight: 800;
       letter-spacing: 0.12em;
@@ -598,7 +598,7 @@ interface PopularDestination {
       padding: 0.55rem 0.95rem;
       border: 1px solid #dbe5ff;
       border-radius: 999px;
-      color: #2563eb;
+      color: #b45309;
       background: #f5f8ff;
       font-family: inherit;
       font-size: 0.8rem;
@@ -640,7 +640,7 @@ interface PopularDestination {
     .quick-action:hover {
       transform: translateY(-3px);
       border-color: #c7d7fe;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 24px 44px -20px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 24px 44px -20px rgba(180, 83, 9, 0.4);
     }
 
     .qa-icon {
@@ -653,8 +653,8 @@ interface PopularDestination {
     }
 
     .qa-icon .material-symbols-outlined { font-size: 1.35rem; }
-    .qa-blue { color: #2563eb; background: linear-gradient(135deg, #eff6ff, #dbeafe); }
-    .qa-violet { color: #7c3aed; background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
+    .qa-blue { color: #b45309; background: linear-gradient(135deg, #fff7ed, #ffedd5); }
+    .qa-violet { color: #3d4b8a; background: linear-gradient(135deg, #f4f5fa, #eceef7); }
     .qa-amber { color: #d97706; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
     .qa-teal { color: #0d9488; background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
 
@@ -686,7 +686,7 @@ interface PopularDestination {
       transition: color 0.2s ease, transform 0.2s ease;
     }
 
-    .quick-action:hover .qa-arrow { color: #2563eb; transform: translateX(2px); }
+    .quick-action:hover .qa-arrow { color: #b45309; transform: translateX(2px); }
 
     /* Featured (next) trip spans two columns with a side image */
     .trip-card.is-featured {
@@ -764,7 +764,7 @@ interface PopularDestination {
     .trip-card:hover {
       transform: translateY(-4px);
       border-color: #d6e0f5;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(37, 99, 235, 0.35);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(180, 83, 9, 0.35);
     }
 
     .trip-card-image {
@@ -811,8 +811,8 @@ interface PopularDestination {
     }
 
     .status-confirmed {
-      background: #e0f2fe;
-      color: #0284c7;
+      background: #fff1dd;
+      color: #b45309;
     }
 
     .trip-card-content {
@@ -841,10 +841,10 @@ interface PopularDestination {
       gap: 0.4rem;
       margin-bottom: 1rem;
       padding: 0.55rem 0.65rem;
-      border: 1px solid #bfdbfe;
+      border: 1px solid #fbdcb0;
       border-radius: 9px;
-      color: #1d4ed8;
-      background: #eff6ff;
+      color: #92400e;
+      background: #fff7ed;
       font-size: 0.72rem;
       font-weight: 800;
     }
@@ -866,9 +866,9 @@ interface PopularDestination {
     }
 
     .trip-countdown.in-progress {
-      border-color: #c4b5fd;
-      color: #6d28d9;
-      background: #f5f3ff;
+      border-color: #f8c98a;
+      color: #232c55;
+      background: #f4f5fa;
     }
 
     .budget-progress-block {
@@ -887,7 +887,7 @@ interface PopularDestination {
 
     .progress-percent {
       font-weight: 700;
-      color: #2563eb;
+      color: #b45309;
     }
 
     .progress-bar-track {
@@ -900,7 +900,7 @@ interface PopularDestination {
 
     .progress-bar-fill {
       height: 100%;
-      background: #2563eb;
+      background: #b45309;
       border-radius: 4px;
       transition: width 0.3s ease;
     }
@@ -919,20 +919,20 @@ interface PopularDestination {
     .btn-view-trip {
       width: 100%;
       padding: 0.65rem;
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      background: var(--tm-gradient-brand);
       color: #ffffff;
       font-size: 0.85rem;
       font-weight: 750;
       border: none;
       border-radius: 12px;
       cursor: pointer;
-      box-shadow: 0 10px 20px -12px rgba(37, 99, 235, 0.8);
+      box-shadow: 0 10px 20px -12px rgba(180, 83, 9, 0.8);
       transition: filter 0.2s ease, box-shadow 0.2s ease;
     }
 
     .btn-view-trip:hover {
       filter: brightness(1.06);
-      box-shadow: 0 14px 24px -12px rgba(37, 99, 235, 0.9);
+      box-shadow: 0 14px 24px -12px rgba(180, 83, 9, 0.9);
     }
 
     /* Destinations Grid */
@@ -957,7 +957,7 @@ interface PopularDestination {
     .dest-card:hover {
       transform: translateY(-4px);
       border-color: #d6e0f5;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(37, 99, 235, 0.35);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(180, 83, 9, 0.35);
     }
 
     .dest-card-image {
@@ -1026,7 +1026,7 @@ interface PopularDestination {
       width: 100%;
       padding: 0.65rem;
       background: #f5f8ff;
-      color: #2563eb;
+      color: #b45309;
       border: 1px solid #dbe5ff;
       font-size: 0.85rem;
       font-weight: 750;
@@ -1037,10 +1037,10 @@ interface PopularDestination {
 
     .btn-plan-dest:hover,
     .dest-card:hover .btn-plan-dest {
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      background: var(--tm-gradient-brand);
       border-color: transparent;
       color: #ffffff;
-      box-shadow: 0 10px 20px -10px rgba(37, 99, 235, 0.7);
+      box-shadow: 0 10px 20px -10px rgba(180, 83, 9, 0.7);
     }
 
     /* Modal Styling */
@@ -1074,14 +1074,14 @@ interface PopularDestination {
       border: 1px solid #cbd5e1; border-radius: 8px;
       font-family: inherit; font-size: 0.9rem; outline: none;
     }
-    .form-control:focus { border-color: #2563eb; }
+    .form-control:focus { border-color: #b45309; }
 
     .form-row { display: flex; gap: 1rem; }
     .half { flex: 1; }
 
     .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
     .btn-cancel { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    .btn-submit { background: #2563eb; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn-submit { background: #b45309; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
     @media (max-width: 1024px) {
       .trips-grid, .destinations-grid, .quick-actions {

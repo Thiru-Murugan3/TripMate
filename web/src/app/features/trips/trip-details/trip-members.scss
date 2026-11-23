@@ -7,7 +7,7 @@
     background:
       radial-gradient(110% 140% at 100% 0%, rgba(244, 114, 182, .35), transparent 55%),
       radial-gradient(80% 120% at 0% 100%, rgba(56, 189, 248, .30), transparent 55%),
-      linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%);
+      linear-gradient(135deg, #0b1022 0%, #141a33 50%, #232c55 100%);
     box-shadow: 0 18px 44px rgba(49, 46, 129, .30);
   }
   .members-toolbar::after {
@@ -21,29 +21,29 @@
   }
   .members-toolbar h2 { margin: .6rem 0 .3rem; color: #fff; font-size: clamp(1.35rem, 2.6vw, 1.85rem); font-weight: 800; letter-spacing: -.03em; }
   .members-toolbar p { margin: 0; max-width: 620px; color: rgba(255, 255, 255, .82); }
-  .members-toolbar .btn-primary { color: #312e81; background: #fff; border: 0; border-radius: 12px; box-shadow: 0 10px 24px rgba(15, 23, 42, .25); }
+  .members-toolbar .btn-primary { color: #141a33; background: #fff; border: 0; border-radius: 12px; box-shadow: 0 10px 24px rgba(15, 23, 42, .25); }
 
   /* Member cards */
   .members-grid { gap: 1rem; }
   .member-card {
-    --role: #4f46e5; --role-soft: #eef2ff;
+    --role: #232c55; --role-soft: #eef0f8;
     position: relative; overflow: hidden; align-items: center; gap: 1rem; padding: 1.15rem 1.2rem;
     border: 1px solid #e2e8f0; border-radius: 20px; background: #fff;
     box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 10px 30px rgba(15, 23, 42, .07);
     transition: transform .2s, box-shadow .2s, border-color .2s;
   }
-  .member-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, var(--role), #7c3aed); }
-  .member-card:hover { transform: translateY(-2px); border-color: #c7d2fe; box-shadow: 0 4px 10px rgba(15, 23, 42, .05), 0 20px 44px rgba(15, 23, 42, .10); }
+  .member-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, var(--role), #3d4b8a); }
+  .member-card:hover { transform: translateY(-2px); border-color: #cfd4ea; box-shadow: 0 4px 10px rgba(15, 23, 42, .05), 0 20px 44px rgba(15, 23, 42, .10); }
   .member-card[data-role="OWNER"] { --role: #f59e0b; --role-soft: #fef3c7; }
-  .member-card[data-role="EDITOR"] { --role: #4f46e5; --role-soft: #eef2ff; }
-  .member-card[data-role="PLANNER"] { --role: #0ea5e9; --role-soft: #e0f2fe; }
+  .member-card[data-role="EDITOR"] { --role: #232c55; --role-soft: #eef0f8; }
+  .member-card[data-role="PLANNER"] { --role: #e8860c; --role-soft: #fff1dd; }
   .member-card[data-role="EXPENSE_MANAGER"] { --role: #10b981; --role-soft: #d1fae5; }
   .member-card[data-role="VIEWER"] { --role: #64748b; --role-soft: #f1f5f9; }
 
   .member-avatar {
     display: grid; place-items: center; flex: 0 0 52px; width: 52px; height: 52px; border-radius: 50%;
     color: #fff; font-size: 1.25rem; font-weight: 800;
-    background: linear-gradient(135deg, var(--role), #7c3aed);
+    background: linear-gradient(135deg, var(--role), #3d4b8a);
     box-shadow: 0 0 0 4px #fff, 0 0 0 6px var(--role-soft), 0 10px 20px rgba(15, 23, 42, .15);
   }
   .member-info { min-width: 0; }
@@ -60,11 +60,11 @@
   .compact-select {
     min-height: 42px; border: 1.5px solid #e2e8f0; border-radius: 12px; background: #fff; font-weight: 600;
   }
-  .compact-select:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 4px rgba(79, 70, 229, .14); }
+  .compact-select:focus { outline: none; border-color: #232c55; box-shadow: 0 0 0 4px rgba(35, 44, 85, .14); }
   .member-card .btn-danger { color: #b91c1c; background: #fff; border: 1px solid #fecaca; border-radius: 12px; }
   .member-card .btn-danger:hover:not(:disabled) { background: #fef2f2; border-color: #f87171; }
 
-  .members-grid .empty-state { border: 1.5px dashed #c7d2fe; border-radius: 22px; background: linear-gradient(135deg, #fafaff, #f5f3ff); }
+  .members-grid .empty-state { border: 1.5px dashed #cfd4ea; border-radius: 22px; background: linear-gradient(135deg, #fafaff, #f4f5fa); }
 
   @media (max-width: 760px) {
     .members-toolbar { flex-direction: column; align-items: flex-start; padding: 1.1rem; border-radius: 18px; }

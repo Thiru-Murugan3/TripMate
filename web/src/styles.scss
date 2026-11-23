@@ -2,38 +2,46 @@
 
 :root {
   --tm-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --tm-bg: #0f172a;
+  /* Brand: ink navy with a saffron accent (shared with suttru.in/portfolio).
+     --tm-primary is the deep saffron used behind white text (4.5:1); --tm-saffron is the
+     bright accent, used for highlights and with navy text on top. */
+  --tm-navy: #141a33;
+  --tm-navy-2: #232c55;
+  --tm-saffron: #e8860c;
+  --tm-saffron-soft: #fff1dd;
+  --tm-bg: #141a33;
   --tm-card-bg: rgba(255, 255, 255, 0.96);
-  --tm-card-border: rgba(226, 232, 240, 0.8);
-  --tm-text: #0f172a;
-  --tm-text-secondary: #475569;
-  --tm-muted: #64748b;
-  --tm-primary: #3b82f6;
-  --tm-primary-hover: #2563eb;
-  --tm-primary-glow: rgba(59, 130, 246, 0.25);
-  --tm-accent: #6366f1;
-  --tm-gradient-brand: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
-  --tm-gradient-hero: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.85) 100%);
-  --tm-border: #e2e8f0;
-  --tm-border-focus: #3b82f6;
+  --tm-card-border: rgba(227, 229, 238, 0.9);
+  --tm-text: #141a33;
+  --tm-text-secondary: #4a5170;
+  --tm-muted: #5d6481;
+  --tm-primary: #c2570c;
+  --tm-primary-hover: #9a3f07;
+  --tm-primary-glow: rgba(194, 87, 12, 0.25);
+  --tm-accent: #232c55;
+  --tm-gradient-brand: linear-gradient(135deg, #c2570c 0%, #9a3f07 100%);
+  --tm-gradient-navy: linear-gradient(135deg, #0b1022 0%, #141a33 55%, #232c55 100%);
+  --tm-gradient-hero: linear-gradient(135deg, rgba(11, 16, 34, 0.92) 0%, rgba(20, 26, 51, 0.85) 100%);
+  --tm-border: #e3e5ee;
+  --tm-border-focus: #c2570c;
   --tm-danger: #ef4444;
   --tm-success: #10b981;
   --tm-shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
   --tm-shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
   --tm-shadow-lg: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
-  --tm-shadow-glow: 0 12px 30px -5px rgba(59, 130, 246, 0.35);
+  --tm-shadow-glow: 0 12px 30px -5px rgba(194, 87, 12, 0.32);
   --tm-radius-sm: 8px;
   --tm-radius-md: 14px;
   --tm-radius-lg: 20px;
   --tm-radius-xl: 28px;
-  --tm-page-bg: #f5f7fb;
-  --tm-ink: #0b1220;
-  --tm-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  --tm-page-bg: #f7f7fa;
+  --tm-ink: #0b1022;
+  --tm-focus-ring: 0 0 0 3px rgba(232, 134, 12, 0.4);
 
   /* Legacy token names still used by some components (footer, reset password,
      India catalogue). Mapped onto the current palette so they never resolve
      to transparent/unset values. */
-  --primary: #2563eb;
+  --primary: #c2570c;
   --brand-gradient: var(--tm-gradient-brand);
   --shadow-glow: var(--tm-shadow-glow);
   --surface-card: #ffffff;
@@ -72,7 +80,7 @@ textarea {
 
 ::selection {
   color: #fff;
-  background: rgba(37, 99, 235, 0.85);
+  background: rgba(180, 83, 9, 0.85);
 }
 
 :focus-visible {

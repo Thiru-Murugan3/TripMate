@@ -11,10 +11,10 @@
     h2 { font-size:18px; letter-spacing:-.025em; }
     .eyebrow { font-size:10px; color:#64748b; }
     .expense-toolbar p,.documents-toolbar p,.places-toolbar p,.planner-toolbar p { font-size:12px; line-height:1.6; }
-    .expense-card,.document-card,.place-card,.state-card,.empty-card,.summary-card,.category-card,.balance-card { border-radius:16px; box-shadow:0 4px 16px #2563eb08; }
+    .expense-card,.document-card,.place-card,.state-card,.empty-card,.summary-card,.category-card,.balance-card { border-radius:16px; box-shadow:0 4px 16px #b4530908; }
     .budget-summary article,.document-summary article,.places-summary article,.summary-grid article { border:0; border-radius:14px; padding:14px; background:white; }
     .expense-controls,.document-controls,.places-controls { gap:10px; }
-    .btn.primary,.btn-primary { border-radius:10px; background:#2563eb; }
+    .btn.primary,.btn-primary { border-radius:10px; background:#b45309; }
     .modal,.modal-content,.modal-card { border-radius:20px; background:#fff; }
 
     button, .btn { min-height: 44px; max-width: 100%; white-space: normal; }
@@ -45,7 +45,7 @@
 // Shared phone surfaces; selectors remain local to each importing component.
 @mixin surfaces {
  @media(max-width:760px) {
-  :host { --phone-surface:#fff; --phone-border:#e2e8f0; --phone-primary:#2563eb; }
+  :host { --phone-surface:#fff; --phone-border:#e2e8f0; --phone-primary:#b45309; }
   .page,.notifications-page,.share-page,.marketplace-page { padding:16px 16px 24px; background:#f8fafc; min-height:0; }
   .page-shell,.shell { width:100%; min-width:0; }
   .page-header,.header { margin-bottom:16px; gap:12px; }
@@ -94,11 +94,11 @@
   .method-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
   .method-btn { justify-items:center; padding:10px 4px; border-radius:12px; font-size:12px; text-align:center; }
   .method-btn small { display:none; }
-  .created-link { padding:12px; background:#eff6ff; border-color:#bfdbfe; }
+  .created-link { padding:12px; background:#fff7ed; border-color:#fbdcb0; }
   .invite-topline { flex-wrap:wrap; gap:6px; }
   .invitation-row { padding:12px 0; }
   .copy-row { display:grid; grid-template-columns:minmax(0,1fr) auto; }
-  .marketplace-hero { padding:16px; border-radius:16px; background:#eff6ff; color:#0f172a; }
+  .marketplace-hero { padding:16px; border-radius:16px; background:#fff7ed; color:#0f172a; }
   .marketplace-hero h1 { font-size:23px; color:#0f172a; }
   .marketplace-hero p,.marketplace-hero .eyebrow { color:#475569; }
   .sandbox-banner { padding:12px; font-size:12px; }
