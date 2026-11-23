@@ -52,22 +52,50 @@ interface PopularDestination {
         (dismiss)="dismissMissedTrip()"
       ></app-missed-trip-dialog>
       <section class="mobile-home" aria-label="Your travel home">
-        <header class="mobile-welcome"><span>Welcome Traveller</span><h1>Let’s plan your next escape.</h1></header>
-        <section class="mobile-hero" [style.background-image]="'linear-gradient(100deg,rgba(11,16,34,.88) 0%,rgba(20,26,51,.55) 55%,rgba(20,26,51,.15) 100%),url('+(upcomingTrips[0]?.image || popularDestinations[0].image)+')'">
-          <span class="mobile-hero-eyebrow">Plan together</span><h2>Where are you going next?</h2><button type="button" (click)="openCreateModal()">Plan New Trip</button>
-        </section>
-        <article class="mobile-next-trip" *ngIf="upcomingTrips[0] as next; else noMobileTrip">
-          <div class="mobile-card-heading"><h2>Your next trip</h2><span>{{next.tag}}</span></div>
-          <button type="button" class="mobile-trip-link" (click)="openMobileTrip('OVERVIEW')"><img [src]="next.image" alt="" width="60" height="60" /><div><strong>{{next.name}}</strong><span>{{next.startDate | date:'d MMM'}} – {{next.endDate | date:'d MMM yyyy'}}</span><small>{{next.countdown}}</small></div><span aria-hidden="true">›</span></button>
+        <header class="mobile-welcome">
+          <span>{{ mobileGreeting }}</span>
+          <h1>{{ mobileFirstName }}, where to next?</h1>
+        </header>
+
+        <article class="pass" *ngIf="upcomingTrips[0] as next; else noMobileTrip">
+          <button type="button" class="pass-top" (click)="openMobileTrip('OVERVIEW')" [attr.aria-label]="'Open ' + next.name"
+            [style.background-image]="'linear-gradient(180deg,rgba(11,16,34,.1) 0%,rgba(11,16,34,.88) 100%),url(' + next.image + ')'">
+            <span class="pass-chips"><span class="pass-chip">{{ next.tag }}</span><span class="pass-chip pass-chip--live">{{ next.countdown }}</span></span>
+            <strong class="pass-title">{{ next.name }}</strong>
+            <span class="pass-sub">{{ next.destination }}</span>
+          </button>
+          <div class="pass-route" aria-hidden="true">
+            <div class="pass-code"><b>YOU</b><small>Home</small></div>
+            <svg class="pass-arc" viewBox="0 0 200 56" preserveAspectRatio="none">
+              <path id="tmPassArc" class="arc-base" d="M6 46 C 60 0, 140 0, 194 46" />
+              <path class="arc-live" d="M6 46 C 60 0, 140 0, 194 46" />
+              <circle cx="6" cy="46" r="3.5" class="arc-pin" /><circle cx="194" cy="46" r="3.5" class="arc-pin arc-pin--end" />
+              <g class="arc-plane"><path d="M-8 0 L7 -4.5 L4.5 0 L7 4.5 Z" />
+                <animateMotion dur="5.5s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".45 0 .25 1"><mpath href="#tmPassArc" /></animateMotion>
+              </g>
+            </svg>
+            <div class="pass-code pass-code--end"><b>{{ destinationCode(next.destination) }}</b><small>{{ next.startDate | date:'d MMM' }}</small></div>
+          </div>
+          <div class="pass-stub">
+            <div><small>Depart</small><strong>{{ next.startDate | date:'d MMM' }}</strong></div>
+            <div><small>Return</small><strong>{{ next.endDate | date:'d MMM' }}</strong></div>
+            <div><small>Length</small><strong>{{ tripLength(next.startDate, next.endDate) }}</strong></div>
+          </div>
           <div class="mobile-trip-budget" *ngIf="mobileBudget as budget"><div><span>Budget used</span><strong>{{budget.budgetUtilizationPercentage | number:'1.0-0'}}%</strong></div><progress [value]="budget.budgetUtilizationPercentage" max="100" aria-label="Trip budget used"></progress><div><small>Spent: {{budget.totalExpenses | currency:'INR':'symbol':'1.0-0'}}</small><small>Limit: {{budget.budget | currency:'INR':'symbol':'1.0-0'}}</small></div></div>
         </article>
-        <ng-template #noMobileTrip><article class="mobile-next-trip"><h2>Your next journey starts here</h2><p>Create a trip, invite your group and plan each day together.</p></article></ng-template>
+        <ng-template #noMobileTrip>
+          <section class="mobile-hero" [style.background-image]="'linear-gradient(100deg,rgba(11,16,34,.88) 0%,rgba(20,26,51,.55) 55%,rgba(20,26,51,.15) 100%),url(' + popularDestinations[0].image + ')'">
+            <svg class="hero-route" viewBox="0 0 320 90" preserveAspectRatio="none" aria-hidden="true"><path id="tmHeroArc" d="M4 80 C 90 10, 200 90, 316 14" /><g class="arc-plane"><path d="M-8 0 L7 -4.5 L4.5 0 L7 4.5 Z" /><animateMotion dur="7s" repeatCount="indefinite" rotate="auto"><mpath href="#tmHeroArc" /></animateMotion></g></svg>
+            <span class="mobile-hero-eyebrow">Plan together</span><h2>Your next journey starts here</h2><button type="button" (click)="openCreateModal()">Plan a new trip</button>
+          </section>
+        </ng-template>
+
         <section class="mobile-quick"><h2>Quick actions</h2><div>
           <button (click)="openMobileTrip('EXPENSES')"><span class="qa-ico" style="--icon:url(assets/mobile/expense.svg)"></span>Expenses</button>
           <button (click)="openMobileTrip('BOOKINGS')"><span class="qa-ico" style="--icon:url(assets/mobile/booking.svg)"></span>Bookings</button>
           <button (click)="openMobileTrip('DOCUMENTS')"><span class="qa-ico" style="--icon:url(assets/mobile/document.svg)"></span>Documents</button>
         </div></section>
-        <section class="mobile-destinations"><div class="mobile-card-heading"><h2>Find your next destination</h2></div><div class="mobile-destination-scroll"><button *ngFor="let destination of popularDestinations" (click)="planDestination(destination)"><img [src]="destination.image" [alt]="destination.name" loading="lazy" /><strong>{{destination.name}}</strong><span>{{destination.tags}}</span></button></div></section>
+        <section class="mobile-destinations"><div class="mobile-card-heading"><h2>Find your next destination</h2><span>Swipe</span></div><div class="mobile-destination-scroll"><button *ngFor="let destination of popularDestinations" (click)="planDestination(destination)"><img [src]="destination.image" [alt]="destination.name" loading="lazy" /><span class="dest-shade" aria-hidden="true"></span><strong>{{destination.name}}</strong><span class="dest-tags">{{destination.tags.join(' · ')}}</span></button></div></section>
       </section>
       <!-- Hero Section -->
       <section class="hero-section">
@@ -1137,6 +1165,25 @@ export class DashboardComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   mobileBudget: TripDashboard | null = null;
+
+  get mobileGreeting(): string {
+    const hour = new Date().getHours();
+    return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  }
+
+  get mobileFirstName(): string {
+    return (this.authService.currentUser()?.name || 'Traveller').trim().split(/\s+/)[0];
+  }
+
+  /** Three-letter "airport style" code for the boarding-pass card, e.g. Kodaikanal → KOD. */
+  destinationCode(destination: string): string {
+    return (destination || '').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase() || 'GO';
+  }
+
+  tripLength(start: string, end: string): string {
+    const days = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1;
+    return Number.isFinite(days) && days > 0 ? `${days} day${days === 1 ? '' : 's'}` : '—';
+  }
 
   openMobileTrip(tab: string): void {
     const trip = this.upcomingTrips[0];

@@ -1,4 +1,5 @@
-// Mobile Home in the Suttru navy + saffron palette.
+// Mobile Home: a boarding-pass for the next trip, a plane flying the route, and a
+// destination carousel whose centred card grows. Navy + saffron.
 $navy: #141a33;
 $navy-2: #232c55;
 $saffron: #e8860c;
@@ -6,58 +7,100 @@ $saffron-deep: #b45309;
 $saffron-soft: #fff1dd;
 $muted: #5d6481;
 $line: #eceef4;
-$card-shadow: 0 1px 2px rgba(20, 26, 51, .04), 0 16px 32px -26px rgba(20, 26, 51, .55);
+$ease: cubic-bezier(.2, .8, .2, 1);
+$card-shadow: 0 1px 2px rgba(20, 26, 51, .04), 0 18px 36px -28px rgba(20, 26, 51, .6);
 
 @mixin home {
+  // Defined here because Angular scopes keyframe names to the component.
+  @keyframes tm-dash { to { stroke-dashoffset:-20; } }
   .mobile-home { display:none; }
   @media(max-width:760px) {
     .hero-section, .content-wrapper { display:none; }
     .home-page { min-height:0; padding-bottom:12px; }
-    .mobile-home { display:flex; flex-direction:column; gap:22px; padding:12px 20px 20px; min-width:0; }
+    .mobile-home { display:flex; flex-direction:column; gap:24px; padding:10px 20px 20px; min-width:0; }
 
-    .mobile-welcome span { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:$saffron-deep; }
-    .mobile-welcome h1 { margin:6px 0 0; color:$navy; font-size:24px; line-height:1.2; letter-spacing:-.035em; font-weight:800; }
+    .mobile-welcome span { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:$saffron-deep; }
+    .mobile-welcome span::before { content:""; width:18px; height:2px; border-radius:2px; background:$saffron; }
+    .mobile-welcome h1 { margin:8px 0 0; color:$navy; font-size:27px; line-height:1.12; letter-spacing:-.04em; font-weight:800; }
 
-    .mobile-hero { position:relative; overflow:hidden; min-height:184px; border-radius:22px; background-position:center; background-size:cover; padding:22px; color:white; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; gap:12px; box-shadow:0 22px 40px -28px rgba(11, 16, 34, .9); }
-    .mobile-hero::after { content:""; position:absolute; left:22px; right:22px; top:22px; height:2px; background:repeating-linear-gradient(90deg, rgba(255,196,107,.85) 0 8px, transparent 8px 14px); opacity:.7; }
-    .mobile-hero-eyebrow { display:inline-flex; padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22); font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
-    .mobile-hero h2 { font-size:24px; line-height:1.15; letter-spacing:-.03em; margin:0; max-width:240px; font-weight:800; }
-    .mobile-hero button { min-height:44px; background:linear-gradient(145deg, #f4a340, $saffron); color:$navy; border:0; border-radius:12px; padding:10px 18px; font:inherit; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 10px 22px -12px rgba(232,134,12,.95); }
-    .mobile-hero button:active { transform:scale(.97); }
+    /* Boarding pass */
+    .pass { position:relative; border-radius:26px; background:#fff; border:1px solid $line; box-shadow:0 30px 50px -36px rgba(11,16,34,.75); overflow:hidden; }
+    .pass-top { position:relative; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; gap:4px; width:100%; min-height:190px; padding:18px 20px 20px; border:0; background-size:cover; background-position:center; color:#fff; text-align:left; font:inherit; cursor:pointer; }
+    .pass-top::after { content:""; position:absolute; inset:0; background:radial-gradient(120% 80% at 100% 0%, rgba(232,134,12,.35), transparent 60%); pointer-events:none; }
+    .pass-chips { position:absolute; top:16px; left:18px; right:18px; display:flex; flex-wrap:wrap; gap:6px; }
+    .pass-chip { padding:5px 10px; border-radius:999px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.25); font-size:10.5px; font-weight:700; letter-spacing:.02em; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+    .pass-chip--live { background:rgba(232,134,12,.9); border-color:transparent; color:$navy; }
+    .pass-title { position:relative; z-index:1; font-size:24px; font-weight:800; letter-spacing:-.03em; line-height:1.15; }
+    .pass-sub { position:relative; z-index:1; font-size:13px; color:rgba(255,255,255,.82); }
 
-    .mobile-next-trip { padding:18px; border:1px solid $line; border-radius:20px; background:#fff; box-shadow:$card-shadow; min-width:0; }
-    .mobile-next-trip h2,.mobile-quick h2,.mobile-destinations h2 { color:$navy; font-size:16px; margin:0; font-weight:800; letter-spacing:-.02em; }
-    .mobile-card-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
-    .mobile-card-heading>span { border-radius:999px; background:$saffron-soft; padding:4px 10px; color:#9a3f07; font-size:10.5px; font-weight:700; }
-    .mobile-trip-link { display:flex; align-items:center; gap:14px; background:transparent; border:0; text-align:left; padding:16px 0; width:100%; color:$navy; cursor:pointer; font:inherit; }
-    .mobile-trip-link img { flex-shrink:0; width:64px; height:64px; border-radius:14px; object-fit:cover; }
-    .mobile-trip-link>div { display:grid; gap:3px; flex:1; min-width:0; }
-    .mobile-trip-link strong { font-size:16px; font-weight:800; letter-spacing:-.02em; overflow-wrap:anywhere; }
-    .mobile-trip-link span,.mobile-trip-link small { color:$muted; font-size:12px; }
-    .mobile-trip-link small { color:$saffron-deep; font-weight:700; }
-    .mobile-trip-link>span[aria-hidden] { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:#f4f5fa; color:$navy; font-size:18px; }
-    .mobile-trip-budget { display:grid; gap:7px; padding-top:14px; border-top:1px dashed #e3e5ee; font-size:12px; }
+    .pass-route { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; padding:18px 20px 6px; }
+    .pass-code { display:grid; gap:2px; }
+    .pass-code b { color:$navy; font-size:22px; font-weight:800; letter-spacing:.04em; }
+    .pass-code small { color:$muted; font-size:11px; font-weight:600; }
+    .pass-code--end { text-align:right; }
+    .pass-arc { width:100%; height:44px; overflow:visible; }
+    .arc-base { fill:none; stroke:#e3e5ee; stroke-width:2; stroke-dasharray:4 6; vector-effect:non-scaling-stroke; }
+    .arc-live { fill:none; stroke:$saffron; stroke-width:2.2; stroke-linecap:round; stroke-dasharray:4 6; vector-effect:non-scaling-stroke; animation:tm-dash 1.4s linear infinite; }
+    .arc-pin { fill:#fff; stroke:$navy; stroke-width:2; vector-effect:non-scaling-stroke; }
+    .arc-pin--end { stroke:$saffron; }
+    .arc-plane path { fill:$navy; }
+
+    .pass-stub { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:12px; padding:16px 20px 18px; border-top:2px dashed #e3e5ee; }
+    /* Perforation notches on both sides of the tear line. */
+    .pass-stub::before, .pass-stub::after { content:""; position:absolute; top:-12px; width:22px; height:22px; border-radius:50%; background:#f7f7fa; border:1px solid $line; }
+    .pass-stub::before { left:-12px; } .pass-stub::after { right:-12px; }
+    .pass-stub div { display:grid; gap:2px; }
+    .pass-stub div + div { padding-left:14px; border-left:1px solid #f0f1f6; }
+    .pass-stub small { color:$muted; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+    .pass-stub strong { color:$navy; font-size:15px; font-weight:800; }
+
+    .mobile-trip-budget { display:grid; gap:7px; margin:0 20px 18px; padding:14px; border-radius:16px; background:#f7f7fa; font-size:12px; }
     .mobile-trip-budget>div { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; color:$muted; }
     .mobile-trip-budget strong { color:$navy; font-weight:800; }
     progress { width:100%; height:8px; border:0; border-radius:999px; overflow:hidden; accent-color:$saffron; }
-    progress::-webkit-progress-bar { background:#f1f2f7; border-radius:999px; }
-    progress::-webkit-progress-value { background:linear-gradient(90deg, #f4a340, $saffron); border-radius:999px; }
-    progress::-moz-progress-bar { background:linear-gradient(90deg, #f4a340, $saffron); border-radius:999px; }
+    progress::-webkit-progress-bar { background:#e9eaf1; border-radius:999px; }
+    progress::-webkit-progress-value { background:linear-gradient(90deg, #ffc46b, $saffron); border-radius:999px; }
+    progress::-moz-progress-bar { background:linear-gradient(90deg, #ffc46b, $saffron); border-radius:999px; }
 
-    .mobile-quick h2 { color:$muted; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.14em; margin-bottom:12px; }
+    /* Empty-state hero with a flying route */
+    .mobile-hero { position:relative; overflow:hidden; min-height:210px; border-radius:26px; background-position:center; background-size:cover; padding:22px; color:white; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; gap:12px; box-shadow:0 26px 44px -30px rgba(11,16,34,.9); }
+    .hero-route { position:absolute; left:0; right:0; top:14px; width:100%; height:90px; overflow:visible; }
+    .hero-route path:first-child { fill:none; stroke:rgba(255,196,107,.85); stroke-width:2; stroke-dasharray:4 7; vector-effect:non-scaling-stroke; animation:tm-dash 1.6s linear infinite; }
+    .hero-route .arc-plane path { fill:#fff; }
+    .mobile-hero-eyebrow { display:inline-flex; padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22); font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+    .mobile-hero h2 { font-size:25px; line-height:1.12; letter-spacing:-.03em; margin:0; max-width:250px; font-weight:800; }
+    .mobile-hero button { min-height:46px; background:linear-gradient(145deg, #ffc46b, $saffron); color:$navy; border:0; border-radius:14px; padding:10px 20px; font:inherit; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 12px 24px -12px rgba(232,134,12,.95); }
+
+    /* Quick actions: icon chips */
+    .mobile-quick h2,.mobile-destinations h2 { color:$navy; font-size:17px; margin:0; font-weight:800; letter-spacing:-.02em; }
+    .mobile-quick h2 { margin-bottom:12px; }
     .mobile-quick>div { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-    .mobile-quick button { display:flex; flex-direction:column; align-items:center; gap:8px; min-width:0; padding:14px 6px 12px; border:1px solid $line; border-radius:18px; background:#fff; box-shadow:$card-shadow; color:$navy; font:inherit; font-size:12px; font-weight:700; cursor:pointer; transition:transform .15s; }
-    .mobile-quick button:active { transform:scale(.97); }
-    .qa-ico { display:block; width:44px; height:44px; border-radius:14px; background:$saffron-soft; position:relative; }
-    .qa-ico::before { content:""; position:absolute; inset:11px; background:$saffron-deep; -webkit-mask:var(--icon) center/contain no-repeat; mask:var(--icon) center/contain no-repeat; }
+    .mobile-quick button { position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:flex-start; gap:12px; min-width:0; padding:14px; border:1px solid $line; border-radius:20px; background:#fff; box-shadow:$card-shadow; color:$navy; font:inherit; font-size:13px; font-weight:800; cursor:pointer; text-align:left; }
+    .mobile-quick button::after { content:"›"; position:absolute; right:12px; top:12px; color:#c4c9de; font-size:18px; line-height:1; }
+    .qa-ico { display:block; width:40px; height:40px; border-radius:13px; background:$saffron-soft; position:relative; }
+    .qa-ico::before { content:""; position:absolute; inset:10px; background:$saffron-deep; -webkit-mask:var(--icon) center/contain no-repeat; mask:var(--icon) center/contain no-repeat; }
     .mobile-quick button:nth-child(2) .qa-ico { background:#eef0f8; } .mobile-quick button:nth-child(2) .qa-ico::before { background:$navy-2; }
 
-    .mobile-destination-scroll { display:flex; gap:12px; overflow-x:auto; padding:14px 0 6px; scroll-snap-type:x mandatory; scrollbar-width:none; }
+    /* Destination carousel */
+    .mobile-card-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+    .mobile-card-heading>span { color:$muted; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+    .mobile-destination-scroll { display:flex; gap:14px; overflow-x:auto; margin:0 -20px; padding:16px 20px 10px; scroll-snap-type:x mandatory; scroll-padding-inline:20px; scrollbar-width:none; }
     .mobile-destination-scroll::-webkit-scrollbar { display:none; }
-    .mobile-destination-scroll button { position:relative; flex:0 0 168px; display:flex; flex-direction:column; align-items:flex-start; text-align:left; padding:0 0 14px; border:1px solid $line; background:#fff; border-radius:18px; overflow:hidden; font:inherit; cursor:pointer; scroll-snap-align:start; box-shadow:$card-shadow; }
-    .mobile-destination-scroll img { width:100%; height:112px; object-fit:cover; }
-    .mobile-destination-scroll strong { color:$navy; font-size:14px; font-weight:800; margin:12px 14px 3px; }
-    .mobile-destination-scroll span { font-size:11px; color:$muted; margin:0 14px; }
+    .mobile-destination-scroll button { position:relative; flex:0 0 72%; height:230px; display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; gap:2px; text-align:left; padding:18px; border:0; border-radius:24px; overflow:hidden; font:inherit; color:#fff; cursor:pointer; scroll-snap-align:start; box-shadow:0 24px 40px -30px rgba(11,16,34,.9); }
+    .mobile-destination-scroll img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:scale .6s $ease; }
+    .dest-shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,16,34,0) 35%, rgba(11,16,34,.85)); }
+    .mobile-destination-scroll strong { position:relative; font-size:20px; font-weight:800; letter-spacing:-.02em; }
+    .dest-tags { position:relative; font-size:12px; color:rgba(255,255,255,.82); }
+    .mobile-destination-scroll button::after { content:"Plan →"; position:absolute; top:14px; right:14px; padding:6px 11px; border-radius:999px; background:rgba(255,255,255,.92); color:$navy; font-size:11px; font-weight:800; }
+    .mobile-destination-scroll button:active img { scale:1.06; }
+    /* Cards gently grow as they reach the centre of the carousel. */
+    @supports (animation-timeline: view()) {
+      @media (prefers-reduced-motion: no-preference) {
+        .mobile-destination-scroll button { animation:dest-focus linear both; animation-timeline:view(inline); }
+        @keyframes dest-focus { 0%, 100% { scale:.92; opacity:.75; } 40%, 60% { scale:1; opacity:1; } }
+      }
+    }
+
     .mobile-next-trip p { font-size:13px; line-height:1.6; color:$muted; }
     .mobile-text-link { min-height:44px; padding:0; border:0; background:transparent; color:$saffron-deep; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
   }

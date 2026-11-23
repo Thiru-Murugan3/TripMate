@@ -1,43 +1,74 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
+type Tab = 'home' | 'trips' | 'expenses' | 'profile';
+
 @Component({
   selector: 'app-mobile-navigation', standalone: true, imports: [RouterLink],
   template: `
-    <nav class="mobile-navigation" aria-label="Main navigation">
-      <a routerLink="/dashboard" [class.active]="active('home')" [attr.aria-current]="active('home') ? 'page' : null"><span class="ico" style="--icon:url(assets/mobile/home.svg)"></span>Home</a>
-      <a routerLink="/trips" [class.active]="active('trips')" [attr.aria-current]="active('trips') ? 'page' : null"><span class="ico" style="--icon:url(assets/mobile/trips.svg)"></span>Trips</a>
-      <a class="create-trip" routerLink="/dashboard" [queryParams]="{createTrip: 1}" aria-label="Plan a new trip"><span class="ico" style="--icon:url(assets/mobile/plus-white.svg)"></span></a>
-      <a routerLink="/expenses" [class.active]="active('expenses')" [attr.aria-current]="active('expenses') ? 'page' : null"><span class="ico" style="--icon:url(assets/mobile/expense-muted.svg)"></span>Expenses</a>
-      <a routerLink="/account" [class.active]="active('profile')" [attr.aria-current]="active('profile') ? 'page' : null"><span class="ico" style="--icon:url(assets/mobile/profile.svg)"></span>Profile</a>
+    <nav class="mobile-navigation" aria-label="Main navigation" [style.--slot]="slot()" [class.has-active]="slot() >= 0">
+      <span class="glider" aria-hidden="true"></span>
+      <a routerLink="/dashboard" [class.active]="active('home')" [attr.aria-current]="active('home') ? 'page' : null"><span class="ico" style="--icon:url(assets/mobile/home.svg)"></span><span class="lbl">Home</span></a>
+      <a routerLink="/trips" [class.active]="active('trips')" [attr.aria-current]="active('trips') ? 'page' : null"><span class="ico" style="--icon:url(assets/mobile/trips.svg)"></span><span class="lbl">Trips</span></a>
+      <a class="create-trip" routerLink="/dashboard" [queryParams]="{createTrip: 1}" aria-label="Plan a new trip">
+        <span class="orbit" aria-hidden="true"></span><span class="ico" style="--icon:url(assets/mobile/plus-white.svg)"></span>
+      </a>
+      <a routerLink="/expenses" [class.active]="active('expenses')" [attr.aria-current]="active('expenses') ? 'page' : null"><span class="ico" style="--icon:url(assets/mobile/expense-muted.svg)"></span><span class="lbl">Expenses</span></a>
+      <a routerLink="/account" [class.active]="active('profile')" [attr.aria-current]="active('profile') ? 'page' : null"><span class="ico" style="--icon:url(assets/mobile/profile.svg)"></span><span class="lbl">Profile</span></a>
     </nav>`,
   styles: [`
     :host { display:none; }
     @media(max-width:760px) {
       :host { display:block; }
+      /* A floating navy island; a glider slides to the active tab. */
       .mobile-navigation {
-        position:fixed; inset:auto 0 0; z-index:1100; display:grid;
-        grid-template-columns:repeat(5,minmax(0,1fr)); align-items:start;
-        min-height:72px; padding:8px 10px calc(8px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px)));
-        background:rgba(255,255,255,.94); -webkit-backdrop-filter:saturate(1.4) blur(14px); backdrop-filter:saturate(1.4) blur(14px);
-        border-top:1px solid #e3e5ee; box-shadow:0 -10px 30px -18px rgba(20,26,51,.35);
+        --slot:-1;
+        position:fixed; left:12px; right:12px; bottom:calc(10px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px))); z-index:1100;
+        display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-items:center;
+        height:66px; padding:0 6px; border-radius:24px;
+        background:linear-gradient(135deg, rgba(11,16,34,.96), rgba(20,26,51,.96) 60%, rgba(35,44,85,.96));
+        -webkit-backdrop-filter:blur(16px) saturate(1.3); backdrop-filter:blur(16px) saturate(1.3);
+        border:1px solid rgba(255,255,255,.08);
+        box-shadow:0 18px 40px -16px rgba(11,16,34,.75), inset 0 1px 0 rgba(255,255,255,.06);
       }
-      a { position:relative; display:flex; min-width:0; min-height:52px; flex-direction:column; gap:4px; align-items:center; justify-content:center; text-decoration:none; color:#5d6481; font-size:10.5px; font-weight:600; letter-spacing:.01em; border-radius:14px; transition:color .2s; }
-      /* Icons are masks so they follow the text colour: muted, saffron when active, navy on the + button. */
-      .ico { width:22px; height:22px; background:currentColor; -webkit-mask:var(--icon) center/contain no-repeat; mask:var(--icon) center/contain no-repeat; }
-      a.active { color:#141a33; font-weight:700; }
-      a.active .ico { color:#e8860c; }
-      a.active::after { content:""; position:absolute; top:-8px; left:50%; width:22px; height:3px; margin-left:-11px; border-radius:0 0 3px 3px; background:#e8860c; }
-      .create-trip { top:-22px; justify-self:center; width:54px; height:54px; border-radius:18px; color:#141a33; background:linear-gradient(145deg,#f4a340,#e8860c); box-shadow:0 0 0 5px #fff, 0 12px 24px -8px rgba(232,134,12,.75); transition:transform .15s; }
-      .create-trip .ico { width:24px; height:24px; }
-      .create-trip:active { transform:scale(.94); }
+      .glider {
+        position:absolute; top:7px; bottom:7px; left:6px; width:calc((100% - 12px) / 5);
+        border-radius:18px; background:rgba(255,255,255,.08); box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+        translate:calc(var(--slot) * 100%) 0; opacity:0;
+        transition:translate .45s cubic-bezier(.3,1.4,.4,1), opacity .2s;
+      }
+      .has-active .glider { opacity:1; }
+      a { position:relative; z-index:1; display:flex; min-width:0; height:52px; flex-direction:column; gap:4px; align-items:center; justify-content:center; text-decoration:none; color:#a3a9c4; font-size:10.5px; font-weight:600; letter-spacing:.01em; border-radius:16px; transition:color .25s; -webkit-tap-highlight-color:transparent; }
+      /* Icons are masks so they follow the text colour. */
+      .ico { width:22px; height:22px; background:currentColor; -webkit-mask:var(--icon) center/contain no-repeat; mask:var(--icon) center/contain no-repeat; transition:translate .35s cubic-bezier(.3,1.4,.4,1); }
+      a.active { color:#fff; font-weight:700; }
+      a.active .ico { color:#f4a340; translate:0 -1px; }
+      a.active .lbl::after { content:""; display:block; width:4px; height:4px; margin:3px auto 0; border-radius:50%; background:#e8860c; }
+      a.active .lbl { margin-bottom:-7px; }
+
+      .create-trip { justify-self:center; width:56px; height:56px; margin-top:-30px; border-radius:20px; color:#141a33;
+        background:linear-gradient(145deg,#ffc46b,#e8860c); box-shadow:0 0 0 6px #f7f7fa, 0 14px 26px -10px rgba(232,134,12,.9); transition:scale .15s, rotate .35s cubic-bezier(.3,1.4,.4,1); }
+      .create-trip .ico { width:24px; height:24px; color:#141a33; }
+      .create-trip:active { scale:.92; rotate:90deg; }
+      /* A dashed orbit slowly circles the create button: a quiet "start a journey" cue. */
+      .orbit { position:absolute; inset:-11px; border-radius:26px; border:1.5px dashed rgba(232,134,12,.55); animation:orbit 14s linear infinite; pointer-events:none; }
+      @keyframes orbit { to { rotate:360deg; } }
       a:focus-visible { outline:3px solid #f4a340; outline-offset:2px; }
+      @media (prefers-reduced-motion: reduce) { .orbit { animation:none; } .glider, .ico, .create-trip { transition:none; } }
     }
   `]
 })
 export class MobileNavigationComponent {
   private readonly router = inject(Router);
-  active(tab: 'home'|'trips'|'expenses'|'profile'): boolean {
+  private readonly slots: Record<Tab, number> = { home: 0, trips: 1, expenses: 3, profile: 4 };
+
+  /** Grid column of the active tab for the sliding glider, or -1 when none is active. */
+  slot(): number {
+    const tab = (Object.keys(this.slots) as Tab[]).find(t => this.active(t));
+    return tab ? this.slots[tab] : -1;
+  }
+
+  active(tab: Tab): boolean {
     const url = this.router.parseUrl(this.router.url);
     const path = this.router.url.split('?')[0];
     if (tab === 'home') return path === '/dashboard';

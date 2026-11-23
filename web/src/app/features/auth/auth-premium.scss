@@ -110,3 +110,16 @@
   .feature-card, .submit-btn, .input-wrapper input { transition: none; }
   .feature-card:hover, .submit-btn:hover:not(:disabled) { transform: none; }
 }
+
+/* Travel motion in the sign-in/sign-up hero: drifting clouds and a plane flying a dashed route. */
+.hero-sky { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.hero-flight { position: absolute; left: 0; right: 0; bottom: 8%; width: 100%; height: 45%; overflow: visible; }
+.hero-flight > path { fill: none; stroke: rgba(255, 196, 107, .8); stroke-width: 2; stroke-dasharray: 4 8; vector-effect: non-scaling-stroke; animation: auth-dash 1.8s linear infinite; }
+.hero-plane path { fill: #fff; }
+.cloud { position: absolute; width: 160px; height: 46px; border-radius: 999px; background: rgba(255, 255, 255, .12); filter: blur(10px); animation: auth-drift 38s linear infinite; }
+.cloud--a { top: 14%; left: -30%; }
+.cloud--b { top: 34%; left: -50%; width: 220px; animation-duration: 52s; animation-delay: -18s; opacity: .7; }
+@keyframes auth-dash { to { stroke-dashoffset: -24; } }
+@keyframes auth-drift { to { translate: 180vw 0; } }
+.hero-content { position: relative; z-index: 2; }
+@media (prefers-reduced-motion: reduce) { .cloud, .hero-flight > path { animation: none; } }

@@ -831,3 +831,37 @@ select:focus {
   .delete-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 
+
+/* Mobile journey cards: full photo with the trip name on it, and a perforated ticket stub below. */
+@media (max-width: 760px) {
+  .trip-grid { gap: 18px; }
+  .trip-card { display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 24px; border: 1px solid #eceef4; background: #fff; box-shadow: 0 1px 2px rgba(20, 26, 51, .04), 0 26px 44px -34px rgba(11, 16, 34, .8); }
+  .trip-image { position: relative; width: auto; height: 176px; padding: 14px 16px 16px; border-radius: 0; display: flex; flex-direction: column; justify-content: space-between; background-size: cover; background-position: center; transition: background-size .6s cubic-bezier(.2, .8, .2, 1); }
+  .trip-image::after { content: ""; position: absolute; inset: 0; background: radial-gradient(110% 80% at 100% 0%, rgba(232, 134, 12, .3), transparent 60%); pointer-events: none; }
+  .image-badges { position: relative; z-index: 1; display: flex; justify-content: space-between; }
+  .image-badges .type-badge { background: rgba(255, 255, 255, .9); color: #141a33; border-radius: 999px; font-size: 10.5px; padding: 5px 10px; }
+  .image-badges .status-badge { font-size: 10.5px; padding: 5px 10px; }
+  .image-title { position: relative; z-index: 1; display: block; }
+  .image-title .timing-chip { display: inline-block; margin-bottom: 8px; font-size: 10.5px; background: rgba(232, 134, 12, .92); border-color: transparent; color: #141a33; }
+  .image-title h3 { font-size: 22px; letter-spacing: -.03em; margin: 0; }
+  .image-title p { display: flex; align-items: center; gap: 3px; margin: 2px 0 0; font-size: 12.5px; color: rgba(255, 255, 255, .85); }
+  .image-title p .material-symbols-outlined { font-size: 16px; color: #ffc46b; }
+  .mobile-trip-title { display: none; }
+
+  .trip-content { position: relative; padding: 0; }
+  .meta-row { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; padding: 14px 18px; border-bottom: 2px dashed #e9eaf1; }
+  .meta-row::before, .meta-row::after { content: ""; position: absolute; bottom: -12px; width: 22px; height: 22px; border-radius: 50%; background: #f7f7fa; border: 1px solid #eceef4; }
+  .meta-row::before { left: -12px; } .meta-row::after { right: -12px; }
+  .meta-row > div { gap: 2px; }
+  .meta-label { display: block; color: #5d6481; font-size: 9.5px; font-weight: 700; letter-spacing: .12em; }
+  .meta-row strong { color: #141a33; font-size: 14px; font-weight: 800; }
+  .meta-row small { color: #5d6481; font-size: 11.5px; }
+  .meta-right { text-align: right; }
+  .description { margin: 12px 18px 0; color: #5d6481; }
+  .card-footer { margin: 0; padding: 12px 14px 12px 18px; border-top: 0; align-items: center; }
+  .card-footer .role { font-size: 10.5px; }
+  .card-actions { gap: 8px; align-items: center; }
+  .view-button { min-height: 40px; padding: 0 16px; border-radius: 12px; color: #fff; background: #141a33; font-weight: 700; font-size: 12.5px; }
+  .view-button span { color: #f4a340; transition: translate .25s; }
+  .trip-card:active .view-button span { translate: 4px 0; }
+}
