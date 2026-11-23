@@ -1,5 +1,5 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 
 export function apiUrl(raw) {
   if (!raw?.trim()) throw new Error('MOBILE_API_BASE must be the public HTTPS backend URL.');
@@ -27,7 +27,9 @@ export function packageWeb(source, target, rawApiBase) {
   }
   rmSync(target, { recursive: true, force: true });
   mkdirSync(target, { recursive: true });
-  cpSync(source, target, { recursive: true });
+  // The marketing portfolio is served at suttru.in/portfolio/ only; keep its photos out of the APK.
+  const portfolio = join(source, 'portfolio');
+  cpSync(source, target, { recursive: true, filter: path => path !== portfolio && !path.startsWith(portfolio + sep) });
   writeFileSync(join(target, 'config.js'), `window.__TRIPMATE_CONFIG__ = ${JSON.stringify({ apiUrl: api })};\n`);
   for (const entry of ['index.html', 'offline.html']) {
     writeFileSync(join(target, entry), injectNative(readFileSync(join(target, entry), 'utf8')));
