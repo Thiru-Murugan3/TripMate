@@ -32,10 +32,10 @@ export class DayRouteMapComponent implements AfterViewInit,OnChanges,OnDestroy {
   const signature=JSON.stringify([points,road]);if(signature===this.signature)return;this.signature=signature;
   this.layers!.clearLayers();if(!points.length){this.map.setView([20.5937,78.9629],5);return;}
   const coordinates=points.map(p=>L.latLng(p.latitude,p.longitude));
-  L.polyline(road.length>1?road.map(p=>L.latLng(p[0],p[1])):coordinates,{color:'#2563eb',weight:4,dashArray:road.length>1?undefined:'8 8'}).addTo(this.layers!);
+  L.polyline(road.length>1?road.map(p=>L.latLng(p[0],p[1])):coordinates,{color:'#0f766e',weight:4,dashArray:road.length>1?undefined:'8 8'}).addTo(this.layers!);
   points.forEach((point,index)=>{
    if(index===points.length-1&&index>0&&point.latitude===points[0].latitude&&point.longitude===points[0].longitude)return;
-   const label=index===0?'H':String(index),color=index===0?'#166534':'#2563eb';
+   const label=index===0?'H':String(index),color=index===0?'#166534':'#0f766e';
    const icon=L.divIcon({className:'sightseeing-number',html:`<span style="display:grid;place-items:center;width:32px;height:32px;border:3px solid white;border-radius:50%;background:${color};color:white;font:bold 15px sans-serif;box-shadow:0 2px 8px #0005">${label}</span>`,iconSize:[38,38],iconAnchor:[19,19]});
    const text=document.createElement('span');text.textContent=(index===0?'Stay: ':index+'. ')+point.name;
    L.marker(coordinates[index],{icon,title:text.textContent,keyboard:true}).bindTooltip(text).addTo(this.layers!);
@@ -44,7 +44,7 @@ export class DayRouteMapComponent implements AfterViewInit,OnChanges,OnDestroy {
    const from=this.map.project(coordinates[i-1],10),to=this.map.project(coordinates[i],10);if(from.distanceTo(to)<0.01)continue;
    const angle=Math.atan2(to.y-from.y,to.x-from.x)*180/Math.PI;
    const midpoint=L.latLng((coordinates[i-1].lat+coordinates[i].lat)/2,(coordinates[i-1].lng+coordinates[i].lng)/2);
-   L.marker(midpoint,{interactive:false,keyboard:false,icon:L.divIcon({className:'route-direction',html:`<span style="display:block;color:#1d4ed8;font-size:22px;transform:rotate(${angle}deg)">➤</span>`,iconSize:[22,22],iconAnchor:[11,11]})}).addTo(this.layers!);
+   L.marker(midpoint,{interactive:false,keyboard:false,icon:L.divIcon({className:'route-direction',html:`<span style="display:block;color:#115e59;font-size:22px;transform:rotate(${angle}deg)">➤</span>`,iconSize:[22,22],iconAnchor:[11,11]})}).addTo(this.layers!);
   }
   this.map.fitBounds(L.latLngBounds([...coordinates,...road.map(p=>L.latLng(p[0],p[1]))]),{padding:[32,32],maxZoom:15,animate:false});
  }

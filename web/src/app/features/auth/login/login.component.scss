@@ -31,7 +31,7 @@
   left: -100px;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, #e0e7ff 0%, rgba(224, 231, 255, 0) 70%);
+  background: radial-gradient(circle, #dcf0ee 0%, rgba(224, 231, 255, 0) 70%);
 }
 
 .glow-sphere-2 {
@@ -39,7 +39,7 @@
   right: -150px;
   width: 550px;
   height: 550px;
-  background: radial-gradient(circle, #ede9fe 0%, rgba(237, 233, 254, 0) 70%);
+  background: radial-gradient(circle, #e6f5f3 0%, rgba(237, 233, 254, 0) 70%);
   animation-delay: -7s;
 }
 
@@ -51,7 +51,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #062a33 100%);
   color: #ffffff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -83,12 +83,12 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #4338ca 100%);
+  background: #0b3c49;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+  color: #f2c14e;
+  box-shadow: 0 8px 20px rgba(17, 94, 107, 0.4);
 }
 
 .brand__icon svg {
@@ -110,9 +110,9 @@
   display: inline-block;
   padding: 6px 14px;
   border-radius: 20px;
-  background: rgba(99, 102, 241, 0.18);
-  border: 1px solid rgba(99, 102, 241, 0.35);
-  color: #a5b4fc;
+  background: rgba(20, 112, 125, 0.18);
+  border: 1px solid rgba(20, 112, 125, 0.35);
+  color: #a7d3d3;
   font-size: 0.825rem;
   font-weight: 600;
   margin-bottom: 1.25rem;
@@ -129,7 +129,7 @@
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+  background: linear-gradient(135deg, #4fa5ad 0%, #f6d27a 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -162,7 +162,7 @@
 
 .feature-card:hover {
   transform: translateX(6px);
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: rgba(20, 112, 125, 0.4);
 }
 
 .feature-icon {
@@ -209,7 +209,7 @@
   color: #0f172a;
   padding: 2.5rem;
   border-radius: 24px;
-  box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.08), 0 0 25px rgba(79, 70, 229, 0.06);
+  box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.08), 0 0 25px rgba(17, 94, 107, 0.06);
   border: 1.5px solid #e2e8f0;
   backdrop-filter: blur(20px);
   animation: fadeInUp 0.5s ease-out;
@@ -224,7 +224,7 @@
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: #4f46e5;
+  color: #115e6b;
   margin-bottom: 6px;
 }
 
@@ -293,13 +293,13 @@ form {
 .forgot-link {
   font-size: 0.825rem;
   font-weight: 600;
-  color: #4f46e5;
+  color: #115e6b;
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
 .forgot-link:hover {
-  color: #4338ca;
+  color: #0f4a58;
   text-decoration: underline;
 }
 
@@ -338,13 +338,13 @@ form {
 }
 
 .input-wrapper:focus-within .input-icon {
-  color: #4f46e5;
+  color: #115e6b;
 }
 
 .input-wrapper input:focus {
   background: #ffffff;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+  border-color: #115e6b;
+  box-shadow: 0 0 0 4px rgba(17, 94, 107, 0.15);
 }
 
 .field--error .input-wrapper input {
@@ -433,8 +433,8 @@ form {
 }
 
 .custom-checkbox input:checked + .checkbox-box {
-  background: #4f46e5;
-  border-color: #4f46e5;
+  background: #115e6b;
+  border-color: #115e6b;
 }
 
 .custom-checkbox input:checked + .checkbox-box svg {
@@ -454,7 +454,7 @@ form {
   height: 52px;
   border: 0;
   border-radius: 14px;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #4338ca 100%);
+  background: #0b3c49;
   color: #ffffff;
   font-family: inherit;
   font-size: 1rem;
@@ -464,13 +464,13 @@ form {
   justify-content: center;
   gap: 10px;
   cursor: pointer;
-  box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(17, 94, 107, 0.4);
   transition: all 0.25s ease;
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #4338ca 0%, #4f46e5 50%, #3730a3 100%);
+    background: linear-gradient(135deg, #0f4a58 0%, #115e6b 50%, #0e4452 100%);
     transform: translateY(-2px);
-    box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.55);
+    box-shadow: 0 15px 30px -5px rgba(17, 94, 107, 0.55);
   }
 
   &:active:not(:disabled) {
@@ -516,13 +516,13 @@ form {
 }
 
 .register-link {
-  color: #4f46e5;
+  color: #115e6b;
   font-weight: 700;
   text-decoration: none;
   transition: color 0.15s ease;
 
   &:hover {
-    color: #4338ca;
+    color: #0f4a58;
     text-decoration: underline;
   }
 }
@@ -593,7 +593,7 @@ form {
  .glow-sphere,.hero-badge,.hero-features,.hero-description { display:none; }
  .auth-hero { min-height:230px; padding:24px; justify-content:flex-end; background:linear-gradient(180deg,#0f172a33,#0f172ab3),url('/assets/images/hero.jpg') center/cover; border:0; }
  .hero-content { margin:0; } .brand { margin-bottom:12px; }
- .brand__icon { width:30px; height:30px; border-radius:8px; background:#2563eb; }
+ .brand__icon { width:30px; height:30px; border-radius:8px; background:#0f766e; }
  .brand__name { font-size:20px; } .hero-text h1 { font-size:24px; line-height:1.25; letter-spacing:-.035em; margin:0; }
  .gradient-text { background:none; -webkit-text-fill-color:white; color:white; }
  .auth-panel { padding:24px; background:#f8fafc; align-items:flex-start; }
@@ -603,8 +603,8 @@ form {
  .field label { color:#64748b; font-size:12px; }
  .input-wrapper { background:#fff; border:1px solid #e2e8f0; border-radius:12px; min-height:48px; }
  .input-wrapper input { color:#0f172a; font-size:16px; }
- .btn-primary,.submit-btn { background:#2563eb; border-radius:12px; min-height:48px; }
+ .btn-primary,.submit-btn { background:#0f766e; border-radius:12px; min-height:48px; }
  .subtitle,.form-footer,.register-footer { color:#64748b; }
 }
 
-.connection-recovery {margin-top:12px;font-size:13px;color:#475569;text-align:center}.connection-recovery button {min-height:44px;padding:10px 18px;border:1px solid #cbd5e1;border-radius:10px;background:white;color:#2563eb;font:inherit;cursor:pointer}
+.connection-recovery {margin-top:12px;font-size:13px;color:#475569;text-align:center}.connection-recovery button {min-height:44px;padding:10px 18px;border:1px solid #cbd5e1;border-radius:10px;background:white;color:#0f766e;font:inherit;cursor:pointer}

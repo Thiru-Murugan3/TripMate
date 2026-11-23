@@ -51,23 +51,69 @@ interface PopularDestination {
         (reschedule)="rescheduleMissedTrip()"
         (dismiss)="dismissMissedTrip()"
       ></app-missed-trip-dialog>
-      <section class="mobile-home" aria-label="Your travel home">
-        <header class="mobile-welcome"><span>Welcome Traveller</span><h1>Let’s plan your next escape.</h1></header>
-        <section class="mobile-hero" [style.background-image]="'linear-gradient(180deg,#0f172a33,#0f172ab3),url('+(upcomingTrips[0]?.image || popularDestinations[0].image)+')'">
-          <h2>Where are you going next?</h2><button type="button" (click)="openCreateModal()">Plan New Trip</button>
+      <section class="mobile-home tropic" aria-label="Your travel home">
+        <header class="tp-hero">
+          <div class="tp-hero-photo" aria-hidden="true" [style.background-image]="'url(' + (upcomingTrips[0]?.image || popularDestinations[0].image) + ')'"></div>
+          <svg class="tp-plane" viewBox="0 0 230 96" aria-hidden="true">
+            <defs><linearGradient id="tpBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d6e4e6"/></linearGradient></defs>
+            <g class="tp-trail"><circle cx="18" cy="56" r="10"/><circle cx="34" cy="50" r="13"/><circle cx="4" cy="62" r="7"/></g>
+            <path d="M112 40 L 146 40 L 128 14 L 118 14 Z" fill="#c9dcdf"/>
+            <path d="M44 52 C 44 44, 62 40, 88 40 L 192 40 C 210 40, 224 46, 224 52 C 224 58, 210 63, 192 63 L 88 63 C 62 63, 44 60, 44 52 Z" fill="url(#tpBody)"/>
+            <path d="M52 44 L 38 16 L 54 16 L 76 42 Z" fill="#0f766e"/>
+            <path d="M206 44 C 214 45, 219 48, 221 51 L 206 51 Z" fill="#0b3c49"/>
+            <g fill="#0b3c49" opacity=".55"><circle cx="100" cy="49" r="2"/><circle cx="110" cy="49" r="2"/><circle cx="120" cy="49" r="2"/><circle cx="130" cy="49" r="2"/><circle cx="140" cy="49" r="2"/><circle cx="150" cy="49" r="2"/><circle cx="160" cy="49" r="2"/><circle cx="170" cy="49" r="2"/><circle cx="180" cy="49" r="2"/></g>
+            <path d="M106 56 L 158 56 L 128 90 L 110 90 Z" fill="#e6eff0"/>
+            <rect x="122" y="62" width="26" height="11" rx="5.5" fill="#9fb5b8"/>
+            <rect x="46" y="51" width="176" height="2" fill="#f2c14e"/>
+          </svg>
+          <p class="tp-script">{{ mobileGreeting }}, {{ mobileFirstName }}</p>
+          <h1>Discover.<br />Travel.<br /><em>Remember.</em></h1>
+          <p class="tp-sub">Unforgettable journeys,<br />planned together.</p>
+        </header>
+
+        <form class="tp-search" role="search" (submit)="$event.preventDefault(); planSearch(where.value)">
+          <span class="tp-search-ico material-symbols-outlined" aria-hidden="true">search</span>
+          <input #where type="search" placeholder="Where to? Search a destination" aria-label="Where do you want to go?" />
+          <button type="submit" aria-label="Plan a trip to this destination"><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></button>
+        </form>
+
+        <nav class="tp-cats" aria-label="Quick actions">
+          <button type="button" (click)="openMobileTrip('OVERVIEW')"><span class="tp-cat tp-cat--teal"><span class="material-symbols-outlined" aria-hidden="true">luggage</span></span>Trips</button>
+          <button type="button" (click)="openMobileTrip('EXPENSES')"><span class="tp-cat tp-cat--amber"><span class="material-symbols-outlined" aria-hidden="true">payments</span></span>Expenses</button>
+          <button type="button" (click)="openMobileTrip('BOOKINGS')"><span class="tp-cat tp-cat--blue"><span class="material-symbols-outlined" aria-hidden="true">confirmation_number</span></span>Bookings</button>
+          <button type="button" (click)="openMobileTrip('DOCUMENTS')"><span class="tp-cat tp-cat--purple"><span class="material-symbols-outlined" aria-hidden="true">description</span></span>Documents</button>
+        </nav>
+
+        <section class="tp-popular" aria-labelledby="tpPopularTitle">
+          <div class="tp-heading"><h2 id="tpPopularTitle">Popular destinations</h2><span>Swipe <span aria-hidden="true">→</span></span></div>
+          <div class="tp-rail">
+            <button type="button" class="tp-dest" *ngFor="let destination of popularDestinations" (click)="planDestination(destination)" [attr.aria-label]="'Plan a trip to ' + destination.name">
+              <img [src]="destination.image" alt="" loading="lazy" />
+              <span class="tp-dest-plan" aria-hidden="true"><span class="material-symbols-outlined">add</span></span>
+              <strong>{{ destination.name }}</strong>
+              <span class="tp-dest-tags">{{ destination.tags.slice(0, 2).join(' · ') }}</span>
+              <span class="tp-dest-days">{{ destination.duration.replace('Suggested Duration: ', '') }}</span>
+            </button>
+          </div>
         </section>
-        <article class="mobile-next-trip" *ngIf="upcomingTrips[0] as next; else noMobileTrip">
-          <div class="mobile-card-heading"><h2>Your next trip</h2><span>{{next.tag}}</span></div>
-          <button type="button" class="mobile-trip-link" (click)="openMobileTrip('OVERVIEW')"><img [src]="next.image" alt="" width="60" height="60" /><div><strong>{{next.name}}</strong><span>{{next.startDate | date:'d MMM'}} – {{next.endDate | date:'d MMM yyyy'}}</span><small>{{next.countdown}}</small></div><span aria-hidden="true">›</span></button>
-          <div class="mobile-trip-budget" *ngIf="mobileBudget as budget"><div><span>Budget used</span><strong>{{budget.budgetUtilizationPercentage | number:'1.0-0'}}%</strong></div><progress [value]="budget.budgetUtilizationPercentage" max="100" aria-label="Trip budget used"></progress><div><small>Spent: {{budget.totalExpenses | currency:'INR':'symbol':'1.0-0'}}</small><small>Limit: {{budget.budget | currency:'INR':'symbol':'1.0-0'}}</small></div></div>
+
+        <article class="tp-banner" *ngIf="upcomingTrips[0] as next; else noMobileTrip" [style.background-image]="'linear-gradient(100deg, rgba(6,40,48,.92) 0%, rgba(11,60,73,.75) 48%, rgba(11,60,73,.1) 100%), url(' + next.image + ')'">
+          <svg class="tp-doodle" viewBox="0 0 120 60" aria-hidden="true"><path d="M4 54 C 30 54, 40 20, 70 26 S 100 40, 108 14" /><path class="tp-doodle-plane" d="M102 8 L 118 12 L 106 20 L 105 14 Z" /></svg>
+          <span class="tp-banner-kicker">Your next trip · {{ next.countdown }}</span>
+          <h2>{{ next.name }}</h2>
+          <p>{{ next.startDate | date:'d MMM' }} – {{ next.endDate | date:'d MMM yyyy' }} · {{ tripLength(next.startDate, next.endDate) }}</p>
+          <div class="tp-banner-budget" *ngIf="mobileBudget as budget"><progress [value]="budget.budgetUtilizationPercentage" max="100" aria-label="Trip budget used"></progress><small>{{ budget.budgetUtilizationPercentage | number:'1.0-0' }}% of budget used</small></div>
+          <button type="button" (click)="openMobileTrip('OVERVIEW')">View trip <span aria-hidden="true">→</span></button>
         </article>
-        <ng-template #noMobileTrip><article class="mobile-next-trip"><h2>Your next journey starts here</h2><p>Create a trip, invite your group and plan each day together.</p></article></ng-template>
-        <section class="mobile-quick"><h2>Quick actions</h2><div>
-          <button (click)="openMobileTrip('EXPENSES')"><span><img src="assets/mobile/expense.svg" alt="" /></span>Expenses</button>
-          <button (click)="openMobileTrip('BOOKINGS')"><span><img src="assets/mobile/booking.svg" alt="" /></span>Bookings</button>
-          <button (click)="openMobileTrip('DOCUMENTS')"><span><img src="assets/mobile/document.svg" alt="" /></span>Documents</button>
-        </div></section>
-        <section class="mobile-destinations"><div class="mobile-card-heading"><h2>Find your next destination</h2></div><div class="mobile-destination-scroll"><button *ngFor="let destination of popularDestinations" (click)="planDestination(destination)"><img [src]="destination.image" [alt]="destination.name" loading="lazy" /><strong>{{destination.name}}</strong><span>{{destination.tags}}</span></button></div></section>
+        <ng-template #noMobileTrip>
+          <article class="tp-banner" [style.background-image]="'linear-gradient(100deg, rgba(6,40,48,.92) 0%, rgba(11,60,73,.75) 48%, rgba(11,60,73,.1) 100%), url(' + popularDestinations[0].image + ')'">
+            <svg class="tp-doodle" viewBox="0 0 120 60" aria-hidden="true"><path d="M4 54 C 30 54, 40 20, 70 26 S 100 40, 108 14" /><path class="tp-doodle-plane" d="M102 8 L 118 12 L 106 20 L 105 14 Z" /></svg>
+            <span class="tp-banner-kicker">Plan together</span>
+            <h2>Your next getaway</h2>
+            <p>Create a trip, invite your group and plan each day together.</p>
+            <button type="button" (click)="openCreateModal()">Plan now <span aria-hidden="true">→</span></button>
+          </article>
+        </ng-template>
       </section>
       <!-- Hero Section -->
       <section class="hero-section">
@@ -374,7 +420,7 @@ interface PopularDestination {
       font-weight: 800;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: #bae6fd;
+      color: #bfe6e0;
     }
 
     .hero-trust {
@@ -411,8 +457,8 @@ interface PopularDestination {
     }
 
     .highlight-teal {
-      color: #00e5ff;
-      background: linear-gradient(135deg, #00e5ff 0%, #38bdf8 100%);
+      color: #f6d27a;
+      background: linear-gradient(135deg, #f6d27a 0%, #f6d27a 100%);
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -449,10 +495,10 @@ interface PopularDestination {
     .btn-hero .material-symbols-outlined { font-size: 1.15rem; }
 
     .btn-hero-primary {
-      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+      background: var(--tm-gradient-brand);
       color: #ffffff;
       border: none;
-      box-shadow: 0 14px 30px -12px rgba(79, 70, 229, 0.9);
+      box-shadow: 0 14px 30px -12px rgba(17, 94, 107, 0.9);
     }
 
     .btn-hero-primary:hover {
@@ -515,7 +561,7 @@ interface PopularDestination {
     .search-icon {
       width: 16px;
       height: 16px;
-      color: #2563eb;
+      color: #0f766e;
       flex-shrink: 0;
     }
 
@@ -546,7 +592,7 @@ interface PopularDestination {
     }
 
     .btn-create-trip {
-      background-color: #2563eb;
+      background-color: #0f766e;
       color: #ffffff;
       font-size: 0.9rem;
       font-weight: 700;
@@ -558,7 +604,7 @@ interface PopularDestination {
     }
 
     .btn-create-trip:hover {
-      background-color: #1d4ed8;
+      background-color: #115e59;
     }
 
     /* Content Area */
@@ -583,7 +629,7 @@ interface PopularDestination {
     .section-kicker {
       display: block;
       margin-bottom: 0.35rem;
-      color: #2563eb;
+      color: #0f766e;
       font-size: 0.7rem;
       font-weight: 800;
       letter-spacing: 0.12em;
@@ -598,7 +644,7 @@ interface PopularDestination {
       padding: 0.55rem 0.95rem;
       border: 1px solid #dbe5ff;
       border-radius: 999px;
-      color: #2563eb;
+      color: #0f766e;
       background: #f5f8ff;
       font-family: inherit;
       font-size: 0.8rem;
@@ -640,7 +686,7 @@ interface PopularDestination {
     .quick-action:hover {
       transform: translateY(-3px);
       border-color: #c7d7fe;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 24px 44px -20px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 24px 44px -20px rgba(15, 118, 110, 0.4);
     }
 
     .qa-icon {
@@ -653,9 +699,9 @@ interface PopularDestination {
     }
 
     .qa-icon .material-symbols-outlined { font-size: 1.35rem; }
-    .qa-blue { color: #2563eb; background: linear-gradient(135deg, #eff6ff, #dbeafe); }
-    .qa-violet { color: #7c3aed; background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
-    .qa-amber { color: #d97706; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+    .qa-blue { color: #0f766e; background: linear-gradient(135deg, #effaf8, #d5f0ec); }
+    .qa-violet { color: #1a7f8c; background: linear-gradient(135deg, #f1faf9, #e6f5f3); }
+    .qa-amber { color: #0d9488; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
     .qa-teal { color: #0d9488; background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
 
     .qa-text {
@@ -686,7 +732,7 @@ interface PopularDestination {
       transition: color 0.2s ease, transform 0.2s ease;
     }
 
-    .quick-action:hover .qa-arrow { color: #2563eb; transform: translateX(2px); }
+    .quick-action:hover .qa-arrow { color: #0f766e; transform: translateX(2px); }
 
     /* Featured (next) trip spans two columns with a side image */
     .trip-card.is-featured {
@@ -764,7 +810,7 @@ interface PopularDestination {
     .trip-card:hover {
       transform: translateY(-4px);
       border-color: #d6e0f5;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(37, 99, 235, 0.35);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(15, 118, 110, 0.35);
     }
 
     .trip-card-image {
@@ -807,12 +853,12 @@ interface PopularDestination {
 
     .status-planning {
       background: #fef3c7;
-      color: #d97706;
+      color: #0d9488;
     }
 
     .status-confirmed {
-      background: #e0f2fe;
-      color: #0284c7;
+      background: #e0f5f2;
+      color: #0f766e;
     }
 
     .trip-card-content {
@@ -841,10 +887,10 @@ interface PopularDestination {
       gap: 0.4rem;
       margin-bottom: 1rem;
       padding: 0.55rem 0.65rem;
-      border: 1px solid #bfdbfe;
+      border: 1px solid #bfe6e0;
       border-radius: 9px;
-      color: #1d4ed8;
-      background: #eff6ff;
+      color: #115e59;
+      background: #effaf8;
       font-size: 0.72rem;
       font-weight: 800;
     }
@@ -855,7 +901,7 @@ interface PopularDestination {
 
     .trip-countdown.starts-soon {
       border-color: #fde68a;
-      color: #b45309;
+      color: #0f766e;
       background: #fffbeb;
     }
 
@@ -866,9 +912,9 @@ interface PopularDestination {
     }
 
     .trip-countdown.in-progress {
-      border-color: #c4b5fd;
-      color: #6d28d9;
-      background: #f5f3ff;
+      border-color: #99d8cf;
+      color: #115e6b;
+      background: #f1faf9;
     }
 
     .budget-progress-block {
@@ -887,7 +933,7 @@ interface PopularDestination {
 
     .progress-percent {
       font-weight: 700;
-      color: #2563eb;
+      color: #0f766e;
     }
 
     .progress-bar-track {
@@ -900,7 +946,7 @@ interface PopularDestination {
 
     .progress-bar-fill {
       height: 100%;
-      background: #2563eb;
+      background: #0f766e;
       border-radius: 4px;
       transition: width 0.3s ease;
     }
@@ -919,20 +965,20 @@ interface PopularDestination {
     .btn-view-trip {
       width: 100%;
       padding: 0.65rem;
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      background: var(--tm-gradient-brand);
       color: #ffffff;
       font-size: 0.85rem;
       font-weight: 750;
       border: none;
       border-radius: 12px;
       cursor: pointer;
-      box-shadow: 0 10px 20px -12px rgba(37, 99, 235, 0.8);
+      box-shadow: 0 10px 20px -12px rgba(15, 118, 110, 0.8);
       transition: filter 0.2s ease, box-shadow 0.2s ease;
     }
 
     .btn-view-trip:hover {
       filter: brightness(1.06);
-      box-shadow: 0 14px 24px -12px rgba(37, 99, 235, 0.9);
+      box-shadow: 0 14px 24px -12px rgba(15, 118, 110, 0.9);
     }
 
     /* Destinations Grid */
@@ -957,7 +1003,7 @@ interface PopularDestination {
     .dest-card:hover {
       transform: translateY(-4px);
       border-color: #d6e0f5;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(37, 99, 235, 0.35);
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 40px -20px rgba(15, 118, 110, 0.35);
     }
 
     .dest-card-image {
@@ -1026,7 +1072,7 @@ interface PopularDestination {
       width: 100%;
       padding: 0.65rem;
       background: #f5f8ff;
-      color: #2563eb;
+      color: #0f766e;
       border: 1px solid #dbe5ff;
       font-size: 0.85rem;
       font-weight: 750;
@@ -1037,10 +1083,10 @@ interface PopularDestination {
 
     .btn-plan-dest:hover,
     .dest-card:hover .btn-plan-dest {
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      background: var(--tm-gradient-brand);
       border-color: transparent;
       color: #ffffff;
-      box-shadow: 0 10px 20px -10px rgba(37, 99, 235, 0.7);
+      box-shadow: 0 10px 20px -10px rgba(15, 118, 110, 0.7);
     }
 
     /* Modal Styling */
@@ -1074,14 +1120,14 @@ interface PopularDestination {
       border: 1px solid #cbd5e1; border-radius: 8px;
       font-family: inherit; font-size: 0.9rem; outline: none;
     }
-    .form-control:focus { border-color: #2563eb; }
+    .form-control:focus { border-color: #0f766e; }
 
     .form-row { display: flex; gap: 1rem; }
     .half { flex: 1; }
 
     .modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
     .btn-cancel { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    .btn-submit { background: #2563eb; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn-submit { background: #0f766e; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
     @media (max-width: 1024px) {
       .trips-grid, .destinations-grid, .quick-actions {
@@ -1112,6 +1158,7 @@ interface PopularDestination {
 
 @include mobile.panels;
 @include mobileHome.home;
+@include mobileHome.home-waves;
 
 @media(max-width:760px) {
  .home-page { width:100%; min-width:0; }
@@ -1137,6 +1184,28 @@ export class DashboardComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   mobileBudget: TripDashboard | null = null;
+
+  get mobileGreeting(): string {
+    const hour = new Date().getHours();
+    return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  }
+
+  get mobileFirstName(): string {
+    return (this.authService.currentUser()?.name || 'Traveller').trim().split(/\s+/)[0];
+  }
+
+  tripLength(start: string, end: string): string {
+    const days = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1;
+    return Number.isFinite(days) && days > 0 ? `${days} day${days === 1 ? '' : 's'}` : '—';
+  }
+
+  /** The Home search pill plans a trip to whatever destination the traveller types. */
+  planSearch(term: string): void {
+    const destination = (term || '').trim();
+    if (!destination) return;
+    this.createTripForm.patchValue({ name: `${destination} Trip`, destination });
+    this.openCreateModal();
+  }
 
   openMobileTrip(tab: string): void {
     const trip = this.upcomingTrips[0];

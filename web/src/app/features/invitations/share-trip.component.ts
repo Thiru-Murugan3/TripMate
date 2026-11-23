@@ -223,7 +223,7 @@ import { TripService } from '../../core/services/trip.service';
     .page-shell { width: min(1120px, 100%); margin: 0 auto; }
     .page-header { margin-bottom: 1.5rem; }
     .back-link { color: #64748b; text-decoration: none; font-weight: 700; font-size: .85rem; }
-    .eyebrow, .section-kicker { color: #2563eb; font-size: .72rem; font-weight: 800; letter-spacing: .12em; margin: .75rem 0 .25rem; }
+    .eyebrow, .section-kicker { color: #0f766e; font-size: .72rem; font-weight: 800; letter-spacing: .12em; margin: .75rem 0 .25rem; }
     h1 { margin: 0; color: #0f172a; font-size: clamp(1.8rem, 4vw, 2.5rem); }
     h2 { margin: 0; color: #0f172a; }
     .subtitle { max-width: 700px; color: #64748b; line-height: 1.6; margin: .6rem 0 0; }
@@ -232,12 +232,12 @@ import { TripService } from '../../core/services/trip.service';
     .invite-card, .pending-card { padding: 1.35rem; }
     .state-card { min-height: 220px; display: grid; place-items: center; text-align: center; padding: 2rem; color: #64748b; }
     .state-card.error { color: #991b1b; border-color: #fecaca; background: #fffafa; }
-    .primary-link { color: #2563eb; font-weight: 800; text-decoration: none; }
+    .primary-link { color: #0f766e; font-weight: 800; text-decoration: none; }
     .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
     form { display: grid; gap: 1rem; }
     .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .65rem; }
     .method-btn { display: grid; justify-items: start; gap: .25rem; padding: .85rem; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; color: #475569; cursor: pointer; text-align: left; }
-    .method-btn.active { border-color: #60a5fa; background: #eff6ff; color: #1d4ed8; }
+    .method-btn.active { border-color: #f6d27a; background: #effaf8; color: #115e59; }
     .method-btn .material-symbols-outlined { font-size: 1.35rem; }
     .method-btn small { color: #94a3b8; line-height: 1.3; }
     .form-group { display: grid; gap: .45rem; }
@@ -246,7 +246,7 @@ import { TripService } from '../../core/services/trip.service';
     .form-group small, .created-link small { color: #64748b; line-height: 1.4; }
     .info-box { display: flex; gap: .75rem; padding: .9rem; border-radius: 12px; background: #f8fafc; color: #475569; }
     .info-box p { margin: .2rem 0 0; font-size: .82rem; line-height: 1.45; }
-    .primary-btn { min-height: 46px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; font-weight: 800; cursor: pointer; }
+    .primary-btn { min-height: 46px; border: 0; border-radius: 10px; background: #0f766e; color: #fff; font-weight: 800; cursor: pointer; }
     .primary-btn:disabled { opacity: .55; cursor: not-allowed; }
     .created-link { display: grid; gap: .65rem; margin-top: 1rem; padding: 1rem; border: 1px solid #bbf7d0; border-radius: 12px; background: #f0fdf4; }
     .success-label { display: block; color: #15803d; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
@@ -254,17 +254,17 @@ import { TripService } from '../../core/services/trip.service';
     .copy-row input { min-width: 0; flex: 1; background: #fff; }
     .copy-row button, .text-btn, .danger-text-btn { border: 0; background: transparent; font: inherit; font-weight: 800; cursor: pointer; }
     .copy-row button { padding: 0 .9rem; border-radius: 9px; background: #166534; color: #fff; }
-    .text-btn { color: #2563eb; }
+    .text-btn { color: #0f766e; }
     .danger-text-btn { color: #dc2626; white-space: nowrap; }
     .invitation-list { display: grid; gap: .65rem; }
     .invitation-row { display: flex; align-items: center; gap: .75rem; padding: .8rem; border: 1px solid #e2e8f0; border-radius: 12px; }
-    .invite-icon { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; border-radius: 10px; background: #eff6ff; color: #2563eb; }
+    .invite-icon { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; border-radius: 10px; background: #effaf8; color: #0f766e; }
     .invite-main { min-width: 0; flex: 1; }
     .invite-topline { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
     .invite-topline strong { color: #0f172a; overflow-wrap: anywhere; }
     .invite-main p { margin: .3rem 0 0; color: #64748b; font-size: .78rem; }
     .status-pill { padding: .2rem .45rem; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: .65rem; font-weight: 900; }
-    .status-pill[data-status="PENDING"] { background: #fff7ed; color: #c2410c; }
+    .status-pill[data-status="PENDING"] { background: #effaf8; color: #0f766e; }
     .status-pill[data-status="ACCEPTED"] { background: #ecfdf5; color: #047857; }
     .status-pill[data-status="REJECTED"], .status-pill[data-status="CANCELLED"] { background: #fef2f2; color: #b91c1c; }
     .empty-state, .inline-state { min-height: 180px; display: grid; place-items: center; align-content: center; gap: .35rem; text-align: center; color: #64748b; }
@@ -272,7 +272,7 @@ import { TripService } from '../../core/services/trip.service';
     .alert { padding: .75rem; border-radius: 10px; font-size: .85rem; }
     .error-alert { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
     .success-alert { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
-    .spinner { width: 30px; height: 30px; border: 3px solid #dbeafe; border-top-color: #2563eb; border-radius: 50%; animation: spin .8s linear infinite; }
+    .spinner { width: 30px; height: 30px; border: 3px solid #d5f0ec; border-top-color: #0f766e; border-radius: 50%; animation: spin .8s linear infinite; }
     .spinner.small { width: 20px; height: 20px; border-width: 2px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     @media (max-width: 850px) { .content-grid { grid-template-columns: 1fr; } }

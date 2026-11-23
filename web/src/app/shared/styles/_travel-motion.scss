@@ -1,0 +1,92 @@
+// App-wide travel motion for phones.
+// Everything is scoped to the routed page (.main-content) so component unit tests and
+// desktop layouts are untouched, and it all switches off for reduced motion.
+// Entrances use the individual `translate` property and a `backwards` fill, so they never
+// override a component's own `transform` or opacity once they finish.
+
+$ease-out: cubic-bezier(.2, .8, .2, 1);
+
+@keyframes tm-rise { from { opacity: 0; translate: 0 12px; } }
+@keyframes tm-fade { from { opacity: 0; } }
+@keyframes tm-pop { from { opacity: 0; scale: .94; } }
+@keyframes tm-vt-out { to { opacity: 0; translate: 0 -10px; scale: .985; } }
+@keyframes tm-vt-in { from { opacity: 0; translate: 0 22px; } }
+@keyframes tm-dash { to { stroke-dashoffset: -28; } }
+@keyframes tm-float { 50% { translate: 0 -5px; } }
+@keyframes tm-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+
+@keyframes tm-waves { to { translate: -50% 0; } }
+@keyframes tm-sheen { 0%, 70% { translate: -120% 0; } 100% { translate: 220% 0; } }
+
+// Reusable motifs (opt-in classes)
+.tm-route-line { stroke-dasharray: 6 8; animation: tm-dash 1.6s linear infinite; }
+.tm-float { animation: tm-float 3.2s ease-in-out infinite; }
+
+// A tileable strip of three soft wave lines (400px wide so it loops seamlessly).
+$wave-strip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='120' fill='none'%3E%3Cpath d='M0 40Q50 20 100 40T200 40T300 40T400 40' stroke='%230f766e' stroke-opacity='.09' stroke-width='2'/%3E%3Cpath d='M0 70Q50 52 100 70T200 70T300 70T400 70' stroke='%2314b8a6' stroke-opacity='.10' stroke-width='2'/%3E%3Cpath d='M0 100Q50 84 100 100T200 100T300 100T400 100' stroke='%23f2c14e' stroke-opacity='.16' stroke-width='2' stroke-dasharray='6 8'/%3E%3C/svg%3E");
+
+@media (max-width: 760px) {
+  // Sea-mist page with gentle wave lines drifting across the top of every screen.
+  .has-app-shell .main-content {
+    position: relative; isolation: isolate; overflow-x: clip;
+    background: radial-gradient(120% 40% at 100% 0%, rgba(20, 184, 166, .10), transparent 70%), var(--tm-page-bg, #f2fbfa) !important;
+  }
+  .has-app-shell .main-content::before {
+    content: ""; position: absolute; z-index: -1; top: 0; left: 0; width: 200%; height: 220px;
+    background: $wave-strip 0 0 / 400px 120px repeat-x, $wave-strip 200px 70px / 400px 120px repeat-x;
+    opacity: .9; pointer-events: none;
+  }
+
+  // Page transitions: the bars stay put while the page slides.
+  app-mobile-navigation .mobile-navigation { view-transition-name: tm-tabbar; }
+  app-navbar .navbar { view-transition-name: tm-topbar; }
+}
+
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) { animation: tm-vt-out .22s cubic-bezier(.4, 0, 1, 1) both; }
+  ::view-transition-new(root) { animation: tm-vt-in .44s $ease-out both; }
+  ::view-transition-group(tm-tabbar), ::view-transition-group(tm-topbar) { animation: none; }
+
+  // The waves drift slowly (GPU-friendly translate on one layer).
+  .has-app-shell .main-content::before { animation: tm-waves 26s linear infinite; }
+
+  // A light sheen sweeps across primary buttons every few seconds.
+  .main-content :is(.btn.primary, .btn-primary, .create-button, .mobile-hero button, .view-button, .place-select:has(input:checked)) { position: relative; overflow: hidden; }
+  .main-content :is(.btn.primary, .btn-primary, .create-button, .mobile-hero button, .view-button)::after {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: 45%; pointer-events: none;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, .35), transparent);
+    animation: tm-sheen 4.5s ease-in-out infinite;
+  }
+
+  // Entrance choreography for whichever page just opened.
+  // Only the page's top-level blocks move, all starting at once (no delay), so offsets never
+  // stack through nested sections and a tap is never aimed at a button that is about to shift.
+  // Cards and tiles inside them fade in one after another without moving.
+  .main-content > :not(router-outlet) > * > :is(section, article, header, nav, div) {
+    animation: tm-rise .45s $ease-out backwards;
+  }
+  .main-content > :not(router-outlet) :is(article, .card, .stat, .trip-card, .booking-card, .expense-card) {
+    animation: tm-fade .5s ease-out backwards;
+  }
+  @for $i from 1 through 8 {
+    .main-content > :not(router-outlet) :is(article, .card, .stat, .trip-card, .booking-card, .expense-card):nth-child(#{$i}) {
+      animation-delay: #{60 + ($i - 1) * 70}ms;
+    }
+  }
+
+  // Tactile press feedback that composes with any existing transform.
+  .main-content :is(button, a, [role='button'], [role='tab'], .card, .trip-card, label):not(:disabled) {
+    transition-property: scale, background-color, color, border-color, box-shadow, opacity;
+    transition-duration: .16s;
+  }
+  .main-content :is(button, a, [role='button'], [role='tab'], .trip-card):not(:disabled):active { scale: .97; }
+  .main-content :is(.card, article):active { scale: .99; }
+
+  // Shimmer for loading placeholders that use the shared spinner card.
+  .main-content .state-card .spinner + h2 {
+    background: linear-gradient(90deg, #0b3c49 0%, #0b3c49 40%, #f2c14e 50%, #0b3c49 60%, #0b3c49 100%) 0 0 / 200% 100%;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    animation: tm-shimmer 2.2s linear infinite;
+  }
+}
+

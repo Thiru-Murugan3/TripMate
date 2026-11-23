@@ -1,38 +1,104 @@
+@use '../../shared/styles/ocean-waves' as ow;
+// Mobile Home, tropical style: a light hero with a photo bleeding in from the right and a
+// plane flying over it, a script greeting, a search pill, colourful round categories,
+// a popular-destinations rail and a next-trip banner with a paper-plane doodle.
+$ink: #0b3c49;
+$teal: #0f766e;
+$turq: #14b8a6;
+$gold: #f2c14e;
+$muted: #4f6b70;
+$line: #e3f1ef;
+$script: var(--tm-script, 'Dancing Script', cursive);
+$ease: cubic-bezier(.2, .8, .2, 1);
+$card: 0 1px 2px rgba(6, 40, 48, .04), 0 18px 34px -24px rgba(6, 40, 48, .45);
+
 @mixin home {
+  @keyframes tp-fly-in { from { opacity: 0; translate: -60px 26px; rotate: 6deg; } }
+  @keyframes tp-hover { 50% { translate: 0 -7px; rotate: -2deg; } }
+  @keyframes tp-puff { 0% { opacity: .9; scale: .6; } 100% { opacity: 0; scale: 1.6; translate: -18px 4px; } }
+  @keyframes tp-kenburns { from { scale: 1.04; } to { scale: 1.14; translate: -3% 0; } }
+  @keyframes tp-doodle { to { stroke-dashoffset: -24; } }
+  @keyframes tp-pop { from { opacity: 0; scale: .6; } }
+
   .mobile-home { display:none; }
   @media(max-width:760px) {
     .hero-section, .content-wrapper { display:none; }
     .home-page { min-height:0; padding-bottom:12px; }
-    .mobile-home { display:flex; flex-direction:column; gap:20px; padding:12px 20px 20px; min-width:0; }
-    .mobile-welcome span { font-size:13px; color:#64748b; }
-    .mobile-welcome h1 { margin:4px 0 0; font-size:22px; line-height:1.25; letter-spacing:-.04em; font-weight:800; }
-    .mobile-hero { min-height:160px; border-radius:16px; background-position:center; background-size:cover; padding:20px; color:white; display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
-    .mobile-hero h2 { font-size:22px; line-height:1.25; letter-spacing:-.025em; margin:0; max-width:250px; }
-    .mobile-hero button { min-height:44px; background:#2563eb; color:#fff; border:0; border-radius:8px; padding:10px 16px; font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
-    .mobile-next-trip { padding:16px; border-radius:16px; background:#fff; box-shadow:0 4px 16px #2563eb08; min-width:0; }
-    .mobile-next-trip h2,.mobile-quick h2,.mobile-destinations h2 { font-size:15px; margin:0; font-weight:750; }
-    .mobile-card-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
-    .mobile-card-heading>span { border-radius:6px; background:#f0fdfa; padding:4px 8px; color:#0f766e; font-size:10px; font-weight:700; }
-    .mobile-trip-link { display:flex; align-items:center; gap:12px; background:transparent; border:0; text-align:left; padding:16px 0; width:100%; color:#0f172a; cursor:pointer; font:inherit; }
-    .mobile-trip-link img { flex-shrink:0; border-radius:10px; object-fit:cover; }
-    .mobile-trip-link>div { display:grid; gap:4px; flex:1; min-width:0; }
-    .mobile-trip-link strong { font-size:16px; overflow-wrap:anywhere; }
-    .mobile-trip-link span,.mobile-trip-link small { color:#64748b; font-size:11px; }
-    .mobile-trip-budget { display:grid; gap:6px; font-size:12px; }
-    .mobile-trip-budget>div { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; color:#64748b; }
-    .mobile-trip-budget strong { color:#2563eb; }
-    progress { width:100%; height:6px; border:0; border-radius:4px; overflow:hidden; accent-color:#2563eb; }
-    progress::-webkit-progress-bar { background:#f1f5f9; } progress::-webkit-progress-value { background:#2563eb; }
-    .mobile-quick h2 { color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:12px; }
-    .mobile-quick>div { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
-    .mobile-quick button { display:flex; flex-direction:column; align-items:center; gap:7px; min-width:0; padding:0; border:0; background:transparent; color:#0f172a; font:inherit; font-size:10px; font-weight:600; cursor:pointer; }
-    .mobile-quick button>span { display:grid; place-items:center; width:48px; height:48px; border-radius:12px; background:#eff6ff; }
-    .mobile-quick button:nth-child(2)>span { background:#f0fdfa; } .mobile-quick button:nth-child(3)>span { background:#fef3c7; }
-    .mobile-destination-scroll { display:flex; gap:12px; overflow-x:auto; padding:12px 0 4px; scroll-snap-type:x proximity; }
-    .mobile-destination-scroll button { flex:0 0 160px; display:flex; flex-direction:column; align-items:flex-start; text-align:left; padding:0 0 12px; border:0; background:#fff; border-radius:12px; overflow:hidden; font:inherit; cursor:pointer; scroll-snap-align:start; }
-    .mobile-destination-scroll img { width:160px; height:100px; object-fit:cover; }
-    .mobile-destination-scroll strong { font-size:14px; margin:10px 12px 4px; } .mobile-destination-scroll span { font-size:11px; color:#64748b; margin:0 12px; }
-    .mobile-next-trip p { font-size:13px; line-height:1.6; color:#64748b; }
-    .mobile-text-link { min-height:44px; padding:0; border:0; background:transparent; color:#2563eb; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+    .mobile-home { position:relative; display:flex; flex-direction:column; gap:20px; padding:4px 20px 24px; min-width:0; overflow-x:clip; }
+
+    /* Hero */
+    .tp-hero { position:relative; isolation:isolate; min-height:300px; padding:18px 0 0; }
+    .tp-hero-photo { position:absolute; z-index:-1; top:-24px; right:-20px; width:78%; height:330px; background-size:cover; background-position:center;
+      -webkit-mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.55) 30%, #000 60%), linear-gradient(180deg, #000 70%, transparent);
+      -webkit-mask-composite:source-in; mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.55) 30%, #000 60%), linear-gradient(180deg, #000 70%, transparent); mask-composite:intersect;
+      border-bottom-left-radius:60px; animation:tp-kenburns 26s ease-in-out infinite alternate; }
+    .tp-plane { position:absolute; z-index:1; top:236px; right:-8px; width:50%; max-width:210px; overflow:visible; filter:drop-shadow(0 18px 18px rgba(6,40,48,.28));
+      animation:tp-fly-in 1.4s $ease both, tp-hover 5s ease-in-out 1.4s infinite; }
+    .tp-trail circle { fill:#fff; transform-box:fill-box; transform-origin:center; animation:tp-puff 2.4s ease-out infinite; }
+    .tp-trail circle:nth-child(2) { animation-delay:.6s; } .tp-trail circle:nth-child(3) { animation-delay:1.2s; }
+    .tp-script { margin:0; color:$teal; font-family:$script; font-size:26px; font-weight:700; line-height:1.1; }
+    .tp-hero h1 { position:relative; z-index:2; margin:6px 0 0; color:$ink; font-size:40px; font-weight:800; line-height:1.04; letter-spacing:-.04em; }
+    .tp-hero h1 em { font-style:normal; background:linear-gradient(90deg, $teal, $turq); -webkit-background-clip:text; background-clip:text; color:transparent; }
+    .tp-sub { position:relative; z-index:2; margin:12px 0 0; color:$ink; font-size:14px; font-weight:600; line-height:1.45; opacity:.85; }
+
+    /* Search pill */
+    .tp-search { position:relative; z-index:2; display:flex; align-items:center; gap:8px; margin-top:-6px; padding:6px 6px 6px 16px; border:1px solid $line; border-radius:999px; background:#fff; box-shadow:0 18px 34px -20px rgba(6,40,48,.45); }
+    .tp-search-ico { color:$muted; font-size:22px; }
+    .tp-search input { flex:1; min-width:0; min-height:44px; border:0; outline:0; background:transparent; color:$ink; font:inherit; font-size:15px; }
+    .tp-search input::placeholder { color:#8aa3a6; }
+    .tp-search button { display:grid; place-items:center; width:46px; height:46px; flex:none; border:0; border-radius:50%; background:linear-gradient(145deg, $turq, $teal); color:#fff; cursor:pointer; box-shadow:0 10px 18px -10px rgba(15,118,110,.9); }
+    .tp-search:focus-within { border-color:#99d8cf; box-shadow:0 0 0 4px rgba(20,184,166,.15), 0 18px 34px -20px rgba(6,40,48,.45); }
+
+    /* Colourful categories */
+    .tp-cats { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; padding:16px 10px; border:1px solid $line; border-radius:24px; background:#fff; box-shadow:$card; }
+    .tp-cats button { display:flex; flex-direction:column; align-items:center; gap:8px; min-width:0; min-height:44px; padding:0; border:0; background:transparent; color:$ink; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+    .tp-cat { display:grid; place-items:center; width:50px; height:50px; border-radius:50%; color:#fff; animation:tp-pop .5s $ease backwards; }
+    .tp-cat .material-symbols-outlined { font-size:24px; }
+    .tp-cat--teal { background:linear-gradient(145deg, #2dd4bf, #0f766e); box-shadow:0 10px 18px -10px rgba(15,118,110,.9); }
+    .tp-cat--amber { background:linear-gradient(145deg, #fcd34d, #f59e0b); box-shadow:0 10px 18px -10px rgba(245,158,11,.9); animation-delay:.08s; }
+    .tp-cat--blue { background:linear-gradient(145deg, #60a5fa, #2563eb); box-shadow:0 10px 18px -10px rgba(37,99,235,.9); animation-delay:.16s; }
+    .tp-cat--purple { background:linear-gradient(145deg, #c084fc, #7c3aed); box-shadow:0 10px 18px -10px rgba(124,58,237,.9); animation-delay:.24s; }
+
+    /* Popular destinations */
+    .tp-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .tp-heading h2 { margin:0; color:$ink; font-size:18px; font-weight:800; letter-spacing:-.02em; }
+    .tp-heading > span { color:$teal; font-size:12.5px; font-weight:700; }
+    .tp-rail { display:flex; gap:12px; overflow-x:auto; margin:0 -20px; padding:14px 20px 8px; scroll-snap-type:x mandatory; scroll-padding-inline:20px; scrollbar-width:none; }
+    .tp-rail::-webkit-scrollbar { display:none; }
+    .tp-dest { position:relative; isolation:isolate; flex:0 0 42%; height:200px; display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; padding:12px; overflow:hidden; border:0; border-radius:20px; color:#fff; text-align:left; font:inherit; cursor:pointer; scroll-snap-align:start; box-shadow:0 18px 30px -20px rgba(6,40,48,.8); }
+    .tp-dest img { position:absolute; inset:0; z-index:-1; width:100%; height:100%; object-fit:cover; transition:scale .6s $ease; }
+    .tp-dest::after { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg, transparent 40%, rgba(6,40,48,.85)); }
+    .tp-dest:active img { scale:1.08; }
+    .tp-dest-plan { position:absolute; top:10px; right:10px; display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.88); color:$teal; }
+    .tp-dest-plan .material-symbols-outlined { font-size:20px; }
+    .tp-dest strong { font-size:16px; font-weight:800; letter-spacing:-.01em; }
+    .tp-dest-tags { font-size:11px; color:rgba(255,255,255,.85); }
+    .tp-dest-days { margin-top:6px; padding:3px 8px; border-radius:999px; background:rgba(242,193,78,.95); color:$ink; font-size:10.5px; font-weight:800; }
+
+    /* Next-trip banner */
+    .tp-banner { position:relative; overflow:hidden; display:grid; justify-items:start; gap:6px; padding:20px; border-radius:24px; background-size:cover; background-position:center; color:#fff; box-shadow:0 24px 40px -26px rgba(6,40,48,.9); }
+    .tp-banner > * { position:relative; z-index:1; }
+    .tp-banner-kicker { padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.25); font-size:10.5px; font-weight:700; letter-spacing:.04em; }
+    .tp-banner h2 { margin:4px 0 0; max-width:75%; font-size:22px; font-weight:800; line-height:1.15; letter-spacing:-.02em; }
+    .tp-banner p { margin:0; max-width:75%; color:rgba(255,255,255,.85); font-size:12.5px; line-height:1.5; }
+    .tp-banner-budget { display:grid; gap:4px; width:60%; margin-top:4px; }
+    .tp-banner-budget small { color:rgba(255,255,255,.8); font-size:10.5px; }
+    .tp-banner progress { width:100%; height:5px; border:0; border-radius:999px; overflow:hidden; accent-color:$gold; }
+    .tp-banner progress::-webkit-progress-bar { background:rgba(255,255,255,.2); border-radius:999px; }
+    .tp-banner progress::-webkit-progress-value { background:$gold; border-radius:999px; }
+    .tp-banner progress::-moz-progress-bar { background:$gold; border-radius:999px; }
+    .tp-banner button { margin-top:8px; min-height:42px; padding:0 18px; border:0; border-radius:999px; background:#fff; color:$ink; font:inherit; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 10px 20px -12px rgba(0,0,0,.6); }
+    .tp-doodle { position:absolute; z-index:0; right:14px; top:14px; width:120px; height:60px; overflow:visible; }
+    .tp-doodle path:first-child { fill:none; stroke:rgba(255,255,255,.75); stroke-width:1.6; stroke-dasharray:4 5; animation:tp-doodle 1.4s linear infinite; }
+    .tp-doodle-plane { fill:#fff; }
+
+    @media (prefers-reduced-motion: reduce) { .tp-hero-photo, .tp-plane, .tp-trail circle, .tp-doodle path, .tp-cat { animation:none; } }
+  }
+}
+
+// Gentle waves along the base of the next-trip banner.
+@mixin home-waves {
+  @media(max-width:760px) {
+    .tp-banner { @include ow.ocean-waves(46px, 20s); }
   }
 }

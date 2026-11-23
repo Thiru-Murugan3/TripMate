@@ -1156,8 +1156,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       color: #ffffff;
       border: none;
       background:
-        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 64, 175, 0.88)),
-        radial-gradient(circle at top right, rgba(14, 165, 233, 0.4), transparent 45%);
+        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(19, 78, 74, 0.88)),
+        radial-gradient(circle at top right, rgba(242, 193, 78, 0.4), transparent 45%);
       box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
       margin-bottom: 1.5rem;
       border-radius: 20px;
@@ -1291,8 +1291,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
     }
 
     .tab-btn.active {
-      color: #1d4ed8;
-      background: #eff6ff;
+      color: #115e59;
+      background: #effaf8;
     }
 
     .tab-count,
@@ -1335,8 +1335,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       height: 38px;
       margin-bottom: 0.25rem;
       border-radius: 11px;
-      color: #2563eb;
-      background: #eff6ff;
+      color: #0f766e;
+      background: #effaf8;
     }
 
     .summary-icon .material-symbols-outlined {
@@ -1392,7 +1392,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
     }
 
     .utilization-value {
-      color: #2563eb;
+      color: #0f766e;
       font-size: 1.45rem;
     }
 
@@ -1405,7 +1405,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 
     .budget-fill {
       height: 100%;
-      background: linear-gradient(90deg, #2563eb, #06b6d4);
+      background: linear-gradient(90deg, #0f766e, #f6d27a);
       border-radius: inherit;
       transition: width 0.25s ease;
     }
@@ -1445,7 +1445,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 
     .text-button {
       padding: 0;
-      color: #2563eb;
+      color: #0f766e;
       background: none;
       border: 0;
       font-weight: 750;
@@ -1463,7 +1463,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 
     .panel-empty .material-symbols-outlined {
       font-size: 2.5rem;
-      color: #93c5fd;
+      color: #99d8cf;
     }
 
     .panel-empty h3 {
@@ -1503,8 +1503,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       min-width: 48px;
       height: 52px;
       border-radius: 11px;
-      color: #1d4ed8;
-      background: #eff6ff;
+      color: #115e59;
+      background: #effaf8;
     }
 
     .activity-date strong {
@@ -1555,8 +1555,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       height: 42px;
       min-width: 42px;
       border-radius: 11px;
-      color: #2563eb;
-      background: #eff6ff;
+      color: #0f766e;
+      background: #effaf8;
     }
 
     .booking-status {
@@ -1564,8 +1564,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       align-items: center;
       padding: 0.28rem 0.55rem;
       border-radius: 999px;
-      color: #0369a1;
-      background: #e0f2fe;
+      color: #115e59;
+      background: #e0f5f2;
       font-size: 0.66rem;
       font-weight: 850;
     }
@@ -1599,7 +1599,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
     }
 
     .info-card > .material-symbols-outlined {
-      color: #2563eb;
+      color: #0f766e;
     }
 
     .info-card > div {
@@ -1774,7 +1774,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       gap: 0.45rem;
       margin-top: 0.75rem;
       padding: 0.75rem;
-      color: #92400e;
+      color: #115e59;
       background: #fffbeb;
       border-radius: 9px;
       font-size: 0.78rem;
@@ -1796,7 +1796,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 
     .empty-icon {
       font-size: 3rem;
-      color: #60a5fa;
+      color: #f6d27a;
     }
 
     .modal-backdrop {
@@ -1851,7 +1851,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 
     .edit-note .material-symbols-outlined {
       font-size: 1rem;
-      color: #2563eb;
+      color: #0f766e;
     }
 
     .close-btn {
@@ -1922,7 +1922,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 
     .btn-primary {
       color: #ffffff;
-      background: #2563eb;
+      background: #0f766e;
     }
 
     .btn-light {
@@ -1964,8 +1964,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       gap: 1rem;
       padding: 1rem 1.15rem;
       margin-bottom: 1rem;
-      border-color: #bfdbfe;
-      background: #eff6ff;
+      border-color: #bfe6e0;
+      background: #effaf8;
     }
 
     .rebook-copy {
@@ -1975,7 +1975,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
     }
 
     .rebook-copy > .material-symbols-outlined {
-      color: #2563eb;
+      color: #0f766e;
     }
 
     .rebook-copy strong {
@@ -2026,8 +2026,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       width: 42px;
       height: 42px;
       border-radius: 50%;
-      color: #1d4ed8;
-      background: #dbeafe;
+      color: #115e59;
+      background: #d5f0ec;
       font-weight: 850;
     }
 
@@ -2062,13 +2062,13 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
     }
 
     .owner-pill {
-      color: #7c3aed;
-      background: #ede9fe;
+      color: #1a7f8c;
+      background: #e6f5f3;
     }
 
     .role-pill {
-      color: #1d4ed8;
-      background: #dbeafe;
+      color: #115e59;
+      background: #d5f0ec;
     }
 
     .compact-select {
@@ -2080,8 +2080,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       width: 34px;
       height: 34px;
       margin: 0 auto 1rem;
-      border: 3px solid #dbeafe;
-      border-top-color: #2563eb;
+      border: 3px solid #d5f0ec;
+      border-top-color: #0f766e;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
     }
@@ -2138,13 +2138,13 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
     }
 
     .status-chip[data-status='PLANNED'] {
-      color: #b45309;
+      color: #0f766e;
       background: #fef3c7;
     }
 
     .status-chip[data-status='ONGOING'] {
-      color: #1d4ed8;
-      background: #dbeafe;
+      color: #115e59;
+      background: #d5f0ec;
     }
 
     .status-chip[data-status='COMPLETED'],
@@ -2169,7 +2169,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
     }
 
     .trip-meta-row .material-symbols-outlined {
-      color: #2563eb;
+      color: #0f766e;
       font-size: 1rem;
     }
 
@@ -2208,7 +2208,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
     }
 
     .dashboard-tabs .tab-btn.active {
-      color: #2563eb;
+      color: #0f766e;
       background: transparent;
     }
 
@@ -2219,16 +2219,16 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       bottom: 0;
       left: 0.9rem;
       height: 2px;
-      background: #2563eb;
+      background: #0f766e;
       border-radius: 999px;
     }
 
     .booking-import-modal { max-width: 560px; }
-    .ocr-privacy-note { display:flex; gap:.55rem; padding:.75rem; margin-bottom:1rem; border-radius:10px; color:#1e40af; background:#eff6ff; font-size:.74rem; line-height:1.45; }
+    .ocr-privacy-note { display:flex; gap:.55rem; padding:.75rem; margin-bottom:1rem; border-radius:10px; color:#134e4a; background:#effaf8; font-size:.74rem; line-height:1.45; }
     .ocr-privacy-note .material-symbols-outlined { font-size:1.05rem; }
-    .ocr-file-picker { display:flex; flex-direction:column; align-items:center; gap:.35rem; padding:1.5rem; border:2px dashed #bfdbfe; border-radius:12px; background:#f8fbff; text-align:center; cursor:pointer; }
+    .ocr-file-picker { display:flex; flex-direction:column; align-items:center; gap:.35rem; padding:1.5rem; border:2px dashed #bfe6e0; border-radius:12px; background:#f8fbff; text-align:center; cursor:pointer; }
     .ocr-file-picker input { position:absolute; width:1px; height:1px; opacity:0; }
-    .ocr-file-picker > .material-symbols-outlined { color:#2563eb; font-size:2rem; }
+    .ocr-file-picker > .material-symbols-outlined { color:#0f766e; font-size:2rem; }
     .ocr-file-picker strong { color:#1e293b; font-size:.82rem; }
     .ocr-file-picker small { color:#64748b; font-size:.68rem; }
 
@@ -2350,8 +2350,8 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       .trip-meta-row > span:nth-child(n+3),.trip-header-description { display:none; }
       .trip-header.mobile-expanded .trip-meta-row > span:nth-child(n+3) { display:inline-flex; }
       .trip-header.mobile-expanded .trip-header-description { display:block; }
-      .mobile-trips-back { display:inline-flex; align-items:center; min-height:44px; color:#2563eb; text-decoration:none; font-size:13px; font-weight:650; }
-      .trip-header { padding:14px; border-radius:16px; box-shadow:0 4px 16px #2563eb08; border:0; background:white; }
+      .mobile-trips-back { display:inline-flex; align-items:center; min-height:44px; color:#0f766e; text-decoration:none; font-size:13px; font-weight:650; }
+      .trip-header { padding:14px; border-radius:16px; box-shadow:0 4px 16px #0f766e08; border:0; background:white; }
       .title-row h1 { font-size:20px; line-height:1.3; letter-spacing:-.03em; }
       .trip-meta-row { gap:8px; font-size:11px; }
       .trip-header-description { font-size:12px; }
@@ -2360,7 +2360,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       .trip-header-actions.mobile-expanded { display:flex; }
       .dashboard-tabs { padding:4px; gap:4px; box-shadow:none; border-radius:12px; }
       .dashboard-tabs .tab-btn { padding:12px; font-size:12px; border-radius:9px; }
-      .summary-card,.compact-summary-card,.budget-card,.overview-panel,.sidebar-card { background:white; border:0; box-shadow:0 4px 16px #2563eb08; border-radius:16px; }
+      .summary-card,.compact-summary-card,.budget-card,.overview-panel,.sidebar-card { background:white; border:0; box-shadow:0 4px 16px #0f766e08; border-radius:16px; }
       .compact-summary-grid { gap:10px; }
       .compact-summary-card { padding:12px; }
       .compact-summary-card strong { font-size:18px; }
@@ -2380,6 +2380,24 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
  .dashboard-tabs, .details-tabs { max-width:100%; min-width:0; }
  .compact-summary-grid, .expenses-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
  .weather-grid, .weather-forecast { min-width:0; }
+}
+
+/* Mobile navy + saffron polish: a calm header card and pill tabs that scroll with a soft edge. */
+@media(max-width:760px) {
+ .mobile-trips-back { color:#0b3c49; font-weight:700; }
+ .mobile-trip-more { border-color:#d9ecea; border-radius:12px; color:#0b3c49; font-weight:600; }
+ .trip-header { border:1px solid #e3f1ef; border-radius:20px 20px 0 0; box-shadow:none; }
+ .title-row h1 { color:#0b3c49; font-weight:800; }
+ .trip-meta-row { color:#4f6b70; }
+ .trip-meta-row .material-symbols-outlined { color:#f2c14e; }
+ .dashboard-tabs { margin:0 0 16px; padding:6px; gap:4px; border:1px solid #e3f1ef; border-top:0; border-radius:0 0 20px 20px; background:#fff; box-shadow:0 16px 30px -26px rgba(6, 40, 48,.55); scrollbar-width:none;
+   -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent); }
+ .dashboard-tabs::-webkit-scrollbar { display:none; }
+ .dashboard-tabs .tab-btn { padding:10px 14px; border-radius:12px; color:#4f6b70; font-weight:600; }
+ .dashboard-tabs .tab-btn:last-child { margin-right:24px; }
+ .dashboard-tabs .tab-btn.active { color:#fff; background:#0b3c49; font-weight:700; }
+ .dashboard-tabs .tab-btn.active::after { display:none; }
+ .summary-card,.compact-summary-card,.budget-card,.overview-panel,.sidebar-card { border:1px solid #e3f1ef; box-shadow:0 1px 2px rgba(6, 40, 48,.04),0 16px 32px -26px rgba(6, 40, 48,.55); border-radius:18px; }
 }
 `]
 })

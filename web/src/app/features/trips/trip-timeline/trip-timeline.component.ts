@@ -271,7 +271,7 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
     
     .timeline-header { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1.2rem; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); }
     .timeline-headline { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-    .eyebrow { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em; color: #2563eb; text-transform: uppercase; }
+    .eyebrow { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em; color: #0f766e; text-transform: uppercase; }
     h2 { margin: 0.2rem 0 0.3rem; font-size: 1.4rem; color: #0f172a; font-weight: 800; }
     p { margin: 0; color: #64748b; font-size: 0.85rem; line-height: 1.4; }
     
@@ -282,23 +282,23 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
     .timeline-metrics { display: flex; flex-wrap: wrap; gap: 0.65rem; }
     .metric-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 9999px; background: #f1f5f9; font-size: 0.78rem; color: #475569; }
     .metric-pill strong { color: #0f172a; font-weight: 800; }
-    .icon-transport { color: #0284c7; font-size: 1.1rem; }
-    .icon-hotel { color: #9333ea; font-size: 1.1rem; }
+    .icon-transport { color: #0f766e; font-size: 1.1rem; }
+    .icon-hotel { color: #1a7f8c; font-size: 1.1rem; }
     .icon-activity { color: #059669; font-size: 1.1rem; }
-    .icon-meal { color: #d97706; font-size: 1.1rem; }
-    .alert-pill { background: #fef3c7; color: #b45309; }
+    .icon-meal { color: #0d9488; font-size: 1.1rem; }
+    .alert-pill { background: #fef3c7; color: #0f766e; }
     .alert-pill span { font-size: 1.1rem; }
 
     .timeline-toolbar { display: flex; flex-direction: column; gap: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.85rem; }
     .day-jump-scroll { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.25rem; }
     .day-pill { border: 1px solid #e2e8f0; background: #fff; padding: 0.3rem 0.65rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; color: #475569; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.2rem; }
-    .day-pill:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+    .day-pill:hover { background: #effaf8; border-color: #99d8cf; color: #115e59; }
     .dot-conflict { color: #ef4444; font-size: 1rem; line-height: 0.5; }
 
     .category-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
     .filter-chip { border: 0; background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
     .filter-chip:hover { background: #e2e8f0; }
-    .filter-chip.active { background: #2563eb; color: #fff; }
+    .filter-chip.active { background: #0f766e; color: #fff; }
 
     .timeline-empty { padding: 3rem 1.5rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
     .empty-icon { font-size: 3rem; color: #94a3b8; }
@@ -308,7 +308,7 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
     .timeline-day-block { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
     .day-banner { display: flex; align-items: center; gap: 1rem; background: #fff; padding: 0.85rem 1.25rem; border-radius: 12px; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
     .day-badge { display: flex; flex-direction: column; }
-    .day-num { font-size: 0.7rem; font-weight: 900; color: #2563eb; letter-spacing: 0.05em; }
+    .day-num { font-size: 0.7rem; font-weight: 900; color: #0f766e; letter-spacing: 0.05em; }
     .day-date { font-size: 0.82rem; font-weight: 800; color: #0f172a; white-space: nowrap; }
     .day-title-group { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
     .day-title-group h3 { margin: 0; font-size: 1.05rem; font-weight: 800; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -330,43 +330,43 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
     .timeline-card-wrapper:last-child .spine-line { background: transparent; }
 
     /* Node Color Codes */
-    .spine-node[data-color="blue"] { background: #2563eb; }
-    .spine-node[data-color="amber"] { background: #d97706; }
+    .spine-node[data-color="blue"] { background: #0f766e; }
+    .spine-node[data-color="amber"] { background: #0d9488; }
     .spine-node[data-color="rose"] { background: #e11d48; }
-    .spine-node[data-color="purple"] { background: #9333ea; }
+    .spine-node[data-color="purple"] { background: #1a7f8c; }
     .spine-node[data-color="emerald"] { background: #059669; }
-    .spine-node[data-color="indigo"] { background: #4f46e5; }
+    .spine-node[data-color="indigo"] { background: #115e6b; }
 
     /* Event Card */
     .timeline-event-card { margin-bottom: 0.85rem; padding: 0.9rem 1.1rem; border-left: 4px solid #cbd5e1; transition: transform 0.15s, box-shadow 0.15s; }
     .timeline-event-card:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06); }
-    .timeline-event-card[data-color="blue"] { border-left-color: #2563eb; }
-    .timeline-event-card[data-color="amber"] { border-left-color: #d97706; }
+    .timeline-event-card[data-color="blue"] { border-left-color: #0f766e; }
+    .timeline-event-card[data-color="amber"] { border-left-color: #0d9488; }
     .timeline-event-card[data-color="rose"] { border-left-color: #e11d48; }
-    .timeline-event-card[data-color="purple"] { border-left-color: #9333ea; }
+    .timeline-event-card[data-color="purple"] { border-left-color: #1a7f8c; }
     .timeline-event-card[data-color="emerald"] { border-left-color: #059669; }
-    .timeline-event-card[data-color="indigo"] { border-left-color: #4f46e5; }
+    .timeline-event-card[data-color="indigo"] { border-left-color: #115e6b; }
 
-    .warning-banner { display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.74rem; font-weight: 700; background: #fef3c7; color: #92400e; margin-bottom: 0.65rem; }
+    .warning-banner { display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.74rem; font-weight: 700; background: #fef3c7; color: #115e59; margin-bottom: 0.65rem; }
     .warning-banner.hard-conflict { background: #fee2e2; color: #991b1b; }
     .warning-banner span { font-size: 1rem; }
 
     .event-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
     .event-title-area { display: flex; flex-direction: column; gap: 0.15rem; }
     .event-category { font-size: 0.65rem; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; }
-    .event-category[data-color="blue"] { color: #2563eb; }
-    .event-category[data-color="amber"] { color: #d97706; }
+    .event-category[data-color="blue"] { color: #0f766e; }
+    .event-category[data-color="amber"] { color: #0d9488; }
     .event-category[data-color="rose"] { color: #e11d48; }
-    .event-category[data-color="purple"] { color: #9333ea; }
+    .event-category[data-color="purple"] { color: #1a7f8c; }
     .event-category[data-color="emerald"] { color: #059669; }
-    .event-category[data-color="indigo"] { color: #4f46e5; }
+    .event-category[data-color="indigo"] { color: #115e6b; }
 
     .event-title { margin: 0; font-size: 0.98rem; font-weight: 800; color: #0f172a; line-height: 1.3; }
     .event-subtitle { margin: 0.2rem 0 0.5rem; font-size: 0.8rem; color: #475569; }
 
     .event-status-pill { font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 9999px; background: #dcfce7; color: #166534; white-space: nowrap; }
     .event-status-pill[data-status="CANCELLED"] { background: #fee2e2; color: #991b1b; }
-    .event-status-pill[data-status="PENDING"] { background: #fef3c7; color: #92400e; }
+    .event-status-pill[data-status="PENDING"] { background: #fef3c7; color: #115e59; }
 
     .event-meta-row { display: flex; flex-wrap: wrap; gap: 0.85rem; font-size: 0.76rem; color: #64748b; margin-top: 0.4rem; }
     .meta-item { display: inline-flex; align-items: center; gap: 0.2rem; }
@@ -377,7 +377,7 @@ type FilterCategory = 'ALL' | 'TRANSPORT' | 'HOTEL' | 'ACTIVITY' | 'FOOD';
 
     .event-actions { display: flex; gap: 0.4rem; margin-top: 0.65rem; }
     .action-btn { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.32rem 0.6rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.72rem; font-weight: 700; color: #334155; cursor: pointer; transition: all 0.15s; }
-    .action-btn:hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+    .action-btn:hover { background: #effaf8; border-color: #bfe6e0; color: #115e59; }
     .action-btn span { font-size: 0.95rem; }
 
     .no-filter-items { padding: 1rem; color: #94a3b8; font-size: 0.8rem; font-style: italic; }

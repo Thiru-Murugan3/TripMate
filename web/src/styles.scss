@@ -1,39 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@use 'app/shared/styles/travel-motion';
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Dancing+Script:wght@600;700&display=swap');
 
 :root {
   --tm-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --tm-bg: #0f172a;
+  --tm-script: 'Dancing Script', 'Segoe Script', 'Brush Script MT', cursive;
+  /* Brand: Ocean teal with a sand-gold accent.
+     --tm-primary is the deep teal used behind white text (5.4:1); --tm-saffron holds the sand-gold
+     accent (name kept for compatibility), used for highlights with deep-teal text on top.
+     --tm-navy / --tm-navy-2 hold the deep-sea teals used for banners and headings. */
+  --tm-navy: #0b3c49;
+  --tm-navy-2: #115e6b;
+  --tm-saffron: #f2c14e;
+  --tm-saffron-soft: #e0f5f2;
+  --tm-bg: #0b3c49;
   --tm-card-bg: rgba(255, 255, 255, 0.96);
-  --tm-card-border: rgba(226, 232, 240, 0.8);
-  --tm-text: #0f172a;
-  --tm-text-secondary: #475569;
-  --tm-muted: #64748b;
-  --tm-primary: #3b82f6;
-  --tm-primary-hover: #2563eb;
-  --tm-primary-glow: rgba(59, 130, 246, 0.25);
-  --tm-accent: #6366f1;
-  --tm-gradient-brand: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
-  --tm-gradient-hero: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.85) 100%);
-  --tm-border: #e2e8f0;
-  --tm-border-focus: #3b82f6;
+  --tm-card-border: rgba(227, 229, 238, 0.9);
+  --tm-text: #0b3c49;
+  --tm-text-secondary: #3f5c61;
+  --tm-muted: #4f6b70;
+  --tm-primary: #0f766e;
+  --tm-primary-hover: #115e59;
+  --tm-primary-glow: rgba(15, 118, 110, 0.25);
+  --tm-accent: #115e6b;
+  --tm-gradient-brand: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+  --tm-gradient-navy: linear-gradient(135deg, #062a33 0%, #0b3c49 55%, #115e6b 100%);
+  --tm-gradient-hero: linear-gradient(135deg, rgba(4, 30, 37, 0.92) 0%, rgba(6, 40, 48, 0.85) 100%);
+  --tm-border: #d9ecea;
+  --tm-border-focus: #0f766e;
   --tm-danger: #ef4444;
   --tm-success: #10b981;
   --tm-shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
   --tm-shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
   --tm-shadow-lg: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
-  --tm-shadow-glow: 0 12px 30px -5px rgba(59, 130, 246, 0.35);
+  --tm-shadow-glow: 0 12px 30px -5px rgba(15, 118, 110, 0.32);
   --tm-radius-sm: 8px;
   --tm-radius-md: 14px;
   --tm-radius-lg: 20px;
   --tm-radius-xl: 28px;
-  --tm-page-bg: #f5f7fb;
-  --tm-ink: #0b1220;
-  --tm-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  --tm-page-bg: #f2fbfa;
+  --tm-ink: #062a33;
+  --tm-focus-ring: 0 0 0 3px rgba(242, 193, 78, 0.4);
 
   /* Legacy token names still used by some components (footer, reset password,
      India catalogue). Mapped onto the current palette so they never resolve
      to transparent/unset values. */
-  --primary: #2563eb;
+  --primary: #0f766e;
   --brand-gradient: var(--tm-gradient-brand);
   --shadow-glow: var(--tm-shadow-glow);
   --surface-card: #ffffff;
@@ -72,7 +83,7 @@ textarea {
 
 ::selection {
   color: #fff;
-  background: rgba(37, 99, 235, 0.85);
+  background: rgba(15, 118, 110, 0.85);
 }
 
 :focus-visible {
