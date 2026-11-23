@@ -51,51 +51,64 @@ interface PopularDestination {
         (reschedule)="rescheduleMissedTrip()"
         (dismiss)="dismissMissedTrip()"
       ></app-missed-trip-dialog>
-      <section class="mobile-home" aria-label="Your travel home">
-        <header class="mobile-welcome">
-          <span>{{ mobileGreeting }}</span>
-          <h1>{{ mobileFirstName }}, where to next?</h1>
+      <section class="mobile-home cine" aria-label="Your travel home">
+        <div class="cine-backdrop" aria-hidden="true" [style.background-image]="'url(' + (upcomingTrips[0]?.image || popularDestinations[0].image) + ')'"></div>
+        <header class="cine-head">
+          <span class="cine-bar" aria-hidden="true"></span>
+          <h1><span>{{ mobileGreeting }}</span><span>{{ mobileFirstName }}</span></h1>
+          <p>{{ upcomingTrips.length ? 'Your journeys and places to go next' : 'Places worth the journey' }}</p>
         </header>
 
-        <article class="pass" *ngIf="upcomingTrips[0] as next; else noMobileTrip">
-          <button type="button" class="pass-top" (click)="openMobileTrip('OVERVIEW')" [attr.aria-label]="'Open ' + next.name"
-            [style.background-image]="'linear-gradient(180deg,rgba(4, 30, 37,.1) 0%,rgba(4, 30, 37,.88) 100%),url(' + next.image + ')'">
-            <span class="pass-chips"><span class="pass-chip">{{ next.tag }}</span><span class="pass-chip pass-chip--live">{{ next.countdown }}</span></span>
-            <strong class="pass-title">{{ next.name }}</strong>
-            <span class="pass-sub">{{ next.destination }}</span>
+        <div class="cine-rail" (scroll)="onRailScroll($event)" aria-label="Your trips and destinations">
+          <button type="button" class="cine-card" *ngFor="let trip of upcomingTrips; let i = index" [attr.data-sky]="i % 3" (click)="openTrip(trip)" [attr.aria-label]="'Open ' + trip.name">
+            <span class="cine-badge">{{ initialsOf(trip.destination) }}</span>
+            <span class="cine-kicker">Your trip · {{ trip.tag }}</span>
+            <strong class="cine-title">{{ trip.name }}</strong>
+            <span class="cine-place">{{ trip.destination }}</span>
+            <span class="cine-photo" [style.background-image]="'url(' + trip.image + ')'"></span>
           </button>
-          <div class="pass-route" aria-hidden="true">
-            <div class="pass-code"><b>YOU</b><small>Home</small></div>
-            <svg class="pass-arc" viewBox="0 0 200 56" preserveAspectRatio="none">
-              <path id="tmPassArc" class="arc-base" d="M6 46 C 60 0, 140 0, 194 46" />
-              <path class="arc-live" d="M6 46 C 60 0, 140 0, 194 46" />
-              <circle cx="6" cy="46" r="3.5" class="arc-pin" /><circle cx="194" cy="46" r="3.5" class="arc-pin arc-pin--end" />
-              <g class="arc-plane"><path d="M-8 0 L7 -4.5 L4.5 0 L7 4.5 Z" />
-                <animateMotion dur="5.5s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".45 0 .25 1"><mpath href="#tmPassArc" /></animateMotion>
-              </g>
-            </svg>
-            <div class="pass-code pass-code--end"><b>{{ destinationCode(next.destination) }}</b><small>{{ next.startDate | date:'d MMM' }}</small></div>
+          <button type="button" class="cine-card" *ngFor="let destination of popularDestinations; let i = index" [attr.data-sky]="(i + upcomingTrips.length) % 3" (click)="planDestination(destination)" [attr.aria-label]="'Plan a trip to ' + destination.name">
+            <span class="cine-badge">{{ initialsOf(destination.name) }}</span>
+            <span class="cine-kicker">Discover · {{ destination.duration }}</span>
+            <strong class="cine-title">{{ destination.name }}</strong>
+            <span class="cine-place">{{ destination.tags.join(' · ') }}</span>
+            <span class="cine-photo" [style.background-image]="'url(' + destination.image + ')'"></span>
+          </button>
+        </div>
+        <div class="cine-pager" aria-hidden="true"><b>{{ pad(railIndex + 1) }}</b><i></i><span>{{ pad(upcomingTrips.length + popularDestinations.length) }}</span></div>
+
+        <nav class="cine-actions" aria-label="Quick actions">
+          <button type="button" class="active" (click)="openMobileTrip('OVERVIEW')" aria-label="Trip overview"><span class="qa-ico" style="--icon:url(assets/mobile/trips.svg)"></span></button>
+          <button type="button" (click)="openMobileTrip('EXPENSES')" aria-label="Expenses"><span class="qa-ico" style="--icon:url(assets/mobile/expense.svg)"></span></button>
+          <button type="button" (click)="openMobileTrip('BOOKINGS')" aria-label="Bookings"><span class="qa-ico" style="--icon:url(assets/mobile/booking.svg)"></span></button>
+          <button type="button" (click)="openMobileTrip('DOCUMENTS')" aria-label="Documents"><span class="qa-ico" style="--icon:url(assets/mobile/document.svg)"></span></button>
+          <span class="cine-actions-label">Quick actions</span>
+        </nav>
+
+        <section class="cine-stats" *ngIf="upcomingTrips[0] as next; else noMobileTrip" aria-label="Next trip at a glance">
+          <div class="cine-stat">
+            <svg viewBox="0 0 120 40" aria-hidden="true"><path class="spark" d="M2 34 C 14 34, 16 14, 30 18 S 46 34, 58 26 S 76 6, 90 12 S 108 26, 118 8" /><circle cx="118" cy="8" r="3" /></svg>
+            <strong>{{ daysUntil(next.startDate) }}<small>days</small></strong>
+            <span>Until you leave · {{ next.startDate | date:'d MMM' }}</span>
           </div>
-          <div class="pass-stub">
-            <div><small>Depart</small><strong>{{ next.startDate | date:'d MMM' }}</strong></div>
-            <div><small>Return</small><strong>{{ next.endDate | date:'d MMM' }}</strong></div>
-            <div><small>Length</small><strong>{{ tripLength(next.startDate, next.endDate) }}</strong></div>
+          <div class="cine-stat">
+            <svg viewBox="0 0 120 40" aria-hidden="true"><path class="spark" d="M2 30 L 22 30 L 34 12 L 48 22 L 62 8 L 78 20 L 94 14 L 118 26" /><circle cx="118" cy="26" r="3" /></svg>
+            <strong>{{ tripLength(next.startDate, next.endDate).split(' ')[0] }}<small>{{ tripLength(next.startDate, next.endDate).split(' ')[1] || '' }}</small></strong>
+            <span>{{ next.startDate | date:'d MMM' }} – {{ next.endDate | date:'d MMM' }}</span>
           </div>
-          <div class="mobile-trip-budget" *ngIf="mobileBudget as budget"><div><span>Budget used</span><strong>{{budget.budgetUtilizationPercentage | number:'1.0-0'}}%</strong></div><progress [value]="budget.budgetUtilizationPercentage" max="100" aria-label="Trip budget used"></progress><div><small>Spent: {{budget.totalExpenses | currency:'INR':'symbol':'1.0-0'}}</small><small>Limit: {{budget.budget | currency:'INR':'symbol':'1.0-0'}}</small></div></div>
-        </article>
+          <button type="button" class="cine-thumb" (click)="openMobileTrip('OVERVIEW')" [style.background-image]="'url(' + next.image + ')'" [attr.aria-label]="'Open ' + next.name"></button>
+          <div class="cine-budget" *ngIf="mobileBudget as budget">
+            <div><span>Budget used</span><strong>{{budget.budgetUtilizationPercentage | number:'1.0-0'}}%</strong></div>
+            <progress [value]="budget.budgetUtilizationPercentage" max="100" aria-label="Trip budget used"></progress>
+            <div><small>Spent {{budget.totalExpenses | currency:'INR':'symbol':'1.0-0'}}</small><small>of {{budget.budget | currency:'INR':'symbol':'1.0-0'}}</small></div>
+          </div>
+        </section>
         <ng-template #noMobileTrip>
-          <section class="mobile-hero" [style.background-image]="'linear-gradient(100deg,rgba(4, 30, 37,.88) 0%,rgba(6, 40, 48,.55) 55%,rgba(6, 40, 48,.15) 100%),url(' + popularDestinations[0].image + ')'">
-            <svg class="hero-route" viewBox="0 0 320 90" preserveAspectRatio="none" aria-hidden="true"><path id="tmHeroArc" d="M4 80 C 90 10, 200 90, 316 14" /><g class="arc-plane"><path d="M-8 0 L7 -4.5 L4.5 0 L7 4.5 Z" /><animateMotion dur="7s" repeatCount="indefinite" rotate="auto"><mpath href="#tmHeroArc" /></animateMotion></g></svg>
-            <span class="mobile-hero-eyebrow">Plan together</span><h2>Your next journey starts here</h2><button type="button" (click)="openCreateModal()">Plan a new trip</button>
+          <section class="cine-empty">
+            <h2>Your next journey starts here</h2><p>Create a trip, invite your group and plan each day together.</p>
+            <button type="button" (click)="openCreateModal()">Plan a new trip</button>
           </section>
         </ng-template>
-
-        <section class="mobile-quick"><h2>Quick actions</h2><div>
-          <button (click)="openMobileTrip('EXPENSES')"><span class="qa-ico" style="--icon:url(assets/mobile/expense.svg)"></span>Expenses</button>
-          <button (click)="openMobileTrip('BOOKINGS')"><span class="qa-ico" style="--icon:url(assets/mobile/booking.svg)"></span>Bookings</button>
-          <button (click)="openMobileTrip('DOCUMENTS')"><span class="qa-ico" style="--icon:url(assets/mobile/document.svg)"></span>Documents</button>
-        </div></section>
-        <section class="mobile-destinations"><div class="mobile-card-heading"><h2>Find your next destination</h2><span>Swipe</span></div><div class="mobile-destination-scroll"><button *ngFor="let destination of popularDestinations" (click)="planDestination(destination)"><img [src]="destination.image" [alt]="destination.name" loading="lazy" /><span class="dest-shade" aria-hidden="true"></span><strong>{{destination.name}}</strong><span class="dest-tags">{{destination.tags.join(' · ')}}</span></button></div></section>
       </section>
       <!-- Hero Section -->
       <section class="hero-section">
@@ -1184,6 +1197,32 @@ export class DashboardComponent implements OnInit {
   tripLength(start: string, end: string): string {
     const days = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86_400_000) + 1;
     return Number.isFinite(days) && days > 0 ? `${days} day${days === 1 ? '' : 's'}` : '—';
+  }
+
+  /** Index of the gallery card nearest the left edge, for the "01 — 05" pager. */
+  railIndex = 0;
+
+  onRailScroll(event: Event): void {
+    const rail = event.target as HTMLElement;
+    const card = rail.firstElementChild as HTMLElement | null;
+    const step = card ? card.offsetWidth + 14 : rail.clientWidth;
+    this.railIndex = Math.max(0, Math.round(rail.scrollLeft / Math.max(1, step)));
+  }
+
+  pad(value: number): string { return String(value).padStart(2, '0'); }
+
+  initialsOf(text: string): string {
+    return (text || '').split(/[\s,]+/).filter(Boolean).slice(0, 2).map(word => word[0]).join('').toUpperCase() || 'S';
+  }
+
+  daysUntil(start: string): number {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const days = Math.ceil((new Date(start).getTime() - today.getTime()) / 86_400_000);
+    return Number.isFinite(days) ? Math.max(0, days) : 0;
+  }
+
+  openTrip(trip: DisplayTrip): void {
+    if (trip.id) { void this.router.navigate(['/trips', trip.id]); } else { this.openCreateModal(); }
   }
 
   openMobileTrip(tab: string): void {
