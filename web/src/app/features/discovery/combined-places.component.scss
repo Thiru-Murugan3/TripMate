@@ -25,10 +25,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hero {
   position: relative; overflow: hidden; border-radius: 28px; padding: 40px 40px 44px; color: #fff;
   background:
-    radial-gradient(120% 140% at 100% 0%, rgba(56, 189, 248, .45) 0%, transparent 55%),
-    radial-gradient(90% 120% at 0% 100%, rgba(236, 72, 153, .35) 0%, transparent 55%),
+    radial-gradient(120% 140% at 100% 0%, rgba(244, 163, 64, .45) 0%, transparent 55%),
+    radial-gradient(90% 120% at 0% 100%, rgba(52, 65, 122, .35) 0%, transparent 55%),
     linear-gradient(135deg, #0b1022 0%, #141a33 45%, #232c55 100%);
-  box-shadow: 0 24px 60px rgba(49, 46, 129, .35);
+  box-shadow: 0 24px 60px rgba(20, 26, 51, .35);
 }
 .hero::after {
   content: ""; position: absolute; inset: auto -60px -80px auto; width: 320px; height: 320px; border-radius: 50%;
@@ -105,7 +105,7 @@ button:disabled { opacity: .45; cursor: default; box-shadow: none; }
 .plan-panel {
   position: sticky; top: 12px; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px;
   margin: 18px 0; padding: 16px 20px; border-radius: 20px; color: #fff;
-  background: linear-gradient(135deg, #0b1022, #232c55); box-shadow: 0 18px 40px rgba(49, 46, 129, .3);
+  background: linear-gradient(135deg, #0b1022, #232c55); box-shadow: 0 18px 40px rgba(20, 26, 51, .3);
 }
 .plan-panel h2 { font-size: 18px; margin: 0; }
 .plan-panel p { margin: 0; font-size: 13px; color: rgba(255, 255, 255, .8); flex: 1 1 180px; }

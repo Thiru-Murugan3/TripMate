@@ -1157,7 +1157,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
       border: none;
       background:
         linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(124, 45, 18, 0.88)),
-        radial-gradient(circle at top right, rgba(14, 165, 233, 0.4), transparent 45%);
+        radial-gradient(circle at top right, rgba(232, 134, 12, 0.4), transparent 45%);
       box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
       margin-bottom: 1.5rem;
       border-radius: 20px;
@@ -1405,7 +1405,7 @@ type TripDetailsTab = 'OVERVIEW' | 'EXPLORE' | 'ITINERARY' | 'EXPENSES' | 'BOOKI
 
     .budget-fill {
       height: 100%;
-      background: linear-gradient(90deg, #b45309, #06b6d4);
+      background: linear-gradient(90deg, #b45309, #f4a340);
       border-radius: inherit;
       transition: width 0.25s ease;
     }

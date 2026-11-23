@@ -14,9 +14,9 @@
     border-radius: 22px; color: #fff;
     background:
       radial-gradient(110% 140% at 100% 0%, rgba(251, 191, 36, .32), transparent 55%),
-      radial-gradient(80% 120% at 0% 100%, rgba(56, 189, 248, .30), transparent 55%),
+      radial-gradient(80% 120% at 0% 100%, rgba(244, 163, 64, .30), transparent 55%),
       linear-gradient(135deg, #0b1022 0%, #141a33 50%, #232c55 100%);
-    box-shadow: 0 18px 44px rgba(49, 46, 129, .30);
+    box-shadow: 0 18px 44px rgba(20, 26, 51, .30);
   }
   .documents-toolbar::after {
     content: ""; position: absolute; right: -60px; bottom: -90px; width: 260px; height: 260px; border-radius: 50%;
@@ -72,7 +72,7 @@
   .file-icon .material-symbols-outlined { font-size: 1.6rem; }
   .file-icon[data-type="FLIGHT_TICKET"] { background: linear-gradient(135deg, #e8860c, #b45309); box-shadow: 0 10px 20px rgba(180, 83, 9, .25); }
   .file-icon[data-type="TRAIN_TICKET"], .file-icon[data-type="BUS_TICKET"] { background: linear-gradient(135deg, #f59e0b, #ea580c); box-shadow: 0 10px 20px rgba(234, 88, 12, .22); }
-  .file-icon[data-type="HOTEL_CONFIRMATION"] { background: linear-gradient(135deg, #e8860c, #e8860c); box-shadow: 0 10px 20px rgba(236, 72, 153, .22); }
+  .file-icon[data-type="HOTEL_CONFIRMATION"] { background: linear-gradient(135deg, #e8860c, #e8860c); box-shadow: 0 10px 20px rgba(52, 65, 122, .22); }
   .file-icon[data-type="RECEIPT"] { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 20px rgba(5, 150, 105, .22); }
   .file-icon[data-type="TRAVEL_DOCUMENT"], .file-icon[data-type="INSURANCE"] { background: linear-gradient(135deg, #f43f5e, #be123c); box-shadow: 0 10px 20px rgba(190, 18, 60, .22); }
   .file-icon[data-type="OTHER"] { background: linear-gradient(135deg, #64748b, #334155); box-shadow: 0 10px 20px rgba(51, 65, 85, .2); }

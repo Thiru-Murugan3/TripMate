@@ -44,6 +44,7 @@ import { AuthService } from '../../core/services/auth.service';
     .account-menu a>span:last-child{font-size:20px;color:#a3a9c4}
     .account-menu button:last-child{justify-content:center;color:#b91c1c;font-weight:700}
     .about{color:#a3a9c4;letter-spacing:.04em}
+    @media(max-width:760px){.account-page{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}}
   `]
 })
 export class AccountComponent {

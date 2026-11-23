@@ -161,7 +161,7 @@ import { AuthService } from '../../../core/services/auth.service';
       height: 24rem;
       right: -10rem;
       bottom: -10rem;
-      background: rgba(168, 85, 247, 0.22);
+      background: rgba(232, 134, 12, 0.22);
     }
 
     .page-shell {
