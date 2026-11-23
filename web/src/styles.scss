@@ -1,9 +1,9 @@
 @use 'app/shared/styles/travel-motion';
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Oswald:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Dancing+Script:wght@600;700&display=swap');
 
 :root {
   --tm-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --tm-display: 'Oswald', 'Arial Narrow', 'Roboto Condensed', sans-serif;
+  --tm-script: 'Dancing Script', 'Segoe Script', 'Brush Script MT', cursive;
   /* Brand: Ocean teal with a sand-gold accent.
      --tm-primary is the deep teal used behind white text (5.4:1); --tm-saffron holds the sand-gold
      accent (name kept for compatibility), used for highlights with deep-teal text on top.
