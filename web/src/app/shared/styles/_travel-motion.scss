@@ -6,7 +6,8 @@
 
 $ease-out: cubic-bezier(.2, .8, .2, 1);
 
-@keyframes tm-rise { from { opacity: 0; translate: 0 18px; } }
+@keyframes tm-rise { from { opacity: 0; translate: 0 12px; } }
+@keyframes tm-fade { from { opacity: 0; } }
 @keyframes tm-pop { from { opacity: 0; scale: .94; } }
 @keyframes tm-vt-out { to { opacity: 0; translate: 0 -10px; scale: .985; } }
 @keyframes tm-vt-in { from { opacity: 0; translate: 0 22px; } }
@@ -36,13 +37,19 @@ $ease-out: cubic-bezier(.2, .8, .2, 1);
   ::view-transition-new(root) { animation: tm-vt-in .44s $ease-out both; }
   ::view-transition-group(tm-tabbar), ::view-transition-group(tm-topbar) { animation: none; }
 
-  // Staggered entrance for the sections and cards of whichever page just opened.
-  .main-content > :not(router-outlet) :is(section, article, .card, .stat, .trip-card, .booking-card, .expense-card) {
-    animation: tm-rise .6s $ease-out backwards;
+  // Entrance choreography for whichever page just opened.
+  // Only the page's top-level blocks move, all starting at once (no delay), so offsets never
+  // stack through nested sections and a tap is never aimed at a button that is about to shift.
+  // Cards and tiles inside them fade in one after another without moving.
+  .main-content > :not(router-outlet) > * > :is(section, article, header, nav, div) {
+    animation: tm-rise .45s $ease-out backwards;
+  }
+  .main-content > :not(router-outlet) :is(article, .card, .stat, .trip-card, .booking-card, .expense-card) {
+    animation: tm-fade .5s ease-out backwards;
   }
   @for $i from 1 through 8 {
-    .main-content > :not(router-outlet) :is(section, article, .card, .stat, .trip-card, .booking-card, .expense-card):nth-child(#{$i}) {
-      animation-delay: #{40 + ($i - 1) * 60}ms;
+    .main-content > :not(router-outlet) :is(article, .card, .stat, .trip-card, .booking-card, .expense-card):nth-child(#{$i}) {
+      animation-delay: #{60 + ($i - 1) * 70}ms;
     }
   }
 
