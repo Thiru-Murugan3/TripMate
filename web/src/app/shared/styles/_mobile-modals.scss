@@ -1,0 +1,67 @@
+// Phone popups: one consistent shape for every form dialog in the app.
+//
+// The routed page (.main-content) is its own stacking context (isolation: isolate in
+// _travel-motion), so a popup's z-index cannot lift it above the floating tab bar, which
+// then covered the popup's bottom edge where Save / Cancel live. Two fixes:
+//   1. the tab bar steps aside while any popup is open;
+//   2. the action row is pinned to the bottom of the popup, so Save and Cancel are always
+//      on screen however long the form is.
+// `html body` keeps these rules ahead of each component's own (attribute-scoped) styles.
+
+$safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+$safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+$popups: '.modal-backdrop, .detail-backdrop, .search-modal-backdrop, app-missed-trip-dialog .backdrop';
+
+@media (max-width: 760px) {
+  body:has(#{$popups}) app-mobile-navigation { display: none; }
+
+  html body .modal-backdrop {
+    align-items: center;
+    padding: max(12px, #{$safe-top}) 12px max(12px, #{$safe-bottom});
+  }
+
+  // The popup scrolls inside itself; the bottom padding moves into the action row.
+  html body .modal-backdrop :is(.modal, .modal-content) {
+    width: 100%;
+    max-height: calc(100dvh - 24px - #{$safe-top} - #{$safe-bottom});
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 0 !important;
+  }
+
+  html body .modal-backdrop .modal-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0 0;
+    padding: 12px 0 16px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -12px 16px -14px rgba(15, 23, 42, .25);
+  }
+
+  // Cancel on the left, the main action on the right, both full and easy to tap.
+  html body .modal-backdrop .modal-actions > :is(button, a) {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 48px;
+    margin: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  // A destructive extra (e.g. Delete Trip) takes its own full-width row below.
+  html body .modal-backdrop .modal-actions > :is([class*='danger-outline']) {
+    flex-basis: 100%;
+    order: 3;
+  }
+}
