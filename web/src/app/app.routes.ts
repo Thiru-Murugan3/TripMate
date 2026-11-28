@@ -8,7 +8,9 @@ export const routes: Routes = [
 
   {
     path: 'login',
-    loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent)
+    loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+    // Login is the landing page, but a signed-in user must not be asked to sign in again on app start.
+    canActivate: [guestGuard]
   },
   {
     path: 'register',
