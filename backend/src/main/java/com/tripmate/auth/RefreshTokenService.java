@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HexFormat;
@@ -76,13 +77,21 @@ public class RefreshTokenService {
         }
     }
 
+    /**
+     * How long a rotated token stays usable. Covers a refresh whose response never reached
+     * the app (e.g. it gave up while the server was waking from sleep), which would otherwise
+     * sign the user out the next time they open the app.
+     */
+    static final Duration ROTATION_GRACE = Duration.ofMinutes(5);
+
     @Transactional
     public RefreshToken validateRefreshToken(String rawToken) {
 
         String tokenHash = hashToken(rawToken);
 
         RefreshToken storedToken = refreshTokenRepository
-                .findByTokenHashAndRevokedFalse(tokenHash)
+                .findByTokenHash(tokenHash)
+                .filter(this::isUsable)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED,
                         "Invalid refresh token"));
@@ -103,12 +112,29 @@ public class RefreshTokenService {
         return storedToken;
     }
 
+    /** Active, or rotated (never logged out) within the grace period. */
+    private boolean isUsable(RefreshToken token) {
+        if (!Boolean.TRUE.equals(token.getRevoked())) {
+            return true;
+        }
+        LocalDateTime replacedAt = token.getReplacedAt();
+        return replacedAt != null
+                && replacedAt.plus(ROTATION_GRACE).isAfter(LocalDateTime.now());
+    }
+
     @Transactional
     public String rotateRefreshToken(
             RefreshToken oldToken) {
 
+        LocalDateTime now = LocalDateTime.now();
+        // Keep the first rotation time so retries cannot stretch the grace period.
+        if (oldToken.getReplacedAt() == null) {
+            oldToken.setReplacedAt(now);
+        }
         oldToken.setRevoked(true);
-        oldToken.setRevokedAt(LocalDateTime.now());
+        if (oldToken.getRevokedAt() == null) {
+            oldToken.setRevokedAt(now);
+        }
 
         refreshTokenRepository.save(oldToken);
 
@@ -122,11 +148,15 @@ public class RefreshTokenService {
         String tokenHash = hashToken(rawToken);
 
         refreshTokenRepository
-                .findByTokenHashAndRevokedFalse(tokenHash)
+                .findByTokenHash(tokenHash)
                 .ifPresent(token -> {
-                    token.setRevoked(true);
-                    token.setRevokedAt(LocalDateTime.now());
-                    refreshTokenRepository.save(token);
+                    if (!Boolean.TRUE.equals(token.getRevoked())) {
+                        token.setRevoked(true);
+                        token.setRevokedAt(LocalDateTime.now());
+                        refreshTokenRepository.save(token);
+                    }
+                    // A logged-out session must not come back through a recently rotated token.
+                    refreshTokenRepository.endRotationGrace(token.getUser().getId());
                 });
     }
 }
