@@ -23,6 +23,15 @@ public record CreatePlaceRequest(
         @DecimalMin(value = "0.0", inclusive = true, message = "Estimated cost cannot be negative")
         BigDecimal estimatedCost,
 
-        String notes
+        String notes,
+
+        /** Optional area to look the place up in when no coordinates are sent (e.g. "Goa"). */
+        @Size(max = 180, message = "Location hint cannot exceed 180 characters")
+        String locationHint
 ) {
+    /** Older clients send no hint. */
+    public CreatePlaceRequest(String name, PlaceCategory category, BigDecimal latitude, BigDecimal longitude,
+                              BigDecimal estimatedCost, String notes) {
+        this(name, category, latitude, longitude, estimatedCost, notes, null);
+    }
 }

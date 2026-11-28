@@ -21,6 +21,7 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final TripRepository tripRepository;
     private final TripMemberRepository tripMemberRepository;
+    private final PlaceLocationService placeLocationService;
 
     @Transactional(readOnly = true)
     public List<PlaceResponse> getPlaces(Long tripId, Long userId) {
@@ -53,12 +54,20 @@ public class PlaceService {
         Trip trip = findTripOrThrow(tripId);
         verifyCanEdit(trip, userId);
 
+        BigDecimal latitude = request.latitude(), longitude = request.longitude();
+        if (latitude == null || longitude == null) {
+            // No coordinates sent: look the place up so the route map can include it.
+            var found = placeLocationService.locate(request.name(), request.locationHint(), trip.getDestination());
+            latitude = found.map(PlaceLocationService.Location::latitude).orElse(null);
+            longitude = found.map(PlaceLocationService.Location::longitude).orElse(null);
+        }
+
         Place place = Place.builder()
                 .trip(trip)
                 .name(request.name().trim())
                 .category(request.category())
-                .latitude(request.latitude())
-                .longitude(request.longitude())
+                .latitude(latitude)
+                .longitude(longitude)
                 .estimatedCost(request.estimatedCost() != null ? request.estimatedCost() : BigDecimal.ZERO)
                 .notes(request.notes())
                 .build();

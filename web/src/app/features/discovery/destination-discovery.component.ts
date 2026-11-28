@@ -1015,8 +1015,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
           this.placeService.createPlace(this.activeTripId, {
             name: place.name,
             category: place.saveCategory,
-            latitude: place.latitude,
-            longitude: place.longitude,
+            ...this.saveLocation(place),
             estimatedCost: place.estimatedCostPerPerson,
             notes: this.discoveryNotes(place)
           })
@@ -1100,8 +1099,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
           this.placeService.createPlace(this.activeTripId, {
             name: place.name,
             category: place.saveCategory,
-            latitude: place.latitude,
-            longitude: place.longitude,
+            ...this.saveLocation(place),
             estimatedCost: place.estimatedCostPerPerson,
             notes: this.discoveryNotes(place)
           })
@@ -1284,6 +1282,20 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       return Math.abs(Number(saved.latitude) - Number(place.latitude)) < 0.001
         && Math.abs(Number(saved.longitude) - Number(place.longitude)) < 0.001;
     });
+  }
+
+  /**
+   * Coordinates to save. A result with no known location (distance -1, shown as "Location not
+   * mapped") only carries the destination centre, which would stack every such place on one spot
+   * of the route map; send no coordinates and its area instead so the server can look it up.
+   */
+  private saveLocation(place: PlanningPlace): { latitude?: number; longitude?: number; locationHint?: string } {
+    const unmapped = place.distanceKm != null && place.distanceKm < 0;
+    if (!unmapped && place.latitude != null && place.longitude != null) {
+      return { latitude: place.latitude, longitude: place.longitude };
+    }
+    const hint = (place.city || this.searchDestination || '').trim();
+    return hint ? { locationHint: hint } : {};
   }
 
   private discoveryNotes(place: PlanningPlace): string {
