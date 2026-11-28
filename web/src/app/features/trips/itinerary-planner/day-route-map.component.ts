@@ -5,17 +5,72 @@ import * as L from 'leaflet';
 export interface RouteMapPoint {id:string;name:string;latitude:number;longitude:number;}
 
 @Component({selector:'app-day-route-map',standalone:true,imports:[CommonModule],template:`
- <div #canvas class="route-map" role="region" [attr.aria-label]="'Day '+dayNumber+' sightseeing route map'" tabindex="0"></div>
+ <div #frame class="route-map-frame" [class.is-fullscreen]="fullscreen" [attr.role]="fullscreen ? 'dialog' : null" [attr.aria-modal]="fullscreen ? 'true' : null" [attr.aria-label]="fullscreen ? 'Day '+dayNumber+' route map, full screen' : null">
+  <div #canvas class="route-map" role="region" [attr.aria-label]="'Day '+dayNumber+' sightseeing route map'" tabindex="0"></div>
+  <span *ngIf="fullscreen" class="fullscreen-title">Day {{ dayNumber }} route</span>
+  <button type="button" class="fullscreen-btn" (click)="toggleFullscreen()" [attr.aria-label]="fullscreen ? 'Exit full screen map' : 'Expand Day '+dayNumber+' map to full screen'" [attr.aria-pressed]="fullscreen">
+   <span class="material-symbols-outlined" aria-hidden="true">{{ fullscreen ? 'close_fullscreen' : 'open_in_full' }}</span>
+  </button>
+ </div>
  <p *ngIf="tilesUnavailable" role="status">Map background unavailable. Your route stops are still shown.</p>
-`,styles:[`:host{display:block;min-width:0}.route-map{height:340px;min-width:0;width:100%;border-radius:12px;background:#e9f0e7;isolation:isolate}p{font-size:12px;color:#64748b}@media(max-width:560px){.route-map{height:300px}}`]})
+`,styles:[`
+ :host{display:block;min-width:0}
+ .route-map-frame{position:relative;min-width:0}
+ .route-map{height:340px;min-width:0;width:100%;border-radius:12px;background:#e9f0e7;isolation:isolate}
+ .fullscreen-btn{position:absolute;top:10px;right:10px;z-index:500;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #d9ecea;border-radius:12px;background:#fff;color:#0b3c49;box-shadow:0 4px 14px rgba(15,23,42,.18);cursor:pointer}
+ .fullscreen-btn:focus-visible{outline:3px solid #0f766e;outline-offset:2px}
+ .fullscreen-btn .material-symbols-outlined{font-size:22px}
+ .route-map-frame.is-fullscreen{position:fixed;inset:0;z-index:5000;background:#e9f0e7;padding:var(--safe-area-inset-top,env(safe-area-inset-top,0px)) var(--safe-area-inset-right,env(safe-area-inset-right,0px)) var(--safe-area-inset-bottom,env(safe-area-inset-bottom,0px)) var(--safe-area-inset-left,env(safe-area-inset-left,0px))}
+ .route-map-frame.is-fullscreen .route-map{height:100%;border-radius:0}
+ .route-map-frame.is-fullscreen .fullscreen-btn{top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top,0px)));right:calc(12px + var(--safe-area-inset-right,env(safe-area-inset-right,0px)))}
+ .fullscreen-title{position:absolute;z-index:500;top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top,0px)));left:calc(12px + var(--safe-area-inset-left,env(safe-area-inset-left,0px)));padding:10px 14px;border-radius:12px;background:#fff;color:#0b3c49;font-weight:800;font-size:14px;box-shadow:0 4px 14px rgba(15,23,42,.18)}
+ p{font-size:12px;color:#64748b}
+ @media(max-width:560px){.route-map{height:300px}}
+`]})
 export class DayRouteMapComponent implements AfterViewInit,OnChanges,OnDestroy {
  @Input() roadPath:number[][]=[];@Input() stops:RouteMapPoint[]=[];@Input() dayNumber=1;
  @ViewChild('canvas',{static:true}) canvas!:ElementRef<HTMLDivElement>;
+ @ViewChild('frame',{static:true}) frame!:ElementRef<HTMLDivElement>;
  private readonly zone=inject(NgZone);private map?:L.Map;private layers?:L.LayerGroup;private resize?:ResizeObserver;
  private signature='';private ready=false;private destroyed=false;
+ private placeholder?:Comment;private previousOverflow='';
+ fullscreen=false;
  tilesUnavailable=false;
+ private readonly onKeydown=(event:KeyboardEvent)=>{if(event.key==='Escape'&&this.fullscreen)this.zone.run(()=>this.toggleFullscreen());};
  ngAfterViewInit():void{this.ready=true;this.zone.runOutsideAngular(()=>{this.resize=new ResizeObserver(()=>this.render());this.resize.observe(this.canvas.nativeElement);this.render();});}
  ngOnChanges():void{if(this.ready)this.zone.runOutsideAngular(()=>this.render());}
+
+ /**
+  * The routed page is its own stacking context, so a fixed overlay inside it would sit under
+  * the header and tab bar. While full screen, the map frame moves to <body> and comes back after.
+  */
+ toggleFullscreen():void{
+  const frame=this.frame.nativeElement;
+  if(!this.fullscreen){
+   this.placeholder=document.createComment('route-map');
+   frame.replaceWith(this.placeholder);
+   document.body.appendChild(frame);
+   this.previousOverflow=document.body.style.overflow;
+   document.body.style.overflow='hidden';
+   document.addEventListener('keydown',this.onKeydown);
+   this.fullscreen=true;
+  }else{
+   this.restoreFrame();
+   this.fullscreen=false;
+  }
+  this.map?.scrollWheelZoom[this.fullscreen?'enable':'disable']();
+  // Re-fit the route to the new size once the layout has settled.
+  requestAnimationFrame(()=>{this.signature='';this.zone.runOutsideAngular(()=>this.render());this.frame.nativeElement.querySelector<HTMLButtonElement>('.fullscreen-btn')?.focus();});
+ }
+
+ private restoreFrame():void{
+  const frame=this.frame.nativeElement;
+  if(this.placeholder?.parentNode){this.placeholder.replaceWith(frame);}else{frame.remove();}
+  this.placeholder=undefined;
+  document.body.style.overflow=this.previousOverflow;
+  document.removeEventListener('keydown',this.onKeydown);
+ }
+
  private render():void{
   const element=this.canvas.nativeElement;
   if(this.destroyed||!element.clientWidth||!element.clientHeight)return;
@@ -48,5 +103,9 @@ export class DayRouteMapComponent implements AfterViewInit,OnChanges,OnDestroy {
   }
   this.map.fitBounds(L.latLngBounds([...coordinates,...road.map(p=>L.latLng(p[0],p[1]))]),{padding:[32,32],maxZoom:15,animate:false});
  }
- ngOnDestroy():void{this.destroyed=true;this.resize?.disconnect();this.map?.remove();}
+ ngOnDestroy():void{
+  this.destroyed=true;
+  if(this.fullscreen)this.restoreFrame();
+  this.resize?.disconnect();this.map?.remove();
+ }
 }
