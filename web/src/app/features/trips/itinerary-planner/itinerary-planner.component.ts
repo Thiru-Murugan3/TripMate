@@ -182,6 +182,10 @@ interface DayRoutePlan {
 
               <ng-container *ngIf="plan.visitStops.length">
                 <app-day-route-map [stops]="plan.stops" [dayNumber]="plan.day.dayNumber" [roadPath]="roadEstimate(plan)?.path || []" />
+                <ol class="route-stop-list" [attr.aria-label]="'Day ' + plan.day.dayNumber + ' stops in order'">
+                  <li><span class="route-stop-badge stay">H</span>{{ plan.stops[0].name }}</li>
+                  <li *ngFor="let stop of plan.visitStops; let i = index"><span class="route-stop-badge">{{ i + 1 }}</span>{{ stop.name }}</li>
+                </ol>
                 <p class="route-distance-note">Nearest-next order · straight-line distances</p>
                 <button type="button" class="btn secondary" [disabled]="loadingRoad[plan.day.id] || plan.stops.length>25" (click)="estimateDayDrive(plan)">{{loadingRoad[plan.day.id] ? 'Estimating drive…' : 'Get driving estimate'}}</button>
                 <p *ngIf="plan.stops.length>25" class="route-distance-note">Use Maps for routes with more than 25 stops.</p>

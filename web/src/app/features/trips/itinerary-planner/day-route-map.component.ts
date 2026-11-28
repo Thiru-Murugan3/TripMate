@@ -71,6 +71,9 @@ export class DayRouteMapComponent implements AfterViewInit,OnChanges,OnDestroy {
   document.removeEventListener('keydown',this.onKeydown);
  }
 
+ private markerLayer?:L.LayerGroup;private markerStops:Array<{point:RouteMapPoint;label:string;coordinate:L.LatLng}>=[];
+ private lastSize='';
+
  private render():void{
   const element=this.canvas.nativeElement;
   if(this.destroyed||!element.clientWidth||!element.clientHeight)return;
@@ -80,28 +83,64 @@ export class DayRouteMapComponent implements AfterViewInit,OnChanges,OnDestroy {
    tiles.on('tileerror',()=>this.zone.run(()=>this.tilesUnavailable=true));
    tiles.on('tileload',()=>{if(this.tilesUnavailable)this.zone.run(()=>this.tilesUnavailable=false);});
    this.layers=L.layerGroup().addTo(this.map);
+   this.markerLayer=L.layerGroup().addTo(this.map);
+   // Spacing between nearby markers depends on zoom, so lay them out again after each zoom.
+   this.map.on('zoomend',()=>this.drawMarkers());
   }
   this.map.invalidateSize({pan:false});
   const points=this.stops.filter(p=>Number.isFinite(p.latitude)&&Number.isFinite(p.longitude)&&Math.abs(p.latitude)<=90&&Math.abs(p.longitude)<=180);
   const road=this.roadPath.filter(p=>p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=90&&Math.abs(p[1])<=180);
-  const signature=JSON.stringify([points,road]);if(signature===this.signature)return;this.signature=signature;
-  this.layers!.clearLayers();if(!points.length){this.map.setView([20.5937,78.9629],5);return;}
+  // Re-fit when the stops change and also when the map box changes size, so no stop sits off-screen.
+  const size=`${element.clientWidth}x${element.clientHeight}`;
+  const signature=JSON.stringify([points,road]);
+  if(signature===this.signature&&size===this.lastSize)return;
+  const stopsChanged=signature!==this.signature;
+  this.signature=signature;this.lastSize=size;
+  if(!points.length){this.layers!.clearLayers();this.markerLayer!.clearLayers();this.markerStops=[];this.map.setView([20.5937,78.9629],5);return;}
   const coordinates=points.map(p=>L.latLng(p.latitude,p.longitude));
-  L.polyline(road.length>1?road.map(p=>L.latLng(p[0],p[1])):coordinates,{color:'#0f766e',weight:4,dashArray:road.length>1?undefined:'8 8'}).addTo(this.layers!);
-  points.forEach((point,index)=>{
-   if(index===points.length-1&&index>0&&point.latitude===points[0].latitude&&point.longitude===points[0].longitude)return;
-   const label=index===0?'H':String(index),color=index===0?'#166534':'#0f766e';
-   const icon=L.divIcon({className:'sightseeing-number',html:`<span style="display:grid;place-items:center;width:32px;height:32px;border:3px solid white;border-radius:50%;background:${color};color:white;font:bold 15px sans-serif;box-shadow:0 2px 8px #0005">${label}</span>`,iconSize:[38,38],iconAnchor:[19,19]});
-   const text=document.createElement('span');text.textContent=(index===0?'Stay: ':index+'. ')+point.name;
-   L.marker(coordinates[index],{icon,title:text.textContent,keyboard:true}).bindTooltip(text).addTo(this.layers!);
-  });
-  for(let i=1;road.length<2&&i<coordinates.length;i++){
-   const from=this.map.project(coordinates[i-1],10),to=this.map.project(coordinates[i],10);if(from.distanceTo(to)<0.01)continue;
-   const angle=Math.atan2(to.y-from.y,to.x-from.x)*180/Math.PI;
-   const midpoint=L.latLng((coordinates[i-1].lat+coordinates[i].lat)/2,(coordinates[i-1].lng+coordinates[i].lng)/2);
-   L.marker(midpoint,{interactive:false,keyboard:false,icon:L.divIcon({className:'route-direction',html:`<span style="display:block;color:#115e59;font-size:22px;transform:rotate(${angle}deg)">➤</span>`,iconSize:[22,22],iconAnchor:[11,11]})}).addTo(this.layers!);
+  if(stopsChanged){
+   this.layers!.clearLayers();
+   L.polyline(road.length>1?road.map(p=>L.latLng(p[0],p[1])):coordinates,{color:'#0f766e',weight:4,dashArray:road.length>1?undefined:'8 8'}).addTo(this.layers!);
+   for(let i=1;road.length<2&&i<coordinates.length;i++){
+    const from=this.map.project(coordinates[i-1],10),to=this.map.project(coordinates[i],10);if(from.distanceTo(to)<0.01)continue;
+    const angle=Math.atan2(to.y-from.y,to.x-from.x)*180/Math.PI;
+    const midpoint=L.latLng((coordinates[i-1].lat+coordinates[i].lat)/2,(coordinates[i-1].lng+coordinates[i].lng)/2);
+    L.marker(midpoint,{interactive:false,keyboard:false,icon:L.divIcon({className:'route-direction',html:`<span style="display:block;color:#115e59;font-size:22px;transform:rotate(${angle}deg)">➤</span>`,iconSize:[22,22],iconAnchor:[11,11]})}).addTo(this.layers!);
+   }
+   // Every stop gets a marker; only the closing "return to stay" stop is skipped (it repeats H).
+   this.markerStops=points
+    .map((point,index)=>({point,label:index===0?'H':String(index),coordinate:coordinates[index]}))
+    .filter((_,index)=>!(index===points.length-1&&index>0&&points[index].latitude===points[0].latitude&&points[index].longitude===points[0].longitude));
   }
-  this.map.fitBounds(L.latLngBounds([...coordinates,...road.map(p=>L.latLng(p[0],p[1]))]),{padding:[32,32],maxZoom:15,animate:false});
+  this.map.fitBounds(L.latLngBounds([...coordinates,...road.map(p=>L.latLng(p[0],p[1]))]),{padding:[40,40],maxZoom:15,animate:false});
+  this.drawMarkers();
+ }
+
+ /**
+  * Draws one numbered marker per stop. Stops that are at (or very near) the same spot would
+  * hide each other, so markers closer than one marker-width are fanned out around that spot.
+  */
+ private drawMarkers():void{
+  if(!this.map||!this.markerLayer)return;
+  this.markerLayer.clearLayers();
+  const minGap=34,placed:L.Point[]=[];
+  // Candidate offsets: the true spot, then 6 around it, then 12 further out.
+  const candidates=[L.point(0,0)];
+  for(const [ring,slots] of [[1,6],[2,12]]){
+   for(let slot=0;slot<slots;slot++){
+    const angle=(slot/slots)*2*Math.PI-Math.PI/2;
+    candidates.push(L.point(Math.round(Math.cos(angle)*minGap*ring),Math.round(Math.sin(angle)*minGap*ring)));
+   }
+  }
+  this.markerStops.forEach(({point,label,coordinate})=>{
+   const origin=this.map!.latLngToLayerPoint(coordinate);
+   const offset=candidates.find(c=>placed.every(p=>p.distanceTo(origin.add(c))>=minGap))??candidates[candidates.length-1];
+   placed.push(origin.add(offset));
+   const color=label==='H'?'#166534':'#0f766e';
+   const icon=L.divIcon({className:'sightseeing-number',html:`<span style="display:grid;place-items:center;width:32px;height:32px;border:3px solid white;border-radius:50%;background:${color};color:white;font:bold 15px sans-serif;box-shadow:0 2px 8px #0005">${label}</span>`,iconSize:[38,38],iconAnchor:[19-offset.x,19-offset.y]});
+   const text=document.createElement('span');text.textContent=(label==='H'?'Stay: ':label+'. ')+point.name;
+   L.marker(coordinate,{icon,title:text.textContent,keyboard:true,zIndexOffset:label==='H'?1000:0}).bindTooltip(text).addTo(this.markerLayer!);
+  });
  }
  ngOnDestroy():void{
   this.destroyed=true;
