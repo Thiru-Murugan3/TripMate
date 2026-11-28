@@ -41,10 +41,16 @@ public class RecommendedPlacesCatalogue {
             Destination hit = byName.get(WikivoyageGuideService.normalize(candidate));
             if (hit != null && near(hit, destination, 40)) return Optional.of(hit);
         }
-        // Fall back to the nearest catalogue destination within 8 km (e.g. a neighbourhood search).
-        return all.stream().filter(d -> near(d, destination, 8))
+        // Fall back to the nearest catalogue destination within NEAREST_FALLBACK_KM (e.g. a neighbourhood,
+        // or a district such as Coorg whose main town Madikeri is ~12 km from its centre). Only destinations
+        // with known coordinates qualify: one without them is not "near" anything, otherwise a search for
+        // Coorg was served Goa's list.
+        return all.stream()
+                .filter(d -> d.latitude() != null && d.longitude() != null && distance(d, destination) <= NEAREST_FALLBACK_KM)
                 .min(Comparator.comparingDouble(d -> distance(d, destination)));
     }
+
+    static final double NEAREST_FALLBACK_KM = 15;
 
     private List<String> candidates(GeocodedDestination destination) {
         List<String> names = new ArrayList<>();
