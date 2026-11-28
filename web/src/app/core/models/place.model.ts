@@ -26,6 +26,8 @@ export interface CreatePlaceRequest {
   longitude?: number;
   estimatedCost?: number;
   notes?: string;
+  /** Area to look the place up in when no coordinates are sent (e.g. "Goa"). Create only. */
+  locationHint?: string;
 }
 
-export interface UpdatePlaceRequest extends CreatePlaceRequest {}
+export interface UpdatePlaceRequest extends Omit<CreatePlaceRequest, 'locationHint'> {}

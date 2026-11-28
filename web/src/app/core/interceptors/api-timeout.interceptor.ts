@@ -13,6 +13,7 @@ export function isApiRequest(url:string):boolean {
 // Keep slow discovery providers and document transfers independent of ordinary page loading.
 export const apiTimeoutInterceptor:HttpInterceptorFn=(request,next)=>{
   if(!isApiRequest(request.url))return next(request);
-  const longRequest=/\/(discovery|documents)(\/|\?|$)/.test(request.url)||request.body instanceof FormData;
+  // Session refresh may wait for a sleeping backend to start; AuthService applies its own limit.
+  const longRequest=/\/(discovery|documents)(\/|\?|$)/.test(request.url)||/\/auth\/refresh(\?|$)/.test(request.url)||request.body instanceof FormData;
   return next(request).pipe(timeout({each:longRequest?120000:45000}));
 };

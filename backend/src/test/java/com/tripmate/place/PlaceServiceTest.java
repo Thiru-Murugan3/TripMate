@@ -37,6 +37,9 @@ class PlaceServiceTest {
     @Mock
     private TripMemberRepository tripMemberRepository;
 
+    @Mock
+    private PlaceLocationService placeLocationService;
+
     @InjectMocks
     private PlaceService placeService;
 
@@ -129,6 +132,36 @@ class PlaceServiceTest {
         assertEquals("Calangute Beach", response.name());
         assertEquals(PlaceCategory.ATTRACTION, response.category());
         assertEquals(new BigDecimal("300.00"), response.estimatedCost());
+    }
+
+    @Test
+    @DisplayName("createPlace: a place sent without coordinates is located by name and area")
+    void createPlace_LooksUpMissingCoordinates() {
+        CreatePlaceRequest request = new CreatePlaceRequest("Fort Aguada", PlaceCategory.ATTRACTION,
+                null, null, null, "Recommended in Goa.", "Goa");
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+        when(placeLocationService.locate("Fort Aguada", "Goa", "Goa")).thenReturn(Optional.of(
+                new PlaceLocationService.Location(new BigDecimal("15.4920"), new BigDecimal("73.7732"))));
+        when(placeRepository.save(any(Place.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PlaceResponse response = placeService.createPlace(10L, 1L, request);
+
+        assertEquals(new BigDecimal("15.4920"), response.latitude());
+        assertEquals(new BigDecimal("73.7732"), response.longitude());
+    }
+
+    @Test
+    @DisplayName("createPlace: coordinates sent by the app are kept and no lookup happens")
+    void createPlace_KeepsSentCoordinates() {
+        CreatePlaceRequest request = new CreatePlaceRequest("Baga Beach", PlaceCategory.ATTRACTION,
+                new BigDecimal("15.5553"), new BigDecimal("73.7517"), null, null, "Goa");
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+        when(placeRepository.save(any(Place.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PlaceResponse response = placeService.createPlace(10L, 1L, request);
+
+        assertEquals(new BigDecimal("15.5553"), response.latitude());
+        verifyNoInteractions(placeLocationService);
     }
 
     @Test

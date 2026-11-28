@@ -25,6 +25,7 @@ import {
 } from '../../../core/models/booking.model';
 import { BookingService } from '../../../core/services/booking.service';
 import { TripService } from '../../../core/services/trip.service';
+import { ItineraryService } from '../../../core/services/itinerary.service';
 import { TripMemberService } from '../../../core/services/trip-member.service';
 import { ItineraryPlannerComponent } from '../itinerary-planner/itinerary-planner.component';
 import { ExpenseManagerComponent } from '../expense-manager/expense-manager.component';
@@ -2407,6 +2408,7 @@ export class TripDetailsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly tripService = inject(TripService);
+  private readonly itineraryService = inject(ItineraryService);
   private readonly bookingService = inject(BookingService);
   private readonly tripMemberService = inject(TripMemberService);
   private readonly fb = inject(FormBuilder);
@@ -2991,7 +2993,41 @@ export class TripDetailsComponent implements OnInit {
     this.setActiveTab('MEMBERS');
   }
 
-  onExploreItineraryAdded():void {this.setActiveTab('ITINERARY');this.onItineraryChanged();}
+  /**
+   * Places added from Explore: stay on Explore while some trip days still have no places,
+   * and open the Itinerary only once the last day is planned.
+   */
+  onExploreItineraryAdded(): void {
+    this.loadDashboard();
+    const openItinerary = () => {
+      this.setActiveTab('ITINERARY');
+      this.tripUpdateMessage = 'All days planned. Here is your itinerary.';
+    };
+    const totalDays = this.tripDayCount();
+    if (!this.tripId || !totalDays) { openItinerary(); return; }
+
+    this.itineraryService.getItinerary(this.tripId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (itinerary) => {
+          const planned = new Set((itinerary.days ?? [])
+            .filter((day) => (day.items?.length ?? 0) > 0)
+            .map((day) => day.dayNumber));
+          const nextDay = Array.from({ length: totalDays }, (_, i) => i + 1).find((d) => !planned.has(d));
+          if (nextDay === undefined) { openItinerary(); return; }
+          this.tripUpdateMessage = `Added to the itinerary. Now choose places for Day ${nextDay} of ${totalDays}.`;
+        },
+        error: () => openItinerary()
+      });
+  }
+
+  /** Days in the trip, counting both the start and end date; 0 when dates are missing. */
+  private tripDayCount(): number {
+    const start = this.trip?.startDate, end = this.trip?.endDate;
+    if (!start || !end) return 0;
+    const ms = Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`);
+    return Number.isFinite(ms) && ms >= 0 ? Math.round(ms / 86400000) + 1 : 0;
+  }
 
   onItineraryChanged(): void {
     this.loadDashboard();

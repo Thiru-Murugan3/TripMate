@@ -33,7 +33,8 @@ import {
 
 export const AUTH_TIMEOUT_MS=45000;
 export const PROFILE_TIMEOUT_MS=20000;
-export const REFRESH_TIMEOUT_MS=20000;
+// Long enough for the hosted backend to wake from sleep; giving up early loses the rotated token.
+export const REFRESH_TIMEOUT_MS=90000;
 
 @Injectable({
   providedIn: 'root'

@@ -57,4 +57,8 @@ public class RefreshToken {
 
     @Column(name = "revoked_at")
     private LocalDateTime revokedAt;
+
+    /** Set only when the token was rotated (not on logout); see RefreshTokenService. */
+    @Column(name = "replaced_at")
+    private LocalDateTime replacedAt;
 }

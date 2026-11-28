@@ -1157,6 +1157,27 @@ interface PopularDestination {
     }
 
 @include mobile.panels;
+
+    /* Phone: a compact Plan a New Trip form with its title always in view. */
+    @media (max-width: 760px) {
+      .modal-backdrop .modal-content { padding: 0 14px; border-radius: 18px; }
+      .modal-backdrop .modal-header {
+        position: sticky; top: 0; z-index: 5;
+        margin: 0 0 4px; padding: 12px 0 8px;
+        background: #fff; border-bottom: 1px solid #eef2f6;
+      }
+      .modal-backdrop .modal-header h3 { margin: 0; font-size: 17px; }
+      .modal-backdrop .close-btn { min-width: 40px; min-height: 40px; font-size: 1.6rem; line-height: 1; }
+      .modal-backdrop .form-group { margin-bottom: 10px; }
+      .modal-backdrop .form-label { margin-bottom: 4px; font-size: 12px; }
+      .modal-backdrop .form-control { min-height: 42px; padding: 8px 12px; border-radius: 10px; }
+      .modal-backdrop textarea.form-control { min-height: 60px; height: 60px; resize: vertical; }
+      .modal-backdrop .form-row { flex-direction: row; gap: 10px; }
+      .modal-backdrop .form-row .half { flex: 1 1 0; min-width: 0; }
+      .modal-backdrop .modal-actions { margin-top: 6px; padding: 10px 0 12px; }
+      .modal-backdrop .modal-actions > button { min-height: 44px; }
+    }
+
 @include mobileHome.home;
 @include mobileHome.home-waves;
 
@@ -1482,6 +1503,8 @@ export class DashboardComponent implements OnInit {
           ].sort((a, b) => a.dates.localeCompare(b.dates));
         }
         this.closeCreateModal();
+        // Take the traveller straight into the trip they just planned.
+        if (newTrip?.id) void this.router.navigate(['/trips', newTrip.id]);
       },
       error: (err) => {
         this.isSubmitting = false;

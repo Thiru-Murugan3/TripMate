@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -841,6 +841,37 @@ export class NavbarComponent {
           }
         });
       }
+    });
+    this.publishHeaderBottom();
+  }
+
+  /**
+   * Popups are drawn beneath the sticky header (the routed page is its own stacking
+   * context), so expose the header's height; _mobile-modals.scss starts popups below it.
+   * Height, not position: in the Android app the header is pushed down by the status-bar
+   * inset, which arrives after first paint, so the CSS adds that inset itself.
+   */
+  private publishHeaderBottom(): void {
+    const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+    const root = document.documentElement;
+    let observer: ResizeObserver | undefined;
+    const update = () => {
+      const bar = host.querySelector<HTMLElement>('.navbar');
+      root.style.setProperty('--app-header-height', `${bar?.offsetHeight ?? 0}px`);
+    };
+    afterNextRender(() => {
+      update();
+      const bar = host.querySelector('.navbar');
+      if (bar && typeof ResizeObserver !== 'undefined') {
+        observer = new ResizeObserver(update);
+        observer.observe(bar);
+      }
+      window.addEventListener('resize', update);
+    });
+    inject(DestroyRef).onDestroy(() => {
+      observer?.disconnect();
+      window.removeEventListener('resize', update);
+      root.style.removeProperty('--app-header-height');
     });
   }
 
