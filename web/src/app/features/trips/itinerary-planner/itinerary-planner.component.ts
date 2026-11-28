@@ -217,7 +217,7 @@ interface DayRoutePlan {
 
         <nav class="mobile-day-strip" *ngIf="itinerary?.days?.length" aria-label="Itinerary days"><button *ngFor="let day of itinerary?.days" type="button" [class.active]="mobileDayId === day.id" (click)="jumpToDay(day.id)">Day {{day.dayNumber}}<small>{{day.dayDate ? formatDate(day.dayDate) : 'Flexible'}}</small></button></nav>
         <div *ngIf="itinerary?.days?.length" class="days-list">
-          <article *ngFor="let day of planningDays" class="day-card" [id]="'itinerary-day-'+day.id">
+          <article *ngFor="let day of planningDays" class="day-card" [id]="'itinerary-day-'+day.id" [class.day-collapsed]="collapsedPlanDays.has(day.id)">
             <header class="day-header">
               <div class="day-title">
                 <div class="day-number">Day {{ day.dayNumber }}</div>
@@ -226,8 +226,10 @@ interface DayRoutePlan {
                   <p>
                     {{ day.dayDate ? formatDate(day.dayDate) : 'Date not set' }}
                     <ng-container *ngIf="day.notes"> · {{ day.notes }}</ng-container>
+                    <ng-container *ngIf="collapsedPlanDays.has(day.id)"> · {{ sortedItems(day).length }} {{ sortedItems(day).length === 1 ? 'activity' : 'activities' }}</ng-container>
                   </p>
                 </div>
+                <button type="button" class="day-collapse-toggle" (click)="togglePlanDay(day.id)" [attr.aria-expanded]="!collapsedPlanDays.has(day.id)" [attr.aria-label]="(collapsedPlanDays.has(day.id) ? 'Expand' : 'Collapse') + ' Day ' + day.dayNumber + ' activities'"><span class="material-symbols-outlined" aria-hidden="true">{{ collapsedPlanDays.has(day.id) ? 'expand_more' : 'expand_less' }}</span></button>
               </div>
 
               <div *ngIf="canEdit" class="day-actions">
@@ -701,6 +703,13 @@ export class ItineraryPlannerComponent implements OnInit, OnChanges, OnDestroy {
     const next=new Set(this.collapsedRouteDays);
     if(!next.delete(dayId))next.add(dayId);
     this.collapsedRouteDays=next;
+  }
+  /** Day activity cards collapse to their header, like the route cards above. */
+  collapsedPlanDays=new Set<number>();
+  togglePlanDay(dayId:number):void {
+    const next=new Set(this.collapsedPlanDays);
+    if(!next.delete(dayId))next.add(dayId);
+    this.collapsedPlanDays=next;
   }
   selectedPlanningDayId=0;
   private roadRequests=new Subscription();
