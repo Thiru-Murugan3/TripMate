@@ -86,10 +86,19 @@ public class PlaceService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Place not found"));
 
+        BigDecimal latitude = request.latitude(), longitude = request.longitude();
+        boolean lookUp = (latitude == null || longitude == null)
+                && request.locationHint() != null && !request.locationHint().isBlank();
+        if (lookUp) {
+            var found = placeLocationService.locate(request.name(), request.locationHint(), trip.getDestination());
+            latitude = found.map(PlaceLocationService.Location::latitude).orElse(null);
+            longitude = found.map(PlaceLocationService.Location::longitude).orElse(null);
+        }
+
         place.setName(request.name().trim());
         place.setCategory(request.category());
-        place.setLatitude(request.latitude());
-        place.setLongitude(request.longitude());
+        place.setLatitude(latitude);
+        place.setLongitude(longitude);
         place.setEstimatedCost(request.estimatedCost() != null ? request.estimatedCost() : BigDecimal.ZERO);
         place.setNotes(request.notes());
 

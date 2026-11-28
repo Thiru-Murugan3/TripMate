@@ -23,6 +23,18 @@ public record UpdatePlaceRequest(
         @DecimalMin(value = "0.0", inclusive = true, message = "Estimated cost cannot be negative")
         BigDecimal estimatedCost,
 
-        String notes
+        String notes,
+
+        /**
+         * Optional. With no coordinates, asks the server to look the place up in this area
+         * (used to repair places saved earlier at the destination centre). Manual edits omit it.
+         */
+        @Size(max = 180, message = "Location hint cannot exceed 180 characters")
+        String locationHint
 ) {
+    /** Older clients send no hint. */
+    public UpdatePlaceRequest(String name, PlaceCategory category, BigDecimal latitude, BigDecimal longitude,
+                              BigDecimal estimatedCost, String notes) {
+        this(name, category, latitude, longitude, estimatedCost, notes, null);
+    }
 }
