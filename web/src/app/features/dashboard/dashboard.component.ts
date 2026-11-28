@@ -1503,6 +1503,8 @@ export class DashboardComponent implements OnInit {
           ].sort((a, b) => a.dates.localeCompare(b.dates));
         }
         this.closeCreateModal();
+        // Take the traveller straight into the trip they just planned.
+        if (newTrip?.id) void this.router.navigate(['/trips', newTrip.id]);
       },
       error: (err) => {
         this.isSubmitting = false;
