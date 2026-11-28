@@ -1091,7 +1091,7 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
       for (const place of selected) {
         const existing = this.findSavedPlace(place);
         if (existing) {
-          savedMap.set(place.externalId, existing);
+          savedMap.set(place.externalId, await this.repairSavedLocation(existing, place));
           continue;
         }
 
@@ -1296,6 +1296,33 @@ export class DestinationDiscoveryComponent implements OnInit, OnDestroy {
     }
     const hint = (place.city || this.searchDestination || '').trim();
     return hint ? { locationHint: hint } : {};
+  }
+
+  /**
+   * Places saved before locations were looked up sit on the destination centre (or nowhere), which
+   * stacks them on one spot of the route map. Re-adding such a place asks the server to find its
+   * real location; on any failure the existing place is used unchanged.
+   */
+  private async repairSavedLocation(saved: Place, place: PlanningPlace): Promise<Place> {
+    const hint = this.saveLocation(place).locationHint;
+    if (!hint || this.saveLocation(place).latitude != null) return saved;
+    const sameAsCentre = saved.latitude != null && saved.longitude != null
+      && Math.abs(Number(saved.latitude) - Number(place.latitude)) < 0.001
+      && Math.abs(Number(saved.longitude) - Number(place.longitude)) < 0.001;
+    if (saved.latitude != null && saved.longitude != null && !sameAsCentre) return saved;
+    try {
+      const repaired = await firstValueFrom(this.placeService.updatePlace(this.activeTripId, saved.id, {
+        name: saved.name,
+        category: saved.category,
+        estimatedCost: saved.estimatedCost,
+        notes: saved.notes,
+        locationHint: hint
+      }));
+      this.savedPlaces = this.savedPlaces.map((entry) => entry.id === repaired.id ? repaired : entry);
+      return repaired;
+    } catch {
+      return saved;
+    }
   }
 
   private discoveryNotes(place: PlanningPlace): string {

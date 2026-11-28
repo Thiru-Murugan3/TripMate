@@ -165,6 +165,37 @@ class PlaceServiceTest {
     }
 
     @Test
+    @DisplayName("updatePlace: a hint with no coordinates repairs a place saved at the destination centre")
+    void updatePlace_RepairsLocationWithHint() {
+        UpdatePlaceRequest request = new UpdatePlaceRequest("Baga Beach", PlaceCategory.ATTRACTION,
+                null, null, null, null, "Goa");
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+        when(placeRepository.findByIdAndTripId(100L, 10L)).thenReturn(Optional.of(place));
+        when(placeLocationService.locate("Baga Beach", "Goa", "Goa")).thenReturn(Optional.of(
+                new PlaceLocationService.Location(new BigDecimal("15.5553"), new BigDecimal("73.7517"))));
+        when(placeRepository.save(any(Place.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PlaceResponse response = placeService.updatePlace(10L, 100L, 1L, request);
+
+        assertEquals(new BigDecimal("15.5553"), response.latitude());
+    }
+
+    @Test
+    @DisplayName("updatePlace: clearing coordinates by hand (no hint) does not trigger a lookup")
+    void updatePlace_ManualClearDoesNotLookUp() {
+        UpdatePlaceRequest request = new UpdatePlaceRequest("Baga Beach", PlaceCategory.ATTRACTION,
+                null, null, null, null);
+        when(tripRepository.findById(10L)).thenReturn(Optional.of(trip));
+        when(placeRepository.findByIdAndTripId(100L, 10L)).thenReturn(Optional.of(place));
+        when(placeRepository.save(any(Place.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PlaceResponse response = placeService.updatePlace(10L, 100L, 1L, request);
+
+        assertNull(response.latitude());
+        verifyNoInteractions(placeLocationService);
+    }
+
+    @Test
     @DisplayName("createPlace: Trip EDITOR member creates place successfully")
     void createPlace_Editor_Success() {
         CreatePlaceRequest request = new CreatePlaceRequest(
