@@ -847,16 +847,17 @@ export class NavbarComponent {
 
   /**
    * Popups are drawn beneath the sticky header (the routed page is its own stacking
-   * context), so expose where the header ends; _mobile-modals.scss starts popups below it.
+   * context), so expose the header's height; _mobile-modals.scss starts popups below it.
+   * Height, not position: in the Android app the header is pushed down by the status-bar
+   * inset, which arrives after first paint, so the CSS adds that inset itself.
    */
   private publishHeaderBottom(): void {
     const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
     const root = document.documentElement;
     let observer: ResizeObserver | undefined;
     const update = () => {
-      const bar = host.querySelector('.navbar');
-      const bottom = bar ? Math.max(0, Math.round(bar.getBoundingClientRect().bottom)) : 0;
-      root.style.setProperty('--app-header-bottom', `${bottom}px`);
+      const bar = host.querySelector<HTMLElement>('.navbar');
+      root.style.setProperty('--app-header-height', `${bar?.offsetHeight ?? 0}px`);
     };
     afterNextRender(() => {
       update();
@@ -870,7 +871,7 @@ export class NavbarComponent {
     inject(DestroyRef).onDestroy(() => {
       observer?.disconnect();
       window.removeEventListener('resize', update);
-      root.style.removeProperty('--app-header-bottom');
+      root.style.removeProperty('--app-header-height');
     });
   }
 

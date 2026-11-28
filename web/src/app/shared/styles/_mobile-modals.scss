@@ -10,14 +10,15 @@
 
 $safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
 $safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
-$popup-top: 'max(12px, #{$safe-top}, var(--app-header-bottom, 0px) + 10px)';
+// Status-bar inset + header height (published by the navbar) + a small gap.
+$popup-top: 'calc(#{$safe-top} + var(--app-header-height, 0px) + 10px)';
 $popups:'.modal-backdrop, .detail-backdrop, .search-modal-backdrop, app-missed-trip-dialog .backdrop';
 
 @media (max-width: 760px) {
   body:has(#{$popups}) app-mobile-navigation { display: none; }
 
   // The header stays visible above popups, so popups start just below it
-  // (--app-header-bottom is measured live by the navbar).
+  // (--app-header-height is measured live by the navbar).
   // Class doubled to outrank each component's attribute-scoped .modal-backdrop rule.
   html body .modal-backdrop.modal-backdrop {
     align-items: center;
