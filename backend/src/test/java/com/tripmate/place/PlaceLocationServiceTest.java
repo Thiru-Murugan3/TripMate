@@ -2,17 +2,17 @@ package com.tripmate.place;
 
 import com.tripmate.discovery.provider.DestinationGeocodingService;
 import com.tripmate.discovery.provider.GeocodedDestination;
+import com.tripmate.place.PointOfInterestLookup.Candidate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
-import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -21,52 +21,77 @@ import static org.mockito.Mockito.*;
 class PlaceLocationServiceTest {
 
     @Mock
-    private DestinationGeocodingService geocoder;
+    private PointOfInterestLookup pointsOfInterest;
+
+    @Mock
+    private DestinationGeocodingService areaGeocoder;
 
     @InjectMocks
     private PlaceLocationService service;
 
-    private static GeocodedDestination at(String lat, String lon) {
-        return new GeocodedDestination(new BigDecimal(lat), new BigDecimal(lon), "Somewhere, India", null, null, null, "IN", "test");
+    private static final GeocodedDestination GOA = new GeocodedDestination(new BigDecimal("15.3004"), new BigDecimal("74.0855"),
+            "Goa, India", null, null, "Goa", "IN", "test");
+
+    private static Candidate poi(String name, String key, String lat, String lon) {
+        return new Candidate(name, key, new BigDecimal(lat), new BigDecimal(lon));
+    }
+
+    // Photon's real answers for the three places in the reported trip.
+    @Test
+    @DisplayName("finds each Goa place at its own spot, so the route has separate stops")
+    void locatesEachPlaceSeparately() {
+        when(areaGeocoder.geocode("Goa")).thenReturn(GOA);
+        when(pointsOfInterest.search("Fort Aguada, Goa")).thenReturn(List.of(
+                poi("Fort Aguada", "historic", "15.4923866", "73.7735976")));
+        when(pointsOfInterest.search("Chapora Fort, Goa")).thenReturn(List.of(
+                poi("Chapora Fort", "historic", "15.6059773", "73.7363109")));
+        when(pointsOfInterest.search("Anjuna flea market, Goa")).thenReturn(List.of(
+                poi("Anjuna Flea Market", "amenity", "15.5763909", "73.7439766")));
+
+        assertEquals(new BigDecimal("15.4923866"), service.locate("Fort Aguada", "Goa").orElseThrow().latitude());
+        assertEquals(new BigDecimal("15.6059773"), service.locate("Chapora Fort", "Goa").orElseThrow().latitude());
+        assertEquals(new BigDecimal("15.5763909"), service.locate("Anjuna flea market", "Goa").orElseThrow().latitude());
     }
 
     @Test
-    @DisplayName("finds the place near its area")
-    void locatesPlaceNearArea() {
-        when(geocoder.geocode("Fort Aguada, Goa")).thenReturn(at("15.4920", "73.7732"));
-        when(geocoder.geocode("Goa")).thenReturn(at("15.3004", "74.0855"));
+    @DisplayName("accepts a reworded name such as 'Aguada Fort' for 'Fort Aguada'")
+    void acceptsRewordedName() {
+        when(areaGeocoder.geocode("Goa")).thenReturn(GOA);
+        when(pointsOfInterest.search("Fort Aguada, Goa")).thenReturn(List.of(
+                poi("Aguada Fort", "historic", "15.4923285", "73.7732044")));
 
-        Optional<PlaceLocationService.Location> found = service.locate("Fort Aguada", "Goa", "Coorg");
-
-        assertEquals(new BigDecimal("15.4920"), found.orElseThrow().latitude());
-        verify(geocoder, never()).geocode("Fort Aguada, Coorg");
+        assertTrue(service.locate("Fort Aguada", "Goa").isPresent());
     }
 
     @Test
-    @DisplayName("rejects a hit that is only the town centre, never inventing a location")
-    void rejectsTownCentreFallback() {
-        when(geocoder.geocode("Anjuna flea market, Goa")).thenReturn(at("15.3004", "74.0855"));
-        when(geocoder.geocode("Goa")).thenReturn(at("15.3004", "74.0855"));
+    @DisplayName("skips results with a different name and never falls back to the town centre")
+    void rejectsDifferentNameAndTownCentre() {
+        when(areaGeocoder.geocode("Goa")).thenReturn(GOA);
+        when(pointsOfInterest.search("Hidden Viewpoint, Goa")).thenReturn(List.of(
+                poi("Goa", "place", "15.3004", "74.0855"),
+                poi("Some Other Viewpoint", "tourism", "15.40", "73.90")));
 
-        assertTrue(service.locate("Anjuna flea market", "Goa").isEmpty());
+        assertTrue(service.locate("Hidden Viewpoint", "Goa").isEmpty());
     }
 
     @Test
     @DisplayName("rejects a same-named place far from the area and tries the next area")
     void rejectsFarAwayHitAndTriesNextArea() {
-        when(geocoder.geocode("Raja Seat, Goa")).thenReturn(at("12.4210", "75.7380"));
-        when(geocoder.geocode("Goa")).thenReturn(at("15.3004", "74.0855"));
-        when(geocoder.geocode("Raja Seat, Madikeri")).thenReturn(at("12.4210", "75.7380"));
-        when(geocoder.geocode("Madikeri")).thenReturn(at("12.4244", "75.7382"));
+        GeocodedDestination madikeri = new GeocodedDestination(new BigDecimal("12.4244"), new BigDecimal("75.7382"),
+                "Madikeri, India", "Madikeri", null, "Karnataka", "IN", "test");
+        when(areaGeocoder.geocode("Goa")).thenReturn(GOA);
+        when(areaGeocoder.geocode("Madikeri")).thenReturn(madikeri);
+        when(pointsOfInterest.search("Raja Seat, Goa")).thenReturn(List.of(poi("Raja Seat", "tourism", "12.4210", "75.7380")));
+        when(pointsOfInterest.search("Raja Seat, Madikeri")).thenReturn(List.of(poi("Raja Seat", "tourism", "12.4210", "75.7380")));
 
         assertEquals(new BigDecimal("12.4210"), service.locate("Raja Seat", "Goa", "Madikeri").orElseThrow().latitude());
     }
 
     @Test
-    @DisplayName("leaves the place unmapped when the geocoder can't find it")
-    void notFoundStaysUnmapped() {
-        when(geocoder.geocode("Hidden Spot, Goa")).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+    @DisplayName("leaves the place unmapped when the lookup service is down")
+    void providerDownStaysUnmapped() {
+        when(pointsOfInterest.search("Fort Aguada, Goa")).thenThrow(new RestClientException("down"));
 
-        assertTrue(service.locate("Hidden Spot", "Goa").isEmpty());
+        assertTrue(service.locate("Fort Aguada", "Goa").isEmpty());
     }
 }
