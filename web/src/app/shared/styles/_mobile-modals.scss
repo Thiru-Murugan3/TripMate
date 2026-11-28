@@ -10,20 +10,24 @@
 
 $safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
 $safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
-$popups: '.modal-backdrop, .detail-backdrop, .search-modal-backdrop, app-missed-trip-dialog .backdrop';
+$popup-top: 'max(12px, #{$safe-top}, var(--app-header-bottom, 0px) + 10px)';
+$popups:'.modal-backdrop, .detail-backdrop, .search-modal-backdrop, app-missed-trip-dialog .backdrop';
 
 @media (max-width: 760px) {
   body:has(#{$popups}) app-mobile-navigation { display: none; }
 
-  html body .modal-backdrop {
+  // The header stays visible above popups, so popups start just below it
+  // (--app-header-bottom is measured live by the navbar).
+  // Class doubled to outrank each component's attribute-scoped .modal-backdrop rule.
+  html body .modal-backdrop.modal-backdrop {
     align-items: center;
-    padding: max(12px, #{$safe-top}) 12px max(12px, #{$safe-bottom});
+    padding: #{$popup-top} 12px max(12px, #{$safe-bottom});
   }
 
   // The popup scrolls inside itself; the bottom padding moves into the action row.
   html body .modal-backdrop :is(.modal, .modal-content) {
     width: 100%;
-    max-height: calc(100dvh - 24px - #{$safe-top} - #{$safe-bottom});
+    max-height: calc(100dvh - #{$popup-top} - max(12px, #{$safe-bottom}));
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-bottom: 0 !important;
